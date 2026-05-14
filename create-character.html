@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kiến Tạo Nhân Vật — Hỗn Nguyên AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Serif+SC:wght@300;400;600&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/",
+    "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.1.3/lib/three-vrm.module.min.js"
+  }
+}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --gold:#c8a84b;--gold2:#ffe88a;--goldd:rgba(200,168,75,0.15);
+  --sect:#00d4ff;--sect2:rgba(0,212,255,0.12);
+  --panel:rgba(3,6,20,0.93);--panelb:rgba(2,4,16,0.97);
+  --border:rgba(200,168,75,0.18);--borderl:rgba(200,168,75,0.07);
+  --tx:rgba(220,205,170,0.9);--txd:rgba(160,140,100,0.5);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:#000610;color:var(--tx);font-family:'Rajdhani',sans-serif;}
+#app-canvas{position:fixed;inset:0;width:100%!important;height:100%!important;z-index:0;}
+
+/* ── LOADING ── */
+#loading{
+  position:fixed;inset:0;z-index:9999;
+  background:radial-gradient(ellipse at 50% 55%,#000c22 0%,#000208 100%);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;
+  transition:opacity 0.8s ease;
+}
+#loading.fade{opacity:0;pointer-events:none;}
+.ld-deco{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin-bottom:4px;}
+.ld-brand{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:8px;color:rgba(200,168,75,0.35);}
+.ld-title{font-family:'Noto Serif SC',serif;font-size:28px;font-weight:600;color:#c8a84b;
+  text-shadow:0 0 50px rgba(200,168,75,0.4);letter-spacing:8px;}
+.ld-sub{font-size:9px;letter-spacing:5px;color:rgba(200,168,75,0.25);font-family:'Orbitron',sans-serif;margin-top:-6px;}
+.ld-bar-wrap{width:280px;height:1px;background:rgba(200,168,75,0.08);border-radius:1px;overflow:hidden;}
+.ld-bar{height:100%;width:0%;background:linear-gradient(90deg,transparent,#c8a84b,#ffe88a,#c8a84b,transparent);
+  transition:width 0.3s ease;border-radius:1px;}
+.ld-status{font-size:9px;letter-spacing:3px;color:rgba(200,168,75,0.28);font-family:'Orbitron',sans-serif;}
+
+/* ── TOP HUD ── */
+#top-hud{
+  position:fixed;top:0;left:0;right:0;z-index:200;height:48px;
+  display:flex;align-items:center;padding:0 16px;gap:12px;
+  background:linear-gradient(180deg,rgba(0,3,14,0.97) 0%,rgba(0,3,14,0.0) 100%);
+  border-bottom:1px solid var(--borderl);pointer-events:auto;
+}
+.hud-logo{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2.5px;color:var(--gold);opacity:.55;flex-shrink:0;line-height:1.7;}
+.hud-logo small{display:block;font-size:5.5px;letter-spacing:3.5px;opacity:.5;}
+.hud-div{width:1px;height:22px;background:var(--border);flex-shrink:0;}
+.hud-name-wrap{flex:1;display:flex;align-items:center;justify-content:center;}
+#char-name{
+  background:transparent;border:none;border-bottom:1px solid rgba(0,212,255,0.25);
+  color:#fff;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:5px;
+  text-align:center;padding:4px 18px;width:230px;outline:none;
+}
+#char-name::placeholder{color:rgba(255,255,255,0.15);font-size:8px;letter-spacing:3px;}
+#char-name:focus{border-bottom-color:var(--sect);color:var(--sect);}
+.hud-btn{
+  padding:6px 15px;border:1px solid;border-radius:1px;cursor:pointer;
+  font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:2px;
+  transition:all 0.2s;flex-shrink:0;background:transparent;
+}
+.hud-back{border-color:rgba(200,168,75,0.18);color:rgba(200,168,75,0.38);}
+.hud-back:hover{border-color:var(--gold);color:var(--gold);background:rgba(200,168,75,0.05);}
+.hud-rand{border-color:rgba(0,212,255,0.2);color:rgba(0,212,255,0.42);}
+.hud-rand:hover{border-color:var(--sect);color:var(--sect);background:rgba(0,212,255,0.05);}
+.hud-confirm{border-color:var(--gold);color:var(--gold);background:rgba(200,168,75,0.05);}
+.hud-confirm:hover{background:rgba(200,168,75,0.12);box-shadow:0 0 18px rgba(200,168,75,0.25);}
+
+/* ── RIGHT PANEL ── */
+#right-panel{
+  position:fixed;top:48px;right:0;bottom:0;z-index:150;
+  width:360px;display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,rgba(5,8,28,0.97) 0%,rgba(3,5,20,0.98) 100%);
+  backdrop-filter:blur(28px);
+  border-left:1px solid rgba(200,168,75,0.14);
+  box-shadow:-8px 0 40px rgba(0,0,0,0.5);
+}
+
+/* — Panel header decoration — */
+#panel-header{
+  flex-shrink:0;padding:8px 14px 6px;
+  background:linear-gradient(180deg,rgba(0,2,12,0.98),rgba(2,4,18,0.95));
+  border-bottom:1px solid rgba(200,168,75,0.08);
+  display:flex;align-items:center;justify-content:space-between;
+}
+#panel-title{
+  font-family:'Noto Serif SC',serif;font-size:11px;letter-spacing:5px;
+  color:rgba(200,168,75,0.5);font-weight:300;
+}
+.panel-deco{display:flex;align-items:center;gap:4px;}
+.panel-deco span{font-size:8px;color:rgba(200,168,75,0.2);}
+
+/* — Cat tabs — */
+#cat-tabs{
+  display:flex;border-bottom:1px solid rgba(200,168,75,0.1);flex-shrink:0;
+  background:rgba(1,3,14,0.98);
+  padding:0;gap:0;
+}
+.c-tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:9px 2px 7px;cursor:pointer;gap:5px;transition:all 0.18s;
+  border-bottom:2px solid transparent;position:relative;
+  border-right:1px solid rgba(255,255,255,0.03);
+}
+.c-tab:last-child{border-right:none;}
+.c-tab:hover{background:rgba(200,168,75,0.03);}
+.c-tab.active{border-bottom-color:var(--gold);background:rgba(200,168,75,0.04);}
+.c-tab.active::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(200,168,75,0.3),transparent);}
+.c-tab.active::after{content:'';position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);
+  width:20px;height:2px;background:var(--gold2);filter:blur(1px);}
+.c-tab .ti{
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  font-size:15px;opacity:.3;transition:all 0.2s;
+  background:rgba(255,255,255,0.02);border-radius:5px;
+  border:1px solid rgba(255,255,255,0.04);
+}
+.c-tab.active .ti{opacity:1;background:rgba(200,168,75,0.08);border-color:rgba(200,168,75,0.2);
+  box-shadow:0 2px 8px rgba(200,168,75,0.12);}
+.c-tab:hover .ti{opacity:.65;}
+.c-tab span{font-family:'Noto Serif SC',serif;font-size:8px;
+  color:rgba(160,145,110,0.4);transition:color 0.2s;text-align:center;line-height:1;
+  letter-spacing:.5px;}
+.c-tab.active span{color:var(--gold);}
+.c-tab:hover span{color:rgba(200,168,75,0.65);}
+
+/* — Scrollable body — */
+#cat-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:0;}
+#cat-body::-webkit-scrollbar{width:3px;}
+#cat-body::-webkit-scrollbar-track{background:transparent;}
+#cat-body::-webkit-scrollbar-thumb{background:rgba(200,168,75,0.15);border-radius:2px;}
+
+.cat-section{display:none;padding:12px 14px 16px;}
+.cat-section.active{display:block;}
+
+/* — Section label — */
+.s-lbl{
+  font-family:'Orbitron',sans-serif;font-size:6px;letter-spacing:3.5px;
+  color:rgba(200,168,75,0.5);margin:12px 0 8px;
+  display:flex;align-items:center;gap:8px;
+}
+.s-lbl::before{content:'◆';font-size:5px;color:var(--gold);opacity:.6;flex-shrink:0;}
+.s-lbl::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(200,168,75,0.15),transparent);}
+.s-lbl:first-child{margin-top:2px;}
+
+/* — Preset grid — */
+.preset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:14px;}
+.preset-grid.g3{grid-template-columns:repeat(3,1fr);}
+.preset-grid.g6{grid-template-columns:repeat(6,1fr);}
+.pi{
+  display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;
+  padding:5px 3px 6px;border-radius:5px;
+  border:1px solid rgba(255,255,255,0.07);
+  background:linear-gradient(160deg,rgba(12,18,42,0.9),rgba(6,10,28,0.95));
+  transition:all 0.2s;position:relative;overflow:hidden;
+}
+.pi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:transparent;transition:background 0.2s;}
+.pi:hover{border-color:rgba(200,168,75,0.35);transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);}
+.pi:hover::after{background:linear-gradient(90deg,transparent,rgba(200,168,75,0.3),transparent);}
+.pi.on{border-color:var(--gold);
+  background:linear-gradient(160deg,rgba(200,168,75,0.12),rgba(150,110,20,0.06));
+  box-shadow:0 0 12px rgba(200,168,75,0.18),inset 0 0 10px rgba(200,168,75,0.04);}
+.pi.on::after{background:linear-gradient(90deg,transparent,rgba(200,168,75,0.5),transparent);}
+.pi-check{display:none;position:absolute;top:3px;right:4px;
+  width:13px;height:13px;border-radius:50%;background:var(--gold);
+  align-items:center;justify-content:center;font-size:7px;color:#000;font-weight:900;}
+.pi.on .pi-check{display:flex;}
+.pi .thumb{width:52px;height:52px;display:flex;align-items:center;justify-content:center;
+  border-radius:4px;background:rgba(0,0,0,0.25);overflow:hidden;}
+.pi .thumb svg{width:100%;height:100%;}
+.pi .thumb .ico{font-size:26px;line-height:1;}
+.pi .lbl{font-size:7px;color:rgba(185,170,140,0.55);text-align:center;
+  font-family:'Noto Serif SC',serif;letter-spacing:.5px;line-height:1.3;font-weight:400;}
+.pi.on .lbl{color:var(--gold2);}
+
+/* — Slider row — */
+.sl-row{display:flex;align-items:center;gap:6px;margin-bottom:10px;padding:0 2px;}
+.sl-label{font-size:9.5px;color:rgba(210,195,165,0.6);width:84px;flex-shrink:0;line-height:1.2;font-family:'Noto Serif SC',serif;}
+.sl-pm{
+  width:20px;height:20px;border:1px solid rgba(200,168,75,0.2);border-radius:3px;
+  background:rgba(0,0,0,0.35);color:var(--gold);font-size:14px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  flex-shrink:0;transition:all 0.14s;user-select:none;line-height:1;
+}
+.sl-pm:hover{border-color:var(--gold);background:rgba(200,168,75,0.12);box-shadow:0 0 6px rgba(200,168,75,0.15);}
+.sl-wrap{flex:1;position:relative;height:16px;display:flex;align-items:center;}
+input.sl{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:2px;border-radius:2px;outline:none;cursor:pointer;
+  background:linear-gradient(90deg,rgba(200,168,75,0.4) var(--pct,50%),rgba(255,255,255,0.08) var(--pct,50%));
+}
+input.sl::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:radial-gradient(circle,#ffe88a 0%,#c8a84b 60%);
+  box-shadow:0 0 8px rgba(200,168,75,0.6),0 1px 3px rgba(0,0,0,0.5);cursor:pointer;
+  border:1px solid rgba(200,168,75,0.8);
+}
+input.sl::-webkit-slider-thumb:hover{transform:scale(1.15);}
+.sl-val{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--gold);
+  width:24px;text-align:right;flex-shrink:0;font-weight:700;}
+
+/* — Color palette — */
+.pal{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.cd{
+  width:26px;height:26px;border-radius:50%;cursor:pointer;
+  border:2px solid rgba(255,255,255,0.08);
+  transition:all 0.18s;flex-shrink:0;position:relative;
+  box-shadow:0 2px 6px rgba(0,0,0,0.4);
+}
+.cd:hover{border-color:rgba(255,255,255,0.5);transform:scale(1.2);box-shadow:0 4px 10px rgba(0,0,0,0.5);}
+.cd.on{border-color:#fff;transform:scale(1.15);box-shadow:0 0 10px rgba(255,255,255,0.3);}
+.cd.on::after{content:'✓';position:absolute;inset:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.8);font-weight:900;}
+.cpick-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;
+  padding:6px 8px;background:rgba(0,0,0,0.2);border-radius:4px;
+  border:1px solid rgba(255,255,255,0.05);}
+.cpick-lbl{font-size:9px;color:rgba(200,180,140,0.5);flex:1;font-family:'Noto Serif SC',serif;}
+input[type=color]{width:36px;height:24px;border:1px solid rgba(200,168,75,0.2);padding:1px;
+  background:rgba(0,0,0,0.3);cursor:pointer;border-radius:3px;}
+
+/* — Toggle — */
+.tog-row{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:9px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03);}
+.tog-lbl{font-size:9.5px;color:rgba(210,195,165,0.55);}
+.tog{width:34px;height:17px;border-radius:9px;background:rgba(255,255,255,0.08);
+  cursor:pointer;position:relative;transition:background 0.2s;border:1px solid rgba(255,255,255,0.08);flex-shrink:0;}
+.tog.on{background:rgba(0,212,255,0.25);border-color:rgba(0,212,255,0.4);}
+.tog::after{content:'';width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,0.7);
+  position:absolute;top:1px;left:1px;transition:left 0.18s;}
+.tog.on::after{left:18px;background:#fff;}
+
+/* — Sect cards — */
+.scard{
+  display:flex;align-items:flex-start;gap:12px;padding:11px 12px;
+  border:1px solid rgba(255,255,255,0.06);border-radius:6px;
+  background:linear-gradient(135deg,rgba(10,14,35,0.9),rgba(4,8,22,0.95));
+  cursor:pointer;margin-bottom:7px;transition:all 0.22s;position:relative;overflow:hidden;
+}
+.scard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:rgba(255,255,255,0.05);transition:background 0.22s;}
+.scard:hover{border-color:rgba(255,255,255,0.15);transform:translateX(2px);}
+.scard:hover::before{background:rgba(200,168,75,0.3);}
+.scard.on{border-color:var(--sect);
+  background:linear-gradient(135deg,rgba(0,30,50,0.8),rgba(0,15,30,0.9));
+  box-shadow:0 0 18px rgba(0,212,255,0.08),inset 0 0 20px rgba(0,212,255,0.03);}
+.scard.on::before{background:var(--sect);}
+.scard-ico{font-size:28px;flex-shrink:0;margin-top:0;line-height:1;
+  filter:drop-shadow(0 0 8px rgba(255,255,255,0.3));}
+.scard-info{flex:1;min-width:0;}
+.scard-name{font-family:'Noto Serif SC',serif;font-size:12px;letter-spacing:3px;
+  color:rgba(220,205,175,0.85);margin-bottom:4px;font-weight:600;}
+.scard.on .scard-name{color:var(--sect);text-shadow:0 0 12px rgba(0,212,255,0.4);}
+.scard-lore{font-size:9px;color:rgba(180,165,135,0.45);line-height:1.55;margin-bottom:6px;}
+.scard-stats{display:flex;gap:4px;flex-wrap:wrap;}
+.ss{font-family:'Orbitron',sans-serif;font-size:6.5px;letter-spacing:.8px;
+  padding:3px 6px;border-radius:2px;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+  color:rgba(200,185,155,0.45);}
+.scard.on .ss{background:rgba(0,212,255,0.06);border-color:rgba(0,212,255,0.15);
+  color:rgba(0,212,255,0.65);}
+
+/* — Body shape presets — */
+.body-card{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:8px 5px;border:1px solid rgba(200,168,75,0.09);border-radius:2px;
+  cursor:pointer;background:rgba(0,0,0,0.2);transition:all 0.18s;
+}
+.body-card:hover{border-color:rgba(200,168,75,0.28);}
+.body-card.on{border-color:var(--gold);background:rgba(200,168,75,0.07);}
+.body-card .ico{font-size:22px;}
+.body-card .lbl{font-size:7.5px;color:var(--txd);font-family:'Orbitron',sans-serif;letter-spacing:.5px;text-align:center;}
+.body-card.on .lbl{color:var(--gold);}
+
+/* — Bottom camera bar — */
+#bottom-bar{
+  position:fixed;bottom:0;left:0;right:360px;z-index:150;height:50px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  background:linear-gradient(0deg,rgba(0,3,14,0.95) 0%,rgba(0,3,14,0.2) 100%);
+  border-top:1px solid rgba(200,168,75,0.06);
+}
+.cbtn{
+  padding:6px 14px;border:1px solid rgba(200,168,75,0.14);border-radius:2px;
+  font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:1.8px;
+  color:rgba(200,168,75,0.36);cursor:pointer;
+  background:rgba(5,8,25,0.7);
+  transition:all 0.18s;
+}
+.cbtn:hover{border-color:rgba(200,168,75,0.45);color:rgba(200,168,75,0.75);background:rgba(200,168,75,0.06);}
+.cbtn.on{border-color:var(--gold);color:var(--gold);background:rgba(200,168,75,0.08);
+  box-shadow:0 0 12px rgba(200,168,75,0.1);}
+
+/* — Character tag — */
+#char-tag{
+  position:fixed;bottom:58px;left:0;right:360px;z-index:100;
+  display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;
+}
+#ctn{font-family:'Noto Serif SC',serif;font-size:18px;letter-spacing:8px;font-weight:600;
+  color:rgba(255,255,255,0.9);text-shadow:0 0 30px var(--sect),0 2px 8px rgba(0,0,0,0.8);}
+#cts{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:3px;
+  color:var(--sect);opacity:.7;}
+
+/* — Notif — */
+#notif{
+  position:fixed;top:58px;left:calc((100% - 360px)/2);transform:translateX(-50%);z-index:500;
+  border:1px solid rgba(200,168,75,0.5);padding:9px 28px;
+  font-family:'Orbitron',sans-serif;font-size:8.5px;letter-spacing:2px;color:var(--gold);
+  background:rgba(0,3,12,0.95);border-radius:2px;
+  box-shadow:0 0 20px rgba(200,168,75,0.12);
+  opacity:0;transition:opacity 0.22s;pointer-events:none;white-space:nowrap;
+}
+#notif.show{opacity:1;}
+
+/* — Right-side bottom stat display — */
+#stat-bar{
+  flex-shrink:0;border-top:1px solid rgba(200,168,75,0.1);padding:10px 14px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:6px;
+  background:rgba(2,4,16,0.98);
+}
+.sb{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;
+  border:1px solid rgba(255,255,255,0.04);border-radius:3px;background:rgba(0,0,0,0.2);}
+.sb-key{font-family:'Orbitron',sans-serif;font-size:5.5px;letter-spacing:1.5px;color:rgba(160,145,110,0.45);}
+.sb-val{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--gold);font-weight:700;
+  text-shadow:0 0 8px rgba(200,168,75,0.3);}
+
+/* ── AI PORTRAIT ── */
+.hud-ai{border-color:rgba(180,80,255,0.5);color:rgba(200,120,255,0.85);background:rgba(100,0,180,0.08);}
+.hud-ai:hover{border-color:#b050ff;color:#cc80ff;background:rgba(140,0,255,0.15);box-shadow:0 0 18px rgba(160,0,255,0.3);}
+.hud-gender{
+  display:flex;align-items:center;gap:4px;border:1px solid rgba(200,168,75,0.2);
+  border-radius:1px;padding:3px 8px;flex-shrink:0;
+}
+.hud-gender span{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:1px;color:rgba(200,168,75,0.4);margin-right:2px;}
+.gdr-btn{
+  background:transparent;border:1px solid rgba(200,168,75,0.15);border-radius:1px;
+  color:rgba(200,168,75,0.4);font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:1px;
+  padding:3px 8px;cursor:pointer;transition:all 0.2s;
+}
+.gdr-btn.on{border-color:var(--gold);color:var(--gold);background:rgba(200,168,75,0.1);}
+.gdr-btn:hover:not(.on){border-color:rgba(200,168,75,0.4);color:rgba(200,168,75,0.7);}
+
+#ai-portrait-wrap{
+  position:fixed;left:0;top:48px;bottom:60px;
+  width:calc(100vw - 360px);
+  display:flex;align-items:center;justify-content:center;
+  z-index:50;pointer-events:none;
+}
+#ai-portrait-frame{
+  position:relative;
+  max-height:calc(100vh - 130px);
+  aspect-ratio:1/2;
+  border:none;
+  background:transparent;
+  overflow:visible;
+  display:none;
+  pointer-events:auto;
+}
+#ai-portrait-frame.show{display:block;}
+#ai-portrait-img{
+  width:100%;height:100%;object-fit:contain;display:block;
+}
+#ai-portrait-frame::before{
+  display:none;
+}
+#ai-portrait-frame::after{
+  display:none;
+}
+#ai-portrait-name{
+  position:absolute;bottom:18px;left:0;right:0;text-align:center;z-index:4;
+  font-family:'Noto Serif SC',serif;font-size:18px;color:#c8a84b;
+  text-shadow:0 0 30px rgba(200,168,75,0.7),0 2px 8px rgba(0,0,0,0.9);
+  letter-spacing:6px;pointer-events:none;
+}
+#ai-portrait-sect{
+  position:absolute;bottom:6px;left:0;right:0;text-align:center;z-index:4;
+  font-family:'Orbitron',sans-serif;font-size:7px;color:rgba(200,168,75,0.45);
+  letter-spacing:4px;pointer-events:none;
+}
+#ai-portrait-close{
+  position:absolute;top:10px;right:10px;z-index:10;
+  background:rgba(0,0,0,0.5);border:1px solid rgba(200,168,75,0.2);
+  color:rgba(200,168,75,0.5);width:24px;height:24px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:12px;border-radius:1px;
+  transition:all 0.2s;
+}
+#ai-portrait-close:hover{border-color:var(--gold);color:var(--gold);}
+
+#ai-loading-overlay{
+  position:fixed;left:0;top:48px;width:calc(100vw - 360px);bottom:60px;
+  display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;
+  z-index:60;pointer-events:none;
+}
+#ai-loading-overlay.show{display:flex;}
+.ai-loader-ring{
+  width:60px;height:60px;border-radius:50%;
+  border:1px solid rgba(180,80,255,0.15);
+  border-top-color:rgba(180,80,255,0.8);
+  animation:aiSpin 1.2s linear infinite;
+}
+@keyframes aiSpin{to{transform:rotate(360deg);}}
+.ai-loader-txt{
+  font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:3px;
+  color:rgba(200,120,255,0.6);animation:aiPulse 2s ease-in-out infinite;
+}
+@keyframes aiPulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+.ai-loader-sub{font-size:7px;letter-spacing:2px;color:rgba(200,120,255,0.3);font-family:'Orbitron',sans-serif;}
+</style>
+</head>
+<body>
+
+<canvas id="app-canvas"></canvas>
+
+<div id="loading">
+  <div class="ld-deco"></div>
+  <div class="ld-brand">HỖN NGUYÊN AI · CHARACTER STUDIO</div>
+  <div class="ld-title">建 造 人 物</div>
+  <div class="ld-sub">KIẾN TẠO NHÂN VẬT</div>
+  <div class="ld-bar-wrap"><div class="ld-bar" id="ld-bar"></div></div>
+  <div class="ld-status" id="ld-status">Đang khởi tạo...</div>
+</div>
+
+<div id="top-hud">
+  <div class="hud-logo">HỖN NGUYÊN AI<small>CHARACTER STUDIO</small></div>
+  <div class="hud-div"></div>
+  <div class="hud-name-wrap">
+    <input id="char-name" type="text" maxlength="20" placeholder="NHẬP TÊN TIÊN HIỆU">
+  </div>
+  <div class="hud-gender">
+    <span>GIỚI TÍNH</span>
+    <button class="gdr-btn on" id="gdr-nam" onclick="setGender('nam',this)">NAM</button>
+    <button class="gdr-btn" id="gdr-nu" onclick="setGender('nu',this)">NỮ</button>
+  </div>
+  <button class="hud-btn hud-ai" onclick="generateAIPortrait()">✦ TẠO ẢNH AI</button>
+  <button class="hud-btn" style="border-color:rgba(0,212,255,0.3);color:rgba(0,212,255,0.6);" onclick="switchVRMModel()">⟳ ĐỔI MODEL</button>
+  <button class="hud-btn" style="border-color:rgba(120,220,120,0.45);color:rgba(140,255,140,0.85);" onclick="showVRoidPanel()">↑ TẢI VRM</button>
+  <input type="file" id="vrm-file-input" accept=".vrm,.vroid" style="display:none" onchange="onVRMFileSelected(this)">
+  <button class="hud-btn hud-rand" onclick="randomAll()">🎲 NGẪU NHIÊN</button>
+  <button class="hud-btn hud-back" onclick="goBack()">← HỦY</button>
+  <button class="hud-btn hud-confirm" onclick="saveChar()">✦ XÁC NHẬN</button>
+</div>
+
+<!-- VRoid Upload Panel -->
+<div id="vroid-panel" style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;">
+  <div style="background:rgba(3,8,25,0.97);border:1px solid rgba(140,255,140,0.3);border-radius:16px;padding:36px 40px;max-width:520px;width:90%;box-shadow:0 0 60px rgba(100,255,100,0.1);position:relative;">
+    <div style="font-family:Orbitron,sans-serif;font-size:15px;color:rgba(140,255,140,0.9);letter-spacing:4px;margin-bottom:6px;">TẢI MÔ HÌNH VRM</div>
+    <div style="font-size:11px;color:rgba(200,168,75,0.5);letter-spacing:2px;margin-bottom:20px;">TỪ VROID STUDIO HOẶC BẤT KỲ NGUỒN VRM NÀO</div>
+
+    <!-- .vroid vs .vrm warning box -->
+    <div style="background:rgba(255,80,80,0.07);border:1px solid rgba(255,100,100,0.35);border-radius:10px;padding:16px 18px;margin-bottom:18px;">
+      <div style="font-family:Orbitron,sans-serif;font-size:10px;color:rgba(255,120,120,0.9);letter-spacing:3px;margin-bottom:10px;">⚠ LƯU Ý QUAN TRỌNG</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;">
+        <div style="background:rgba(255,60,60,0.08);border:1px solid rgba(255,80,80,0.2);border-radius:7px;padding:12px;text-align:center;">
+          <div style="font-family:Orbitron,sans-serif;font-size:16px;color:rgba(255,100,100,0.7);margin-bottom:6px;">.vroid</div>
+          <div style="color:rgba(255,120,120,0.6);font-size:11px;line-height:1.6;">File PROJECT<br><span style="opacity:0.6;">(Ctrl+S / lưu thường)</span><br><strong style="color:rgba(255,80,80,0.8);">✕ Không dùng được</strong></div>
+        </div>
+        <div style="background:rgba(80,255,120,0.06);border:1px solid rgba(100,255,140,0.25);border-radius:7px;padding:12px;text-align:center;">
+          <div style="font-family:Orbitron,sans-serif;font-size:16px;color:rgba(120,255,140,0.9);margin-bottom:6px;">.vrm</div>
+          <div style="color:rgba(160,255,180,0.7);font-size:11px;line-height:1.6;">File EXPORT 3D<br><span style="opacity:0.6;">(Export → .VRM)</span><br><strong style="color:rgba(100,255,140,0.9);">✓ Dùng được</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:rgba(140,255,140,0.04);border:1px solid rgba(140,255,140,0.12);border-radius:10px;padding:18px;margin-bottom:16px;">
+      <div style="font-family:Orbitron,sans-serif;font-size:10px;color:rgba(140,255,140,0.6);letter-spacing:3px;margin-bottom:12px;">CÁCH EXPORT .VRM TRONG VROID STUDIO</div>
+      <div style="font-size:12px;color:rgba(200,180,140,0.85);line-height:2;">
+        <div style="margin-bottom:4px;"><span style="color:rgba(140,255,140,0.7);font-weight:bold;margin-right:8px;">①</span>Mở nhân vật trong VRoid Studio</div>
+        <div style="margin-bottom:4px;"><span style="color:rgba(140,255,140,0.7);font-weight:bold;margin-right:8px;">②</span>Click icon <strong style="color:#fff;">📷 Camera</strong> (góc trên phải)</div>
+        <div style="margin-bottom:4px;"><span style="color:rgba(140,255,140,0.7);font-weight:bold;margin-right:8px;">③</span>Chọn <strong style="color:rgba(140,255,140,0.9);">"Export as VRM"</strong></div>
+        <div><span style="color:rgba(140,255,140,0.7);font-weight:bold;margin-right:8px;">④</span>Lưu file <strong style="color:rgba(140,255,140,0.9);">.vrm</strong> → tải lên đây</div>
+      </div>
+    </div>
+
+    <div style="background:rgba(200,168,75,0.04);border:1px solid rgba(200,168,75,0.12);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:11px;color:rgba(200,168,75,0.6);line-height:1.7;">
+      ✦ Cũng hỗ trợ VRM từ <strong style="color:rgba(200,168,75,0.8);">Booth.pm</strong>, <strong style="color:rgba(200,168,75,0.8);">VRoid Hub</strong><br>
+      ✦ File chỉ xử lý cục bộ — không upload lên server
+    </div>
+
+    <div style="display:flex;gap:12px;">
+      <button onclick="document.getElementById('vrm-file-input').click();closeVRoidPanel();"
+        style="flex:1;padding:14px;background:rgba(140,255,140,0.1);border:1px solid rgba(140,255,140,0.4);border-radius:8px;color:rgba(140,255,140,0.9);font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;cursor:pointer;">
+        ↑ CHỌN FILE VRM
+      </button>
+      <button onclick="closeVRoidPanel()"
+        style="padding:14px 20px;background:rgba(200,168,75,0.08);border:1px solid rgba(200,168,75,0.2);border-radius:8px;color:rgba(200,168,75,0.6);font-family:Orbitron,sans-serif;font-size:11px;cursor:pointer;">
+        ✕
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="char-tag">
+  <div id="ctn">VÔ DANH</div>
+  <div id="cts">THỦY PHÁI ✦ THỦY NGUYÊN CẢNH</div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div id="right-panel">
+
+  <div id="panel-header">
+    <div id="panel-title">外 观 编 辑</div>
+    <div class="panel-deco"><span>◆</span><span>◆</span><span>◆</span></div>
+  </div>
+
+  <div id="cat-tabs">
+    <div class="c-tab active" onclick="swCat('face',this)"><div class="ti">🧑</div><span>Khuôn Mặt</span></div>
+    <div class="c-tab" onclick="swCat('eyes',this)"><div class="ti">👁️</div><span>Đôi Mắt</span></div>
+    <div class="c-tab" onclick="swCat('hair',this)"><div class="ti">💇</div><span>Mái Tóc</span></div>
+    <div class="c-tab" onclick="swCat('makeup',this)"><div class="ti">💄</div><span>Điểm Trang</span></div>
+    <div class="c-tab" onclick="swCat('body',this)"><div class="ti">🧍</div><span>Cơ Thể</span></div>
+    <div class="c-tab" onclick="swCat('sect',this)"><div class="ti">⚔️</div><span>Môn Phái</span></div>
+  </div>
+
+  <div id="cat-body">
+
+    <!-- FACE -->
+    <div class="cat-section active" id="sec-face">
+      <div class="s-lbl">KIỂU KHUÔN MẶT</div>
+      <div class="preset-grid" id="fp-grid"></div>
+
+      <div class="s-lbl">MÀU DA</div>
+      <div class="pal" id="skin-pal"></div>
+
+      <div class="s-lbl">THÔNG SỐ KHUÔN MẶT</div>
+      <div id="face-sl"></div>
+    </div>
+
+    <!-- EYES -->
+    <div class="cat-section" id="sec-eyes">
+      <div class="s-lbl">KIỂU MẮT</div>
+      <div class="preset-grid" id="ep-grid"></div>
+
+      <div class="s-lbl">MÀU MẮT</div>
+      <div class="pal" id="eye-pal"></div>
+      <div class="cpick-row">
+        <span class="cpick-lbl">Tùy chỉnh màu mắt</span>
+        <input type="color" id="eye-cpick" value="#4488ff" oninput="applyEyeColor(this.value)">
+      </div>
+
+      <div class="s-lbl">THÔNG SỐ MẮT</div>
+      <div id="eye-sl"></div>
+
+      <div class="s-lbl">KIỂU LÔNG MÀY</div>
+      <div class="preset-grid" id="brow-grid"></div>
+    </div>
+
+    <!-- HAIR -->
+    <div class="cat-section" id="sec-hair">
+      <div class="s-lbl">KIỂU TÓC</div>
+      <div class="preset-grid g3" id="hp-grid"></div>
+
+      <div class="s-lbl">MÀU TÓC</div>
+      <div class="pal" id="hair-pal"></div>
+      <div class="cpick-row">
+        <span class="cpick-lbl">Tùy chỉnh màu tóc</span>
+        <input type="color" id="hair-cpick" value="#2a1040" oninput="applyHairColor(this.value)">
+      </div>
+
+      <div class="s-lbl">THÔNG SỐ TÓC</div>
+      <div id="hair-sl"></div>
+    </div>
+
+    <!-- MAKEUP -->
+    <div class="cat-section" id="sec-makeup">
+      <div class="s-lbl">PHẤN NỀN</div>
+      <div class="pal" id="found-pal"></div>
+
+      <div class="s-lbl">MÁ HỒNG</div>
+      <div class="pal" id="blush-pal"></div>
+      <div id="blush-sl"></div>
+
+      <div class="s-lbl">SON MÔI</div>
+      <div class="pal" id="lip-pal"></div>
+      <div id="lip-sl"></div>
+
+      <div class="s-lbl">PHẤN MẮT</div>
+      <div class="pal" id="shadow-pal"></div>
+      <div id="shadow-sl"></div>
+
+      <div class="s-lbl">HIỆU ỨNG</div>
+      <div class="tog-row"><span class="tog-lbl">Kẻ mắt</span><div class="tog on" onclick="togFX('eyeliner',this)"></div></div>
+      <div class="tog-row"><span class="tog-lbl">Lông mi giả</span><div class="tog" onclick="togFX('lash',this)"></div></div>
+      <div class="tog-row"><span class="tog-lbl">Nốt cinnabar</span><div class="tog" onclick="togFX('bindi',this)"></div></div>
+      <div class="tog-row"><span class="tog-lbl">Mắt long lanh</span><div class="tog" onclick="togFX('sparkle',this)"></div></div>
+    </div>
+
+    <!-- BODY -->
+    <div class="cat-section" id="sec-body">
+      <div class="s-lbl">VÓC DÁNG</div>
+      <div class="preset-grid" id="body-grid"></div>
+
+      <div class="s-lbl">THÔNG SỐ CƠ THỂ</div>
+      <div id="body-sl"></div>
+    </div>
+
+    <!-- SECT -->
+    <div class="cat-section" id="sec-sect">
+      <div class="s-lbl">CHỌN MÔN PHÁI</div>
+      <div id="sect-list"></div>
+    </div>
+
+  </div>
+
+  <!-- Stat bar -->
+  <div id="stat-bar">
+    <div class="sb"><div class="sb-key">CÔNG KÍCH</div><div class="sb-val" id="st-atk">850</div></div>
+    <div class="sb"><div class="sb-key">PHÒNG NGỰ</div><div class="sb-val" id="st-def">620</div></div>
+    <div class="sb"><div class="sb-key">LINH LỰC</div><div class="sb-val" id="st-mana">1240</div></div>
+  </div>
+
+</div>
+
+<div id="bottom-bar">
+  <button class="cbtn on" onclick="camP('full',this)">TOÀN THÂN</button>
+  <button class="cbtn" onclick="camP('half',this)">NỬA NGƯỜI</button>
+  <button class="cbtn" onclick="camP('face',this)">CẬN MẶT</button>
+  <button class="cbtn" onclick="camP('left',this)">TRÁI</button>
+  <button class="cbtn" onclick="camP('right',this)">PHẢI</button>
+  <button class="cbtn" onclick="camP('back',this)">SAU LƯNG</button>
+</div>
+
+<div id="notif"></div>
+
+<!-- AI PORTRAIT OVERLAY -->
+<div id="ai-portrait-wrap">
+  <div id="ai-portrait-frame">
+    <img id="ai-portrait-img" src="" alt="">
+    <div id="ai-portrait-name"></div>
+    <div id="ai-portrait-sect"></div>
+    <div id="ai-portrait-close" onclick="closeAIPortrait()">✕</div>
+  </div>
+</div>
+
+<!-- AI LOADING OVERLAY -->
+<div id="ai-loading-overlay">
+  <div class="ai-loader-ring"></div>
+  <div class="ai-loader-txt">ĐANG TẠO NHÂN VẬT</div>
+  <div class="ai-loader-sub">AI đang vẽ nhân vật của bạn...</div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+const S = {
+  name:'',sect:'thuy',
+  facePreset:0, skinColor:'#f5c8a0',
+  face:{width:50,length:52,jaw:48,chin:46,cheek:50,fore:50},
+  eyePreset:0, eyeColor:'#4488ff', browPreset:0,
+  eyes:{size:50,spacing:50,angle:48,lash:40},
+  hairStyle:0, hairColor:'#2a1040',
+  hair:{length:60,volume:55},
+  makeup:{
+    found:'#f5c8a0',
+    blushC:'#ffaaaa',blushI:25,
+    lipC:'#cc3344',lipG:35,
+    shadowC:'#4444aa',shadowI:20,
+    eyeliner:true,lash:false,bindi:false,sparkle:false,
+  },
+  bodyPreset:0,
+  body:{height:50,slim:55,bust:50},
+};
+
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const FACE_P = [
+  {n:'Thanh Lệ',s:'oval'},   {n:'Khả Ái',  s:'round'},
+  {n:'Tiên Tử', s:'heart'},  {n:'Lãnh Khốc',s:'square'},
+  {n:'Yêu Kiều',s:'diamond'},{n:'Trầm Tĩnh',s:'long'},
+  {n:'Kiêu Kỳ', s:'soft'},   {n:'Hồn Nhiên',s:'nat'},
+];
+const EYE_P = [
+  {n:'Phượng Nhãn', s:'almond'},   {n:'Đào Hoa',   s:'peach'},
+  {n:'Đan Phụng',   s:'upward'},   {n:'Thủy Linh', s:'teary'},
+  {n:'Sắc Bén',     s:'sharp'},    {n:'Huyền Bí',  s:'myst'},
+  {n:'Hạnh Nhân',   s:'hanh'},     {n:'Thuần Khiết',s:'pure'},
+];
+const BROW_P = [
+  {n:'Liễu Mày',s:'willow'},{n:'Nhạn Vĩ',s:'arch'},
+  {n:'Thẳng',   s:'flat'},  {n:'Cung',   s:'bow'},
+];
+const HAIR_P = [
+  {n:'Thác Nước',i:'💧'},{n:'Kết Bính',i:'🎀'},{n:'Mây Bay',i:'☁️'},
+  {n:'Lãng Tử', i:'🌊'},{n:'Công Chúa',i:'👑'},{n:'Tiên Nữ',i:'🌸'},
+  {n:'Đoản Phát',i:'✂️'},{n:'Song Vĩ',i:'🎋'},{n:'Bồng Bềnh',i:'🌙'},
+];
+const BODY_P = [
+  {n:'Tiêu Sái',i:'🧍',d:'Cân đối'},  {n:'Kiều Mỵ',i:'🧏‍♀️',d:'Nữ tính'},
+  {n:'Trường Điều',i:'🏃‍♀️',d:'Cao ráo'},{n:'Cường Thể',i:'💪',d:'Mạnh mẽ'},
+];
+const SECTS = [
+  {id:'thuy',n:'THỦY PHÁI',sub:'Thủy Nguyên Chi Lực',i:'💧',c:0x00d4ff,u:'#00d4ff',
+   lore:'Linh mạch băng hà, tu luyện nước và băng. Nội công thâm hậu, phòng ngự vô song.',
+   stats:['Linh Lực +30','Phòng Ngự +25','Tốc Độ +15'],atk:750,def:900,mana:1200},
+  {id:'hoa',n:'HỎA PHÁI',sub:'Liệt Diệm Thiên Pháp',i:'🔥',c:0xff5500,u:'#ff6622',
+   lore:'Chưng cất linh hỏa trong đan điền, công kích mãnh liệt, bùng cháy vạn vật.',
+   stats:['Công Kích +40','Xuyên Phá +20','Linh Lực +10'],atk:1100,def:550,mana:850},
+  {id:'kim',n:'KIM PHÁI',sub:'Vạn Kiếm Quy Tông',i:'⚔️',c:0xffd700,u:'#ffd700',
+   lore:'Kiếm khí xung thiên, kim nguyên thuần chính. Nhất kiếm chém vạn giặc, vô địch thiên hạ.',
+   stats:['Bạo Kích +35','Xuyên Giáp +30','Tốc Độ +20'],atk:980,def:720,mana:700},
+  {id:'moc',n:'MỘC PHÁI',sub:'Sinh Cơ Vô Hạn',i:'🌿',c:0x00ff88,u:'#00ff88',
+   lore:'Nương theo đất trời, điều tiết sinh khí vạn vật. Hồi phục và hỗ trợ vô cùng mạnh mẽ.',
+   stats:['Hồi Phục +45','Linh Lực +25','Tốc Độ +15'],atk:620,def:780,mana:1500},
+  {id:'tho',n:'THỔ PHÁI',sub:'Địa Long Phục Mệnh',i:'🌍',c:0xff9933,u:'#ff9933',
+   lore:'Đất đai vững chắc, tu luyện thổ nguyên. Sinh mệnh bền bỉ, trụ vững muôn trận.',
+   stats:['Máu +50','Phòng Ngự +35','Kháng Pháp +25'],atk:680,def:1200,mana:900},
+];
+
+const HAIR_COLS   = ['#2a1040','#c8a84b','#111118','#cc2244','#ff8800','#4488ff','#f0f0f8','#44cc88','#6a1010','#221688','#883300','#dd44cc'];
+const EYE_COLS    = ['#4488ff','#00ccff','#cc3344','#88cc44','#cc8800','#8844cc','#00ff88','#ffaa00','#ddddff','#550066','#005550','#663300'];
+const SKIN_COLS   = ['#fde8cc','#f5c8a0','#e8a880','#d49060','#c07040','#8a4822'];
+const BLUSH_COLS  = ['#ffaaaa','#ff8899','#ffcc88','#ff6699','#cc9999','#ffbbdd'];
+const LIP_COLS    = ['#cc3344','#ff4466','#aa2233','#ff8866','#cc6655','#ff3399'];
+const SHADOW_COLS = ['#4444aa','#224488','#8844aa','#224422','#554400','#220044'];
+const FOUND_COLS  = ['#fde8cc','#f5c8a0','#e8a880','#d49060','#c07040','#8a4822'];
+
+const FACE_SL = [
+  {k:'width', l:'Chiều rộng mặt', mn:20,mx:80},
+  {k:'length',l:'Độ dài khuôn',   mn:20,mx:80},
+  {k:'jaw',   l:'Quai hàm',       mn:20,mx:80},
+  {k:'chin',  l:'Cằm nhọn',       mn:20,mx:80},
+  {k:'cheek', l:'Gò má',          mn:20,mx:80},
+  {k:'fore',  l:'Chiều rộng trán',mn:20,mx:80},
+];
+const EYE_SL = [
+  {k:'size',   l:'Cỡ mắt',       mn:20,mx:80},
+  {k:'spacing',l:'Khoảng cách',   mn:25,mx:75},
+  {k:'angle',  l:'Góc đuôi mắt', mn:20,mx:80},
+  {k:'lash',   l:'Độ dày mi',     mn:0, mx:100},
+];
+const HAIR_SL = [
+  {k:'length',l:'Độ dài tóc', mn:10,mx:90},
+  {k:'volume',l:'Độ phồng',   mn:10,mx:90},
+];
+const BODY_SL = [
+  {k:'height',l:'Chiều cao',   mn:0, mx:100},
+  {k:'slim',  l:'Eo thon',     mn:0, mx:100},
+  {k:'bust',  l:'Ngực',        mn:20,mx:80},
+];
+const BLUSH_SL  = [{k:'blushI',  l:'Cường độ',mn:0,mx:80,tgt:'makeup'}];
+const LIP_SL    = [{k:'lipG',    l:'Son bóng', mn:0,mx:80,tgt:'makeup'}];
+const SHADOW_SL = [{k:'shadowI', l:'Cường độ',mn:0,mx:80,tgt:'makeup'}];
+
+const CAM = {
+  full:{p:[0,1.0,3.6],l:[0,0.9,0]},
+  half:{p:[0,1.28,2.1],l:[0,1.28,0]},
+  face:{p:[0,1.6,0.9],l:[0,1.6,0]},
+  left:{p:[-2.1,1.2,2.0],l:[0,1.2,0]},
+  right:{p:[2.1,1.2,2.0],l:[0,1.2,0]},
+  back:{p:[0,1.2,-3.1],l:[0,1.2,0]},
+};
+
+// ══════════════════════════════════════════════
+// THREE.JS — wrapped in try/catch so UI always loads
+// ══════════════════════════════════════════════
+const canvas = document.getElementById('app-canvas');
+let renderer=null, scene=null, camera=null, ctrl=null, composer=null, bloom=null;
+let ambient=null, keyL=null, fillL=null, rimL=null, sectPt=null, topL=null;
+let platMat=null, rMat=null, r2Mat=null, pMat=null, parts=null;
+const pV=[],pPh=[]; const PC=280;
+let webglOK = false;
+
+// VRM
+let currentVRM = null;
+let vrmMixer = null;
+let vrmLoader = null;
+
+// VRM customization state — persisted across animate frames
+const _vrmCustom = {
+  faceExprs: {},   // face preset expressions to reapply each frame
+  eyeExprs: {},    // eye preset expressions to reapply each frame
+  eyeSizeBlink: 0, // blink amount from eye size slider
+};
+
+// VRM model URLs — public domain / CC0 anime models
+const VRM_MODELS = [
+  'https://pixiv.github.io/three-vrm/packages/three-vrm/examples/models/VRM1_Constraint_Twist_Sample.vrm',
+  'https://raw.githubusercontent.com/vrm-c/vrm-specification/master/samples/Seed-san/vrm/Seed-san.vrm',
+];
+// Fallback model index
+let vrmModelIdx = 0;
+
+try {
+  renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false, preserveDrawingBuffer:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  scene = new THREE.Scene();
+
+  // ── Gradient sky background ──────────────────
+  (function(){
+    const bgCanvas = document.createElement('canvas');
+    bgCanvas.width = 2; bgCanvas.height = 512;
+    const ctx = bgCanvas.getContext('2d');
+    const g = ctx.createLinearGradient(0,0,0,512);
+    g.addColorStop(0.00, '#0a0020');  // deep purple top
+    g.addColorStop(0.25, '#080a28');  // dark indigo
+    g.addColorStop(0.55, '#020c1e');  // dark navy
+    g.addColorStop(0.80, '#010818');  // almost-black navy
+    g.addColorStop(1.00, '#000510');  // near black bottom
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,2,512);
+    const bgTex = new THREE.CanvasTexture(bgCanvas);
+    scene.background = bgTex;
+  })();
+
+  scene.fog = new THREE.FogExp2(0x020c1e, 0.006);
+
+  camera = new THREE.PerspectiveCamera(32, innerWidth/innerHeight, 0.1, 100);
+  camera.position.set(0,1.0,3.6);
+
+  ctrl = new OrbitControls(camera, renderer.domElement);
+  ctrl.target.set(0,0.9,0);
+  ctrl.enableDamping=true; ctrl.dampingFactor=0.06;
+  ctrl.minDistance=0.7; ctrl.maxDistance=10;
+  ctrl.minPolarAngle=0.05; ctrl.maxPolarAngle=Math.PI*0.58;
+  ctrl.update();
+
+  // Lights
+  ambient = new THREE.AmbientLight(0x182240,0.9); scene.add(ambient);
+  keyL = new THREE.DirectionalLight(0xffffff,2.2);
+  keyL.position.set(-2,5,3.5); keyL.castShadow=true;
+  keyL.shadow.mapSize.set(1024,1024); scene.add(keyL);
+  fillL = new THREE.DirectionalLight(0x88aaff,0.8);
+  fillL.position.set(3,2,2); scene.add(fillL);
+  rimL = new THREE.DirectionalLight(0x00d4ff,1.6);
+  rimL.position.set(0,4,-5); scene.add(rimL);
+  sectPt = new THREE.PointLight(0x00d4ff,4,5);
+  sectPt.position.set(0,0.8,0.8); scene.add(sectPt);
+  topL = new THREE.SpotLight(0xaaccff,2.5,14,Math.PI*.12,0.75,1.5);
+  topL.position.set(0,9,0); scene.add(topL); scene.add(topL.target);
+
+  // Floor
+  const floorMat = new THREE.MeshStandardMaterial({color:0x000912,metalness:.9,roughness:.1});
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(24,24),floorMat);
+  floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor);
+  scene.add(new THREE.GridHelper(24,48,0x000e28,0x00091c));
+
+  // Platform
+  platMat = new THREE.MeshStandardMaterial({color:0x001222,metalness:.95,roughness:.04,
+    emissive:new THREE.Color(0x00d4ff),emissiveIntensity:.28});
+  const plat = new THREE.Mesh(new THREE.CylinderGeometry(.92,.92,.04,72),platMat);
+  plat.position.y=-.01; plat.receiveShadow=true; scene.add(plat);
+
+  rMat  = new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:.65});
+  r2Mat = new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:.18});
+  const ring  = new THREE.Mesh(new THREE.TorusGeometry(.93,.014,8,80),rMat);
+  ring.rotation.x=Math.PI/2; scene.add(ring);
+  const ring2 = new THREE.Mesh(new THREE.TorusGeometry(1.28,.006,8,80),r2Mat);
+  ring2.rotation.x=Math.PI/2; scene.add(ring2);
+
+  // Particles
+  const pBuf=new Float32Array(PC*3);
+  for(let i=0;i<PC;i++){
+    const a=Math.random()*Math.PI*2,r=.35+Math.random()*2.8;
+    pBuf[i*3]=Math.cos(a)*r; pBuf[i*3+1]=Math.random()*4.2; pBuf[i*3+2]=Math.sin(a)*r;
+    pV.push({vx:(Math.random()-.5)*.0018,vy:.0028+Math.random()*.005,vz:(Math.random()-.5)*.0018});
+    pPh.push(Math.random()*Math.PI*2);
+  }
+  const pGeo=new THREE.BufferGeometry();
+  pGeo.setAttribute('position',new THREE.BufferAttribute(pBuf,3));
+  pMat=new THREE.PointsMaterial({color:0x00d4ff,size:.02,transparent:true,opacity:.5,sizeAttenuation:true});
+  parts=new THREE.Points(pGeo,pMat); scene.add(parts);
+
+  // Background stars (far field)
+  (function(){
+    const SC = 800;
+    const sBuf = new Float32Array(SC * 3);
+    for(let i=0;i<SC;i++){
+      const theta = Math.random()*Math.PI*2;
+      const phi   = Math.acos(2*Math.random()-1);
+      const r     = 20 + Math.random()*20;
+      sBuf[i*3]   = r*Math.sin(phi)*Math.cos(theta);
+      sBuf[i*3+1] = r*Math.cos(phi);
+      sBuf[i*3+2] = r*Math.sin(phi)*Math.sin(theta);
+    }
+    const sGeo = new THREE.BufferGeometry();
+    sGeo.setAttribute('position', new THREE.BufferAttribute(sBuf,3));
+    // Mix of white & purple & cyan star colors
+    const starColors = new Float32Array(SC*3);
+    for(let i=0;i<SC;i++){
+      const t = Math.random();
+      if(t<0.6){ starColors[i*3]=0.9; starColors[i*3+1]=0.9; starColors[i*3+2]=1.0; }      // white-blue
+      else if(t<0.8){ starColors[i*3]=0.6; starColors[i*3+1]=0.4; starColors[i*3+2]=1.0; } // purple
+      else { starColors[i*3]=0.2; starColors[i*3+1]=0.9; starColors[i*3+2]=1.0; }          // cyan
+    }
+    sGeo.setAttribute('color', new THREE.BufferAttribute(starColors,3));
+    const sMat = new THREE.PointsMaterial({size:0.07, vertexColors:true, transparent:true, opacity:0.8, sizeAttenuation:true});
+    scene.add(new THREE.Points(sGeo, sMat));
+  })();
+
+  // Nebula glow planes (large soft sprites in bg)
+  (function(){
+    const nebDefs = [
+      {col:0x3a006f, x:-8, y:6,  z:-18, sx:22, sy:14, op:0.09},
+      {col:0x001e5a, x: 6, y:2,  z:-20, sx:18, sy:12, op:0.11},
+      {col:0x4a0050, x: 0, y:10, z:-22, sx:28, sy:10, op:0.07},
+    ];
+    nebDefs.forEach(d=>{
+      const g = new THREE.PlaneGeometry(d.sx, d.sy);
+      const m = new THREE.MeshBasicMaterial({color:d.col, transparent:true, opacity:d.op, depthWrite:false});
+      const mesh = new THREE.Mesh(g, m);
+      mesh.position.set(d.x, d.y, d.z);
+      scene.add(mesh);
+    });
+  })();
+
+  // Post-processing
+  composer=new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene,camera));
+  bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.42,.35,.55);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+
+  webglOK = true;
+} catch(e) {
+  console.warn('WebGL unavailable — UI only mode:', e.message);
+  canvas.style.display = 'none';
+}
+
+// ══════════════════════════════════════════════
+// VRM LOADER
+// ══════════════════════════════════════════════
+const VRM_STATUS = {loading: false};
+
+function showVRMStatus(msg){
+  let el = document.getElementById('vrm-status');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'vrm-status';
+    el.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:300;font-family:Orbitron,sans-serif;font-size:8px;letter-spacing:3px;color:rgba(200,168,75,0.6);pointer-events:none;text-align:center;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+}
+
+async function loadVRM(url){
+  if(!webglOK || !scene) return;
+  if(VRM_STATUS.loading) return;
+  VRM_STATUS.loading = true;
+  showVRMStatus('⟳ ĐANG TẢI MÔ HÌNH...');
+
+  try {
+    if(!vrmLoader){
+      vrmLoader = new GLTFLoader();
+      vrmLoader.register(parser => new VRMLoaderPlugin(parser));
+    }
+
+    // Remove old VRM
+    if(currentVRM){
+      scene.remove(currentVRM.scene);
+      VRMUtils.deepDispose(currentVRM.scene);
+      currentVRM = null; vrmMixer = null;
+    }
+
+    const gltf = await new Promise((resolve, reject) => {
+      vrmLoader.load(url, resolve, undefined, reject);
+    });
+
+    const vrm = gltf.userData.vrm;
+    if(!vrm) throw new Error('Not a VRM file');
+
+    // v2.x compatible — combineSkeletons & rotateVRM0 removed in v2
+    if(VRMUtils.removeUnnecessaryVertices) VRMUtils.removeUnnecessaryVertices(gltf.scene);
+
+    currentVRM = vrm;
+    // VRM1 faces forward by default; VRM0 needs 180° rotation
+    if(vrm.meta && vrm.meta.metaVersion === '0'){
+      vrm.scene.rotation.y = Math.PI;
+    }
+    scene.add(vrm.scene);
+
+    // ── FIX VRM MATERIALS — prevent white glow ──────────
+    vrm.scene.traverse(obj => {
+      if(!obj.isMesh) return;
+      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+      mats.forEach(mat => {
+        if(!mat) return;
+        // MToon emissive cap — white VRM glow comes from high emissiveIntensity
+        if(mat.emissiveIntensity !== undefined){
+          mat.emissiveIntensity = Math.min(mat.emissiveIntensity || 0, 0.04);
+        }
+        // Cap any bright emissive color
+        if(mat.emissive){
+          const b = mat.emissive.r + mat.emissive.g + mat.emissive.b;
+          if(b > 0.6) mat.emissive.set(0, 0, 0);
+        }
+        // Outlines can appear as bright planes — tone them down
+        if(mat.name && mat.name.toLowerCase().includes('outline')) {
+          mat.visible = true;
+          if(mat.emissive) mat.emissive.set(0,0,0);
+          if(mat.emissiveIntensity !== undefined) mat.emissiveIntensity = 0;
+        }
+        obj.castShadow = true;
+      });
+    });
+
+    // ── Soften lights for VRM — prevent overexposure ────
+    if(ambient) ambient.intensity = 1.2;
+    if(keyL)   keyL.intensity    = 1.4;
+    if(fillL)  fillL.intensity   = 0.6;
+    if(rimL)   rimL.intensity    = 0.5;
+    if(sectPt) sectPt.intensity  = 1.2;
+    if(topL)   topL.intensity    = 0.8;
+    if(bloom)  { bloom.strength = 0.28; bloom.threshold = 0.62; }
+
+    // Scale to fit scene
+    const box = new THREE.Box3().setFromObject(vrm.scene);
+    const h = box.max.y - box.min.y;
+    const scale = 1.65 / h;
+    vrm.scene.scale.setScalar(scale);
+
+    // Lift off floor
+    const box2 = new THREE.Box3().setFromObject(vrm.scene);
+    vrm.scene.position.y = -box2.min.y;
+
+    // Setup animation mixer for expressions
+    vrmMixer = new THREE.AnimationMixer(vrm.scene);
+
+    // Reset customization state for new model
+    _vrmCustom.faceExprs = {};
+    _vrmCustom.eyeExprs  = {};
+    _vrmCustom.eyeSizeBlink = 0;
+    currentVRM._baseY = null; // will be set in animIdle
+
+    // Debug: log all VRM material names (open DevTools to see)
+    console.log('[VRM] Materials found:');
+    currentVRM.scene.traverse(obj => {
+      if(!obj.isMesh) return;
+      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+      mats.forEach(mat => {
+        if(!mat) return;
+        const id = `mesh="${obj.name}" mat="${mat.name}" type=${mat.type}`;
+        const u = mat.uniforms;
+        const hasLit = !!(u?.litFactor?.value);
+        console.log(`  ${id} hasColor=${!!mat.color} hasLitFactor=${hasLit}`);
+      });
+    });
+
+    // Apply all current customizations to VRM
+    vrmApplyAll();
+    showVRMStatus('✦ MÔ HÌNH ĐÃ SẴN SÀNG');
+    setTimeout(()=>showVRMStatus(''), 2000);
+
+    // Remove old procedural
+    if(CH.root){ scene.remove(CH.root); CH={}; }
+
+  } catch(err){
+    console.warn('VRM load failed:', err && (err.message||err.toString()), err);
+    showVRMStatus('✕ TẢI THẤT BẠI — THỬ GLB...');
+    setTimeout(()=>showVRMStatus(''), 3000);
+    // Try fallback GLB if VRM fails
+    try {
+      await loadGLB('/models/michelle.glb', 'Tiên Nữ');
+    } catch(e2){
+      buildCharacterFallback();
+    }
+  } finally {
+    VRM_STATUS.loading = false;
+  }
+}
+
+// ══════════════════════════════════════════════
+// GLB LOADER (for non-VRM anime models)
+// ══════════════════════════════════════════════
+let glbLoader = null;
+let currentGLBModel = null;
+let glbMixer = null;
+
+async function loadGLB(url, name){
+  if(!webglOK || !scene) return;
+  showVRMStatus('⟳ ĐANG TẢI: ' + name.toUpperCase());
+
+  try {
+    if(!glbLoader){ glbLoader = new GLTFLoader(); }
+
+    // Remove old models
+    if(currentVRM){ scene.remove(currentVRM.scene); VRMUtils.deepDispose(currentVRM.scene); currentVRM=null; vrmMixer=null; }
+    if(currentGLBModel){ scene.remove(currentGLBModel); currentGLBModel=null; glbMixer=null; }
+    if(CH.root){ scene.remove(CH.root); CH={}; }
+
+    const gltf = await new Promise((resolve,reject)=>{ glbLoader.load(url,resolve,undefined,reject); });
+
+    const model = gltf.scene;
+    scene.add(model);
+    currentGLBModel = model;
+
+    // Auto-scale
+    const box = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+    const h = size.y || 1;
+    const scale = 1.7 / h;
+    model.scale.setScalar(scale);
+
+    // Center on platform
+    const box2 = new THREE.Box3().setFromObject(model);
+    model.position.y = -box2.min.y;
+    model.position.x = 0; model.position.z = 0;
+    model._baseY = model.position.y;
+
+    // Apply toon-style sect color tint to all meshes
+    const sec = SECTS.find(s=>s.id===S.sect)||SECTS[0];
+    model.traverse(obj=>{
+      if(obj.isMesh){
+        obj.castShadow = true;
+        // Apply sect emissive glow
+        if(obj.material){
+          const mats = Array.isArray(obj.material)?obj.material:[obj.material];
+          mats.forEach(mat=>{
+            if(mat.emissive) mat.emissive.setHex(sec.c);
+            if(mat.emissiveIntensity !== undefined) mat.emissiveIntensity = 0.04;
+          });
+        }
+      }
+    });
+
+    // Animations
+    if(gltf.animations && gltf.animations.length > 0){
+      glbMixer = new THREE.AnimationMixer(model);
+      // Play idle animation if available, else first
+      const idleClip = gltf.animations.find(a=>a.name.toLowerCase().includes('idle')) || gltf.animations[0];
+      glbMixer.clipAction(idleClip).play();
+    }
+
+    showVRMStatus('✦ ' + name.toUpperCase() + ' — SẴN SÀNG');
+    setTimeout(()=>showVRMStatus(''), 2500);
+    notif('✦ Đã tải: ' + name);
+  } catch(err){
+    console.warn('GLB load failed:', err);
+    showVRMStatus('✕ TẢI THẤT BẠI');
+    setTimeout(()=>showVRMStatus(''), 3000);
+  }
+}
+
+// ══════════════════════════════════════════════
+// VRM FULL CONTROL SYSTEM — Thiên Dụ style
+// ══════════════════════════════════════════════
+
+// Face preset → VRM expression blend (neutral bias + subtle overlay)
+const VRM_FACE_EXPR = [
+  {},                                         // oval    — Thanh Lệ
+  {happy:0.18, relaxed:0.10},                // round   — Khả Ái
+  {relaxed:0.22},                             // heart   — Tiên Tử
+  {angry:0.14},                               // square  — Lãnh Khốc
+  {surprised:0.20},                           // diamond — Yêu Kiều
+  {sad:0.12},                                 // long    — Trầm Tĩnh
+  {relaxed:0.14, happy:0.10},                // soft    — Kiêu Kỳ
+  {happy:0.12},                               // nat     — Hồn Nhiên
+];
+
+// Eye preset → VRM look expression
+const VRM_EYE_EXPR = [
+  {},                                         // almond  — Phượng Nhãn
+  {happy:0.12},                               // peach   — Đào Hoa
+  {lookUp:0.18},                              // upward  — Đan Phụng
+  {sad:0.10},                                 // teary   — Thủy Linh
+  {angry:0.12},                               // sharp   — Sắc Bén
+  {},                                         // myst    — Huyền Bí
+  {lookDown:0.15},                            // hanh    — Hạnh Nhân
+  {},                                         // pure    — Thuần Khiết
+];
+
+const VRM_ALL_EXPRS = ['happy','angry','sad','surprised','relaxed','neutral','aa','ee','ih','oh','ou','lookUp','lookDown','lookLeft','lookRight'];
+
+function _vrmExpr(name, val){
+  if(!currentVRM?.expressionManager) return;
+  try { currentVRM.expressionManager.setValue(name, Math.max(0, Math.min(1, val))); } catch(e){}
+}
+
+function vrmApplyFace(){
+  if(!currentVRM?.expressionManager) return;
+  // Reset all non-blink exprs
+  VRM_ALL_EXPRS.forEach(n => _vrmExpr(n, 0));
+  // Apply face preset
+  const fe = VRM_FACE_EXPR[S.facePreset] || {};
+  Object.entries(fe).forEach(([k,v]) => _vrmExpr(k, v));
+  // Apply eye preset (additive — only look exprs)
+  const ee = VRM_EYE_EXPR[S.eyePreset] || {};
+  Object.entries(ee).forEach(([k,v]) => _vrmExpr(k, v));
+  // Store for per-frame reapplication (animIdle overwrites otherwise)
+  _vrmCustom.faceExprs = {...fe};
+  _vrmCustom.eyeExprs  = {...ee};
+}
+
+// Robust color setter for MToon and standard Three.js materials
+function _setMatColor(mat, col, emissiveScale){
+  if(!mat) return;
+  // Standard Three.js color property
+  if(mat.color instanceof THREE.Color){ mat.color.copy(col); }
+  // MToon v2 uniforms — litFactor is the base color uniform
+  if(mat.uniforms){
+    if(mat.uniforms.litFactor?.value instanceof THREE.Color)
+      mat.uniforms.litFactor.value.copy(col);
+    // MToon v1 / compatibility
+    if(mat.uniforms['_Color']?.value instanceof THREE.Color)
+      mat.uniforms['_Color'].value.copy(col);
+  }
+  // Emissive tint
+  if(emissiveScale !== undefined){
+    const ec = col.clone().multiplyScalar(emissiveScale);
+    if(mat.emissive instanceof THREE.Color) mat.emissive.copy(ec);
+    if(mat.uniforms?.emissionFactor?.value instanceof THREE.Color)
+      mat.uniforms.emissionFactor.value.copy(ec);
+    if(mat.uniforms?.['_EmissionColor']?.value instanceof THREE.Color)
+      mat.uniforms['_EmissionColor'].value.copy(ec);
+  }
+  mat.needsUpdate = true;
+}
+
+function vrmApplyColors(){
+  if(!currentVRM) return;
+  const hairCol = new THREE.Color(S.hairColor || '#2a1040');
+  const skinCol = new THREE.Color(S.skinColor || '#f5c8a0');
+  const eyeCol  = new THREE.Color(S.eyeColor  || '#4488ff');
+  const lipCol  = new THREE.Color(S.makeup?.lipC || '#cc3344');
+
+  currentVRM.scene.traverse(obj => {
+    if(!obj.isMesh) return;
+    const mn  = (obj.name  || '').toLowerCase();
+    const mats = Array.isArray(obj.material) ? obj.material : (obj.material ? [obj.material] : []);
+    mats.forEach(mat => {
+      if(!mat) return;
+      const matN = (mat.name || '').toLowerCase();
+      const id   = mn + ' ' + matN;
+
+      // Skip eye whites, highlights, catchlights — keep them white
+      if(id.includes('highlight') || id.includes('catchlight') ||
+         id.includes('eyewhite')  || id.includes('white'))  return;
+
+      if(id.includes('hair')){
+        _setMatColor(mat, hairCol, 0.05);
+      } else if(id.includes('iris') || id.includes('pupil')){
+        _setMatColor(mat, eyeCol, 0.15);
+      } else if(id.includes('eye') && !id.includes('lash') && !id.includes('brow')){
+        _setMatColor(mat, eyeCol, 0.08);
+      } else if(id.includes('face') || id.includes('skin')){
+        _setMatColor(mat, skinCol);
+      } else if(id.includes('body') || mn === 'body'){
+        _setMatColor(mat, skinCol);
+      } else if(id.includes('lip') || id.includes('mouth')){
+        _setMatColor(mat, lipCol);
+      }
+    });
+  });
+}
+
+function vrmApplyBones(){
+  if(!currentVRM?.humanoid) return;
+  const h = currentVRM.humanoid;
+
+  // ── Head shape ────────────────────────────────
+  const headBone = h.getNormalizedBoneNode('head');
+  if(headBone){
+    const fw = 0.88 + (S.face.width  - 50) / 50 * 0.20;
+    const fl = 0.90 + (S.face.length - 50) / 50 * 0.16;
+    headBone.scale.set(fw, fl, 1.0);
+  }
+
+  // ── Eye bones — spacing ───────────────────────
+  const lEye = h.getNormalizedBoneNode('leftEye');
+  const rEye = h.getNormalizedBoneNode('rightEye');
+  if(lEye && rEye){
+    const sp = (S.eyes.spacing - 50) / 50 * 0.04;
+    lEye.position.x  =  sp * 0.5;
+    rEye.position.x  = -sp * 0.5;
+    // Eye angle — tilt via local rotation
+    const ang = (S.eyes.angle - 50) / 50 * 0.18;
+    lEye.rotation.z =  ang;
+    rEye.rotation.z = -ang;
+    // Eye size — partial blink (inverse); store so animIdle can add blink on top
+    const bSz = Math.max(0, (50 - S.eyes.size) / 50 * 0.35);
+    _vrmCustom.eyeSizeBlink = bSz;
+    _vrmExpr('blinkLeft',  bSz);
+    _vrmExpr('blinkRight', bSz);
+  }
+
+  // ── Neck / chin ───────────────────────────────
+  const neck = h.getNormalizedBoneNode('neck');
+  if(neck){
+    const chinY = 0.94 + (S.face.chin - 50) / 50 * 0.12;
+    neck.scale.set(1.0, chinY, 1.0);
+  }
+
+  // ── Chest / shoulders (slim) ──────────────────
+  const chest = h.getNormalizedBoneNode('upperChest') || h.getNormalizedBoneNode('chest');
+  if(chest){
+    const slim = 1.0 - (S.body.slim - 50) / 50 * 0.14;
+    chest.scale.set(slim, 1.0, slim);
+  }
+
+  // ── Hips (slim + height) ─────────────────────
+  const hips = h.getNormalizedBoneNode('hips');
+  if(hips){
+    const slim = 1.0 - (S.body.slim - 50) / 50 * 0.12;
+    const ht   = 1.0 + (S.body.height - 50) / 50 * 0.10;
+    hips.scale.set(slim, ht, slim);
+  }
+}
+
+// Master VRM apply — call this whenever any slider/preset changes
+function vrmApplyAll(){
+  if(!currentVRM) return;
+  vrmApplyFace();
+  vrmApplyColors();
+  vrmApplyBones();
+  // Sync lighting to sect
+  const sec = SECTS.find(s=>s.id===S.sect)||SECTS[0];
+  const sc = new THREE.Color(sec.c);
+  if(sectPt) sectPt.color.copy(sc);
+  if(rimL)   rimL.color.copy(sc);
+  if(topL)   topL.color.setHex(sec.c);
+  if(platMat) platMat.emissive.setHex(sec.c);
+  if(rMat)   rMat.color.setHex(sec.c);
+  if(r2Mat)  r2Mat.color.setHex(sec.c);
+  if(pMat)   pMat.color.setHex(sec.c);
+}
+
+// ══════════════════════════════════════════════
+// CHARACTER BUILDER (procedural fallback)
+// ══════════════════════════════════════════════
+function mkMat(col,emi=0x000000,ei=0){
+  return new THREE.MeshToonMaterial({color:col,emissive:emi,emissiveIntensity:ei});
+}
+function mkStd(col,m=0.1,r=0.7){
+  return new THREE.MeshStandardMaterial({color:col,metalness:m,roughness:r});
+}
+
+let CH = {};
+
+function buildCharacterFallback(){
+  if(!webglOK||!scene) return;
+  if(CH.root){ scene.remove(CH.root); }
+  const root = new THREE.Group(); scene.add(root);
+
+  // -- Legs --
+  const legM = mkMat(0x0d0920);
+  const legL = new THREE.Mesh(new THREE.CapsuleGeometry(.062,.34,6,10),legM);
+  legL.position.set(-.085,.3,0); legL.castShadow=true; root.add(legL);
+  const legR = legL.clone(); legR.position.x=.085; root.add(legR);
+
+  // -- Boots --
+  const bootM = mkMat(0x060610,0x000010,.04);
+  const bootL = new THREE.Mesh(new THREE.BoxGeometry(.10,.09,.14),bootM);
+  bootL.position.set(-.085,.07,.02); root.add(bootL);
+  const bootR = bootL.clone(); bootR.position.x=.085; root.add(bootR);
+
+  // -- Skirt (flare cone) --
+  const skirtM = mkMat(0x0c0825);
+  const skirt = new THREE.Mesh(new THREE.ConeGeometry(.26,.50,22),skirtM);
+  skirt.position.y=.72; skirt.castShadow=true; root.add(skirt);
+
+  // -- Skirt inner glow trim --
+  const trimM = new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:.22});
+  const trim = new THREE.Mesh(new THREE.TorusGeometry(.22,.008,6,32),trimM);
+  trim.position.y=.48; trim.rotation.x=Math.PI/2; root.add(trim);
+
+  // -- Body --
+  const bodyM = mkMat(0x160e32);
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(.155,.40,8,16),bodyM);
+  body.position.y=1.08; body.castShadow=true; root.add(body);
+
+  // -- Obi belt --
+  const beltM = mkMat(0x7a5518,0x302000,.08);
+  const belt = new THREE.Mesh(new THREE.TorusGeometry(.172,.028,8,32),beltM);
+  belt.position.y=.95; belt.rotation.x=Math.PI/2; root.add(belt);
+
+  // -- Collar / lapel --
+  const lapM = mkMat(0x0a0820);
+  const lap = new THREE.Mesh(new THREE.BoxGeometry(.18,.22,.06),lapM);
+  lap.position.set(0,1.20,.07); root.add(lap);
+
+  // -- Arms --
+  const armM = mkMat(0x120c28);
+  const armL = new THREE.Group(); root.add(armL);
+  const upperL = new THREE.Mesh(new THREE.CapsuleGeometry(.052,.22,6,8),armM);
+  upperL.position.set(-.03,-.06,0); armL.add(upperL);
+  const lowerL = new THREE.Mesh(new THREE.CapsuleGeometry(.044,.20,6,8),armM);
+  lowerL.position.set(0,-.28,0); armL.add(lowerL);
+  armL.position.set(-.225,1.22,0); armL.rotation.z=.18;
+
+  const armR = armL.clone(); armR.position.x=.225; armR.rotation.z=-.18; root.add(armR);
+
+  // -- Hands --
+  const handM = mkMat(0xf5c8a0);
+  const handL = new THREE.Mesh(new THREE.SphereGeometry(.04,10,10),handM);
+  handL.position.set(-.24,.82,0); root.add(handL);
+  const handR = handL.clone(); handR.position.x=.24; root.add(handR);
+
+  // -- Sleeve ornament --
+  const slvM = new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:.3});
+  const slvL = new THREE.Mesh(new THREE.TorusGeometry(.055,.006,6,18),slvM);
+  slvL.position.set(-.228,.92,0); slvL.rotation.x=Math.PI/2; root.add(slvL);
+  const slvR = slvL.clone(); slvR.position.x=.228; root.add(slvR);
+
+  // -- Neck --
+  const neckM = mkMat(0xf5c8a0);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(.054,.062,.10,12),neckM);
+  neck.position.y=1.35; root.add(neck);
+
+  // == HEAD GROUP ==
+  const headGrp = new THREE.Group();
+  headGrp.position.y=1.54; root.add(headGrp);
+
+  // Head shape — anime proportions: slightly wider, rounded
+  const headM = mkMat(0xf5c8a0);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.165,28,28),headM);
+  head.scale.set(.97,1.04,.9); head.castShadow=true; headGrp.add(head);
+
+  // Jaw extension
+  const jawM = mkMat(0xf5c8a0);
+  const jaw = new THREE.Mesh(new THREE.SphereGeometry(.10,16,16),jawM);
+  jaw.scale.set(.9,.7,.9); jaw.position.set(0,-.085,0.01); headGrp.add(jaw);
+
+  // Ears
+  const earM = mkMat(0xf0bb94);
+  const earL = new THREE.Mesh(new THREE.SphereGeometry(.038,8,8),earM);
+  earL.scale.set(.5,1,.6); earL.position.set(-.164,-.01,.0); headGrp.add(earL);
+  const earR = earL.clone(); earR.position.x=.164; headGrp.add(earR);
+
+  // == HAIR ==
+  const hairM = mkMat(0x2a1040,0x110820,.1);
+  // Top
+  const hairTop = new THREE.Mesh(new THREE.SphereGeometry(.178,22,22,0,Math.PI*2,0,Math.PI*.5),hairM);
+  hairTop.position.y=.04; headGrp.add(hairTop);
+  // Sides + volume
+  const hairSideL = new THREE.Mesh(new THREE.CapsuleGeometry(.055,.28,6,8),hairM);
+  hairSideL.position.set(-.19,-.08,.0); hairSideL.rotation.z=.1; headGrp.add(hairSideL);
+  const hairSideR = hairSideL.clone(); hairSideR.position.x=.19; hairSideR.rotation.z=-.1; headGrp.add(hairSideR);
+  // Back long flow
+  const hairBack = new THREE.Mesh(new THREE.CapsuleGeometry(.14,.65,8,12),hairM);
+  hairBack.position.set(0,-.32,-.12); headGrp.add(hairBack);
+  const hairBack2 = new THREE.Mesh(new THREE.CapsuleGeometry(.08,.45,6,8),hairM);
+  hairBack2.position.set(.07,-.45,-.14); hairBack2.rotation.z=.08; headGrp.add(hairBack2);
+  const hairBack3 = hairBack2.clone(); hairBack3.position.x=-.07; hairBack3.rotation.z=-.08; headGrp.add(hairBack3);
+  // Fringe / bangs
+  const bangM = mkMat(0x2a1040,0x110820,.08);
+  const bang1 = new THREE.Mesh(new THREE.BoxGeometry(.28,.06,.08),bangM);
+  bang1.position.set(0,.072,.13); headGrp.add(bang1);
+  const bang2 = new THREE.Mesh(new THREE.BoxGeometry(.08,.10,.07),bangM);
+  bang2.position.set(-.14,.038,.12); bang2.rotation.z=.2; headGrp.add(bang2);
+  const bang3 = bang2.clone(); bang3.position.x=.14; bang3.rotation.z=-.2; headGrp.add(bang3);
+
+  // == FACE FEATURES ==
+  // Eyes (white + iris + pupil + highlight)
+  const eWhM = new THREE.MeshBasicMaterial({color:0xfafafe});
+  const eyeWhL = new THREE.Mesh(new THREE.SphereGeometry(.052,12,8), eWhM);
+  eyeWhL.scale.set(1,.62,.3); eyeWhL.position.set(-.064,0,.152); headGrp.add(eyeWhL);
+  const eyeWhR = eyeWhL.clone(); eyeWhR.position.x=.064; headGrp.add(eyeWhR);
+
+  const irisM = new THREE.MeshBasicMaterial({color:0x4488ff});
+  const irisL = new THREE.Mesh(new THREE.CircleGeometry(.034,14), irisM);
+  irisL.position.set(-.064,.0,.156); headGrp.add(irisL);
+  const irisR = irisL.clone(); irisR.position.x=.064; headGrp.add(irisR);
+
+  const pupM = new THREE.MeshBasicMaterial({color:0x000010});
+  const pupL = new THREE.Mesh(new THREE.CircleGeometry(.018,10), pupM);
+  pupL.position.set(-.064,.0,.1565); headGrp.add(pupL);
+  const pupR = pupL.clone(); pupR.position.x=.064; headGrp.add(pupR);
+
+  const shineM = new THREE.MeshBasicMaterial({color:0xffffff});
+  const shL = new THREE.Mesh(new THREE.CircleGeometry(.009,8), shineM);
+  shL.position.set(-.055,.01,.157); headGrp.add(shL);
+  const shL2 = new THREE.Mesh(new THREE.CircleGeometry(.005,6), shineM);
+  shL2.position.set(-.07,-.008,.157); headGrp.add(shL2);
+  const shR = shL.clone(); shR.position.x=.128; headGrp.add(shR);
+  const shR2 = shL2.clone(); shR2.position.x=.128; headGrp.add(shR2);
+
+  // Eyelashes (top bar)
+  const lashM = new THREE.MeshBasicMaterial({color:0x000000});
+  const lashL = new THREE.Mesh(new THREE.BoxGeometry(.072,.012,.002), lashM);
+  lashL.position.set(-.064,.034,.157); headGrp.add(lashL);
+  const lashR = lashL.clone(); lashR.position.x=.128; headGrp.add(lashR);
+
+  // Eyebrows
+  const browM = new THREE.MeshBasicMaterial({color:0x2a1040});
+  const browL = new THREE.Mesh(new THREE.BoxGeometry(.065,.01,.002), browM);
+  browL.position.set(-.064,.066,.155); browL.rotation.z=.08; headGrp.add(browL);
+  const browR = browL.clone(); browR.position.x=.128; browR.rotation.z=-.08; headGrp.add(browR);
+
+  // Nose (subtle)
+  const noseM = mkMat(0xe8b890);
+  const noseTip = new THREE.Mesh(new THREE.SphereGeometry(.014,8,6), noseM);
+  noseTip.position.set(0,-.03,.168); headGrp.add(noseTip);
+
+  // Mouth
+  const lipM = new THREE.MeshBasicMaterial({color:0xcc3344});
+  const mouth = new THREE.Mesh(new THREE.BoxGeometry(.055,.012,.002), lipM);
+  mouth.position.set(0,-.076,.163); headGrp.add(mouth);
+  const lowerLip = new THREE.Mesh(new THREE.BoxGeometry(.038,.009,.002), lipM);
+  lowerLip.position.set(0,-.091,.162); headGrp.add(lowerLip);
+
+  // Blush marks
+  const blushM = new THREE.MeshBasicMaterial({color:0xffaaaa,transparent:true,opacity:.32});
+  const blushL = new THREE.Mesh(new THREE.CircleGeometry(.04,10), blushM);
+  blushL.position.set(-.1,-.02,.148); headGrp.add(blushL);
+  const blushR = blushL.clone(); blushR.position.x=.1; headGrp.add(blushR);
+
+  // -- Hair ornament --
+  const ornM = new THREE.MeshBasicMaterial({color:0xc8a84b,transparent:true,opacity:.85});
+  const orn1 = new THREE.Mesh(new THREE.TorusGeometry(.032,.006,6,16), ornM);
+  orn1.position.set(-.1,.14,.08); headGrp.add(orn1);
+  const gem = new THREE.Mesh(new THREE.OctahedronGeometry(.014), new THREE.MeshStandardMaterial({color:0x00d4ff,emissive:0x00d4ff,emissiveIntensity:.6,metalness:.9,roughness:.1}));
+  gem.position.set(-.1,.14,.09); headGrp.add(gem);
+
+  // -- Collar glow --
+  const colM = new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:.55});
+  const col = new THREE.Mesh(new THREE.TorusGeometry(.07,.008,6,24), colM);
+  col.position.set(0,1.355,0); col.rotation.x=Math.PI/2; root.add(col);
+
+  // Store references for dynamic updates
+  CH = {
+    root, headGrp, head, headM, jawM: jaw,
+    hairTop, hairSideL, hairSideR, hairBack, hairBack2, hairBack3, bang1, bang2, bang3,
+    hairM, bangM,
+    irisL, irisR, irisM,
+    blushL, blushR, blushM,
+    mouth, lowerLip, lipM,
+    skinMeshes:[head, jaw, earL, earR, neck, noseTip, handL, handR],
+    sectPtRef: sectPt,
+    trim, slvL, slvR, col, gem,
+  };
+}
+
+// ══════════════════════════════════════════════
+// DYNAMIC COLOR UPDATES
+// ══════════════════════════════════════════════
+function applyAll(){
+  if(!CH.root) return;
+  // Skin
+  const sc = new THREE.Color(S.skinColor||'#f5c8a0');
+  CH.skinMeshes?.forEach(m=>{ if(m.material?.color) m.material.color.copy(sc); });
+  // Hair
+  const hc = new THREE.Color(S.hairColor||'#2a1040');
+  [CH.hairM, CH.bangM].forEach(m=>{ if(m?.color) m.color.copy(hc); });
+  // Eyes
+  const ec = new THREE.Color(S.eyeColor||'#4488ff');
+  if(CH.irisM?.color) CH.irisM.color.copy(ec);
+  // Blush
+  if(CH.blushM){ CH.blushM.color.set(S.makeup.blushC||'#ffaaaa'); CH.blushM.opacity=S.makeup.blushI/100; }
+  // Lips
+  if(CH.lipM) CH.lipM.color.set(S.makeup.lipC||'#cc3344');
+  // Face shape
+  const fw = .88 + S.face.width/100*.22;
+  const fl = .92 + S.face.length/100*.18;
+  if(CH.headGrp){ CH.headGrp.scale.set(fw,fl,1); }
+  // Body scale
+  const bh = .97 + S.body.height/100*.06;
+  if(CH.root){ CH.root.scale.y = bh; }
+}
+
+window.applyHairColor = function(hex){ S.hairColor=hex; applyAll(); vrmApplyAll(); };
+window.applyEyeColor  = function(hex){ S.eyeColor=hex;  applyAll(); vrmApplyAll(); };
+window.applySkinColor = function(hex){ S.skinColor=hex; applyAll(); vrmApplyAll(); };
+
+// ══════════════════════════════════════════════
+// SECT APPLICATION
+// ══════════════════════════════════════════════
+function applySect(id){
+  S.sect=id;
+  const sec=SECTS.find(s=>s.id===id)||SECTS[0];
+  if(sectPt) sectPt.color.setHex(sec.c);
+  if(rimL) rimL.color.setHex(sec.c);
+  if(topL) topL.color.setHex(sec.c);
+  if(platMat) platMat.emissive.setHex(sec.c);
+  if(rMat) rMat.color.setHex(sec.c);
+  if(r2Mat) r2Mat.color.setHex(sec.c);
+  if(pMat) pMat.color.setHex(sec.c);
+  if(CH.trim) CH.trim.material.color.setHex(sec.c);
+  if(CH.slvL) CH.slvL.material.color.setHex(sec.c);
+  if(CH.slvR) CH.slvR.material.color.setHex(sec.c);
+  if(CH.col)  CH.col.material.color.setHex(sec.c);
+  if(CH.gem)  { CH.gem.material.color.setHex(sec.c); CH.gem.material.emissive.setHex(sec.c); }
+  document.documentElement.style.setProperty('--sect',sec.u);
+  document.getElementById('cts').textContent=sec.n+' ✦ '+sec.sub;
+  document.getElementById('st-atk').textContent=sec.atk;
+  document.getElementById('st-def').textContent=sec.def;
+  document.getElementById('st-mana').textContent=sec.mana;
+  document.querySelectorAll('.scard').forEach(c=>c.classList.remove('on'));
+  document.querySelector(`[data-sect="${id}"]`)?.classList.add('on');
+  // Apply VRM sect glow
+  if(currentVRM){ const sc=new THREE.Color(sec.c); if(sectPt)sectPt.color.copy(sc); if(rimL)rimL.color.copy(sc); if(topL)topL.color.setHex(sec.c); if(platMat)platMat.emissive.setHex(sec.c); if(rMat)rMat.color.setHex(sec.c); if(r2Mat)r2Mat.color.setHex(sec.c); if(pMat)pMat.color.setHex(sec.c); }
+}
+
+// ══════════════════════════════════════════════
+// TOGGLE FX
+// ══════════════════════════════════════════════
+window.togFX = function(k,el){ el.classList.toggle('on'); S.makeup[k]=el.classList.contains('on'); };
+
+// ══════════════════════════════════════════════
+// RANDOMIZE
+// ══════════════════════════════════════════════
+window.randomAll = function(){
+  selectPreset('fp-grid',Math.floor(Math.random()*FACE_P.length));
+  selectPreset('ep-grid',Math.floor(Math.random()*EYE_P.length));
+  selectPreset('hp-grid',Math.floor(Math.random()*HAIR_P.length));
+  const hc=HAIR_COLS[Math.floor(Math.random()*HAIR_COLS.length)];
+  const ec=EYE_COLS[Math.floor(Math.random()*EYE_COLS.length)];
+  const sc=SKIN_COLS[Math.floor(Math.random()*SKIN_COLS.length)];
+  applyHairColor(hc); applyEyeColor(ec); applySkinColor(sc);
+  const hpick=document.getElementById('hair-cpick'); if(hpick)hpick.value=hc;
+  const epick=document.getElementById('eye-cpick');  if(epick)epick.value=ec;
+  FACE_SL.forEach(d=>{ const v=d.mn+Math.floor(Math.random()*(d.mx-d.mn)); S.face[d.k]=v; nudgeSl(d.k,v,'face'); });
+  EYE_SL.forEach(d=>{ const v=d.mn+Math.floor(Math.random()*(d.mx-d.mn)); S.eyes[d.k]=v; nudgeSl(d.k,v,'eyes'); });
+  BODY_SL.forEach(d=>{ const v=d.mn+Math.floor(Math.random()*(d.mx-d.mn)); S.body[d.k]=v; nudgeSl(d.k,v,'body'); });
+  const si=Math.floor(Math.random()*SECTS.length);
+  applySect(SECTS[si].id);
+  vrmApplyAll();
+  notif('🎲 Ngẫu nhiên hóa hoàn tất!');
+};
+
+function nudgeSl(key,val,obj){
+  const inp=document.querySelector(`[data-sl="${key}"][data-obj="${obj}"]`);
+  if(inp){ inp.value=val; inp.closest('.sl-row')?.querySelector('.sl-val')?.textContent && (inp.closest('.sl-row').querySelector('.sl-val').textContent=val); }
+  applyAll();
+}
+
+// ══════════════════════════════════════════════
+// CAMERA
+// ══════════════════════════════════════════════
+let camLerp=null;
+window.camP = function(k,btn){
+  if(!webglOK||!camera||!ctrl) return;
+  const p=CAM[k]; if(!p)return;
+  camLerp={sp:camera.position.clone(),sl:ctrl.target.clone(),ep:new THREE.Vector3(...p.p),el:new THREE.Vector3(...p.l),t:0};
+  document.querySelectorAll('.cbtn').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+};
+
+// ══════════════════════════════════════════════
+// ANIMATION
+// ══════════════════════════════════════════════
+const clk=new THREE.Clock();
+let idleT=0;
+
+function animIdle(t,dt){
+  // VRM idle animation
+  if(currentVRM){
+    // Gentle breathing — use explicit null/undefined check (0 is a valid baseY)
+    if(currentVRM._baseY === null || currentVRM._baseY === undefined)
+      currentVRM._baseY = currentVRM.scene.position.y;
+    currentVRM.scene.position.y = currentVRM._baseY + Math.sin(t*.7)*.006;
+    // ── Step 1: Set idle animation bone poses (before update) ────────
+    const head = currentVRM.humanoid?.getNormalizedBoneNode('head');
+    if(head){
+      head.rotation.y = Math.sin(t*.25)*.08;
+      head.rotation.x = Math.sin(t*.18)*.03 - 0.02;
+    }
+    const spine = currentVRM.humanoid?.getNormalizedBoneNode('spine');
+    if(spine){ spine.rotation.z = Math.sin(t*.4)*.015; }
+    // Bring arms gently down from T-pose
+    const lArm = currentVRM.humanoid?.getNormalizedBoneNode('leftUpperArm');
+    const rArm = currentVRM.humanoid?.getNormalizedBoneNode('rightUpperArm');
+    if(lArm) lArm.rotation.z = 0.52 + Math.sin(t*.6+0.3)*.04;
+    if(rArm) rArm.rotation.z = -(0.52 + Math.sin(t*.6+0.9)*.04);
+
+    // ── Step 2: Tick VRM physics / animation mixer ────────────────
+    if(vrmMixer) vrmMixer.update(dt);
+    currentVRM.update(dt);
+
+    // ── Step 3: Reapply bone customization EVERY FRAME ───────────
+    // currentVRM.update() may reset normalized bone scales, so we
+    // must reapply after update, just like expressions below.
+    if(currentVRM.humanoid){
+      const h = currentVRM.humanoid;
+      // Head shape
+      const hb = h.getNormalizedBoneNode('head');
+      if(hb){
+        const fw = 0.88 + (S.face.width  - 50) / 50 * 0.22;
+        const fl = 0.90 + (S.face.length - 50) / 50 * 0.18;
+        hb.scale.set(fw, fl, 1.0);
+      }
+      // Chin via neck scale
+      const nb = h.getNormalizedBoneNode('neck');
+      if(nb){ nb.scale.set(1.0, 0.94 + (S.face.chin - 50)/50*0.14, 1.0); }
+      // Body width via chest/hips
+      const cb = h.getNormalizedBoneNode('upperChest') || h.getNormalizedBoneNode('chest');
+      if(cb){ const sl=1.0-(S.body.slim-50)/50*0.16; cb.scale.set(sl,1.0,sl); }
+      const hipb = h.getNormalizedBoneNode('hips');
+      if(hipb){
+        const sl=1.0-(S.body.slim-50)/50*0.13;
+        const ht=1.0+(S.body.height-50)/50*0.12;
+        hipb.scale.set(sl,ht,sl);
+      }
+      // Eye bone spacing + tilt
+      const le = h.getNormalizedBoneNode('leftEye');
+      const re = h.getNormalizedBoneNode('rightEye');
+      if(le && re){
+        const sp=(S.eyes.spacing-50)/50*0.05;
+        le.position.x= sp*0.5; re.position.x=-sp*0.5;
+        const ang=(S.eyes.angle-50)/50*0.20;
+        le.rotation.z=ang; re.rotation.z=-ang;
+      }
+    }
+
+    // ── Step 4: Reapply customization expressions AFTER vrm.update() ─
+    if(currentVRM.expressionManager){
+      // Idle blink — natural eye blink every ~4s
+      const blink = Math.sin(t*0.5) > 0.985 ? 1.0 : 0.0;
+      // Eye size adds on top of idle blink
+      const eyeBlink = Math.max(_vrmCustom.eyeSizeBlink || 0, blink);
+      try { currentVRM.expressionManager.setValue('blinkLeft',  eyeBlink); } catch(e){}
+      try { currentVRM.expressionManager.setValue('blinkRight', eyeBlink); } catch(e){}
+      // Reapply face preset expressions
+      Object.entries(_vrmCustom.faceExprs || {}).forEach(([k,v])=>{
+        try { currentVRM.expressionManager.setValue(k, v); } catch(e){}
+      });
+      // Reapply eye preset look expressions
+      Object.entries(_vrmCustom.eyeExprs || {}).forEach(([k,v])=>{
+        try { currentVRM.expressionManager.setValue(k, v); } catch(e){}
+      });
+    }
+    return;
+  }
+  // GLB model idle
+  if(currentGLBModel){
+    if(glbMixer) glbMixer.update(dt);
+    currentGLBModel.position.y = (currentGLBModel._baseY||0) + Math.sin(t*.7)*.006;
+    return;
+  }
+  // Fallback procedural idle
+  if(!CH.headGrp) return;
+  CH.headGrp.rotation.y=Math.sin(t*.25)*.12;
+  CH.headGrp.rotation.x=Math.sin(t*.18)*.04-.02;
+  if(CH.hairBack){ CH.hairBack.rotation.z=Math.sin(t*.9+.2)*.05; CH.hairBack.position.z=-.12-Math.sin(t*1.1)*.015; }
+  if(CH.hairBack2){ CH.hairBack2.rotation.z=.08+Math.sin(t*1.1+.5)*.06; }
+  if(CH.hairBack3){ CH.hairBack3.rotation.z=-.08+Math.sin(t*1.1+.8)*.06; }
+  if(CH.hairSideL){ CH.hairSideL.rotation.z=.1+Math.sin(t*1.2+.3)*.04; }
+  if(CH.hairSideR){ CH.hairSideR.rotation.z=-.1+Math.sin(t*1.2+.6)*.04; }
+  if(CH.root){ CH.root.position.y=Math.sin(t*.7)*.012; }
+}
+
+function updateParts(t){
+  const pos=parts.geometry.attributes.position.array;
+  for(let i=0;i<PC;i++){
+    const v=pV[i],ph=pPh[i];
+    pos[i*3]  +=v.vx+Math.sin(t*.42+ph)*.0007;
+    pos[i*3+1]+=v.vy;
+    pos[i*3+2]+=v.vz+Math.cos(t*.35+ph)*.0007;
+    if(pos[i*3+1]>4.4){
+      const a=Math.random()*Math.PI*2,r=.32+Math.random()*2.7;
+      pos[i*3]=Math.cos(a)*r; pos[i*3+1]=-.1; pos[i*3+2]=Math.sin(a)*r;
+    }
+  }
+  parts.geometry.attributes.position.needsUpdate=true;
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  if(!webglOK) return;
+  const dt=clk.getDelta(),t=clk.elapsedTime;
+  if(camLerp){
+    camLerp.t=Math.min(1,camLerp.t+dt*1.7);
+    const e=1-Math.pow(1-camLerp.t,3);
+    camera.position.lerpVectors(camLerp.sp,camLerp.ep,e);
+    ctrl.target.lerpVectors(camLerp.sl,camLerp.el,e);
+    if(camLerp.t>=1)camLerp=null;
+  }
+  ctrl.update();
+  animIdle(t,dt);
+  if(parts) updateParts(t);
+  if(platMat) platMat.emissiveIntensity=.20+Math.sin(t*1.7)*.12;
+  if(rMat) rMat.opacity=.45+Math.sin(t*2.1)*.25;
+  if(r2Mat) r2Mat.opacity=.12+Math.sin(t*1.3+1)*.09;
+  // Keep sectPt low when VRM loaded to avoid overexposure
+  if(sectPt) sectPt.intensity = currentVRM ? (1.0+Math.sin(t*2.2)*.2) : (3.2+Math.sin(t*2.2)*.9);
+  if(composer) composer.render();
+}
+
+// ══════════════════════════════════════════════
+// SAVE / BACK
+// ══════════════════════════════════════════════
+// ── GENDER ──
+let G_gender = 'nam';
+window.setGender = function(g, el){
+  G_gender = g;
+  document.querySelectorAll('.gdr-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+};
+
+// ── AI PORTRAIT ──
+let G_aiPortraitData = null;
+window.generateAIPortrait = async function(){
+  const loadEl = document.getElementById('ai-loading-overlay');
+  const frame  = document.getElementById('ai-portrait-frame');
+  frame.classList.remove('show');
+  loadEl.classList.add('show');
+
+  const name     = document.getElementById('char-name').value.trim() || 'Vô Danh';
+  const sec      = SECTS.find(s=>s.id===S.sect)||SECTS[0];
+  const hairName = HAIR_P[S.hairStyle]?.n || 'Thác Nước';
+  const faceName = FACE_P[S.facePreset]?.n || 'Thanh Lệ';
+  const eyeName  = EYE_P[S.eyePreset]?.n  || 'Phượng Nhãn';
+
+  try {
+    const res = await fetch('/api/generate-character', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        gender:    G_gender,
+        hair:      hairName,
+        face:      faceName,
+        eyeStyle:  eyeName,
+        sect:      S.sect,
+        eyeColor:  S.eyeColor,
+        hairColor: S.hairColor,
+        skinColor: S.skinColor,
+        name,
+      })
+    });
+    const data = await res.json();
+    if(data.image){
+      G_aiPortraitData = data.image.replace(/^data:[^;]+;base64,/, '');
+      document.getElementById('ai-portrait-img').src = data.image;
+      document.getElementById('ai-portrait-name').textContent = name.toUpperCase();
+      document.getElementById('ai-portrait-sect').textContent = sec.n + ' ✦ ' + sec.sub;
+      frame.classList.add('show');
+      notif('✦ Nhân vật đã được tạo thành công!');
+    } else {
+      notif('✕ Lỗi: ' + (data.error || 'Không thể tạo ảnh'));
+    }
+  } catch(e){
+    notif('✕ Kết nối thất bại, vui lòng thử lại');
+  } finally {
+    loadEl.classList.remove('show');
+  }
+};
+
+window.closeAIPortrait = function(){
+  document.getElementById('ai-portrait-frame').classList.remove('show');
+};
+
+window.saveChar = function(){
+  const name=document.getElementById('char-name').value.trim()||'Vô Danh';
+  S.name=name;
+  notif(`❖ ${name.toUpperCase()} — ĐÃ XÁC NHẬN`);
+  if(composer) composer.render();
+  let snap=null; try{ snap=canvas.toDataURL('image/png'); }catch(e){}
+  const sec=SECTS.find(s=>s.id===S.sect)||SECTS[0];
+  localStorage.setItem('vdai_character',JSON.stringify({
+    name, sect:S.sect, auraColor:sec.u, svgSnapshot:snap,
+    aiPortrait: G_aiPortraitData,
+    gender: G_gender,
+    state:{...S,name}
+  }));
+  setTimeout(()=>{ window.location.href='/user'; },1700);
+};
+window.goBack = ()=>{ window.location.href='/user'; };
+
+// ══════════════════════════════════════════════
+// NOTIF
+// ══════════════════════════════════════════════
+function notif(m){
+  const el=document.getElementById('notif');
+  el.textContent=m; el.classList.add('show');
+  clearTimeout(notif._t); notif._t=setTimeout(()=>el.classList.remove('show'),2400);
+}
+
+// ══════════════════════════════════════════════
+// UI BUILDER HELPERS
+// ══════════════════════════════════════════════
+function faceSVG(s){
+  const p={
+    oval:   'M20 34 Q10 10 20 8 Q30 10 30 34 Q28 44 20 44 Q12 44 10 34Z',
+    round:  'M20 36 Q8 36 8 22 Q8 10 20 10 Q32 10 32 22 Q32 36 20 36Z',
+    heart:  'M20 42 Q8 28 8 20 Q8 12 14 12 Q18 12 20 17 Q22 12 26 12 Q32 12 32 20 Q32 28 20 42Z',
+    square: 'M10 14 Q10 11 13 11 L27 11 Q30 11 30 14 L30 37 Q30 40 27 40 L13 40 Q10 40 10 37Z',
+    diamond:'M20 9 L32 26 L20 43 L8 26Z',
+    long:   'M20 40 Q11 40 11 24 Q11 9 20 9 Q29 9 29 24 Q29 40 20 40Z',
+    soft:   'M10 16 Q10 11 15 11 L25 11 Q30 11 30 16 L30 37 Q30 43 24 43 L16 43 Q10 43 10 37Z',
+    nat:    'M20 41 Q10 39 10 26 Q10 13 16 11 Q18 10 20 10 Q22 10 24 11 Q30 13 30 26 Q30 39 20 41Z',
+  };
+  const d=p[s]||p.nat;
+  return `<svg viewBox="0 0 40 52" fill="none">
+    <path d="${d}" stroke="rgba(200,168,75,0.4)" stroke-width="1" fill="rgba(200,168,75,0.06)"/>
+    <circle cx="14" cy="22" r="2.5" fill="rgba(68,136,255,0.5)"/>
+    <circle cx="26" cy="22" r="2.5" fill="rgba(68,136,255,0.5)"/>
+    <path d="M15 30 Q20 33 25 30" stroke="rgba(200,100,80,0.5)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+function eyeSVG(s){
+  const p={
+    almond:  'M4 14 Q14 8 24 14 Q14 19 4 14Z',
+    peach:   'M4 14 Q14 8 24 14 Q16 21 4 14Z',
+    upward:  'M4 15 Q14 7 24 12 Q14 17 4 15Z',
+    teary:   'M4 15 Q14 8 24 15 Q15 23 4 15Z',
+    sharp:   'M3 13 Q14 8 25 12 Q15 15 3 13Z',
+    myst:    'M5 15 Q14 9 23 14 Q15 19 7 17Z',
+    hanh:    'M5 13 Q14 8 23 13 Q14 17.5 5 13Z',
+    pure:    'M6 14 Q14 9 22 14 Q14 18 6 14Z',
+  };
+  const d=p[s]||p.almond;
+  return `<svg viewBox="0 0 28 24" fill="none">
+    <path d="${d}" stroke="rgba(200,168,75,0.45)" stroke-width="1" fill="rgba(68,136,255,0.12)"/>
+    <circle cx="14" cy="13.5" r="3.5" fill="rgba(68,136,255,0.45)"/>
+    <circle cx="14" cy="13.5" r="1.5" fill="rgba(0,0,20,0.7)"/>
+    <circle cx="15.5" cy="12.5" r="1" fill="rgba(255,255,255,0.8)"/>
+  </svg>`;
+}
+function browSVG(s){
+  const p={willow:'M3 12 Q14 8 25 10',arch:'M3 12 Q14 6 25 12',flat:'M3 11 L25 11',bow:'M3 10 Q9 14 14 11 Q19 8 25 10'};
+  return `<svg viewBox="0 0 28 20" fill="none"><path d="${p[s]||p.willow}" stroke="rgba(200,168,75,0.7)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+}
+
+function updateSlGradient(inp){
+  const mn=parseFloat(inp.min), mx=parseFloat(inp.max), v=parseFloat(inp.value);
+  const pct = ((v-mn)/(mx-mn)*100).toFixed(1)+'%';
+  inp.style.setProperty('--pct', pct);
+  inp.style.background = `linear-gradient(90deg,rgba(200,168,75,0.55) ${pct},rgba(255,255,255,0.08) ${pct})`;
+}
+
+function buildSlRow(container, label, val, mn, mx, slKey, objKey){
+  const row=document.createElement('div'); row.className='sl-row';
+  row.innerHTML=`<span class="sl-label">${label}</span>
+    <div class="sl-pm" onclick="adjSl(this,-5)">−</div>
+    <div class="sl-wrap"><input class="sl" type="range" min="${mn}" max="${mx}" value="${val}" data-sl="${slKey}" data-obj="${objKey}"></div>
+    <div class="sl-pm" onclick="adjSl(this,5)">+</div>
+    <span class="sl-val">${val}</span>`;
+  const inp=row.querySelector('input');
+  updateSlGradient(inp);
+  inp.addEventListener('input',function(){
+    const v=parseInt(this.value);
+    updateSlGradient(this);
+    row.querySelector('.sl-val').textContent=v;
+    if(objKey==='makeup') S.makeup[slKey]=v;
+    else S[objKey][slKey]=v;
+    applyAll();
+    vrmApplyAll();
+  });
+  container.appendChild(row);
+}
+window.adjSl=function(btn,d){
+  const row=btn.closest('.sl-row'),inp=row.querySelector('input');
+  const v=Math.max(parseInt(inp.min),Math.min(parseInt(inp.max),parseInt(inp.value)+d));
+  inp.value=v; row.querySelector('.sl-val').textContent=v;
+  updateSlGradient(inp);
+  inp.dispatchEvent(new Event('input'));
+};
+
+function buildPalette(id,colors,onPick,initIdx=0){
+  const w=document.getElementById(id); if(!w)return;
+  colors.forEach((c,i)=>{
+    const dot=document.createElement('div'); dot.className='cd'+(i===initIdx?' on':'');
+    dot.style.background=c;
+    dot.onclick=()=>{ w.querySelectorAll('.cd').forEach(x=>x.classList.remove('on')); dot.classList.add('on'); onPick(c); };
+    w.appendChild(dot);
+  });
+}
+
+function buildPresetGrid(gridId,items,thumbFn,onSel){
+  const wrap=document.getElementById(gridId); if(!wrap)return;
+  items.forEach((p,i)=>{
+    const div=document.createElement('div'); div.className='pi'+(i===0?' on':'');
+    div.innerHTML=`<div class="pi-check">✓</div><div class="thumb">${thumbFn(p)}</div><div class="lbl">${p.n||p.name}</div>`;
+    div.onclick=()=>{ wrap.querySelectorAll('.pi').forEach(x=>x.classList.remove('on')); div.classList.add('on'); onSel(i,p); };
+    wrap.appendChild(div);
+  });
+}
+function selectPreset(gridId,idx){
+  const wrap=document.getElementById(gridId); if(!wrap)return;
+  const items=wrap.querySelectorAll('.pi');
+  items.forEach((el,i)=>{ el.classList.toggle('on',i===idx); });
+}
+
+// ══════════════════════════════════════════════
+// BUILD ALL UI
+// ══════════════════════════════════════════════
+function buildUI(){
+  // Face presets
+  buildPresetGrid('fp-grid', FACE_P, p=>`<svg viewBox="0 0 40 52" fill="none">${(()=>{const p2={oval:'M20 34 Q10 10 20 8 Q30 10 30 34 Q28 44 20 44 Q12 44 10 34Z',round:'M20 36 Q8 36 8 22 Q8 10 20 10 Q32 10 32 22 Q32 36 20 36Z',heart:'M20 42 Q8 28 8 20 Q8 12 14 12 Q18 12 20 17 Q22 12 26 12 Q32 12 32 20 Q32 28 20 42Z',square:'M10 14 Q10 11 13 11 L27 11 Q30 11 30 14 L30 37 Q30 40 27 40 L13 40 Q10 40 10 37Z',diamond:'M20 9 L32 26 L20 43 L8 26Z',long:'M20 40 Q11 40 11 24 Q11 9 20 9 Q29 9 29 24 Q29 40 20 40Z',soft:'M10 16 Q10 11 15 11 L25 11 Q30 11 30 16 L30 37 Q30 43 24 43 L16 43 Q10 43 10 37Z',nat:'M20 41 Q10 39 10 26 Q10 13 16 11 Q18 10 20 10 Q22 10 24 11 Q30 13 30 26 Q30 39 20 41Z'};return `<path d="${p2[p.s]||p2.nat}" stroke="rgba(200,168,75,0.4)" stroke-width="1" fill="rgba(200,168,75,0.06)"/><circle cx="14" cy="22" r="2" fill="rgba(68,136,255,0.5)"/><circle cx="26" cy="22" r="2" fill="rgba(68,136,255,0.5)"/><path d="M15 30 Q20 33 25 30" stroke="rgba(200,100,80,0.5)" stroke-width="1" fill="none" stroke-linecap="round"/>`;})()}</svg>`,
+    (i,p)=>{ S.facePreset=i; applyAll(); vrmApplyAll(); });
+
+  // Skin colors
+  buildPalette('skin-pal', SKIN_COLS, hex=>applySkinColor(hex), 1);
+
+  // Face sliders
+  const fsc=document.getElementById('face-sl');
+  FACE_SL.forEach(d=>buildSlRow(fsc,d.l,S.face[d.k],d.mn,d.mx,d.k,'face'));
+
+  // Eye presets
+  buildPresetGrid('ep-grid', EYE_P, p=>eyeSVG(p.s), (i)=>{ S.eyePreset=i; vrmApplyAll(); });
+
+  // Eye colors
+  buildPalette('eye-pal', EYE_COLS, hex=>{ applyEyeColor(hex); const p=document.getElementById('eye-cpick'); if(p)p.value=hex; });
+
+  // Eye sliders
+  const esc=document.getElementById('eye-sl');
+  EYE_SL.forEach(d=>buildSlRow(esc,d.l,S.eyes[d.k],d.mn,d.mx,d.k,'eyes'));
+
+  // Brow presets
+  buildPresetGrid('brow-grid', BROW_P, p=>browSVG(p.s), (i)=>{ S.browPreset=i; });
+
+  // Hair presets
+  buildPresetGrid('hp-grid', HAIR_P, p=>`<div class="ico">${p.i}</div>`, (i)=>{ S.hairStyle=i; });
+
+  // Hair colors
+  buildPalette('hair-pal', HAIR_COLS, hex=>{ applyHairColor(hex); const p=document.getElementById('hair-cpick'); if(p)p.value=hex; });
+
+  // Hair sliders
+  const hsc=document.getElementById('hair-sl');
+  HAIR_SL.forEach(d=>buildSlRow(hsc,d.l,S.hair[d.k],d.mn,d.mx,d.k,'hair'));
+
+  // Makeup
+  buildPalette('found-pal',FOUND_COLS,hex=>{S.makeup.found=hex;applySkinColor(hex);});
+  buildPalette('blush-pal',BLUSH_COLS,hex=>{S.makeup.blushC=hex;applyAll();vrmApplyAll();});
+  BLUSH_SL.forEach(d=>buildSlRow(document.getElementById('blush-sl'),d.l,S.makeup[d.k],d.mn,d.mx,d.k,'makeup'));
+  buildPalette('lip-pal',LIP_COLS,hex=>{S.makeup.lipC=hex;applyAll();vrmApplyAll();});
+  LIP_SL.forEach(d=>buildSlRow(document.getElementById('lip-sl'),d.l,S.makeup[d.k],d.mn,d.mx,d.k,'makeup'));
+  buildPalette('shadow-pal',SHADOW_COLS,hex=>{S.makeup.shadowC=hex;});
+  SHADOW_SL.forEach(d=>buildSlRow(document.getElementById('shadow-sl'),d.l,S.makeup[d.k],d.mn,d.mx,d.k,'makeup'));
+
+  // Body presets
+  buildPresetGrid('body-grid', BODY_P, p=>`<div class="ico">${p.i}</div><div style="font-size:7px;color:rgba(200,168,75,0.3);font-family:Orbitron,sans-serif;">${p.d}</div>`,
+    (i)=>{ S.bodyPreset=i; applyAll(); vrmApplyAll(); });
+
+  // Body sliders
+  const bsc=document.getElementById('body-sl');
+  BODY_SL.forEach(d=>buildSlRow(bsc,d.l,S.body[d.k],d.mn,d.mx,d.k,'body'));
+
+  // Sects
+  const sl=document.getElementById('sect-list');
+  SECTS.forEach(sec=>{
+    const card=document.createElement('div'); card.className='scard'+(sec.id==='thuy'?' on':'');
+    card.dataset.sect=sec.id;
+    card.innerHTML=`<div class="scard-ico">${sec.i}</div>
+      <div class="scard-info">
+        <div class="scard-name">${sec.n}</div>
+        <div class="scard-lore">${sec.lore}</div>
+        <div class="scard-stats">${sec.stats.map(s=>`<span class="ss">${s}</span>`).join('')}</div>
+      </div>`;
+    card.onclick=()=>applySect(sec.id);
+    sl.appendChild(card);
+  });
+}
+
+// Tab switch
+window.swCat=function(n,el){
+  document.querySelectorAll('.c-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.cat-section').forEach(s=>s.classList.remove('active'));
+  el?.classList.add('active');
+  document.getElementById('sec-'+n)?.classList.add('active');
+};
+
+// Char name → tag
+document.getElementById('char-name').addEventListener('input',function(){
+  document.getElementById('ctn').textContent=(this.value.trim()||'VÔ DANH').toUpperCase();
+});
+
+// Resize
+window.addEventListener('resize',()=>{
+  if(!webglOK) return;
+  const W=innerWidth,H=innerHeight;
+  camera.aspect=W/H; camera.updateProjectionMatrix();
+  renderer.setSize(W,H); composer.setSize(W,H); bloom.resolution.set(W,H);
+});
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+function setP(p,m){ document.getElementById('ld-bar').style.width=p+'%'; document.getElementById('ld-status').textContent=m; }
+
+// Model list — VRM + GLB
+const MODEL_LIST = [
+  { name:'Thiên Nữ (VRM)', url:'/models/character1.vrm', type:'vrm' },
+  { name:'Tiên Nữ Michelle (GLB)', url:'/models/michelle.glb', type:'glb' },
+  { name:'Thiên Kiếm (GLB)', url:'/models/xbot.glb', type:'glb' },
+];
+let vrmListIdx = 0;
+
+window.switchVRMModel = function(){
+  vrmListIdx = (vrmListIdx + 1) % MODEL_LIST.length;
+  const m = MODEL_LIST[vrmListIdx];
+  notif('⟳ Đang tải: ' + m.name);
+  if(m.type === 'vrm') loadVRM(m.url);
+  else loadGLB(m.url, m.name);
+};
+
+// ══════════════════════════════════════════════
+// VROID UPLOAD
+// ══════════════════════════════════════════════
+let _vrmBlobURL = null;
+
+window.showVRoidPanel = function(){
+  const p = document.getElementById('vroid-panel');
+  p.style.display = 'flex';
+};
+
+window.closeVRoidPanel = function(){
+  const p = document.getElementById('vroid-panel');
+  p.style.display = 'none';
+};
+
+// Click outside panel to close
+document.getElementById('vroid-panel').addEventListener('click', function(e){
+  if(e.target === this) closeVRoidPanel();
+});
+
+window.onVRMFileSelected = async function(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const fname = file.name.toLowerCase();
+  if(fname.endsWith('.vroid')){
+    showVRoidPanel();
+    notif('✕ File .vroid là project — cần Export → .VRM trong VRoid Studio');
+    // Flash the warning box
+    const boxes = document.querySelectorAll('#vroid-panel [style*="255,80,80"]');
+    boxes.forEach(b=>{ b.style.transition='all 0.2s'; b.style.background='rgba(255,60,60,0.2)'; setTimeout(()=>b.style.background='rgba(255,80,80,0.07)',600); });
+    input.value = '';
+    return;
+  }
+  if(!fname.endsWith('.vrm')){
+    notif('✕ Chỉ hỗ trợ file .VRM'); input.value=''; return;
+  }
+
+  // Revoke previous blob URL
+  if(_vrmBlobURL){ URL.revokeObjectURL(_vrmBlobURL); _vrmBlobURL = null; }
+
+  _vrmBlobURL = URL.createObjectURL(file);
+  const shortName = file.name.replace(/\.vrm$/i,'').slice(0,20);
+  notif('⟳ Đang tải VRM: ' + shortName + '...');
+  showVRMStatus('⟳ TẢI VRM: ' + shortName.toUpperCase());
+
+  try {
+    await loadVRM(_vrmBlobURL);
+    notif('✦ Đã tải VRM thành công: ' + shortName);
+    // Add to model list so ⟳ cycling works
+    const existing = MODEL_LIST.findIndex(m=>m._userUpload);
+    if(existing>=0) MODEL_LIST.splice(existing,1);
+    MODEL_LIST.unshift({ name: shortName+' (VRM)', url: _vrmBlobURL, type:'vrm', _userUpload:true });
+    vrmListIdx = 0;
+  } catch(err){
+    notif('✕ Lỗi tải VRM — kiểm tra file hợp lệ');
+    console.error('VRoid upload failed:', err);
+  }
+
+  // Reset input so same file can be selected again
+  input.value = '';
+};
+
+async function init(){
+  setP(10,'Khởi tạo cảnh...');
+  setP(30,'Xây dựng môi trường...');
+  await new Promise(r=>setTimeout(r,100));
+  buildUI();
+  setP(60,'Tải mô hình nhân vật...');
+  animate();
+  // Try VRM first, fall back to GLB, then procedural
+  try {
+    await loadVRM(MODEL_LIST[0].url);
+    setP(100,'Sẵn sàng!');
+  } catch(e) {
+    try {
+      await loadGLB('/models/michelle.glb', 'Tiên Nữ');
+      setP(100,'Sẵn sàng!');
+    } catch(e2) {
+      buildCharacterFallback();
+      setP(100,'Sẵn sàng (chế độ cơ bản)!');
+    }
+  }
+  setP(80,'Đang hoàn thiện...');
+  await new Promise(r=>setTimeout(r,400));
+  document.getElementById('loading').classList.add('fade');
+  setTimeout(()=>document.getElementById('loading').style.display='none',850);
+}
+
+init();
+</script>
+</body>
+</html>

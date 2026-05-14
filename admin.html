@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Vương Đế AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{background:#000008;min-height:100vh;font-family:'Rajdhani',sans-serif;color:#e0e0e0;overflow-x:hidden}
+    #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+    .wrap{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;padding:0 20px 80px;max-width:1200px;margin:0 auto}
+
+    /* ── Topbar ── */
+    .topbar{display:flex;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid rgba(0,255,255,0.12);margin-bottom:32px}
+    .topbar-brand{font-family:'Orbitron',sans-serif;font-size:12px;color:#00ffff;letter-spacing:3px;text-shadow:0 0 14px #00ffff;flex:1}
+    .topbar-brand span{color:#ff666688}
+    .topbar-btn{background:rgba(0,40,40,0.7);border:1px solid rgba(0,255,255,0.35);color:#00ffff;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1.5px;padding:7px 14px;border-radius:20px;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+    .topbar-btn:hover{background:rgba(0,255,255,0.15);box-shadow:0 0 14px rgba(0,255,255,.4)}
+    .topbar-btn.red{border-color:rgba(255,80,80,.4);color:#ff6666}
+    .topbar-btn.red:hover{background:rgba(255,60,60,.15)}
+    .topbar-refresh{font-size:13px;cursor:pointer;opacity:.5;transition:opacity .2s;background:none;border:none;color:#00ffff;padding:4px 8px}
+    .topbar-refresh:hover{opacity:1}
+
+    /* ── Summary cards ── */
+    .summary-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:28px}
+    @media(max-width:900px){.summary-grid{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:560px){.summary-grid{grid-template-columns:repeat(2,1fr)}}
+    .sum-card{background:rgba(0,12,24,0.88);border:1px solid rgba(0,255,255,.12);border-radius:12px;padding:18px 16px;display:flex;flex-direction:column;gap:6px;backdrop-filter:blur(6px);transition:border-color .2s,box-shadow .2s}
+    .sum-card:hover{border-color:rgba(0,255,255,.3);box-shadow:0 0 18px rgba(0,255,255,.07)}
+    .sum-card.gold{border-color:rgba(255,215,0,.12)}
+    .sum-card.gold:hover{border-color:rgba(255,215,0,.35);box-shadow:0 0 18px rgba(255,215,0,.07)}
+    .sum-card.green{border-color:rgba(0,255,128,.12)}
+    .sum-card.green:hover{border-color:rgba(0,255,128,.35);box-shadow:0 0 18px rgba(0,255,128,.07)}
+    .sum-icon{font-size:18px;opacity:.7;margin-bottom:2px}
+    .sum-val{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:#00ffff;text-shadow:0 0 14px rgba(0,255,255,.5)}
+    .sum-val.gold{color:#ffd700;text-shadow:0 0 14px rgba(255,215,0,.5)}
+    .sum-val.green{color:#00ff88;text-shadow:0 0 14px rgba(0,255,128,.5)}
+    .sum-label{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:#00ffff44;text-transform:uppercase}
+    .sum-label.gold{color:#ffd70044}
+    .sum-label.green{color:#00ff8844}
+
+    /* ── Toolbar ── */
+    .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+    .search-box{flex:1;min-width:200px;background:rgba(0,20,40,.8);border:1px solid rgba(0,255,255,.2);border-radius:8px;padding:9px 14px;color:#00ffff;font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:1px;outline:none;transition:border-color .2s}
+    .search-box::placeholder{color:#00ffff44}
+    .search-box:focus{border-color:rgba(0,255,255,.5)}
+    .filter-sel{background:rgba(0,20,40,.8);border:1px solid rgba(0,255,255,.2);border-radius:8px;padding:9px 12px;color:#00ffff88;font-family:'Share Tech Mono',monospace;font-size:11px;outline:none;cursor:pointer}
+    .sort-btn{background:rgba(0,20,40,.8);border:1px solid rgba(0,255,255,.15);border-radius:8px;padding:9px 12px;color:#00ffff66;font-family:'Share Tech Mono',monospace;font-size:10px;cursor:pointer;transition:all .2s;letter-spacing:1px}
+    .sort-btn.active{border-color:rgba(0,255,255,.5);color:#00ffff;background:rgba(0,255,255,.08)}
+    .count-badge{font-family:'Share Tech Mono',monospace;font-size:10px;color:#00ffff55;letter-spacing:1px;white-space:nowrap}
+
+    /* ── Table ── */
+    .table-wrap{background:rgba(0,12,24,.88);border:1px solid rgba(0,255,255,.12);border-radius:14px;overflow:hidden;backdrop-filter:blur(6px)}
+    table{width:100%;border-collapse:collapse}
+    thead th{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;color:#00ffff55;text-transform:uppercase;padding:14px 12px;border-bottom:1px solid rgba(0,255,255,.1);text-align:left;white-space:nowrap;cursor:pointer;user-select:none;transition:color .2s}
+    thead th:hover{color:#00ffff}
+    thead th.sorted{color:#00ffff;border-bottom-color:rgba(0,255,255,.3)}
+    tbody tr{border-bottom:1px solid rgba(0,255,255,.05);transition:background .18s}
+    tbody tr:hover{background:rgba(0,255,255,.04)}
+    tbody tr:last-child{border-bottom:none}
+    td{padding:12px 12px;font-family:'Share Tech Mono',monospace;font-size:11px;color:#ccc;vertical-align:middle;white-space:nowrap}
+
+    /* Avatar cell */
+    .av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00ffff33,#ffd70022);border:1px solid rgba(0,255,255,.25);display:inline-flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:900;color:#00ffff;text-shadow:0 0 10px #00ffff;flex-shrink:0}
+
+    /* Provider badge */
+    .prov{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:12px;font-size:9px;letter-spacing:1px}
+    .prov.google{background:rgba(234,67,53,.08);border:1px solid rgba(234,67,53,.3);color:#ea4335aa}
+    .prov.replit{background:rgba(0,200,100,.08);border:1px solid rgba(0,200,100,.3);color:#00c86488}
+
+    /* Rank badge */
+    .rank{display:inline-block;padding:2px 8px;border-radius:12px;font-size:8px;letter-spacing:1.5px;border:1px solid currentColor;opacity:.8}
+
+    /* Number cells */
+    .num{color:#00ffff;font-weight:700;text-align:right}
+    .num.gold{color:#ffd700}
+    .num.dim{color:#ffffff44;font-weight:400}
+    td.num-cell{text-align:right}
+
+    /* Time cell */
+    .time-ago{color:#00ffff55;font-size:10px}
+
+    /* Name cell */
+    .user-name{color:#fff;letter-spacing:.5px}
+    .user-email{font-size:9px;color:#ffffff44;margin-top:2px;letter-spacing:.5px;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+    .display-alias{font-size:9px;color:#ffd70088;margin-top:1px}
+
+    /* Action buttons */
+    .act-btn{background:none;border:1px solid rgba(255,80,80,.3);color:#ff6666;border-radius:6px;padding:3px 8px;font-size:9px;cursor:pointer;transition:all .2s;font-family:'Share Tech Mono',monospace}
+    .act-btn:hover{background:rgba(255,60,60,.12);border-color:rgba(255,80,80,.6)}
+
+    /* ── Empty / loading ── */
+    .empty-row td{text-align:center;padding:60px;color:#00ffff22;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px}
+    .spin{display:inline-block;width:24px;height:24px;border:2px solid transparent;border-top-color:#00ffff;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── Toast ── */
+    #toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(0,255,100,.1);border:1px solid rgba(0,255,100,.4);color:#00ff64;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;padding:10px 28px;border-radius:30px;transition:transform .35s cubic-bezier(.175,.885,.32,1.275);z-index:999;pointer-events:none}
+    #toast.show{transform:translateX(-50%) translateY(0)}
+    #toast.err{background:rgba(255,80,80,.12);border-color:rgba(255,80,80,.4);color:#ff6666}
+
+    /* ── Loading overlay ── */
+    #loading-overlay{position:fixed;inset:0;z-index:999;background:#000008;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+    .loading-ring{width:60px;height:60px;border-radius:50%;border:2px solid transparent;border-top-color:#00ffff;border-right-color:#ffd70055;animation:spin .9s linear infinite}
+    .loading-text{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:#00ffff66}
+
+    /* ── Confirm modal ── */
+    #confirm-modal{display:none;position:fixed;inset:0;z-index:998;background:rgba(0,0,8,.85);align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+    #confirm-modal.show{display:flex}
+    .confirm-box{background:rgba(0,12,24,.97);border:1px solid rgba(255,80,80,.4);border-radius:14px;padding:36px;max-width:400px;width:90%;text-align:center;box-shadow:0 0 40px rgba(255,60,60,.12)}
+    .confirm-title{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;color:#ff6666;margin-bottom:14px}
+    .confirm-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:#ffffff66;margin-bottom:28px;line-height:1.7;letter-spacing:.5px}
+    .confirm-btns{display:flex;gap:14px;justify-content:center}
+    .confirm-yes{background:rgba(255,60,60,.15);border:1px solid rgba(255,80,80,.5);color:#ff6666;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s}
+    .confirm-yes:hover{background:rgba(255,60,60,.3)}
+    .confirm-no{background:rgba(0,255,255,.06);border:1px solid rgba(0,255,255,.25);color:#00ffff88;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s}
+    .confirm-no:hover{background:rgba(0,255,255,.12)}
+  </style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<div id="loading-overlay">
+  <div class="loading-ring"></div>
+  <div class="loading-text">ĐANG TẢI DỮ LIỆU...</div>
+</div>
+
+<!-- Confirm modal -->
+<div id="confirm-modal">
+  <div class="confirm-box">
+    <div class="confirm-title">⚠ XÁC NHẬN XÓA</div>
+    <div class="confirm-sub" id="confirm-sub"></div>
+    <div class="confirm-btns">
+      <button class="confirm-yes" id="confirm-yes-btn">XÓA</button>
+      <button class="confirm-no" onclick="closeConfirm()">HỦY</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="wrap" style="display:none">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-brand">⬡ VƯƠNG ĐẾ AI &nbsp;/&nbsp; <span>ADMIN DASHBOARD</span></div>
+    <button class="topbar-refresh" onclick="loadData()" title="Tải lại">⟳</button>
+    <a href="/admin" class="topbar-btn">⬅ VŨ TRỤ ADMIN</a>
+    <a href="/api/admin/logout" class="topbar-btn red">⏻ ĐĂNG XUẤT</a>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="summary-grid">
+    <div class="sum-card green">
+      <div class="sum-icon">👥</div>
+      <div class="sum-val green" id="s-users">—</div>
+      <div class="sum-label green">TỔNG USER</div>
+    </div>
+    <div class="sum-card green">
+      <div class="sum-icon">🟢</div>
+      <div class="sum-val green" id="s-active">—</div>
+      <div class="sum-label green">HOẠT ĐỘNG 7 NGÀY</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-icon">💬</div>
+      <div class="sum-val" id="s-agent-msgs">—</div>
+      <div class="sum-label">TIN NHẮN AGENT</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-icon">🌌</div>
+      <div class="sum-val" id="s-uc-msgs">—</div>
+      <div class="sum-label">TIN VẠN GIỚI</div>
+    </div>
+    <div class="sum-card gold">
+      <div class="sum-icon">📦</div>
+      <div class="sum-val gold" id="s-vault">—</div>
+      <div class="sum-label gold">VẬT PHẨM KHO</div>
+    </div>
+    <div class="sum-card gold">
+      <div class="sum-icon">⭐</div>
+      <div class="sum-val gold" id="s-favs">—</div>
+      <div class="sum-label gold">YÊU THÍCH</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input class="search-box" id="search" placeholder="🔍  Tìm tên, email, ID..." oninput="renderTable()">
+    <select class="filter-sel" id="filter-prov" onchange="renderTable()">
+      <option value="">Tất cả provider</option>
+      <option value="google">Google</option>
+      <option value="replit">Replit</option>
+    </select>
+    <button class="sort-btn active" id="sort-login" onclick="setSort('last_login')">Đăng nhập gần nhất ↓</button>
+    <button class="sort-btn" id="sort-msgs" onclick="setSort('agent_msgs')">Nhiều tin nhất</button>
+    <span class="count-badge" id="count-badge"></span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:44px"></th>
+          <th onclick="setSort('name')">NGƯỜI DÙNG</th>
+          <th onclick="setSort('provider')">PROVIDER</th>
+          <th onclick="setSort('rank')">CẤP BẬC</th>
+          <th onclick="setSort('login_count')" style="text-align:right">ĐĂNG NHẬP</th>
+          <th onclick="setSort('agent_msgs')" style="text-align:right">TIN AGENT</th>
+          <th onclick="setSort('uc_msgs')" style="text-align:right">TIN VG</th>
+          <th onclick="setSort('vault_count')" style="text-align:right">KHO</th>
+          <th onclick="setSort('fav_count')" style="text-align:right">FAV</th>
+          <th onclick="setSort('last_login')">ĐĂNG NHẬP GN</th>
+          <th onclick="setSort('created_at')">NHẬP MÔN</th>
+          <th style="width:60px"></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Starfield ────────────────────────────────────────────────────────────────
+(function(){
+  const cv=document.getElementById('bg-canvas'),ctx=cv.getContext('2d');
+  let W,H,stars=[];
+  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+  function mk(){stars=Array.from({length:220},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+.2,a:Math.random(),da:(Math.random()-.5)*.005}))}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    stars.forEach(s=>{
+      s.a=Math.max(.05,Math.min(1,s.a+s.da));
+      if(s.a<=.06||s.a>=.99)s.da*=-1;
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(0,255,255,${s.a*.3})`;ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  resize();mk();draw();
+  window.addEventListener('resize',()=>{resize();mk();});
+})();
+
+// ── Data ─────────────────────────────────────────────────────────────────────
+let _all=[], _sort='last_login', _sortDir=-1;
+
+function rankFromLogins(n){
+  if(n>=100) return {label:'VÔ THƯỢNG ĐẾ',   color:'#ff00ff'};
+  if(n>=50)  return {label:'ĐẠI NĂNG',        color:'#ffd700'};
+  if(n>=20)  return {label:'KIM ĐAN ĐẠI NĂNG',color:'#ffa500'};
+  if(n>=10)  return {label:'NGUYÊN ANH KỲ',   color:'#00ffff'};
+  if(n>=5)   return {label:'TRÚC CƠ KỲ',      color:'#00ff88'};
+  return          {label:'TU SĨ SƠ KỲ',    color:'#ffffff66'};
+}
+
+function fmt(n){return (n||0).toLocaleString('vi-VN')}
+function fmtDate(iso){
+  if(!iso)return '—';
+  try{return new Date(iso).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'})}
+  catch(e){return '—'}
+}
+function timeAgo(iso){
+  if(!iso)return '—';
+  try{
+    const diff=Date.now()-new Date(iso).getTime();
+    const m=Math.floor(diff/60000);
+    if(m<1)return 'vừa xong';
+    if(m<60)return m+'p trước';
+    const h=Math.floor(m/60);
+    if(h<24)return h+'h trước';
+    const d=Math.floor(h/24);
+    if(d<7)return d+'d trước';
+    return fmtDate(iso);
+  }catch(e){return '—'}
+}
+function initials(u){
+  const n=(u.display_name||u.first_name||u.email||'?')[0];
+  return n.toUpperCase();
+}
+function displayName(u){
+  return u.display_name || [u.first_name,u.last_name].filter(Boolean).join(' ') || u.email || u.id.substring(0,12);
+}
+
+async function loadData(){
+  try{
+    const r=await fetch('/api/db/admin/users');
+    if(!r.ok){if(r.status===401){window.location.href='/api/login';return;} throw new Error(r.status);}
+    const {users,summary}=await r.json();
+    _all=users;
+    renderSummary(summary);
+    renderTable();
+    document.getElementById('loading-overlay').style.display='none';
+    document.getElementById('wrap').style.display='flex';
+  }catch(e){
+    showToast('⚠ Lỗi tải dữ liệu: '+e.message, true);
+    document.getElementById('loading-overlay').style.display='none';
+    document.getElementById('wrap').style.display='flex';
+  }
+}
+
+function renderSummary(s){
+  if(!s)return;
+  document.getElementById('s-users').textContent=fmt(s.total_users);
+  document.getElementById('s-active').textContent=fmt(s.active_7d);
+  document.getElementById('s-agent-msgs').textContent=fmt(s.total_agent_msgs);
+  document.getElementById('s-uc-msgs').textContent=fmt(s.total_uc_msgs);
+  document.getElementById('s-vault').textContent=fmt(s.total_vault);
+  document.getElementById('s-favs').textContent=fmt(s.total_favs);
+}
+
+function setSort(col){
+  if(_sort===col) _sortDir*=-1;
+  else{_sort=col;_sortDir=-1;}
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  if(col==='last_login')document.getElementById('sort-login').classList.add('active');
+  if(col==='agent_msgs')document.getElementById('sort-msgs').classList.add('active');
+  renderTable();
+}
+
+function renderTable(){
+  const q=(document.getElementById('search').value||'').toLowerCase().trim();
+  const prov=document.getElementById('filter-prov').value;
+
+  let rows=_all.filter(u=>{
+    if(prov){
+      const isGoogle=(u.provider||'').includes('google')||(u.id||'').startsWith('google:');
+      if(prov==='google'&&!isGoogle)return false;
+      if(prov==='replit'&&isGoogle)return false;
+    }
+    if(q){
+      const hay=[u.email,u.first_name,u.last_name,u.display_name,u.id].filter(Boolean).join(' ').toLowerCase();
+      if(!hay.includes(q))return false;
+    }
+    return true;
+  });
+
+  rows.sort((a,b)=>{
+    let va,vb;
+    switch(_sort){
+      case 'last_login': va=a.last_login?new Date(a.last_login).getTime():0; vb=b.last_login?new Date(b.last_login).getTime():0; break;
+      case 'created_at': va=a.created_at?new Date(a.created_at).getTime():0; vb=b.created_at?new Date(b.created_at).getTime():0; break;
+      case 'login_count': va=+a.login_count||0; vb=+b.login_count||0; break;
+      case 'agent_msgs':  va=+a.agent_msgs||0;  vb=+b.agent_msgs||0;  break;
+      case 'uc_msgs':     va=+a.uc_msgs||0;     vb=+b.uc_msgs||0;     break;
+      case 'vault_count': va=+a.vault_count||0; vb=+b.vault_count||0; break;
+      case 'fav_count':   va=+a.fav_count||0;   vb=+b.fav_count||0;   break;
+      case 'rank':        va=+a.login_count||0; vb=+b.login_count||0; break;
+      case 'name':        va=displayName(a).toLowerCase(); vb=displayName(b).toLowerCase(); break;
+      default: va=0; vb=0;
+    }
+    if(va<vb)return _sortDir;
+    if(va>vb)return -_sortDir;
+    return 0;
+  });
+
+  document.getElementById('count-badge').textContent=rows.length+' người dùng';
+
+  const tbody=document.getElementById('tbody');
+  if(rows.length===0){
+    tbody.innerHTML='<tr class="empty-row"><td colspan="12">CHƯA CÓ DỮ LIỆU</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML=rows.map(u=>{
+    const isGoogle=(u.provider||'').includes('google')||(u.id||'').startsWith('google:');
+    const provHtml=isGoogle
+      ? `<span class="prov google">G GOOGLE</span>`
+      : `<span class="prov replit">⚙ REPLIT</span>`;
+    const {label:rankLabel,color:rankColor}=rankFromLogins(+u.login_count||0);
+    const name=displayName(u);
+    const alias=u.display_name&&u.display_name!==[u.first_name,u.last_name].filter(Boolean).join(' ')
+      ? `<div class="display-alias">✦ ${u.display_name}</div>` : '';
+    const uid=u.id.replace(/^(google:|replit:)/,'').substring(0,10);
+
+    return `<tr>
+      <td><div class="av">${initials(u)}</div></td>
+      <td>
+        <div class="user-name">${esc(name)}</div>
+        <div class="user-email">${esc(u.email||uid)}</div>
+        ${alias}
+      </td>
+      <td>${provHtml}</td>
+      <td><span class="rank" style="color:${rankColor};border-color:${rankColor}44">${rankLabel}</span></td>
+      <td class="num-cell"><span class="${+u.login_count>0?'num':'num dim'}">${fmt(u.login_count)}</span></td>
+      <td class="num-cell"><span class="${+u.agent_msgs>0?'num':'num dim'}">${fmt(u.agent_msgs)}</span></td>
+      <td class="num-cell"><span class="${+u.uc_msgs>0?'num':'num dim'}">${fmt(u.uc_msgs)}</span></td>
+      <td class="num-cell"><span class="${+u.vault_count>0?'num gold':'num dim'}">${fmt(u.vault_count)}</span></td>
+      <td class="num-cell"><span class="${+u.fav_count>0?'num gold':'num dim'}">${fmt(u.fav_count)}</span></td>
+      <td><span class="time-ago">${timeAgo(u.last_login)}</span></td>
+      <td><span class="time-ago">${fmtDate(u.created_at)}</span></td>
+      <td><button class="act-btn" onclick="confirmDelete('${esc(u.id)}','${esc(name)}')">XÓA</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Confirm / delete ──────────────────────────────────────────────────────────
+let _pendingDeleteId=null;
+function confirmDelete(uid,name){
+  _pendingDeleteId=uid;
+  document.getElementById('confirm-sub').textContent=
+    'Xóa toàn bộ dữ liệu của "'+name+'"?\n(lịch sử chat, kho tàng, yêu thích, chủ đề, hồ sơ)';
+  document.getElementById('confirm-modal').classList.add('show');
+  document.getElementById('confirm-yes-btn').onclick=doDelete;
+}
+function closeConfirm(){
+  document.getElementById('confirm-modal').classList.remove('show');
+  _pendingDeleteId=null;
+}
+async function doDelete(){
+  if(!_pendingDeleteId)return;
+  const uid=_pendingDeleteId;
+  closeConfirm();
+  try{
+    const r=await fetch('/api/db/admin/delete-user/'+encodeURIComponent(uid),{method:'DELETE'});
+    if(!r.ok)throw new Error(await r.text());
+    _all=_all.filter(u=>u.id!==uid);
+    renderTable();
+    showToast('✦ ĐÃ XÓA NGƯỜI DÙNG');
+    // reload summary
+    loadData();
+  }catch(e){ showToast('⚠ Lỗi: '+e.message,true); }
+}
+
+// ── Toast ────────────────────────────────────────────────────────────────────
+function showToast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=err?'err':'';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

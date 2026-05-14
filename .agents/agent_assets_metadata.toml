@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "T0Og7uoyvUVo9OXuQSxFp"
+uri = "file://TONG_HOP_APP.md"
+type = "text"
+title = "Tổng Hợp App — Vương Đế AI"
+
+[[outputs]]
+id = "fl0zRrD6STk1NzUfKLv_v"
+uri = "file://TONG_HOP_FULL.md"
+type = "text"
+title = "TỔNG HỢP ĐẦY ĐỦ — Vương Đế AI"

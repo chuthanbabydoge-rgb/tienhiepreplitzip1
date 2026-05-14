@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Vương Đế AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{background:#000008;min-height:100vh;font-family:'Rajdhani',sans-serif;color:#e0e0e0;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+    canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+    .box{
+      position:relative;z-index:1;
+      width:min(420px,92vw);
+      background:rgba(0,8,20,0.97);
+      border:1px solid rgba(255,170,0,0.4);
+      border-radius:18px;
+      padding:44px 40px 40px;
+      box-shadow:0 0 60px rgba(255,170,0,0.12),0 0 120px rgba(255,170,0,0.06);
+      display:flex;flex-direction:column;align-items:center;gap:0;
+    }
+
+    .emblem{font-size:52px;line-height:1;margin-bottom:18px;filter:drop-shadow(0 0 20px #ffaa00);}
+    .title{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:4px;color:#ffaa00;text-shadow:0 0 20px rgba(255,170,0,0.7);margin-bottom:6px;text-align:center;}
+    .subtitle{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#ffaa0055;margin-bottom:36px;text-align:center;}
+
+    .input-wrap{position:relative;width:100%;margin-bottom:20px;}
+    .input-wrap input{
+      width:100%;padding:14px 18px 14px 18px;
+      background:rgba(255,170,0,0.05);
+      border:1px solid rgba(255,170,0,0.3);
+      border-radius:10px;
+      color:#ffdd88;
+      font-family:'Share Tech Mono',monospace;
+      font-size:18px;letter-spacing:6px;
+      text-align:center;
+      outline:none;
+      transition:border-color .2s,box-shadow .2s;
+    }
+    .input-wrap input::placeholder{color:#ffaa0033;letter-spacing:3px;font-size:13px}
+    .input-wrap input:focus{border-color:rgba(255,170,0,0.7);box-shadow:0 0 20px rgba(255,170,0,0.15);}
+
+    .btn{
+      width:100%;padding:14px;
+      background:linear-gradient(135deg,rgba(255,170,0,0.18),rgba(255,170,0,0.08));
+      border:1px solid rgba(255,170,0,0.6);
+      border-radius:10px;
+      color:#ffdd88;
+      font-family:'Orbitron',sans-serif;
+      font-size:11px;letter-spacing:3px;
+      cursor:pointer;
+      transition:all .25s;
+      box-shadow:0 0 20px rgba(255,170,0,0.15);
+    }
+    .btn:hover{background:linear-gradient(135deg,rgba(255,170,0,0.3),rgba(255,170,0,0.15));box-shadow:0 0 35px rgba(255,170,0,0.35);}
+    .btn:active{transform:scale(0.98);}
+    .btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+    .err{
+      font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1.5px;
+      color:#ff6666;text-align:center;margin-top:14px;
+      min-height:18px;
+      transition:opacity .3s;
+    }
+
+    .back{
+      margin-top:28px;
+      font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;
+      color:#ffffff22;text-decoration:none;
+      transition:color .2s;
+    }
+    .back:hover{color:#ffffff66;}
+
+    /* Ripple on wrong password */
+    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+    .shake{animation:shake .4s ease;}
+
+    /* Loading spinner inside btn */
+    .spin{display:inline-block;width:14px;height:14px;border:2px solid transparent;border-top-color:#ffdd88;border-radius:50%;animation:rot .7s linear infinite;vertical-align:middle;margin-right:8px;}
+    @keyframes rot{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<div class="box" id="box">
+  <div class="emblem">⚙</div>
+  <div class="title">VƯƠNG ĐẾ AI</div>
+  <div class="subtitle">KHU VỰC QUẢN TRỊ — NHẬP MẬT LỆNH</div>
+
+  <form onsubmit="doLogin();return false;" style="width:100%;display:contents;">
+    <div class="input-wrap">
+      <input type="password" id="pass" placeholder="••••••••" autocomplete="current-password" autofocus>
+    </div>
+    <button type="submit" class="btn" id="btn">⚡ TIẾN NHẬP</button>
+  </form>
+
+  <div class="err" id="err"></div>
+
+  <a href="/" class="back">← Quay về trang chủ</a>
+</div>
+
+<script>
+// ── Starfield ─────────────────────────────────────────────────────────────
+(function(){
+  const cv=document.getElementById('bg'),ctx=cv.getContext('2d');
+  let W,H,stars=[];
+  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+  function mk(){stars=Array.from({length:180},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+.2,a:Math.random(),da:(Math.random()-.5)*.005}))}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    stars.forEach(s=>{
+      s.a=Math.max(.05,Math.min(1,s.a+s.da));
+      if(s.a<=.06||s.a>=.99)s.da*=-1;
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,170,0,${s.a*.25})`;ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  resize();mk();draw();
+  window.addEventListener('resize',()=>{resize();mk();});
+})();
+
+async function doLogin() {
+  const pass = document.getElementById('pass').value;
+  const btn  = document.getElementById('btn');
+  const err  = document.getElementById('err');
+  const box  = document.getElementById('box');
+
+  if (!pass) { shake(); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>ĐANG XÁC THỰC...';
+  err.textContent = '';
+
+  try {
+    const r = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pass })
+    });
+    const data = await r.json();
+    if (r.ok && data.ok) {
+      btn.innerHTML = '✦ XÁC THỰC THÀNH CÔNG';
+      setTimeout(() => { window.location.href = '/admin'; }, 600);
+    } else {
+      shake();
+      err.textContent = '⚠ ' + (data.error || 'Mật lệnh không hợp lệ');
+      btn.disabled = false;
+      btn.innerHTML = '⚡ TIẾN NHẬP';
+      document.getElementById('pass').value = '';
+      document.getElementById('pass').focus();
+    }
+  } catch(e) {
+    shake();
+    err.textContent = '⚠ Lỗi kết nối, thử lại';
+    btn.disabled = false;
+    btn.innerHTML = '⚡ TIẾN NHẬP';
+  }
+}
+
+function shake() {
+  const box = document.getElementById('box');
+  box.classList.remove('shake');
+  void box.offsetWidth;
+  box.classList.add('shake');
+  setTimeout(() => box.classList.remove('shake'), 400);
+}
+</script>
+</body>
+</html>

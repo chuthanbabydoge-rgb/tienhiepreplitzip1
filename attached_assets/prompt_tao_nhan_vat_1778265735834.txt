@@ -1,0 +1,421 @@
+<master_prompt>
+
+<project>
+  <name>Hỗn Nguyên AI — MMORPG Character Creator</name>
+
+  <goal>
+    Build a fully interactive AAA fantasy MMORPG character creation system inspired by Revelation Online, Dragon Raja, Black Desert Online, Justice Mobile, and Asian anime fantasy games.
+
+    This is NOT a normal web dashboard.
+
+    This must feel like a real in-game cinematic character creation scene.
+  </goal>
+</project>
+
+<!-- ========================= -->
+<!-- CORE EXPERIENCE -->
+<!-- ========================= -->
+
+<experience>
+
+  The entire experience must feel:
+
+  - cinematic
+  - luxurious
+  - immersive
+  - premium
+  - magical
+  - responsive
+  - elegant
+  - futuristic fantasy
+
+  The interface should resemble:
+  - an MMORPG customization scene
+  - a metaverse avatar creator
+  - a next-generation anime game UI
+
+  NOT:
+  - admin dashboard
+  - basic website
+  - flat form UI
+  - generic Tailwind app
+
+</experience>
+
+<!-- ========================= -->
+<!-- LAYOUT -->
+<!-- ========================= -->
+
+<layout>
+
+  Screen layout:
+
+  LEFT MENU = 10%
+  CHARACTER AREA = 70%
+  RIGHT CUSTOMIZATION PANEL = 20%
+
+  CHARACTER IS THE MAIN FOCUS.
+
+  The character must dominate the screen visually.
+
+  Character area:
+  - centered
+  - large
+  - cinematic
+  - depth feeling
+  - glowing environment
+
+  Left side:
+  - vertical icon menu
+  - elegant gold circular buttons
+  - minimal labels
+  - smooth hover animation
+
+  Right side:
+  - translucent glass panel
+  - dark transparent fantasy style
+  - premium sliders
+  - customization categories
+
+  Bottom navigation:
+  - tabs like MMORPG games
+  - smooth switching
+  - glowing active state
+
+</layout>
+
+<!-- ========================= -->
+<!-- VISUAL STYLE -->
+<!-- ========================= -->
+
+<visual_style>
+
+  Theme:
+  - dark fantasy
+  - deep navy blue
+  - black gold
+  - subtle magic glow
+
+  Effects:
+  - bloom
+  - fog
+  - volumetric lighting
+  - floating particles
+  - vignette edges
+  - subtle animated grid
+  - ambient aura
+
+  UI style:
+  - thin elegant lines
+  - premium spacing
+  - cinematic overlays
+  - smooth transitions
+  - luxury MMORPG aesthetic
+
+  Avoid:
+  - flat material design
+  - generic SaaS UI
+  - modern corporate dashboard style
+  - sharp ugly boxes
+
+</visual_style>
+
+<!-- ========================= -->
+<!-- CHARACTER SYSTEM -->
+<!-- ========================= -->
+
+<character_system>
+
+  Build a REAL interactive character creator.
+
+  NOT a static illustration.
+
+  Character features:
+  - anime MMORPG female character
+  - layered face system
+  - dynamic facial updates
+  - fake 3D shading
+  - premium anime rendering
+
+  Character behavior:
+  - idle breathing animation
+  - blinking eyes
+  - hair sway
+  - subtle head movement
+  - parallax depth effect
+
+  Rendering:
+  - layered gradients
+  - soft shadows
+  - highlights
+  - anime eye reflections
+  - fake subsurface skin lighting
+
+</character_system>
+
+<!-- ========================= -->
+<!-- FACE MORPH SYSTEM -->
+<!-- ========================= -->
+
+<face_morph_system>
+
+  Build realtime facial customization.
+
+  Sliders must affect the character instantly.
+
+  Include:
+  - eye size
+  - eye spacing
+  - eyebrow angle
+  - nose height
+  - jaw width
+  - chin shape
+  - lip fullness
+  - cheek softness
+  - face width
+  - forehead height
+
+  All morphing must animate smoothly.
+
+  Use SVG path interpolation or layered transforms.
+
+</face_morph_system>
+
+<!-- ========================= -->
+<!-- CUSTOMIZATION -->
+<!-- ========================= -->
+
+<customization>
+
+  Categories:
+
+  - Face
+  - Eyes
+  - Eyebrows
+  - Nose
+  - Mouth
+  - Makeup
+  - Hair
+  - Outfit
+  - Accessories
+
+  Makeup system:
+  - blush
+  - eyeliner
+  - lipstick
+  - eye lens
+  - shimmer
+
+  Hair system:
+  - hairstyle switching
+  - hair color presets
+  - anime gradient hair
+
+  Outfit system:
+  - fantasy clothing
+  - elegant robes
+  - sci-fi fantasy costumes
+
+</customization>
+
+<!-- ========================= -->
+<!-- CAMERA -->
+<!-- ========================= -->
+
+<camera_system>
+
+  Camera must feel alive.
+
+  Features:
+  - smooth rotate
+  - zoom transitions
+  - parallax movement
+  - subtle idle drifting
+  - cinematic easing
+
+  Camera positions:
+  - front
+  - side
+  - 45 degree angle
+  - close-up face mode
+
+</camera_system>
+
+<!-- ========================= -->
+<!-- SLIDER DESIGN -->
+<!-- ========================= -->
+
+<slider_design>
+
+  Sliders must NOT use default HTML style.
+
+  Design:
+  - thin glowing gold line
+  - animated thumb
+  - luxury hover effect
+  - elegant movement
+
+  Style reference:
+  MMORPG sliders from Asian fantasy games.
+
+</slider_design>
+
+<!-- ========================= -->
+<!-- UI ANIMATIONS -->
+<!-- ========================= -->
+
+<animations>
+
+  All UI interactions must feel premium.
+
+  Include:
+  - fade transitions
+  - smooth hover glow
+  - animated tab switching
+  - easing animations
+  - floating UI movement
+  - subtle motion everywhere
+
+  Avoid:
+  - instant appearance
+  - stiff interactions
+  - robotic transitions
+
+</animations>
+
+<!-- ========================= -->
+<!-- BACKGROUND -->
+<!-- ========================= -->
+
+<background>
+
+  Create a cinematic fantasy environment.
+
+  Include:
+  - dark blue gradient
+  - ambient fog
+  - floating particles
+  - glowing dust
+  - animated faint grid
+  - magical atmosphere
+
+  Character should feel inside:
+  - celestial chamber
+  - fantasy creation hall
+  - cosmic laboratory
+
+</background>
+
+<!-- ========================= -->
+<!-- TYPOGRAPHY -->
+<!-- ========================= -->
+
+<typography>
+
+  Use elegant fantasy serif fonts.
+
+  Preferred:
+  - Cinzel
+  - Cormorant Garamond
+  - Noto Serif SC
+
+  Text style:
+  - luxury spacing
+  - subtle glow
+  - elegant hierarchy
+
+</typography>
+
+<!-- ========================= -->
+<!-- TECH STACK -->
+<!-- ========================= -->
+
+<tech_stack>
+
+  Use:
+  - React
+  - Tailwind
+  - Framer Motion
+  - SVG layered rendering
+
+  Architecture must be ready for:
+  - Three.js integration
+  - Live2D upgrade
+  - WebGL rendering
+  - future MMORPG systems
+
+</tech_stack>
+
+<!-- ========================= -->
+<!-- STATE MANAGEMENT -->
+<!-- ========================= -->
+
+<state_system>
+
+  Create centralized character state.
+
+  Example:
+
+  {
+    eyeSize: 120,
+    eyeSpacing: 40,
+    eyebrowAngle: 15,
+    noseHeight: 22,
+    lipSize: 18,
+    hairStyle: "pink_ponytail",
+    hairColor: "#ff99cc",
+    makeup: {
+      blush: true,
+      eyeliner: true
+    }
+  }
+
+  All sliders update character state in realtime.
+
+</state_system>
+
+<!-- ========================= -->
+<!-- PRESETS -->
+<!-- ========================= -->
+
+<presets>
+
+  Include:
+  - 8 face presets
+  - anime fantasy presets
+  - random AI generation button
+
+  Presets must animate smoothly when switching.
+
+</presets>
+
+<!-- ========================= -->
+<!-- IMPORTANT -->
+<!-- ========================= -->
+
+<important_rules>
+
+  IMPORTANT:
+
+  This app must feel like:
+  - a premium MMORPG game system
+  - NOT a normal website
+
+  PRIORITY ORDER:
+
+  1. Visual immersion
+  2. Character beauty
+  3. Cinematic feeling
+  4. Smooth interactions
+  5. AAA fantasy atmosphere
+  6. Realtime customization
+
+  DO NOT:
+  - create generic dashboard UI
+  - use flat boring cards
+  - use default browser controls
+  - create corporate SaaS layouts
+
+</important_rules>
+
+</master_prompt>

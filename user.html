@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VƯƠNG ĐẾ AI — Cổng Tu Tiên</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      color: #00ffff;
+      font-family: 'Share Tech Mono', monospace;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Starfield canvas ── */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Scanline overlay ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,255,255,.012) 3px, rgba(0,255,255,.012) 4px);
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      background: linear-gradient(180deg, rgba(0,0,0,.95) 0%, transparent 100%);
+      border-bottom: 1px solid #00ffff18;
+      z-index: 100;
+    }
+    .brand {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 16px;
+      font-weight: 900;
+      color: #00ffff;
+      letter-spacing: 4px;
+      text-shadow: 0 0 20px #00ffff88;
+    }
+    #user-badge {
+      margin-left: 14px;
+      padding: 4px 12px;
+      background: rgba(0,255,136,.08);
+      border: 1px solid rgba(0,255,136,.3);
+      border-radius: 20px;
+      color: #00ff88;
+      font-size: 10px;
+      letter-spacing: 2px;
+    }
+    #topbar-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    #clock {
+      font-size: 11px;
+      color: #00ffff88;
+    }
+    #btn-logout {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(255,60,60,.08);
+      border: 1px solid rgba(255,80,80,.35);
+      color: #ff6666;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all .25s;
+    }
+    #btn-logout:hover {
+      background: rgba(255,60,60,.25);
+      border-color: #ff4444;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(255,60,60,.4);
+    }
+
+    /* ── MAIN LAYOUT ── */
+    #main {
+      position: fixed;
+      inset: 56px 0 0 0;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      grid-template-rows: 1fr;
+      gap: 0;
+      z-index: 10;
+    }
+
+    /* ── LEFT: Character slot + AI agents ── */
+    #left-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 1px solid #00ffff11;
+    }
+
+    /* Character placeholder */
+    #char-slot {
+      flex: 0 0 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid #00ffff11;
+      position: relative;
+      background: radial-gradient(ellipse 80% 80% at 50% 50%, rgba(0,50,80,.25) 0%, transparent 70%);
+    }
+    #char-slot-ring {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 2px dashed rgba(0,255,255,.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      animation: ringPulse 4s ease-in-out infinite;
+    }
+    #char-slot-ring::before {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,255,255,.08);
+    }
+    @keyframes ringPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,255,255,.1), inset 0 0 30px rgba(0,255,255,.04); }
+      50% { box-shadow: 0 0 0 12px rgba(0,255,255,.04), inset 0 0 40px rgba(0,255,255,.08); }
+    }
+    .char-icon { font-size: 40px; opacity: .35; }
+    .char-hint {
+      font-size: 9px;
+      color: rgba(0,255,255,.3);
+      letter-spacing: 2px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    #char-slot-label {
+      position: absolute;
+      top: 12px;
+      left: 20px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 8px;
+      color: rgba(0,255,255,.25);
+      letter-spacing: 3px;
+    }
+    #btn-create-char {
+      margin-top: 14px;
+      padding: 7px 20px;
+      background: transparent;
+      border: 1px solid rgba(255,170,0,.3);
+      color: rgba(255,170,0,.6);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 8px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all .25s;
+    }
+    #btn-create-char:hover {
+      background: rgba(255,170,0,.1);
+      border-color: rgba(255,170,0,.7);
+      color: #ffaa00;
+      box-shadow: 0 0 10px rgba(255,170,0,.2);
+    }
+
+    /* Agent grid */
+    #agent-section {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,255,255,.1) transparent;
+    }
+    #agent-section-hdr {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9px;
+      color: rgba(0,255,255,.4);
+      letter-spacing: 3px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #agent-section-hdr::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(0,255,255,.15), transparent);
+    }
+    #agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .agent-card {
+      background: rgba(0,10,20,.6);
+      border: 1px solid rgba(0,255,255,.1);
+      padding: 12px 10px;
+      cursor: pointer;
+      transition: all .2s;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .agent-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 40%, var(--c,.3) 100%);
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .agent-card:hover { border-color: rgba(0,255,255,.4); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,255,255,.1); }
+    .agent-card:hover::before { opacity: .06; }
+    .agent-card .emoji { font-size: 22px; margin-bottom: 6px; }
+    .agent-card .aname { font-family: 'Orbitron', sans-serif; font-size: 7px; letter-spacing: 1px; color: #00ffff88; line-height: 1.4; }
+    .agent-card .arev { font-size: 9px; color: #00ff88; margin-top: 4px; font-weight: 700; }
+    .agent-card .astatus { position: absolute; top: 6px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 6px #00ff88; animation: blink 2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── RIGHT: Chat panel ── */
+    #right-panel {
+      display: flex;
+      flex-direction: column;
+      background: rgba(0,5,15,.5);
+      backdrop-filter: blur(10px);
+    }
+
+    #chat-hdr {
+      padding: 14px 18px;
+      border-bottom: 1px solid #00ffff11;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    #chat-hdr-icon { font-size: 20px; }
+    #chat-hdr-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      font-weight: 900;
+      color: #ffaa00;
+      letter-spacing: 2px;
+    }
+    #chat-hdr-note { font-size: 8px; color: rgba(255,170,0,.4); letter-spacing: 1px; }
+    #chat-status { margin-left: auto; font-size: 8px; color: #00ff88; letter-spacing: 1px; display: flex; align-items: center; gap: 5px; }
+
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,255,255,.1) transparent;
+    }
+
+    .msg { display: flex; flex-direction: column; gap: 4px; max-width: 90%; }
+    .msg.user { align-self: flex-end; align-items: flex-end; }
+    .msg.ai { align-self: flex-start; align-items: flex-start; }
+    .msg-sender { font-size: 8px; letter-spacing: 2px; opacity: .5; }
+    .msg.user .msg-sender { color: #00ffff; }
+    .msg.ai .msg-sender { color: #ffaa00; }
+    .msg-bubble {
+      padding: 10px 14px;
+      border-radius: 2px;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    .msg.user .msg-bubble {
+      background: rgba(0,255,255,.07);
+      border: 1px solid rgba(0,255,255,.15);
+      color: #e0ffff;
+    }
+    .msg.ai .msg-bubble {
+      background: rgba(255,170,0,.06);
+      border: 1px solid rgba(255,170,0,.15);
+      color: #ffe8b0;
+    }
+    .typing-dots span {
+      display: inline-block;
+      animation: dot 1.2s infinite;
+      font-size: 16px;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: .2s; }
+    .typing-dots span:nth-child(3) { animation-delay: .4s; }
+    @keyframes dot { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+
+    #chat-input-wrap {
+      padding: 12px 14px;
+      border-top: 1px solid #00ffff11;
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    #chat-input {
+      flex: 1;
+      background: rgba(0,255,255,.04);
+      border: 1px solid rgba(0,255,255,.2);
+      color: #00ffff;
+      padding: 10px 14px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    #chat-input:focus { border-color: rgba(0,255,255,.5); }
+    #chat-input::placeholder { color: rgba(0,255,255,.25); }
+    #btn-send {
+      padding: 10px 18px;
+      background: rgba(0,255,255,.08);
+      border: 1px solid rgba(0,255,255,.3);
+      color: #00ffff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    #btn-send:hover { background: rgba(0,255,255,.2); box-shadow: 0 0 10px rgba(0,255,255,.2); }
+    #btn-send:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Agent detail overlay ── */
+    #agent-detail {
+      display: none;
+      position: fixed;
+      inset: 56px 360px 0 0;
+      z-index: 200;
+      background: rgba(0,0,0,.85);
+      backdrop-filter: blur(12px);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+    }
+    #agent-detail.open { display: flex; }
+    #ad-box {
+      background: rgba(0,10,20,.95);
+      border: 1px solid var(--adc,#00ffff);
+      box-shadow: 0 0 40px var(--adc,#00ffff)22, 0 0 80px rgba(0,0,0,.8);
+      padding: 30px;
+      width: min(500px, 90%);
+      position: relative;
+    }
+    #ad-close {
+      position: absolute;
+      top: 14px; right: 14px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.15);
+      color: rgba(255,255,255,.5);
+      width: 28px; height: 28px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all .2s;
+    }
+    #ad-close:hover { background: rgba(255,60,60,.3); border-color: #ff4444; color: #fff; }
+    #ad-emoji { font-size: 40px; margin-bottom: 12px; }
+    #ad-name { font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 900; color: var(--adc,#00ffff); letter-spacing: 3px; margin-bottom: 6px; }
+    #ad-type { font-size: 10px; color: rgba(255,255,255,.35); letter-spacing: 2px; margin-bottom: 18px; }
+    #ad-stats { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+    .ad-stat { text-align: center; }
+    .ad-stat-val { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--adc,#00ffff); }
+    .ad-stat-lbl { font-size: 8px; color: rgba(255,255,255,.3); letter-spacing: 2px; }
+    #ad-rev { font-size: 18px; font-weight: 900; color: #00ff88; font-family: 'Orbitron', sans-serif; margin-bottom: 16px; }
+    #ad-apis { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .ad-api { padding: 3px 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); font-size: 9px; color: rgba(255,255,255,.5); border-radius: 2px; }
+    #btn-chat-agent {
+      width: 100%;
+      padding: 12px;
+      background: rgba(0,255,255,.08);
+      border: 1px solid var(--adc,#00ffff);
+      color: var(--adc,#00ffff);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all .2s;
+      margin-top: 4px;
+    }
+    #btn-chat-agent:hover { background: rgba(0,255,255,.2); box-shadow: 0 0 16px var(--adc,#00ffff)44; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(0,20,30,.9);
+      border: 1px solid #00ffff44;
+      padding: 10px 22px;
+      font-size: 12px;
+      letter-spacing: 1px;
+      color: #00ffff;
+      opacity: 0;
+      transition: all .3s;
+      z-index: 999;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="brand">⬡ VŨ TRỤ AI</div>
+  <div id="user-badge">◈ ĐẠO HỮU</div>
+  <div id="topbar-right">
+    <span id="clock">--:--:--</span>
+    <button id="btn-logout" onclick="location.href='/'">⬅ THOÁT</button>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div id="main">
+
+  <!-- LEFT PANEL -->
+  <div id="left-panel">
+
+    <!-- Character slot (placeholder) -->
+    <div id="char-slot">
+      <div id="char-slot-label">◈ NHÂN VẬT</div>
+      <div id="char-slot-ring">
+        <div class="char-icon">👤</div>
+        <div class="char-hint">CHƯA CÓ<br>NHÂN VẬT</div>
+      </div>
+      <button id="btn-create-char" onclick="showToast('✦ Tính năng tạo nhân vật đang được phát triển...')">
+        + TẠO NHÂN VẬT
+      </button>
+    </div>
+
+    <!-- Agent grid -->
+    <div id="agent-section">
+      <div id="agent-section-hdr">◈ DANH SÁCH PHÁP BẢO</div>
+      <div id="agent-grid"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Chat panel -->
+  <div id="right-panel">
+    <div id="chat-hdr">
+      <div id="chat-hdr-icon">🏯</div>
+      <div>
+        <div id="chat-hdr-name">THIÊN CƠ CÁC</div>
+        <div id="chat-hdr-note">TOÀN TRI VẠN GIỚI</div>
+      </div>
+      <div id="chat-status"><span style="width:6px;height:6px;border-radius:50%;background:#00ff88;display:inline-block;box-shadow:0 0 6px #00ff88;animation:blink 2s infinite;"></span>TRỰC TUYẾN</div>
+    </div>
+    <div id="chat-messages">
+      <div class="msg ai">
+        <div class="msg-sender">THIÊN CƠ CÁC</div>
+        <div class="msg-bubble">Đạo hữu đã đến. Linh khí nơi đây chào đón ngươi. Ta là Thiên Cơ Các, toàn tri vạn giới — hữu duyên gặp gỡ, có điều gì ngươi muốn ta khai mở?</div>
+      </div>
+    </div>
+    <div id="chat-input-wrap">
+      <input id="chat-input" type="text" placeholder="Hỏi Thiên Cơ Các..." onkeydown="if(event.key==='Enter') sendChat()">
+      <button id="btn-send" onclick="sendChat()">⟣ GỬI</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Agent detail overlay -->
+<div id="agent-detail">
+  <div id="ad-box">
+    <button id="ad-close" onclick="closeDetail()">✕</button>
+    <div id="ad-emoji"></div>
+    <div id="ad-name"></div>
+    <div id="ad-type"></div>
+    <div id="ad-stats"></div>
+    <div id="ad-rev"></div>
+    <div id="ad-apis"></div>
+    <button id="btn-chat-agent" onclick="chatWithAgent()">💬 KHAI VẤN PHÁP BẢO NÀY</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Clock ──
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toTimeString().slice(0, 8);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Starfield canvas ──
+(function() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    stars = Array.from({ length: 140 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.2 + 0.2,
+      a: Math.random(),
+      speed: Math.random() * 0.4 + 0.1,
+      dir: Math.random() > 0.5 ? 1 : -1
+    }));
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      s.a += s.speed * 0.01 * s.dir;
+      if (s.a > 1 || s.a < 0) s.dir *= -1;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(180,220,255,${s.a * 0.8})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── Toast ──
+function showToast(msg, duration = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── Agent data (compact list of 20) ──
+const AGENTS = [
+  { id:0, emoji:'📰', name:'NewsFlash AI', type:'Content Intelligence', color:'#00ffff', revenue:'$2,400', auto:92, neural:88, iq:95, apis:['NewsAPI','Reuters','OpenAI','Twitter'] },
+  { id:1, emoji:'🎬', name:'TubeGenius AI', type:'YouTube Automation', color:'#ff0044', revenue:'$8,200', auto:95, neural:92, iq:97, apis:['YouTube API','GPT-4','ElevenLabs','Canva'] },
+  { id:2, emoji:'📱', name:'TikFlow AI', type:'Short Video Empire', color:'#ff00aa', revenue:'$5,600', auto:90, neural:85, iq:93, apis:['TikTok API','CapCut','Sora','Runway'] },
+  { id:3, emoji:'🛍️', name:'ShopBot AI', type:'E-Commerce Engine', color:'#ff8800', revenue:'$12,400', auto:93, neural:89, iq:95, apis:['Shopify','Amazon','Stripe','GPT-4'] },
+  { id:4, emoji:'💹', name:'TradeAI Pro', type:'Algorithmic Trading', color:'#00ff88', revenue:'$45,000', auto:97, neural:96, iq:99, apis:['Binance','Alpaca','TradingView','Quant'] },
+  { id:5, emoji:'✍️', name:'ContentMind AI', type:'Content Creation', color:'#aa00ff', revenue:'$3,800', auto:88, neural:91, iq:92, apis:['GPT-4','Notion','WordPress','Buffer'] },
+  { id:6, emoji:'🔍', name:'SEOMaster AI', type:'Search Domination', color:'#00aaff', revenue:'$7,300', auto:88, neural:87, iq:92, apis:['Ahrefs','SEMrush','Google API','GPT-4'] },
+  { id:7, emoji:'📣', name:'AdGenius AI', type:'Performance Marketing', color:'#ff6600', revenue:'$18,500', auto:94, neural:93, iq:96, apis:['Facebook Ads','Google Ads','TikTok Ads'] },
+  { id:8, emoji:'🤝', name:'SalesBot AI', type:'Sales Automation', color:'#ffcc00', revenue:'$22,000', auto:91, neural:88, iq:94, apis:['HubSpot','Salesforce','LinkedIn','GPT-4'] },
+  { id:9, emoji:'📧', name:'EmailGenius', type:'Email Marketing', color:'#44ffcc', revenue:'$4,200', auto:90, neural:84, iq:91, apis:['Mailchimp','SendGrid','GPT-4','Zapier'] },
+  { id:10, emoji:'🎨', name:'DesignBot AI', type:'Creative Design', color:'#ff44ff', revenue:'$6,100', auto:87, neural:90, iq:93, apis:['Midjourney','Canva','Adobe','DALL-E'] },
+  { id:11, emoji:'🛒', name:'DropBot AI', type:'Dropship Empire', color:'#ff4488', revenue:'$15,800', auto:95, neural:88, iq:93, apis:['Shopify','AliExpress','Facebook','Stripe'] },
+  { id:12, emoji:'📊', name:'DataMind AI', type:'Analytics Engine', color:'#00ddff', revenue:'$9,700', auto:93, neural:95, iq:97, apis:['BigQuery','Tableau','Python','GPT-4'] },
+  { id:13, emoji:'🎙️', name:'VoiceAI Pro', type:'Podcast Automation', color:'#ff7700', revenue:'$3,400', auto:86, neural:83, iq:90, apis:['ElevenLabs','Spotify','RSS','GPT-4'] },
+  { id:14, emoji:'💬', name:'ChatGenius', type:'Customer Support', color:'#00ff66', revenue:'$5,500', auto:92, neural:86, iq:92, apis:['Intercom','Zendesk','WhatsApp','GPT-4'] },
+  { id:15, emoji:'🌐', name:'WebBuilder AI', type:'Web Development', color:'#8844ff', revenue:'$11,200', auto:89, neural:92, iq:95, apis:['Vercel','GitHub','React','GPT-4'] },
+  { id:16, emoji:'🔐', name:'SecureAI', type:'Cybersecurity', color:'#ff3300', revenue:'$13,800', auto:96, neural:94, iq:98, apis:['Cloudflare','Snyk','CrowdStrike'] },
+  { id:17, emoji:'📚', name:'LearnBot AI', type:'Education Engine', color:'#44aaff', revenue:'$4,900', auto:85, neural:89, iq:93, apis:['Khan Academy','Coursera','GPT-4','Notion'] },
+  { id:18, emoji:'⚛️', name:'QuantumAI', type:'Quantum Computing', color:'#ff00ff', revenue:'$120,000', auto:99, neural:99, iq:99, apis:['IBM Quantum','AWS Braket','Qiskit'] },
+  { id:19, emoji:'🏥', name:'MedAI Pro', type:'Healthcare AI', color:'#00ff99', revenue:'$17,600', auto:94, neural:96, iq:98, apis:['Epic','FDA','PubMed','GPT-4'] },
+];
+
+// ── Render agent grid ──
+const grid = document.getElementById('agent-grid');
+AGENTS.forEach(ag => {
+  const card = document.createElement('div');
+  card.className = 'agent-card';
+  card.style.setProperty('--c', ag.color + '20');
+  card.innerHTML = `
+    <div class="astatus"></div>
+    <div class="emoji">${ag.emoji}</div>
+    <div class="aname">${ag.name}</div>
+    <div class="arev">${ag.revenue}</div>
+  `;
+  card.onclick = () => openDetail(ag);
+  grid.appendChild(card);
+});
+
+// ── Agent detail ──
+let currentAgent = null;
+function openDetail(ag) {
+  currentAgent = ag;
+  const box = document.getElementById('ad-box');
+  box.style.setProperty('--adc', ag.color);
+  document.getElementById('ad-emoji').textContent = ag.emoji;
+  document.getElementById('ad-name').textContent = ag.name;
+  document.getElementById('ad-type').textContent = ag.type;
+  document.getElementById('ad-rev').textContent = ag.revenue + ' / NGÀY';
+  document.getElementById('ad-stats').innerHTML = `
+    <div class="ad-stat"><div class="ad-stat-val">${ag.auto}</div><div class="ad-stat-lbl">TỰ ĐỘNG</div></div>
+    <div class="ad-stat"><div class="ad-stat-val">${ag.neural}</div><div class="ad-stat-lbl">THẦN KINH</div></div>
+    <div class="ad-stat"><div class="ad-stat-val">${ag.iq}</div><div class="ad-stat-lbl">TRÍ TUỆ</div></div>
+  `;
+  document.getElementById('ad-apis').innerHTML = ag.apis.map(a => `<span class="ad-api">${a}</span>`).join('');
+  document.getElementById('agent-detail').classList.add('open');
+}
+function closeDetail() {
+  document.getElementById('agent-detail').classList.remove('open');
+  currentAgent = null;
+}
+function chatWithAgent() {
+  if (!currentAgent) return;
+  closeDetail();
+  const name = currentAgent.name;
+  const type = currentAgent.type;
+  addMsg('ai', `Ta là ${name} — ${type}. Đạo hữu muốn ta hé lộ bí quyết nào?`, '🤖 ' + name.toUpperCase());
+  document.getElementById('chat-input').focus();
+}
+
+// ── Chat ──
+const chatHistory = [];
+let chatLoading = false;
+let activeSender = 'THIÊN CƠ CÁC';
+let activePersonality = null;
+
+function addMsg(type, text, sender) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `msg ${type}`;
+  div.innerHTML = `<div class="msg-sender">${sender || (type === 'user' ? 'ĐẠO HỮU' : activeSender)}</div><div class="msg-bubble">${text.replace(/\n/g, '<br>')}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing-indicator';
+  div.innerHTML = `<div class="msg-sender">${activeSender}</div><div class="msg-bubble"><span class="typing-dots"><span>●</span><span>●</span><span>●</span></span></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+async function sendChat() {
+  if (chatLoading) return;
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  addMsg('user', msg);
+  chatHistory.push({ sender: 'ĐẠO HỮU', text: msg });
+
+  chatLoading = true;
+  document.getElementById('btn-send').disabled = true;
+  addTyping();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, history: chatHistory, agentPersonality: activePersonality })
+    });
+    const data = await res.json();
+    removeTyping();
+    addMsg('ai', data.reply);
+    chatHistory.push({ sender: activeSender, text: data.reply });
+    if (chatHistory.length > 30) chatHistory.splice(0, 2);
+  } catch {
+    removeTyping();
+    addMsg('ai', 'Linh khí hỗn loạn... vui lòng thử lại.');
+  } finally {
+    chatLoading = false;
+    document.getElementById('btn-send').disabled = false;
+  }
+}
+
+// ── ESC to close detail ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDetail();
+  if (e.key === 'Enter' && document.activeElement === document.getElementById('chat-input')) {
+    sendChat();
+  }
+});
+</script>
+</body>
+</html>

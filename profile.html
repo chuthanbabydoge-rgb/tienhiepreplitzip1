@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ Sơ Tu Sĩ — Vương Đế AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000008;
+      min-height: 100vh;
+      font-family: 'Rajdhani', sans-serif;
+      color: #e0e0e0;
+      overflow-x: hidden;
+    }
+
+    #bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    .page-wrap {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 0 16px 80px;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      width: 100%; max-width: 900px;
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(0,255,255,0.12);
+      margin-bottom: 36px;
+    }
+    .topbar-brand {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px; color: #00ffff;
+      letter-spacing: 3px; text-shadow: 0 0 14px #00ffff; flex: 1;
+    }
+    .topbar-btn {
+      background: rgba(0,40,40,0.7);
+      border: 1px solid rgba(0,255,255,0.35);
+      color: #00ffff; font-family: 'Orbitron', sans-serif;
+      font-size: 9px; letter-spacing: 1.5px;
+      padding: 7px 14px; border-radius: 20px;
+      cursor: pointer; transition: all 0.2s;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .topbar-btn:hover { background: rgba(0,255,255,0.15); box-shadow: 0 0 14px rgba(0,255,255,0.4); }
+    .topbar-btn.danger { border-color: rgba(255,80,80,0.4); color: #ff6666; }
+    .topbar-btn.danger:hover { background: rgba(255,60,60,0.15); box-shadow: 0 0 14px rgba(255,60,60,0.4); }
+
+    /* ── Profile card ── */
+    .profile-card {
+      width: 100%; max-width: 900px;
+      background: rgba(0,12,24,0.85);
+      border: 1px solid rgba(0,255,255,0.2);
+      border-radius: 16px;
+      box-shadow: 0 0 40px rgba(0,255,255,0.08), inset 0 0 40px rgba(0,255,255,0.03);
+      padding: 40px 36px;
+      display: flex; gap: 40px; align-items: flex-start;
+      backdrop-filter: blur(10px);
+      position: relative; overflow: hidden;
+    }
+    .profile-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, #00ffff88, #ffd70066, #00ffff88, transparent);
+    }
+
+    /* Avatar */
+    .avatar-section { display: flex; flex-direction: column; align-items: center; gap: 16px; min-width: 160px; }
+    .avatar-ring {
+      width: 120px; height: 120px; border-radius: 50%; padding: 3px;
+      background: linear-gradient(135deg, #00ffff, #ffd700, #00ffff);
+      box-shadow: 0 0 30px rgba(0,255,255,0.5), 0 0 60px rgba(0,255,255,0.2);
+      animation: ringPulse 3s ease-in-out infinite;
+    }
+    @keyframes ringPulse {
+      0%,100% { box-shadow: 0 0 30px rgba(0,255,255,0.5), 0 0 60px rgba(0,255,255,0.2); }
+      50%      { box-shadow: 0 0 50px rgba(0,255,255,0.8), 0 0 90px rgba(0,255,255,0.35); }
+    }
+    .avatar-inner { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: rgba(0,30,50,0.9); display: flex; align-items: center; justify-content: center; }
+    .avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-initials { font-family: 'Orbitron', sans-serif; font-size: 36px; font-weight: 900; color: #00ffff; text-shadow: 0 0 20px #00ffff; }
+    .avatar-badge {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; color: #ffd700;
+      background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 20px; padding: 3px 12px; text-align: center;
+    }
+    .user-id-small { font-family:'Share Tech Mono',monospace; font-size:9px; color:#00ffff33; letter-spacing:1px; text-align:center; }
+
+    /* Info section */
+    .info-section { flex: 1; display: flex; flex-direction: column; gap: 22px; }
+    .section-label { font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 3px; color: #00ffff44; text-transform: uppercase; margin-bottom: 6px; }
+    .display-name { font-family: 'Orbitron', sans-serif; font-size: 22px; font-weight: 700; color: #fff; letter-spacing: 2px; text-shadow: 0 0 20px rgba(0,255,255,0.4); display: flex; align-items: center; gap: 10px; }
+    .display-name-edit { background: transparent; border: none; border-bottom: 1px solid rgba(0,255,255,0.3); color: #fff; font-family: 'Orbitron', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 2px; outline: none; width: 100%; }
+    .display-name-edit:focus { border-bottom-color: #00ffff; }
+    .edit-icon { font-size: 14px; cursor: pointer; opacity: 0.4; transition: opacity 0.2s; }
+    .edit-icon:hover { opacity: 1; }
+    .info-row { display: flex; flex-direction: column; gap: 4px; }
+    .info-value { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: #00ffff; letter-spacing: 1px; }
+    .info-value.muted { color: #00ffff77; }
+    .info-value.gold { color: #ffd700; }
+
+    .provider-badge { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 20px; font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 1px; }
+    .provider-google { background: rgba(234,67,53,0.1); border: 1px solid rgba(234,67,53,0.4); color: #ea4335aa; }
+    .provider-replit { background: rgba(0,200,100,0.1); border: 1px solid rgba(0,200,100,0.4); color: #00c86488; }
+
+    /* ── Stats grid ── */
+    .stats-grid {
+      width: 100%; max-width: 900px;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 14px; margin-top: 22px;
+    }
+    .stat-box {
+      background: rgba(0,12,24,0.85);
+      border: 1px solid rgba(0,255,255,0.12);
+      border-radius: 12px; padding: 20px 24px;
+      display: flex; flex-direction: column; gap: 8px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      backdrop-filter: blur(6px); position: relative; overflow: hidden;
+    }
+    .stat-box:hover { border-color: rgba(0,255,255,0.3); box-shadow: 0 0 20px rgba(0,255,255,0.08); }
+    .stat-box.gold-box { border-color: rgba(255,215,0,0.12); }
+    .stat-box.gold-box:hover { border-color: rgba(255,215,0,0.3); box-shadow: 0 0 20px rgba(255,215,0,0.08); }
+    .stat-value { font-family: 'Orbitron', sans-serif; font-size: 26px; font-weight: 900; color: #00ffff; text-shadow: 0 0 16px rgba(0,255,255,0.5); }
+    .stat-value.gold { color: #ffd700; text-shadow: 0 0 16px rgba(255,215,0,0.5); }
+    .stat-label { font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 2px; color: #00ffff55; text-transform: uppercase; }
+    .stat-label.gold { color: #ffd70055; }
+    .stat-icon { font-size: 18px; opacity: 0.6; margin-bottom: 4px; }
+
+    /* ── Member since banner ── */
+    .member-banner {
+      width: 100%; max-width: 900px;
+      background: rgba(0,12,24,0.85);
+      border: 1px solid rgba(255,215,0,0.15);
+      border-radius: 12px; padding: 18px 28px;
+      display: flex; align-items: center; gap: 20px;
+      margin-top: 14px; backdrop-filter: blur(6px);
+    }
+    .member-banner-icon { font-size: 28px; flex-shrink: 0; }
+    .member-banner-text { flex: 1; }
+    .member-banner-title { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 2px; color: #ffd700; margin-bottom: 4px; }
+    .member-banner-sub { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #ffffff55; letter-spacing: 1px; }
+
+    /* ── Actions card ── */
+    .actions-card {
+      width: 100%; max-width: 900px;
+      margin-top: 22px;
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+    }
+    .action-btn {
+      background: rgba(0,12,24,0.85);
+      border: 1px solid rgba(0,255,255,0.15);
+      border-radius: 10px; padding: 18px 22px;
+      display: flex; align-items: center; gap: 14px;
+      cursor: pointer; transition: all 0.22s;
+      text-decoration: none; color: inherit; backdrop-filter: blur(6px);
+    }
+    .action-btn:hover { border-color: rgba(0,255,255,0.4); background: rgba(0,30,50,0.9); box-shadow: 0 0 20px rgba(0,255,255,0.1); transform: translateY(-2px); }
+    .action-btn.gold { border-color: rgba(255,215,0,0.2); }
+    .action-btn.gold:hover { border-color: rgba(255,215,0,0.5); box-shadow: 0 0 20px rgba(255,215,0,0.1); }
+    .action-btn.red { border-color: rgba(255,80,80,0.15); }
+    .action-btn.red:hover { border-color: rgba(255,80,80,0.4); box-shadow: 0 0 20px rgba(255,80,80,0.1); }
+    .action-icon { font-size: 24px; flex-shrink: 0; }
+    .action-text { display: flex; flex-direction: column; gap: 3px; }
+    .action-title { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 2px; color: #00ffff; font-weight: 700; }
+    .action-title.gold { color: #ffd700; }
+    .action-title.red  { color: #ff6666; }
+    .action-title.gray { color: #aaa; }
+    .action-desc { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: #ffffff44; letter-spacing: 1px; }
+
+    /* ── Toast ── */
+    #save-toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: rgba(0,255,100,0.1); border: 1px solid rgba(0,255,100,0.4);
+      color: #00ff64; font-family: 'Share Tech Mono', monospace;
+      font-size: 11px; letter-spacing: 2px;
+      padding: 10px 28px; border-radius: 30px;
+      transition: transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+      z-index: 999; pointer-events: none;
+    }
+    #save-toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Loading ── */
+    #loading-overlay {
+      position: fixed; inset: 0; z-index: 999;
+      background: #000008;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px; transition: opacity 0.5s;
+    }
+    .loading-ring { width: 60px; height: 60px; border-radius: 50%; border: 2px solid transparent; border-top-color: #00ffff; border-right-color: #ffd70055; animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 3px; color: #00ffff66; }
+
+    /* ── Responsive ── */
+    @media (max-width: 680px) {
+      .profile-card { flex-direction: column; align-items: center; padding: 28px 20px; }
+      .avatar-section { min-width: unset; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .actions-card { grid-template-columns: 1fr; }
+      .display-name { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<div id="loading-overlay">
+  <div class="loading-ring"></div>
+  <div class="loading-text">ĐANG TẢI HỒ SƠ...</div>
+</div>
+
+<div class="page-wrap" id="page-wrap" style="display:none;">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-brand">⬡ VƯƠNG ĐẾ AI &nbsp;/&nbsp; <span style="color:#ffd70088;">HỒ SƠ TU SĨ</span></div>
+    <a href="/user" class="topbar-btn">⬅ QUAY LẠI VŨ TRỤ</a>
+    <a href="/api/logout" class="topbar-btn danger">⏻ ĐĂNG XUẤT</a>
+  </div>
+
+  <!-- Profile card -->
+  <div class="profile-card">
+
+    <div class="avatar-section">
+      <div class="avatar-ring">
+        <div class="avatar-inner">
+          <img id="avatar-img" src="" alt="" style="display:none;">
+          <div class="avatar-initials" id="avatar-initials"></div>
+        </div>
+      </div>
+      <div class="avatar-badge" id="rank-badge">TU SĨ SƠ KỲ</div>
+      <div class="user-id-small" id="user-id-display"></div>
+    </div>
+
+    <div class="info-section">
+
+      <!-- Tiên hiệu (editable) -->
+      <div>
+        <div class="section-label">⊹ TIÊN HIỆU</div>
+        <div class="display-name" id="name-display-wrap">
+          <span id="name-display"></span>
+          <span class="edit-icon" onclick="toggleNameEdit()" title="Sửa tiên hiệu">✏️</span>
+        </div>
+        <input class="display-name-edit" id="name-input"
+          style="display:none;" maxlength="50"
+          placeholder="Nhập tiên hiệu..."
+          onblur="saveDisplayName()"
+          onkeydown="if(event.key==='Enter')saveDisplayName()">
+      </div>
+
+      <!-- Email -->
+      <div class="info-row">
+        <div class="section-label">⊹ THẦN THỨC LIÊN KẾT</div>
+        <div class="info-value" id="email-display">—</div>
+      </div>
+
+      <!-- Provider -->
+      <div class="info-row">
+        <div class="section-label">⊹ PHƯƠNG THỨC XÁC THỰC</div>
+        <div id="provider-display"></div>
+      </div>
+
+      <!-- Full name -->
+      <div class="info-row" id="fullname-row" style="display:none;">
+        <div class="section-label">⊹ CHÂN DANH</div>
+        <div class="info-value muted" id="fullname-display"></div>
+      </div>
+
+      <!-- Joined -->
+      <div class="info-row">
+        <div class="section-label">⊹ NGÀY NHẬP MÔN</div>
+        <div class="info-value gold" id="joined-display">—</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Stats grid -->
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-icon">🔐</div>
+      <div class="stat-value" id="stat-logins">—</div>
+      <div class="stat-label">LẦN ĐĂNG NHẬP</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-icon">💬</div>
+      <div class="stat-value" id="stat-agent-msgs">—</div>
+      <div class="stat-label">TIN NHẮN VỚI AGENT</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-icon">🌌</div>
+      <div class="stat-value" id="stat-uc-msgs">—</div>
+      <div class="stat-label">ĐÀM ĐẠO VẠN GIỚI</div>
+    </div>
+    <div class="stat-box gold-box">
+      <div class="stat-icon">📦</div>
+      <div class="stat-value gold" id="stat-vault">—</div>
+      <div class="stat-label gold">VẬT PHẨM KHO TÀNG</div>
+    </div>
+    <div class="stat-box gold-box">
+      <div class="stat-icon">⭐</div>
+      <div class="stat-value gold" id="stat-favs">—</div>
+      <div class="stat-label gold">AGENT YÊU THÍCH</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-value" id="stat-topics">—</div>
+      <div class="stat-label">CHỦ ĐỀ ĐÃ ĐẶT</div>
+    </div>
+  </div>
+
+  <!-- Member since banner -->
+  <div class="member-banner">
+    <div class="member-banner-icon">🏅</div>
+    <div class="member-banner-text">
+      <div class="member-banner-title" id="banner-rank-title">TU SĨ SƠ KỲ</div>
+      <div class="member-banner-sub" id="banner-rank-sub">Cấp bậc dựa trên số lần đăng nhập vào Vương Đế AI</div>
+    </div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#ffd70066;letter-spacing:1px;" id="banner-last-login"></div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions-card">
+    <a href="/user" class="action-btn">
+      <div class="action-icon">🌐</div>
+      <div class="action-text">
+        <div class="action-title">VŨ TRỤ AI</div>
+        <div class="action-desc">Quay lại hệ thống chính</div>
+      </div>
+    </a>
+    <a href="/create-character" class="action-btn gold">
+      <div class="action-icon">⚔️</div>
+      <div class="action-text">
+        <div class="action-title gold">TẠO NHÂN VẬT</div>
+        <div class="action-desc">Đúc luyện hình tượng tu sĩ</div>
+      </div>
+    </a>
+    <div class="action-btn" onclick="clearAllDBData()">
+      <div class="action-icon">🗑️</div>
+      <div class="action-text">
+        <div class="action-title gray">XÓA DỮ LIỆU</div>
+        <div class="action-desc">Xóa lịch sử chat & kho tàng (local + DB)</div>
+      </div>
+    </div>
+    <a href="/api/logout" class="action-btn red">
+      <div class="action-icon">⏻</div>
+      <div class="action-text">
+        <div class="action-title red">ĐĂNG XUẤT</div>
+        <div class="action-desc">Rời khỏi Vương Đế AI</div>
+      </div>
+    </a>
+  </div>
+
+</div>
+
+<div id="save-toast">✦ ĐÃ LƯU TIÊN HIỆU</div>
+
+<script>
+  // ── Starfield ──────────────────────────────────────────────────────────────
+  (function() {
+    const cv = document.getElementById('bg-canvas');
+    const ctx = cv.getContext('2d');
+    let W, H, stars = [];
+    function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
+    function mkStars() {
+      stars = Array.from({length:200}, () => ({
+        x: Math.random()*W, y: Math.random()*H,
+        r: Math.random()*1.2+0.2, a: Math.random(), da: (Math.random()-0.5)*0.005
+      }));
+    }
+    function draw() {
+      ctx.clearRect(0,0,W,H);
+      stars.forEach(s => {
+        s.a = Math.max(0.05, Math.min(1, s.a+s.da));
+        if (s.a<=0.06||s.a>=0.99) s.da*=-1;
+        ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(0,255,255,${s.a*0.35})`; ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    }
+    resize(); mkStars(); draw();
+    window.addEventListener('resize',()=>{resize();mkStars();});
+  })();
+
+  // ── Profile ────────────────────────────────────────────────────────────────
+  let _profile = null;
+
+  function rankFromLogins(n) {
+    if (n >= 100) return { rank: 'VÔ THƯỢNG ĐẾ', sub: 'Đỉnh cao của tu tiên lộ' };
+    if (n >= 50)  return { rank: 'ĐẠI NĂNG',     sub: 'Cảnh giới siêu việt' };
+    if (n >= 20)  return { rank: 'KIM ĐAN ĐẠI NĂNG', sub: 'Đột phá Kim Đan kỳ' };
+    if (n >= 10)  return { rank: 'NGUYÊN ANH KỲ', sub: 'Nguyên thần đã ngưng tụ' };
+    if (n >= 5)   return { rank: 'TRÚC CƠ KỲ',   sub: 'Đã củng cố nền tảng' };
+    return           { rank: 'TU SĨ SƠ KỲ',   sub: 'Cấp bậc dựa trên số lần đăng nhập' };
+  }
+
+  function fmt(n) { return (n||0).toLocaleString('vi-VN'); }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString('vi-VN', {day:'2-digit',month:'2-digit',year:'numeric'});
+    } catch(e) { return '—'; }
+  }
+
+  function fmtDateTime(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      return 'Đăng nhập: ' + d.toLocaleString('vi-VN', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    } catch(e) { return ''; }
+  }
+
+  async function loadProfile() {
+    let authOk = false;
+    try {
+      const r = await fetch('/api/auth/user');
+      if (!r.ok) { window.location.href='/api/login'; return; }
+      authOk = true;
+    } catch(e) { window.location.href='/api/login'; return; }
+
+    try {
+      const r = await fetch('/api/db/user-profile');
+      if (r.ok) _profile = await r.json();
+    } catch(e) {}
+
+    if (!_profile) { window.location.href='/api/login'; return; }
+
+    renderProfile();
+    document.getElementById('loading-overlay').style.display = 'none';
+    const pw = document.getElementById('page-wrap');
+    pw.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
+  }
+
+  function renderProfile() {
+    const p = _profile;
+
+    // Avatar
+    if (p.profileImageUrl) {
+      const img = document.getElementById('avatar-img');
+      img.src = p.profileImageUrl; img.style.display = 'block';
+      document.getElementById('avatar-initials').style.display = 'none';
+    } else {
+      const ch = (p.firstName || p.email || 'Đ')[0].toUpperCase();
+      document.getElementById('avatar-initials').textContent = ch;
+    }
+
+    // User ID
+    const shortId = (p.id||'').replace(/^(google:|replit:)/,'').substring(0,8);
+    document.getElementById('user-id-display').textContent = shortId ? 'ID: '+shortId : '';
+
+    // Tiên hiệu (DB display_name overrides full name)
+    const serverName = [p.firstName, p.lastName].filter(Boolean).join(' ') || p.email || 'Đạo Hữu';
+    const showName = p.displayName || serverName;
+    document.getElementById('name-display').textContent = showName;
+    document.getElementById('name-input').value = showName;
+
+    // Email
+    document.getElementById('email-display').textContent = p.email || 'Không rõ';
+
+    // Provider
+    const isGoogle = (p.provider||'').includes('google') || (p.id||'').startsWith('google:');
+    const provEl = document.getElementById('provider-display');
+    if (isGoogle) {
+      provEl.innerHTML = `<span class="provider-badge provider-google">
+        <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115Z"/><path fill="#34A853" d="M16.04 18.013c-1.09.703-2.474 1.078-4.04 1.078a7.077 7.077 0 0 1-6.723-4.823l-4.04 3.067A11.965 11.965 0 0 0 12 24c2.933 0 5.735-1.043 7.834-3l-3.793-2.987Z"/><path fill="#4A90D9" d="M19.834 21c2.195-2.048 3.62-5.096 3.62-9 0-.71-.109-1.473-.272-2.182H12v4.637h6.436c-.317 1.559-1.17 2.766-2.395 3.558L19.834 21Z"/><path fill="#FBBC05" d="M5.277 14.268A7.12 7.12 0 0 1 4.909 12c0-.782.125-1.533.357-2.235L1.24 6.65A11.934 11.934 0 0 0 0 12c0 1.92.445 3.73 1.237 5.335l4.04-3.067Z"/></svg>
+        GOOGLE ACCOUNT</span>`;
+    } else {
+      provEl.innerHTML = `<span class="provider-badge provider-replit">⚙ REPLIT AUTH</span>`;
+    }
+
+    // Full name
+    const fullName = [p.firstName, p.lastName].filter(Boolean).join(' ');
+    if (fullName) {
+      document.getElementById('fullname-display').textContent = fullName;
+      document.getElementById('fullname-row').style.display = 'flex';
+    }
+
+    // Joined date
+    document.getElementById('joined-display').textContent = fmtDate(p.createdAt);
+
+    // Rank
+    const { rank, sub } = rankFromLogins(p.loginCount || 0);
+    document.getElementById('rank-badge').textContent = rank;
+    document.getElementById('banner-rank-title').textContent = rank;
+    document.getElementById('banner-rank-sub').textContent = sub;
+    document.getElementById('banner-last-login').textContent = fmtDateTime(p.lastLogin);
+
+    // Stats
+    document.getElementById('stat-logins').textContent     = fmt(p.loginCount);
+    document.getElementById('stat-agent-msgs').textContent = fmt(p.stats?.agentMessages);
+    document.getElementById('stat-uc-msgs').textContent    = fmt(p.stats?.ucMessages);
+    document.getElementById('stat-vault').textContent      = fmt(p.stats?.vaultItems);
+    document.getElementById('stat-favs').textContent       = fmt(p.stats?.favorites);
+    document.getElementById('stat-topics').textContent     = fmt(p.stats?.topics);
+  }
+
+  // ── Tiên hiệu editing ──────────────────────────────────────────────────────
+  function toggleNameEdit() {
+    const wrap  = document.getElementById('name-display-wrap');
+    const input = document.getElementById('name-input');
+    if (input.style.display !== 'none') {
+      saveDisplayName();
+    } else {
+      wrap.style.display = 'none';
+      input.style.display = 'block';
+      input.focus(); input.select();
+    }
+  }
+
+  async function saveDisplayName() {
+    const val   = document.getElementById('name-input').value.trim();
+    const wrap  = document.getElementById('name-display-wrap');
+    const input = document.getElementById('name-input');
+    if (val) {
+      document.getElementById('name-display').textContent = val;
+      // Save to DB
+      try {
+        await fetch('/api/db/user-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ displayName: val })
+        });
+      } catch(e) {}
+      // Also keep localStorage as backup
+      localStorage.setItem('vdai_display_name', val);
+    }
+    input.style.display = 'none';
+    wrap.style.display = 'flex';
+    showToast('✦ ĐÃ LƯU TIÊN HIỆU');
+  }
+
+  // ── Clear data ─────────────────────────────────────────────────────────────
+  async function clearAllDBData() {
+    if (!confirm('Xóa toàn bộ lịch sử chat và kho tàng? (Cả local lẫn database — không thể hoàn tác)')) return;
+
+    // Clear localStorage
+    const keep = ['vdai_theme', 'vdai_display_name'];
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && !keep.includes(k)) toRemove.push(k);
+    }
+    toRemove.forEach(k => localStorage.removeItem(k));
+
+    // Clear DB
+    await Promise.allSettled([
+      fetch('/api/db/uc-history', { method: 'DELETE' }),
+      fetch('/api/db/vault',      { method: 'DELETE' }).catch(()=>{}),
+      fetch('/api/db/favorites',  { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({agentIds:[]}) }),
+    ]);
+
+    showToast('✦ ĐÃ XÓA DỮ LIỆU');
+    // Reload stats
+    setTimeout(async () => {
+      try {
+        const r = await fetch('/api/db/user-profile');
+        if (r.ok) { _profile = await r.json(); renderProfile(); }
+      } catch(e) {}
+    }, 800);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('save-toast');
+    t.textContent = msg || '✦ ĐÃ LƯU';
+    t.classList.add('show');
+    setTimeout(() => { t.classList.remove('show'); t.textContent = '✦ ĐÃ LƯU TIÊN HIỆU'; }, 2400);
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  loadProfile();
+</script>
+</body>
+</html>
