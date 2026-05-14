@@ -3,110 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>VƯƠNG ĐẾ AR — Không Gian 3D</title>
+  <title>VƯƠNG ĐẾ AR — Tiên Giới</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    body {
-      background: #000;
-      color: #00ffff;
-      font-family: 'Share Tech Mono', monospace;
+    html, body {
+      width: 100vw; height: 100vh;
       overflow: hidden;
-      height: 100vh;
-      width: 100vw;
+      background: #000;
+      font-family: 'Share Tech Mono', monospace;
     }
 
-    canvas { display: block; }
-
-    /* ── Overlay UI ── */
-    #overlay {
+    /* ═══════════════════════════════
+       CAMERA BACKGROUND
+    ═══════════════════════════════ */
+    #camera-bg {
       position: fixed;
       inset: 0;
-      z-index: 100;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      filter: brightness(0.75) saturate(0.9);
+    }
+
+    /* ═══════════════════════════════
+       AR EFFECTS CANVAS (scanlines, particles)
+    ═══════════════════════════════ */
+    #ar-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%; height: 100%;
+      z-index: 1;
       pointer-events: none;
     }
 
-    /* ── Start Screen ── */
+    /* ═══════════════════════════════
+       START SCREEN
+    ═══════════════════════════════ */
     #start-screen {
       position: fixed;
       inset: 0;
-      background: radial-gradient(ellipse at center, #000a14 0%, #000 70%);
+      z-index: 300;
+      background: radial-gradient(ellipse at center, #000d1a 0%, #000 70%);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 32px;
-      z-index: 200;
+      gap: 28px;
     }
 
     .ar-logo {
       font-family: 'Orbitron', sans-serif;
-      font-size: 28px;
+      font-size: clamp(22px, 5vw, 34px);
       font-weight: 900;
       color: #00ffff;
       letter-spacing: 8px;
-      text-shadow: 0 0 30px #00ffff88, 0 0 60px #00ffff44;
+      text-shadow: 0 0 30px #00ffff88, 0 0 60px #00ffff33;
       animation: logoPulse 3s ease-in-out infinite;
     }
-
     @keyframes logoPulse {
-      0%, 100% { text-shadow: 0 0 30px #00ffff88, 0 0 60px #00ffff44; }
-      50% { text-shadow: 0 0 50px #00ffffcc, 0 0 100px #00ffff66; }
+      0%,100% { text-shadow: 0 0 30px #00ffff88, 0 0 60px #00ffff33; }
+      50%      { text-shadow: 0 0 60px #00ffffcc, 0 0 100px #00ffff66; }
     }
 
-    .ar-subtitle {
-      font-size: 12px;
-      color: rgba(0,255,255,.5);
-      letter-spacing: 4px;
-      text-align: center;
-      line-height: 1.8;
-    }
-
-    .ar-ring {
-      width: 160px;
-      height: 160px;
-      border-radius: 50%;
-      border: 2px solid rgba(0,255,255,.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .ar-ring-wrap {
       position: relative;
+      width: 160px; height: 160px;
+    }
+    .ar-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(0,255,255,.35);
       animation: ringRotate 8s linear infinite;
     }
     .ar-ring::before {
       content: '';
       position: absolute;
-      inset: -15px;
+      inset: -16px;
       border-radius: 50%;
-      border: 1px solid rgba(0,255,255,.1);
+      border: 1px solid rgba(0,255,255,.12);
       animation: ringRotate 5s linear infinite reverse;
     }
-    .ar-ring::after {
-      content: '⬡';
-      font-size: 60px;
-      color: rgba(0,255,255,.6);
-      text-shadow: 0 0 20px #00ffff;
+    .ar-ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 62px;
+      filter: drop-shadow(0 0 18px #00ffff);
     }
-    @keyframes ringRotate {
-      to { transform: rotate(360deg); }
+    @keyframes ringRotate { to { transform: rotate(360deg); } }
+
+    .ar-subtitle {
+      font-size: 11px;
+      color: rgba(0,255,255,.5);
+      letter-spacing: 4px;
+      text-align: center;
+      line-height: 2;
     }
 
-    #btn-start-ar {
-      padding: 16px 48px;
+    #btn-start {
+      padding: 15px 50px;
       background: transparent;
       border: 2px solid #00ffff;
       color: #00ffff;
       font-family: 'Orbitron', sans-serif;
       font-size: 13px;
       font-weight: 700;
-      letter-spacing: 4px;
+      letter-spacing: 5px;
       cursor: pointer;
       transition: all .3s;
       position: relative;
       overflow: hidden;
-      pointer-events: all;
     }
-    #btn-start-ar::before {
+    #btn-start::before {
       content: '';
       position: absolute;
       inset: 0;
@@ -114,1457 +127,929 @@
       transform: scaleX(0);
       transition: transform .3s;
     }
-    #btn-start-ar:hover { box-shadow: 0 0 30px rgba(0,255,255,.4); }
-    #btn-start-ar:hover::before { transform: scaleX(1); }
+    #btn-start:hover { box-shadow: 0 0 40px rgba(0,255,255,.4); }
+    #btn-start:hover::before { transform: scaleX(1); }
 
-    #btn-back-home {
-      padding: 10px 28px;
+    .start-note {
+      font-size: 10px;
+      color: rgba(255,170,0,.6);
+      text-align: center;
+      max-width: 320px;
+      line-height: 1.7;
+      letter-spacing: 1px;
+    }
+
+    #btn-back {
+      padding: 9px 26px;
       background: transparent;
-      border: 1px solid rgba(0,255,255,.3);
-      color: rgba(0,255,255,.5);
+      border: 1px solid rgba(255,255,255,.2);
+      color: rgba(255,255,255,.4);
       font-family: 'Orbitron', sans-serif;
       font-size: 9px;
       letter-spacing: 3px;
       cursor: pointer;
       transition: all .25s;
-      pointer-events: all;
     }
-    #btn-back-home:hover { border-color: rgba(0,255,255,.7); color: #00ffff; }
+    #btn-back:hover { border-color: rgba(255,255,255,.6); color: #fff; }
 
-    #ar-support-msg {
-      font-size: 10px;
-      color: rgba(255,180,0,.6);
-      text-align: center;
-      max-width: 320px;
-      line-height: 1.6;
+    /* ═══════════════════════════════
+       SCANNING ANIMATION
+    ═══════════════════════════════ */
+    #scan-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      pointer-events: none;
     }
 
-    /* ── AR HUD (shown while in AR) ── */
+    #scan-reticle {
+      width: min(70vw, 70vh);
+      height: min(70vw, 70vh);
+      position: relative;
+    }
+    .scan-corner {
+      position: absolute;
+      width: 40px; height: 40px;
+      border-color: #00ffff;
+      border-style: solid;
+      border-width: 0;
+    }
+    .scan-corner.tl { top:0; left:0;  border-top-width: 3px; border-left-width: 3px; }
+    .scan-corner.tr { top:0; right:0; border-top-width: 3px; border-right-width: 3px; }
+    .scan-corner.bl { bottom:0; left:0; border-bottom-width: 3px; border-left-width: 3px; }
+    .scan-corner.br { bottom:0; right:0; border-bottom-width: 3px; border-right-width: 3px; }
+
+    #scan-line {
+      position: absolute;
+      left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00ffff, #00ff88, #00ffff, transparent);
+      box-shadow: 0 0 12px #00ffff;
+      animation: scanDown 1.8s ease-in-out infinite;
+      top: 0;
+    }
+    @keyframes scanDown {
+      0%   { top: 0%; opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    #scan-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      color: #00ffff;
+      letter-spacing: 5px;
+      animation: blinkText 1s ease-in-out infinite;
+    }
+    @keyframes blinkText { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    #scan-progress-bar {
+      width: 200px; height: 3px;
+      background: rgba(0,255,255,.15);
+      border: 1px solid rgba(0,255,255,.3);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    #scan-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00ffff, #00ff88);
+      box-shadow: 0 0 10px #00ffff;
+      transition: width .1s linear;
+    }
+
+    /* ═══════════════════════════════
+       FLOATING APP PANEL
+    ═══════════════════════════════ */
+    #ar-panel-wrapper {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      perspective: 1200px;
+    }
+
+    #ar-panel {
+      width: min(96vw, 520px);
+      height: min(86vh, 780px);
+      display: flex;
+      flex-direction: column;
+      transform-style: preserve-3d;
+      animation: floatPanel 5s ease-in-out infinite;
+      transition: transform .15s ease-out;
+      position: relative;
+    }
+    @keyframes floatPanel {
+      0%,100% { transform: translateY(0px) rotateX(1deg); }
+      50%      { transform: translateY(-8px) rotateX(-1deg); }
+    }
+
+    /* Holographic glow behind panel */
+    #ar-panel::before {
+      content: '';
+      position: absolute;
+      inset: -20px;
+      background: radial-gradient(ellipse, rgba(0,255,255,.12) 0%, transparent 70%);
+      border-radius: 4px;
+      z-index: -1;
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+    @keyframes glowPulse {
+      0%,100% { opacity: .6; }
+      50%      { opacity: 1; }
+    }
+
+    /* Panel header */
+    #ar-panel-header {
+      flex-shrink: 0;
+      height: 44px;
+      background: linear-gradient(90deg, rgba(0,10,25,.95), rgba(0,20,40,.95));
+      border: 1px solid rgba(0,255,255,.5);
+      border-bottom: none;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    #ar-panel-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #00ffff, #00ff88, #00ffff, transparent);
+    }
+
+    .panel-hdr-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #00ff88;
+      box-shadow: 0 0 8px #00ff88;
+      animation: dotBlink 1.5s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes dotBlink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    .panel-hdr-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9px;
+      font-weight: 900;
+      color: #00ffff;
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px #00ffff88;
+      flex: 1;
+    }
+
+    .panel-hdr-status {
+      font-size: 8px;
+      color: rgba(0,255,136,.7);
+      letter-spacing: 2px;
+    }
+
+    /* Corner accents on header */
+    .hdr-corner {
+      position: absolute;
+      width: 10px; height: 10px;
+      border-color: #00ffff;
+      border-style: solid;
+      border-width: 0;
+    }
+    .hdr-corner.tl { top:0; left:0; border-top-width:2px; border-left-width:2px; }
+    .hdr-corner.tr { top:0; right:0; border-top-width:2px; border-right-width:2px; }
+
+    /* Main iframe container */
+    #ar-iframe-wrap {
+      flex: 1;
+      position: relative;
+      border-left: 1px solid rgba(0,255,255,.5);
+      border-right: 1px solid rgba(0,255,255,.5);
+      overflow: hidden;
+      background: #000;
+    }
+
+    #main-app-iframe {
+      width: 100%; height: 100%;
+      border: none;
+      display: block;
+    }
+
+    /* Scanline overlay on iframe */
+    #ar-iframe-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,255,255,.015) 3px,
+        rgba(0,255,255,.015) 4px
+      );
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Panel footer */
+    #ar-panel-footer {
+      flex-shrink: 0;
+      height: 40px;
+      background: linear-gradient(90deg, rgba(0,10,25,.95), rgba(0,20,40,.95));
+      border: 1px solid rgba(0,255,255,.5);
+      border-top: none;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    #ar-panel-footer::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #00ffff44, transparent);
+    }
+    .hdr-corner.bl { bottom:0; left:0; border-bottom-width:2px; border-left-width:2px; }
+    .hdr-corner.br { bottom:0; right:0; border-bottom-width:2px; border-right-width:2px; }
+
+    .ftr-label {
+      font-size: 8px;
+      color: rgba(0,255,255,.4);
+      letter-spacing: 2px;
+      flex: 1;
+    }
+
+    .ftr-btn {
+      padding: 5px 12px;
+      background: transparent;
+      border: 1px solid rgba(255,100,100,.35);
+      color: rgba(255,120,120,.7);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 7px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .ftr-btn:hover { background: rgba(255,100,100,.12); border-color: rgba(255,100,100,.7); color: #ff8888; }
+
+    .ftr-btn-zoom {
+      padding: 5px 12px;
+      background: transparent;
+      border: 1px solid rgba(0,255,255,.25);
+      color: rgba(0,255,255,.5);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 7px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .ftr-btn-zoom:hover { background: rgba(0,255,255,.08); border-color: rgba(0,255,255,.6); color: #00ffff; }
+
+    /* Left/right side glow bars */
+    .side-glow {
+      position: absolute;
+      top: 44px;
+      width: 2px;
+      bottom: 40px;
+      background: linear-gradient(180deg, transparent, #00ffff, #00ff88, #00ffff, transparent);
+      opacity: .5;
+      animation: sideGlowPulse 2s ease-in-out infinite;
+    }
+    .side-glow.left  { left: -1px; }
+    .side-glow.right { right: -1px; }
+    @keyframes sideGlowPulse { 0%,100%{opacity:.3} 50%{opacity:.7} }
+
+    /* Floating particles around panel */
+    .ar-particle {
+      position: fixed;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: #00ffff;
+      box-shadow: 0 0 6px #00ffff;
+      pointer-events: none;
+      z-index: 99;
+      animation: particleFloat linear infinite;
+      opacity: 0;
+    }
+    @keyframes particleFloat {
+      0%   { opacity: 0; transform: translateY(0) scale(0); }
+      20%  { opacity: .7; transform: translateY(-20px) scale(1); }
+      80%  { opacity: .4; transform: translateY(-80px) scale(.8); }
+      100% { opacity: 0; transform: translateY(-120px) scale(0); }
+    }
+
+    /* ═══════════════════════════════
+       AR HUD (top/bottom bar)
+    ═══════════════════════════════ */
     #ar-hud {
       position: fixed;
       inset: 0;
-      pointer-events: none;
       z-index: 150;
+      pointer-events: none;
       display: none;
     }
 
     #hud-top {
       position: absolute;
       top: 0; left: 0; right: 0;
-      padding: 16px 20px;
+      padding: 12px 18px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      background: linear-gradient(180deg, rgba(0,0,0,.6) 0%, transparent 100%);
+      gap: 12px;
+      background: linear-gradient(180deg, rgba(0,0,0,.7) 0%, transparent 100%);
     }
 
-    .hud-brand {
+    .hud-logo {
       font-family: 'Orbitron', sans-serif;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 900;
       color: #00ffff;
       letter-spacing: 4px;
-      text-shadow: 0 0 15px #00ffff88;
+      text-shadow: 0 0 12px #00ffff88;
     }
 
-    .hud-status {
-      font-size: 9px;
+    .hud-badge {
+      padding: 3px 10px;
+      background: rgba(0,255,136,.1);
+      border: 1px solid rgba(0,255,136,.35);
       color: #00ff88;
+      font-size: 8px;
       letter-spacing: 2px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
-    .hud-dot {
-      width: 6px; height: 6px;
+    .hud-badge-dot {
+      width: 5px; height: 5px;
       border-radius: 50%;
       background: #00ff88;
-      box-shadow: 0 0 8px #00ff88;
-      animation: blink 1.5s infinite;
+      box-shadow: 0 0 6px #00ff88;
+      animation: dotBlink 1s infinite;
     }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    .hud-spacer { flex: 1; }
+
+    #hud-clock {
+      font-size: 10px;
+      color: rgba(0,255,255,.5);
+      letter-spacing: 2px;
+    }
 
     #hud-bottom {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      padding: 20px;
+      padding: 12px 18px;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 12px;
-      background: linear-gradient(0deg, rgba(0,0,0,.6) 0%, transparent 100%);
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(0deg, rgba(0,0,0,.7) 0%, transparent 100%);
       pointer-events: all;
     }
 
-    #scan-hint {
-      font-size: 11px;
-      color: rgba(0,255,255,.7);
-      letter-spacing: 2px;
-      text-align: center;
-    }
-
-    #btn-place {
-      padding: 14px 40px;
-      background: rgba(0,255,136,.1);
-      border: 2px solid #00ff88;
-      color: #00ff88;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: all .25s;
-      display: none;
-    }
-    #btn-place:hover { background: rgba(0,255,136,.2); box-shadow: 0 0 20px rgba(0,255,136,.3); }
-
-    #btn-reset {
-      padding: 10px 28px;
-      background: rgba(255,100,100,.08);
-      border: 1px solid rgba(255,100,100,.4);
-      color: rgba(255,120,120,.8);
-      font-family: 'Orbitron', sans-serif;
-      font-size: 9px;
-      letter-spacing: 2px;
-      cursor: pointer;
-      transition: all .25s;
-      display: none;
-    }
-    #btn-reset:hover { background: rgba(255,100,100,.2); }
-
-    #btn-exit-ar {
-      padding: 10px 28px;
-      background: transparent;
-      border: 1px solid rgba(255,255,255,.2);
-      color: rgba(255,255,255,.5);
-      font-family: 'Orbitron', sans-serif;
-      font-size: 9px;
-      letter-spacing: 2px;
-      cursor: pointer;
-      transition: all .25s;
-    }
-    #btn-exit-ar:hover { border-color: rgba(255,255,255,.6); color: #fff; }
-
-    /* Panel buttons row */
-    #panel-controls {
-      display: none;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .panel-btn {
-      padding: 8px 16px;
-      background: rgba(0,255,255,.08);
+    .hud-ctrl-btn {
+      padding: 8px 18px;
+      background: rgba(0,0,0,.5);
       border: 1px solid rgba(0,255,255,.3);
-      color: rgba(0,255,255,.8);
+      color: rgba(0,255,255,.7);
       font-family: 'Orbitron', sans-serif;
       font-size: 8px;
       letter-spacing: 2px;
       cursor: pointer;
       transition: all .2s;
+      backdrop-filter: blur(4px);
     }
-    .panel-btn:hover { background: rgba(0,255,255,.2); border-color: #00ffff; color: #00ffff; }
-    .panel-btn.active { background: rgba(0,255,255,.2); border-color: #00ffff; color: #00ffff; box-shadow: 0 0 10px rgba(0,255,255,.3); }
+    .hud-ctrl-btn:hover { background: rgba(0,255,255,.12); border-color: #00ffff; color: #00ffff; }
 
-    /* ── Fallback (non-WebXR) AR simulation ── */
-    #fallback-screen {
+    #btn-exit {
+      padding: 8px 18px;
+      background: rgba(0,0,0,.5);
+      border: 1px solid rgba(255,100,100,.3);
+      color: rgba(255,120,120,.7);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 8px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all .2s;
+      backdrop-filter: blur(4px);
+    }
+    #btn-exit:hover { background: rgba(255,80,80,.15); border-color: rgba(255,100,100,.8); color: #ff8888; }
+
+    /* ═══════════════════════════════
+       SIZE CONTROLS
+    ═══════════════════════════════ */
+    #size-controls {
       position: fixed;
-      inset: 0;
-      z-index: 180;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 160;
       display: none;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    #camera-feed {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      position: absolute;
-      inset: 0;
+    .size-btn {
+      width: 36px; height: 36px;
+      background: rgba(0,10,25,.8);
+      border: 1px solid rgba(0,255,255,.35);
+      color: #00ffff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+      backdrop-filter: blur(4px);
     }
+    .size-btn:hover { background: rgba(0,255,255,.12); border-color: #00ffff; box-shadow: 0 0 10px rgba(0,255,255,.3); }
 
-    #ar-overlay-canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    /* ── Loading ── */
-    #loading-screen {
+    /* ═══════════════════════════════
+       ERROR / LOADING
+    ═══════════════════════════════ */
+    #error-msg {
       position: fixed;
       inset: 0;
-      background: #000;
+      z-index: 500;
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 20px;
-      z-index: 250;
+      gap: 16px;
+      background: rgba(0,0,0,.9);
     }
-    .loading-ring {
-      width: 60px; height: 60px;
-      border: 2px solid rgba(0,255,255,.1);
-      border-top-color: #00ffff;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text { font-size: 11px; color: rgba(0,255,255,.6); letter-spacing: 3px; }
+    .err-icon { font-size: 40px; }
+    .err-text { font-size: 12px; color: rgba(255,150,100,.8); letter-spacing: 2px; text-align: center; line-height: 1.8; max-width: 300px; }
+    .err-btn { padding: 10px 24px; background: transparent; border: 1px solid rgba(255,150,100,.5); color: rgba(255,150,100,.8); font-family: 'Orbitron', sans-serif; font-size: 9px; letter-spacing: 2px; cursor: pointer; }
   </style>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<!-- Loading -->
-<div id="loading-screen">
-  <div class="loading-ring"></div>
-  <div class="loading-text">KHỞI TẠO HỆ THỐNG AR...</div>
-</div>
+<!-- Camera background -->
+<video id="camera-bg" autoplay playsinline muted></video>
 
-<!-- Start Screen -->
+<!-- AR effects canvas (scanlines, particles, HUD decorations) -->
+<canvas id="ar-canvas"></canvas>
+
+<!-- Start screen -->
 <div id="start-screen">
   <div class="ar-logo">VƯƠNG ĐẾ AR</div>
-  <div class="ar-ring"></div>
-  <div class="ar-subtitle">GIAO DIỆN KHÔNG GIAN 3D<br>QUÉT BỀ MẶT — ĐẶT PORTAL TU TIÊN</div>
-  <button id="btn-start-ar" onclick="startAR()">▶ KÍCH HOẠT AR</button>
-  <div id="ar-support-msg">Yêu cầu: Chrome Android 12+ hoặc Safari iOS 16+ với ARKit. Thiết bị cần có camera và cảm biến chuyển động.</div>
-  <button id="btn-back-home" onclick="window.location.href='/user'">← QUAY LẠI</button>
+  <div class="ar-ring-wrap">
+    <div class="ar-ring"></div>
+    <div class="ar-ring-center">⬡</div>
+  </div>
+  <div class="ar-subtitle">KÍCH HOẠT ĐỂ MỞ TIÊN GIỚI<br>GIAO DIỆN CHÍNH HIỂN THỊ TRONG KHÔNG GIAN 3D</div>
+  <button id="btn-start" onclick="startAR()">▶ MỞ TIÊN GIỚI AR</button>
+  <div class="start-note">App sẽ xin quyền camera để tạo nền thực tế.<br>Giao diện chính sẽ hiện ra như màn hình hologram nổi trên không gian thực.</div>
+  <button id="btn-back" onclick="history.back()">← QUAY LẠI</button>
+</div>
+
+<!-- Scanning animation -->
+<div id="scan-screen">
+  <div id="scan-reticle">
+    <div class="scan-corner tl"></div>
+    <div class="scan-corner tr"></div>
+    <div class="scan-corner bl"></div>
+    <div class="scan-corner br"></div>
+    <div id="scan-line"></div>
+  </div>
+  <div id="scan-label">ĐANG KHỞI TẠO TIÊN GIỚI...</div>
+  <div id="scan-progress-bar"><div id="scan-progress-fill"></div></div>
+</div>
+
+<!-- Floating App Panel -->
+<div id="ar-panel-wrapper">
+  <div id="ar-panel">
+    <!-- Side glow bars -->
+    <div class="side-glow left"></div>
+    <div class="side-glow right"></div>
+
+    <!-- Header -->
+    <div id="ar-panel-header">
+      <div class="hdr-corner tl"></div>
+      <div class="hdr-corner tr"></div>
+      <div class="panel-hdr-dot"></div>
+      <div class="panel-hdr-title">⬡ TIÊN GIỚI CỔNG — VƯƠNG ĐẾ AI</div>
+      <div class="panel-hdr-status" id="hdr-status">● HOẠT ĐỘNG</div>
+    </div>
+
+    <!-- Main app iframe -->
+    <div id="ar-iframe-wrap">
+      <iframe id="main-app-iframe" src="/" allow="camera; microphone; autoplay" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"></iframe>
+    </div>
+
+    <!-- Footer -->
+    <div id="ar-panel-footer">
+      <div class="hdr-corner bl"></div>
+      <div class="hdr-corner br"></div>
+      <span class="ftr-label" id="ftr-coord">AR PORTAL · KHÔNG GIAN 3D</span>
+      <button class="ftr-btn-zoom" onclick="zoomPanel(-1)">⊖</button>
+      <button class="ftr-btn-zoom" onclick="zoomPanel(1)">⊕</button>
+      <button class="ftr-btn" onclick="exitAR()">✕ THOÁT</button>
+    </div>
+  </div>
 </div>
 
 <!-- AR HUD -->
 <div id="ar-hud">
   <div id="hud-top">
-    <div class="hud-brand">VƯƠNG ĐẾ AR</div>
-    <div class="hud-status">
-      <div class="hud-dot"></div>
-      <span id="hud-status-text">ĐANG QUÉT...</span>
+    <div class="hud-logo">VƯƠNG ĐẾ AR</div>
+    <div class="hud-badge">
+      <div class="hud-badge-dot"></div>
+      <span>PORTAL HOẠT ĐỘNG</span>
     </div>
+    <div class="hud-spacer"></div>
+    <div id="hud-clock">--:--:--</div>
   </div>
   <div id="hud-bottom">
-    <div id="scan-hint">Hướng camera xuống bề mặt phẳng</div>
-    <button id="btn-place" onclick="placePanel()">⬡ ĐẶT PORTAL TẠI ĐÂY</button>
-    <div id="panel-controls">
-      <button class="panel-btn active" onclick="switchPanel('agents')" id="pb-agents">THẦN LINH</button>
-      <button class="panel-btn" onclick="switchPanel('char')" id="pb-char">NHÂN VẬT</button>
-      <button class="panel-btn" onclick="switchPanel('chat')" id="pb-chat">ĐỐI THOẠI</button>
-      <button class="panel-btn" onclick="switchPanel('vault')" id="pb-vault">KHO BÁU</button>
-    </div>
-    <button id="btn-reset" onclick="resetPanel()">↺ ĐẶT LẠI VỊ TRÍ</button>
-    <button id="btn-exit-ar" onclick="exitAR()">✕ THOÁT AR</button>
+    <button class="hud-ctrl-btn" onclick="toggleTilt()">⟳ TILT</button>
+    <button class="hud-ctrl-btn" onclick="resetPanelPos()">⌖ CĂNG GIỮA</button>
+    <button id="btn-exit" onclick="exitAR()">✕ THOÁT AR</button>
   </div>
 </div>
 
-<!-- Fallback for non-WebXR browsers -->
-<div id="fallback-screen">
-  <video id="camera-feed" autoplay playsinline muted></video>
-  <canvas id="ar-overlay-canvas"></canvas>
-  <div id="ar-hud" style="display:block"></div>
+<!-- Size controls -->
+<div id="size-controls">
+  <button class="size-btn" onclick="zoomPanel(1)" title="Phóng to">+</button>
+  <button class="size-btn" onclick="zoomPanel(-1)" title="Thu nhỏ">−</button>
+  <button class="size-btn" onclick="resetPanelPos()" title="Reset">⌖</button>
 </div>
 
-<!-- Three.js canvas will be inserted here by JS -->
-<div id="webxr-container"></div>
+<!-- Error -->
+<div id="error-msg">
+  <div class="err-icon">📷</div>
+  <div class="err-text" id="err-text">Không thể truy cập camera.<br>Vui lòng cấp quyền camera và thử lại.</div>
+  <button class="err-btn" onclick="location.reload()">↺ THỬ LẠI</button>
+</div>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-  }
-}
-</script>
-
-<script type="module">
-import * as THREE from 'three';
-
-// ── State ──
-let renderer, scene, camera, xrSession = null;
-let reticle, hitTestSource = null, hitTestSourceRequested = false;
-let panelPlaced = false;
-let panelGroup = null;
-let activePanel = 'agents';
-let userData = null;
-let agentsData = [];
-let panelMeshes = {};
-let currentTextures = {};
-
-// ── Hand Tracking State ──
-let handTrackingAvailable = false;
-let handJointMeshes = { left: {}, right: {} };
-let pinchActive = { left: false, right: false };
-let lastPinchTime = 0;
-const PINCH_THRESHOLD = 0.035; // meters
-
-// ── Gaze / Interaction State ──
-let gazeRaycaster = new THREE.Raycaster();
-let gazeCursor = null;
-let gazeProgressMesh = null;
-let interactiveZones = [];
-let gazeTarget = null;
-let gazeDwellStart = null;
-const GAZE_DWELL_MS = 1500;
-let handPointerLine = null;
-
-// ── Swipe / Touch State ──
+<script>
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let cameraStream = null;
+let animFrame = null;
+let panelScale = 1;
+let tiltEnabled = true;
+let panelTiltX = 0, panelTiltY = 0;
+let targetTiltX = 0, targetTiltY = 0;
 let touchStartX = 0, touchStartY = 0;
-const panels = ['agents', 'char', 'chat', 'vault'];
+let isDragging = false;
+let panelOffsetX = 0, panelOffsetY = 0;
+let dragStartX = 0, dragStartY = 0;
+let dragStartOX = 0, dragStartOY = 0;
+let clockInterval = null;
 
-// ── Init Three.js ──
-function initThree() {
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.xr.enabled = true;
-  renderer.setClearColor(0x000000, 0);
-
-  document.getElementById('webxr-container').appendChild(renderer.domElement);
-
-  // Ambient light
-  const ambient = new THREE.AmbientLight(0x00ffff, 0.4);
-  scene.add(ambient);
-
-  const dirLight = new THREE.DirectionalLight(0x00ffff, 0.8);
-  dirLight.position.set(0, 5, 5);
-  scene.add(dirLight);
-
-  // Reticle (surface indicator)
-  const reticleGeo = new THREE.RingGeometry(0.08, 0.1, 32);
-  const reticleMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide });
-  reticle = new THREE.Mesh(reticleGeo, reticleMat);
-  reticle.matrixAutoUpdate = false;
-  reticle.visible = false;
-  scene.add(reticle);
-
-  // Inner reticle dot
-  const dotGeo = new THREE.CircleGeometry(0.015, 16);
-  const dotMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, side: THREE.DoubleSide });
-  const dot = new THREE.Mesh(dotGeo, dotMat);
-  reticle.add(dot);
-
-  // ── Gaze cursor (center crosshair + dwell ring) ──
-  const cursorGroup = new THREE.Group();
-
-  const crossH = new THREE.PlaneGeometry(0.012, 0.002);
-  const crossV = new THREE.PlaneGeometry(0.002, 0.012);
-  const crossMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, depthTest: false });
-  cursorGroup.add(new THREE.Mesh(crossH, crossMat));
-  cursorGroup.add(new THREE.Mesh(crossV, crossMat));
-
-  const outerRingGeo = new THREE.RingGeometry(0.007, 0.009, 32);
-  const outerRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.6, side: THREE.DoubleSide, depthTest: false });
-  cursorGroup.add(new THREE.Mesh(outerRingGeo, outerRingMat));
-
-  const progressGeo = new THREE.RingGeometry(0.010, 0.013, 32, 1, 0, 0);
-  const progressMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0, side: THREE.DoubleSide, depthTest: false });
-  gazeProgressMesh = new THREE.Mesh(progressGeo, progressMat);
-  cursorGroup.add(gazeProgressMesh);
-
-  cursorGroup.name = 'gaze-cursor';
-  cursorGroup.renderOrder = 999;
-  scene.add(cursorGroup);
-  gazeCursor = cursorGroup;
-
-  // ── Hand pointer line (rendered when hand tracking active) ──
-  const lineMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.7, depthTest: false });
-  const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-1)]);
-  handPointerLine = new THREE.Line(lineGeo, lineMat);
-  handPointerLine.visible = false;
-  handPointerLine.renderOrder = 998;
-  scene.add(handPointerLine);
-
-  window.addEventListener('resize', onResize);
+// ═══════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  const el = document.getElementById('hud-clock');
+  if (el) el.textContent = `${h}:${m}:${s}`;
 }
 
-function onResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-// ── Hand Tracking: Create joint sphere meshes ──
-function initHandJoints(side) {
-  const tipJoints = ['index-finger-tip', 'thumb-tip', 'middle-finger-tip'];
-  tipJoints.forEach(joint => {
-    const geo = new THREE.SphereGeometry(joint.includes('tip') ? 0.007 : 0.005, 8, 8);
-    const mat = new THREE.MeshBasicMaterial({
-      color: joint === 'index-finger-tip' ? 0x00ffff : joint === 'thumb-tip' ? 0x00ff88 : 0xffffff,
-      transparent: true, opacity: 0.85
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.visible = false;
-    scene.add(mesh);
-    handJointMeshes[side][joint] = mesh;
-  });
-}
-
-// ── Hand Tracking: Update joints per frame ──
-function updateHandTracking(frame, refSpace) {
-  const session = renderer.xr.getSession();
-  if (!session.hand) return;
-
-  ['left', 'right'].forEach(side => {
-    const hand = session.inputSources.find(s => s.handedness === side && s.hand);
-    if (!hand?.hand) {
-      Object.values(handJointMeshes[side]).forEach(m => m.visible = false);
-      return;
-    }
-    const tipJoints = ['index-finger-tip', 'thumb-tip', 'middle-finger-tip'];
-    tipJoints.forEach(jointName => {
-      const joint = hand.hand.get(jointName);
-      if (!joint) return;
-      const pose = frame.getJointPose(joint, refSpace);
-      if (!pose) return;
-      const m = handJointMeshes[side][jointName];
-      if (m) {
-        m.visible = true;
-        m.position.set(
-          pose.transform.position.x,
-          pose.transform.position.y,
-          pose.transform.position.z
-        );
-      }
-    });
-
-    // ── Pinch detection ──
-    const indexTip = hand.hand.get('index-finger-tip');
-    const thumbTip = hand.hand.get('thumb-tip');
-    if (indexTip && thumbTip) {
-      const iPose = frame.getJointPose(indexTip, refSpace);
-      const tPose = frame.getJointPose(thumbTip, refSpace);
-      if (iPose && tPose) {
-        const dx = iPose.transform.position.x - tPose.transform.position.x;
-        const dy = iPose.transform.position.y - tPose.transform.position.y;
-        const dz = iPose.transform.position.z - tPose.transform.position.z;
-        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-        const nowPinching = dist < PINCH_THRESHOLD;
-        if (nowPinching && !pinchActive[side]) {
-          pinchActive[side] = true;
-          const now = performance.now();
-          if (now - lastPinchTime > 600) {
-            lastPinchTime = now;
-            // Cast ray from index tip forward
-            if (iPose && panelGroup) {
-              const origin = new THREE.Vector3(
-                iPose.transform.position.x,
-                iPose.transform.position.y,
-                iPose.transform.position.z
-              );
-              const camPos = new THREE.Vector3();
-              camera.getWorldPosition(camPos);
-              const dir = origin.clone().sub(camPos).normalize();
-              gazeRaycaster.set(origin, dir);
-              const targets = interactiveZones.map(z => z.mesh);
-              const hits = gazeRaycaster.intersectObjects(targets);
-              if (hits.length > 0) {
-                const zone = interactiveZones.find(z => z.mesh === hits[0].object);
-                if (zone) activateZone(zone);
-              }
-            }
-          }
-        } else if (!nowPinching) {
-          pinchActive[side] = false;
-        }
-
-        // Update hand pointer line (from index tip toward panel)
-        if (side === 'right' && iPose) {
-          const origin = new THREE.Vector3(
-            iPose.transform.position.x,
-            iPose.transform.position.y,
-            iPose.transform.position.z
-          );
-          const camPos = new THREE.Vector3();
-          camera.getWorldPosition(camPos);
-          const dir = origin.clone().sub(camPos).normalize();
-          const end = origin.clone().add(dir.clone().multiplyScalar(1.5));
-          handPointerLine.geometry.setFromPoints([origin, end]);
-          handPointerLine.visible = true;
-        }
-      }
-    }
-  });
-}
-
-// ── Create interactive 3D zone meshes for tab switching ──
-function createInteractiveZones(group) {
-  interactiveZones = [];
-  const tabDefs = [
-    { id: 'agents', label: '⬡ THẦN LINH', color: 0x00ffff },
-    { id: 'char',   label: '☯ NHÂN VẬT',  color: 0xffaa00 },
-    { id: 'chat',   label: '💬 ĐỐI THOẠI', color: 0x00ff88 },
-    { id: 'vault',  label: '🏺 KHO BÁU',   color: 0xaa88ff },
-  ];
-
-  const totalW = 0.78;
-  const tabW = totalW / tabDefs.length - 0.01;
-  const tabH = 0.06;
-  const startX = -totalW / 2 + tabW / 2;
-  const tabY = 0.38;
-
-  tabDefs.forEach((tab, i) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256; canvas.height = 64;
-    const ctx = canvas.getContext('2d');
-    const isActive = tab.id === activePanel;
-    ctx.fillStyle = isActive ? `rgba(${hexToRGB(tab.color)},0.25)` : 'rgba(0,5,20,0.85)';
-    ctx.fillRect(0, 0, 256, 64);
-    ctx.strokeStyle = `rgba(${hexToRGB(tab.color)},${isActive ? 0.9 : 0.4})`;
-    ctx.lineWidth = isActive ? 3 : 1.5;
-    ctx.strokeRect(2, 2, 252, 60);
-    ctx.font = 'bold 18px Orbitron, monospace';
-    ctx.fillStyle = isActive ? `rgb(${hexToRGB(tab.color)})` : `rgba(${hexToRGB(tab.color)},0.6)`;
-    ctx.textAlign = 'center';
-    ctx.shadowColor = `rgb(${hexToRGB(tab.color)})`;
-    ctx.shadowBlur = isActive ? 15 : 0;
-    ctx.fillText(tab.label, 128, 40);
-    const tex = new THREE.CanvasTexture(canvas);
-    const geo = new THREE.PlaneGeometry(tabW, tabH);
-    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(startX + i * (tabW + 0.01), tabY, 0.001);
-    group.add(mesh);
-
-    interactiveZones.push({ mesh, action: () => window.switchPanel(tab.id), label: tab.label, tabId: tab.id, color: tab.color, tabIdx: i, tabW, tabH, startX });
-  });
-}
-
-function hexToRGB(hex) {
-  const r = (hex >> 16) & 255;
-  const g = (hex >> 8) & 255;
-  const b = hex & 255;
-  return `${r},${g},${b}`;
-}
-
-// ── Refresh tab meshes when active panel changes ──
-function refreshTabMeshes() {
-  if (!panelGroup) return;
-  interactiveZones.forEach(zone => {
-    const tab = { agents: { label:'⬡ THẦN LINH', color:0x00ffff }, char: { label:'☯ NHÂN VẬT', color:0xffaa00 }, chat: { label:'💬 ĐỐI THOẠI', color:0x00ff88 }, vault: { label:'🏺 KHO BÁU', color:0xaa88ff } }[zone.tabId];
-    const canvas = document.createElement('canvas');
-    canvas.width = 256; canvas.height = 64;
-    const ctx = canvas.getContext('2d');
-    const isActive = zone.tabId === activePanel;
-    ctx.fillStyle = isActive ? `rgba(${hexToRGB(tab.color)},0.25)` : 'rgba(0,5,20,0.85)';
-    ctx.fillRect(0, 0, 256, 64);
-    ctx.strokeStyle = `rgba(${hexToRGB(tab.color)},${isActive ? 0.9 : 0.4})`;
-    ctx.lineWidth = isActive ? 3 : 1.5;
-    ctx.strokeRect(2, 2, 252, 60);
-    ctx.font = 'bold 18px Orbitron, monospace';
-    ctx.fillStyle = isActive ? `rgb(${hexToRGB(tab.color)})` : `rgba(${hexToRGB(tab.color)},0.6)`;
-    ctx.textAlign = 'center';
-    ctx.shadowColor = `rgb(${hexToRGB(tab.color)})`;
-    ctx.shadowBlur = isActive ? 15 : 0;
-    ctx.fillText(tab.label, 128, 40);
-    if (zone.mesh.material.map) zone.mesh.material.map.dispose();
-    zone.mesh.material.map = new THREE.CanvasTexture(canvas);
-    zone.mesh.material.needsUpdate = true;
-  });
-}
-
-// ── Activate zone action ──
-function activateZone(zone) {
-  zone.action();
-  // Flash effect on mesh
-  const origOpacity = zone.mesh.material.opacity;
-  zone.mesh.material.opacity = 1;
-  setTimeout(() => { if(zone.mesh.material) zone.mesh.material.opacity = origOpacity; }, 200);
-  refreshTabMeshes();
-  showGestureToast(zone.label);
-}
-
-// ── Gaze update: project center ray, detect dwell ──
-function updateGaze(time) {
-  if (!gazeCursor || !panelGroup) return;
-
-  // Place gaze cursor 1m in front of camera
-  const camDir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-  const camPos = new THREE.Vector3();
-  camera.getWorldPosition(camPos);
-  gazeCursor.position.copy(camPos).add(camDir.clone().multiplyScalar(1.0));
-  gazeCursor.quaternion.copy(camera.quaternion);
-
-  // Raycast from camera center
-  gazeRaycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-  const targets = interactiveZones.map(z => z.mesh);
-  const hits = gazeRaycaster.intersectObjects(targets);
-
-  if (hits.length > 0) {
-    const zone = interactiveZones.find(z => z.mesh === hits[0].object);
-    if (zone !== gazeTarget) {
-      gazeTarget = zone;
-      gazeDwellStart = time;
-      gazeProgressMesh.material.opacity = 0.9;
-    } else {
-      const elapsed = time - gazeDwellStart;
-      const progress = Math.min(elapsed / GAZE_DWELL_MS, 1);
-      // Update progress ring arc
-      gazeProgressMesh.geometry.dispose();
-      gazeProgressMesh.geometry = new THREE.RingGeometry(0.010, 0.013, 32, 1, 0, progress * Math.PI * 2);
-      gazeProgressMesh.material.opacity = progress > 0 ? 0.9 : 0;
-      if (progress >= 1) {
-        activateZone(gazeTarget);
-        gazeTarget = null;
-        gazeDwellStart = null;
-        gazeProgressMesh.geometry.dispose();
-        gazeProgressMesh.geometry = new THREE.RingGeometry(0.010, 0.013, 32, 1, 0, 0);
-        gazeProgressMesh.material.opacity = 0;
-      }
-    }
-    // Highlight hovered tab
-    updateHoverHighlight(zone);
-  } else {
-    if (gazeTarget !== null) {
-      gazeTarget = null;
-      gazeDwellStart = null;
-      gazeProgressMesh.geometry.dispose();
-      gazeProgressMesh.geometry = new THREE.RingGeometry(0.010, 0.013, 32, 1, 0, 0);
-      gazeProgressMesh.material.opacity = 0;
-      updateHoverHighlight(null);
-    }
-  }
-}
-
-let hoveredZone = null;
-function updateHoverHighlight(zone) {
-  if (hoveredZone === zone) return;
-  hoveredZone = zone;
-  interactiveZones.forEach(z => {
-    const scale = z === zone ? 1.08 : 1.0;
-    z.mesh.scale.set(scale, scale, 1);
-  });
-}
-
-// ── Handle XR select event (screen tap / controller trigger) ──
-function handleSelect(event) {
-  if (!panelGroup) return;
-  const source = event.inputSource;
-  // Use gaze ray from camera center
-  gazeRaycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-  const targets = interactiveZones.map(z => z.mesh);
-  const hits = gazeRaycaster.intersectObjects(targets);
-  if (hits.length > 0) {
-    const zone = interactiveZones.find(z => z.mesh === hits[0].object);
-    if (zone) activateZone(zone);
-  }
-}
-
-// ── Toast notification inside AR ──
-function showGestureToast(msg) {
-  let toast = document.getElementById('ar-gesture-toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'ar-gesture-toast';
-    toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,255,255,0.15);border:1px solid rgba(0,255,255,0.5);color:#00ffff;font-family:Orbitron,sans-serif;font-size:12px;letter-spacing:3px;padding:12px 24px;border-radius:2px;z-index:400;pointer-events:none;transition:opacity 0.3s;';
-    document.body.appendChild(toast);
-  }
-  toast.textContent = '✓ ' + msg;
-  toast.style.opacity = '1';
-  setTimeout(() => { toast.style.opacity = '0'; }, 1200);
-}
-
-// ── Fetch user data ──
-async function fetchUserData() {
-  try {
-    const res = await fetch('/api/auth/user');
-    if (res.ok) userData = await res.json();
-  } catch(e) {}
-
-  try {
-    const res2 = await fetch('/api/db/agent-chat/1');
-  } catch(e) {}
-}
-
-// ── Create Canvas Texture (2D UI drawn on canvas → Three.js texture) ──
-function makeCanvasTexture(width, height, drawFn) {
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
+// ═══════════════════════════════════════
+// AR CANVAS EFFECTS
+// ═══════════════════════════════════════
+function initARCanvas() {
+  const canvas = document.getElementById('ar-canvas');
   const ctx = canvas.getContext('2d');
-  drawFn(ctx, width, height);
-  return new THREE.CanvasTexture(canvas);
-}
+  let t = 0;
 
-// ── Panel: Agents ──
-function drawAgentsPanel(ctx, w, h) {
-  // Background
-  ctx.fillStyle = 'rgba(0, 5, 20, 0.92)';
-  ctx.fillRect(0, 0, w, h);
-
-  // Border glow
-  const grad = ctx.createLinearGradient(0, 0, w, h);
-  grad.addColorStop(0, 'rgba(0,255,255,0.6)');
-  grad.addColorStop(1, 'rgba(0,100,255,0.3)');
-  ctx.strokeStyle = grad;
-  ctx.lineWidth = 4;
-  ctx.strokeRect(2, 2, w-4, h-4);
-
-  // Corner accents
-  const c = 20;
-  ctx.strokeStyle = '#00ffff';
-  ctx.lineWidth = 3;
-  [[0,0],[w,0],[0,h],[w,h]].forEach(([x,y]) => {
-    const sx = x === 0 ? 0 : w - c;
-    const sy = y === 0 ? 0 : h - c;
-    ctx.beginPath();
-    ctx.moveTo(sx, y === 0 ? sy + c : sy);
-    ctx.lineTo(sx, sy);
-    ctx.lineTo(x === 0 ? sx + c : sx, sy);
-    ctx.stroke();
-  });
-
-  // Header
-  ctx.fillStyle = 'rgba(0,255,255,0.08)';
-  ctx.fillRect(0, 0, w, 80);
-
-  ctx.font = 'bold 28px Orbitron, monospace';
-  ctx.fillStyle = '#00ffff';
-  ctx.textAlign = 'center';
-  ctx.shadowColor = '#00ffff';
-  ctx.shadowBlur = 20;
-  ctx.fillText('⬡ THIÊN THẦN HỘI', w/2, 50);
-  ctx.shadowBlur = 0;
-
-  ctx.font = '16px Share Tech Mono, monospace';
-  ctx.fillStyle = 'rgba(0,255,255,0.4)';
-  ctx.fillText('CHỌN THẦN LINH ĐỂ GIAO TIẾP', w/2, 70);
-
-  // Agent cards
-  const agents = [
-    { emoji: '🌙', name: 'THIÊN CƠ', desc: 'Tiên tri & dự đoán', color: '#aa88ff' },
-    { emoji: '⚔️', name: 'VŨ THẦN', desc: 'Chiến đấu & tu luyện', color: '#ff6644' },
-    { emoji: '📖', name: 'VĂN THÁNH', desc: 'Tri thức & học vấn', color: '#44aaff' },
-    { emoji: '💊', name: 'Y TIÊN', desc: 'Đan dược & chữa lành', color: '#44ff88' },
-    { emoji: '🔮', name: 'HUYỀN CƠ', desc: 'Bí ẩn & huyền học', color: '#ff44aa' },
-    { emoji: '⚡', name: 'LÔI THẦN', desc: 'Sức mạnh & năng lượng', color: '#ffcc00' },
-  ];
-
-  const cols = 3, rows = 2;
-  const padX = 40, padY = 100;
-  const cw = (w - padX*2) / cols;
-  const ch = (h - padY - 40) / rows;
-
-  agents.forEach((ag, i) => {
-    const col = i % cols, row = Math.floor(i / cols);
-    const x = padX + col * cw, y = padY + row * ch;
-
-    // Card bg
-    ctx.fillStyle = 'rgba(0,10,30,0.7)';
-    ctx.fillRect(x+4, y+4, cw-8, ch-8);
-
-    // Card border
-    ctx.strokeStyle = ag.color + '55';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(x+4, y+4, cw-8, ch-8);
-
-    // Emoji
-    ctx.font = `${ch * 0.28}px serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText(ag.emoji, x + cw/2, y + ch*0.42);
-
-    // Name
-    ctx.font = 'bold 18px Orbitron, monospace';
-    ctx.fillStyle = ag.color;
-    ctx.shadowColor = ag.color;
-    ctx.shadowBlur = 10;
-    ctx.fillText(ag.name, x + cw/2, y + ch*0.65);
-    ctx.shadowBlur = 0;
-
-    // Desc
-    ctx.font = '14px Share Tech Mono, monospace';
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.fillText(ag.desc, x + cw/2, y + ch*0.82);
-  });
-}
-
-// ── Panel: Character ──
-function drawCharPanel(ctx, w, h) {
-  ctx.fillStyle = 'rgba(0, 5, 20, 0.92)';
-  ctx.fillRect(0, 0, w, h);
-
-  const grad = ctx.createLinearGradient(0, 0, w, h);
-  grad.addColorStop(0, 'rgba(255,170,0,0.5)');
-  grad.addColorStop(1, 'rgba(255,100,0,0.2)');
-  ctx.strokeStyle = grad;
-  ctx.lineWidth = 4;
-  ctx.strokeRect(2, 2, w-4, h-4);
-
-  // Header
-  ctx.fillStyle = 'rgba(255,170,0,0.08)';
-  ctx.fillRect(0, 0, w, 80);
-
-  ctx.font = 'bold 28px Orbitron, monospace';
-  ctx.fillStyle = '#ffaa00';
-  ctx.textAlign = 'center';
-  ctx.shadowColor = '#ffaa00';
-  ctx.shadowBlur = 20;
-  ctx.fillText('☯ NHÂN VẬT TU TIÊN', w/2, 50);
-  ctx.shadowBlur = 0;
-
-  // Avatar circle
-  ctx.beginPath();
-  ctx.arc(w/2, 200, 80, 0, Math.PI*2);
-  ctx.strokeStyle = 'rgba(255,170,0,0.5)';
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  ctx.font = '80px serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('🧘', w/2, 230);
-
-  const name = userData?.display_name || userData?.first_name || 'ĐẠO HỮU';
-  ctx.font = 'bold 26px Orbitron, monospace';
-  ctx.fillStyle = '#ffaa00';
-  ctx.shadowColor = '#ffaa00';
-  ctx.shadowBlur = 15;
-  ctx.fillText(name.toUpperCase(), w/2, 320);
-  ctx.shadowBlur = 0;
-
-  ctx.font = '18px Share Tech Mono, monospace';
-  ctx.fillStyle = 'rgba(255,170,0,0.5)';
-  ctx.fillText('CẤP ĐỘ: LUYỆN KHÍ TẦNG 1', w/2, 355);
-
-  // Stats
-  const stats = [
-    { label: 'LINH KHÍ', val: 85, color: '#00ffff' },
-    { label: 'THỂ LỰC', val: 60, color: '#00ff88' },
-    { label: 'TÂM PHÁP', val: 42, color: '#aa88ff' },
-    { label: 'VŨ KHÍ', val: 73, color: '#ff6644' },
-  ];
-
-  stats.forEach((s, i) => {
-    const y = 410 + i * 65;
-    const bx = 80, bw = w - 160, bh = 22;
-
-    ctx.font = '16px Orbitron, monospace';
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.textAlign = 'left';
-    ctx.fillText(s.label, bx, y);
-
-    ctx.font = '16px Share Tech Mono, monospace';
-    ctx.fillStyle = s.color;
-    ctx.textAlign = 'right';
-    ctx.fillText(s.val + '%', w - bx, y);
-
-    // Bar bg
-    ctx.fillStyle = 'rgba(255,255,255,0.07)';
-    ctx.fillRect(bx, y + 8, bw, bh);
-
-    // Bar fill
-    const fg = ctx.createLinearGradient(bx, 0, bx + bw, 0);
-    fg.addColorStop(0, s.color + 'cc');
-    fg.addColorStop(1, s.color + '44');
-    ctx.fillStyle = fg;
-    ctx.fillRect(bx, y + 8, bw * (s.val/100), bh);
-  });
-}
-
-// ── Panel: Chat ──
-function drawChatPanel(ctx, w, h, messages) {
-  ctx.fillStyle = 'rgba(0, 5, 20, 0.92)';
-  ctx.fillRect(0, 0, w, h);
-
-  const grad = ctx.createLinearGradient(0, 0, 0, h);
-  grad.addColorStop(0, 'rgba(0,255,136,0.5)');
-  grad.addColorStop(1, 'rgba(0,100,255,0.2)');
-  ctx.strokeStyle = grad;
-  ctx.lineWidth = 4;
-  ctx.strokeRect(2, 2, w-4, h-4);
-
-  ctx.fillStyle = 'rgba(0,255,136,0.06)';
-  ctx.fillRect(0, 0, w, 80);
-
-  ctx.font = 'bold 28px Orbitron, monospace';
-  ctx.fillStyle = '#00ff88';
-  ctx.textAlign = 'center';
-  ctx.shadowColor = '#00ff88';
-  ctx.shadowBlur = 20;
-  ctx.fillText('💬 ĐỐI THOẠI THẦN LINH', w/2, 50);
-  ctx.shadowBlur = 0;
-
-  // Chat area
-  const msgs = messages || [
-    { from: 'AI', text: 'Đạo hữu, ngươi cần ta trợ giúp điều gì trong không gian thiêng liêng này?' },
-    { from: 'USER', text: 'Ta muốn biết cách đột phá cảnh giới.' },
-    { from: 'AI', text: 'Muốn đột phá cần tích lũy đủ linh khí, thiền định 49 ngày và dùng đan dược trợ lực.' },
-  ];
-
-  let y = 110;
-  msgs.forEach(m => {
-    const isUser = m.from === 'USER';
-    const maxW = w - 120;
-
-    ctx.font = '16px Orbitron, monospace';
-    ctx.fillStyle = isUser ? '#00ffff' : '#00ff88';
-    ctx.textAlign = isUser ? 'right' : 'left';
-    ctx.fillText(isUser ? '[ ĐẠO HỮU ]' : '[ THẦN LINH ]', isUser ? w - 40 : 40, y);
-    y += 26;
-
-    ctx.font = '18px Share Tech Mono, monospace';
-    ctx.fillStyle = isUser ? 'rgba(0,255,255,0.85)' : 'rgba(0,255,136,0.85)';
-    ctx.textAlign = isUser ? 'right' : 'left';
-
-    // Word wrap
-    const words = m.text.split('');
-    let line = '', lx = isUser ? w - 40 : 40;
-    const chars_per_line = 28;
-    for (let ci = 0; ci < m.text.length; ci += chars_per_line) {
-      const chunk = m.text.substring(ci, ci + chars_per_line);
-      ctx.fillText(chunk, lx, y);
-      y += 24;
-    }
-    y += 14;
-
-    // Divider
-    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(40, y); ctx.lineTo(w-40, y);
-    ctx.stroke();
-    y += 14;
-  });
-
-  // Input box
-  ctx.fillStyle = 'rgba(0,255,136,0.05)';
-  ctx.fillRect(40, h - 80, w - 80, 50);
-  ctx.strokeStyle = 'rgba(0,255,136,0.3)';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(40, h - 80, w - 80, 50);
-
-  ctx.font = '18px Share Tech Mono, monospace';
-  ctx.fillStyle = 'rgba(0,255,136,0.3)';
-  ctx.textAlign = 'left';
-  ctx.fillText('Nhập lệnh... [dùng app để chat]', 60, h - 48);
-}
-
-// ── Panel: Vault ──
-function drawVaultPanel(ctx, w, h) {
-  ctx.fillStyle = 'rgba(0, 5, 20, 0.92)';
-  ctx.fillRect(0, 0, w, h);
-
-  const grad = ctx.createLinearGradient(0, 0, w, h);
-  grad.addColorStop(0, 'rgba(170,136,255,0.5)');
-  grad.addColorStop(1, 'rgba(100,0,255,0.2)');
-  ctx.strokeStyle = grad;
-  ctx.lineWidth = 4;
-  ctx.strokeRect(2, 2, w-4, h-4);
-
-  ctx.fillStyle = 'rgba(170,136,255,0.06)';
-  ctx.fillRect(0, 0, w, 80);
-
-  ctx.font = 'bold 28px Orbitron, monospace';
-  ctx.fillStyle = '#aa88ff';
-  ctx.textAlign = 'center';
-  ctx.shadowColor = '#aa88ff';
-  ctx.shadowBlur = 20;
-  ctx.fillText('🏺 KHO BÁU BÍ TÀNG', w/2, 50);
-  ctx.shadowBlur = 0;
-
-  ctx.font = '18px Share Tech Mono, monospace';
-  ctx.fillStyle = 'rgba(170,136,255,0.4)';
-  ctx.fillText('NHỮNG GHI CHÉP ĐÃ LƯU TRỮ', w/2, 70);
-
-  const items = [
-    { icon: '📜', title: 'Bí kíp Cửu Dương', type: 'VĂN BẢN', time: '2 giờ trước' },
-    { icon: '🗡️', title: 'Chiến thuật đánh boss', type: 'CHIẾN LƯỢC', time: '5 giờ trước' },
-    { icon: '💊', title: 'Công thức đan dược', type: 'ĐAN PHƯƠNG', time: '1 ngày trước' },
-    { icon: '⭐', title: 'Lịch trình tu luyện', type: 'KẾ HOẠCH', time: '2 ngày trước' },
-    { icon: '🔮', title: 'Bí mật huyền bí', type: 'HUYỀN HỌC', time: '3 ngày trước' },
-  ];
-
-  items.forEach((item, i) => {
-    const y = 110 + i * 100;
-    ctx.fillStyle = 'rgba(170,136,255,0.06)';
-    ctx.fillRect(40, y, w - 80, 85);
-    ctx.strokeStyle = 'rgba(170,136,255,0.15)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(40, y, w - 80, 85);
-
-    ctx.font = '36px serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(item.icon, 65, y + 52);
-
-    ctx.font = 'bold 20px Orbitron, monospace';
-    ctx.fillStyle = '#aa88ff';
-    ctx.fillText(item.title, 115, y + 38);
-
-    ctx.font = '15px Share Tech Mono, monospace';
-    ctx.fillStyle = 'rgba(170,136,255,0.5)';
-    ctx.fillText(item.type + ' · ' + item.time, 115, y + 62);
-  });
-}
-
-// ── Build/Update panel texture ──
-function buildPanel(type) {
-  const W = 1024, H = 768;
-  let drawFn;
-  switch(type) {
-    case 'agents': drawFn = (c,w,h) => drawAgentsPanel(c,w,h); break;
-    case 'char':   drawFn = (c,w,h) => drawCharPanel(c,w,h); break;
-    case 'chat':   drawFn = (c,w,h) => drawChatPanel(c,w,h); break;
-    case 'vault':  drawFn = (c,w,h) => drawVaultPanel(c,w,h); break;
-    default: drawFn = (c,w,h) => drawAgentsPanel(c,w,h);
-  }
-
-  if (currentTextures[type]) {
-    currentTextures[type].dispose();
-  }
-  const tex = makeCanvasTexture(W, H, drawFn);
-  currentTextures[type] = tex;
-  return tex;
-}
-
-// ── Create 3D Panel Group ──
-function createPanelGroup() {
-  const group = new THREE.Group();
-
-  // Main panel mesh
-  const panelW = 0.8, panelH = 0.6;
-  const geo = new THREE.PlaneGeometry(panelW, panelH);
-  const tex = buildPanel('agents');
-  const mat = new THREE.MeshBasicMaterial({
-    map: tex,
-    transparent: true,
-    opacity: 0.95,
-    side: THREE.DoubleSide,
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.name = 'panel-main';
-  group.add(mesh);
-  panelMeshes['main'] = mesh;
-
-  // Glow border (slightly larger plane with additive)
-  const borderGeo = new THREE.PlaneGeometry(panelW + 0.01, panelH + 0.01);
-  const borderMat = new THREE.MeshBasicMaterial({
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.15,
-    side: THREE.DoubleSide,
-  });
-  const border = new THREE.Mesh(borderGeo, borderMat);
-  border.position.z = -0.001;
-  group.add(border);
-
-  // Particle ring
-  const particleCount = 60;
-  const pGeo = new THREE.BufferGeometry();
-  const positions = new Float32Array(particleCount * 3);
-  const radius = Math.max(panelW, panelH) * 0.65;
-  for (let i = 0; i < particleCount; i++) {
-    const angle = (i / particleCount) * Math.PI * 2;
-    positions[i*3]   = Math.cos(angle) * radius;
-    positions[i*3+1] = Math.sin(angle) * radius;
-    positions[i*3+2] = (Math.random() - 0.5) * 0.05;
-  }
-  pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  const pMat = new THREE.PointsMaterial({ color: 0x00ffff, size: 0.008, transparent: true, opacity: 0.6 });
-  const particles = new THREE.Points(pGeo, pMat);
-  particles.name = 'particles';
-  group.add(particles);
-
-  // Vertical beam below
-  const beamGeo = new THREE.CylinderGeometry(0.003, 0.003, 0.3, 8);
-  const beamMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.4 });
-  const beam = new THREE.Mesh(beamGeo, beamMat);
-  beam.position.y = -panelH/2 - 0.15;
-  group.add(beam);
-
-  // ── Interactive tab zones (gaze / pinch / tap targets) ──
-  createInteractiveZones(group);
-
-  return group;
-}
-
-// ── Switch panel content ──
-window.switchPanel = function(type) {
-  activePanel = type;
-  ['agents','char','chat','vault'].forEach(p => {
-    const btn = document.getElementById('pb-' + p);
-    if (btn) btn.classList.toggle('active', p === type);
-  });
-
-  if (panelGroup && panelMeshes['main']) {
-    const tex = buildPanel(type);
-    panelMeshes['main'].material.map = tex;
-    panelMeshes['main'].material.needsUpdate = true;
-  }
-  refreshTabMeshes();
-};
-
-// ── Place Panel ──
-window.placePanel = function() {
-  if (!reticle.visible) return;
-
-  if (panelGroup) scene.remove(panelGroup);
-  panelGroup = createPanelGroup();
-
-  const pos = new THREE.Vector3();
-  const quat = new THREE.Quaternion();
-  reticle.matrix.decompose(pos, quat, new THREE.Vector3());
-
-  panelGroup.position.copy(pos);
-  panelGroup.position.y += 0.35;
-  panelGroup.quaternion.copy(quat);
-
-  scene.add(panelGroup);
-  panelPlaced = true;
-
-  document.getElementById('scan-hint').textContent = 'Portal đã đặt! Chọn chế độ bên dưới.';
-  document.getElementById('btn-place').style.display = 'none';
-  document.getElementById('panel-controls').style.display = 'flex';
-  document.getElementById('btn-reset').style.display = 'block';
-  document.getElementById('hud-status-text').textContent = 'PORTAL HOẠT ĐỘNG';
-};
-
-// ── Reset Panel ──
-window.resetPanel = function() {
-  if (panelGroup) { scene.remove(panelGroup); panelGroup = null; }
-  panelPlaced = false;
-
-  document.getElementById('scan-hint').textContent = 'Hướng camera xuống bề mặt phẳng';
-  document.getElementById('btn-place').style.display = 'none';
-  document.getElementById('panel-controls').style.display = 'none';
-  document.getElementById('btn-reset').style.display = 'none';
-  document.getElementById('hud-status-text').textContent = 'ĐANG QUÉT...';
-};
-
-// ── XR Frame ──
-function onXRFrame(time, frame) {
-  const session = renderer.xr.getSession();
-  const refSpace = renderer.xr.getReferenceSpace();
-
-  if (!hitTestSourceRequested) {
-    session.requestReferenceSpace('viewer').then(viewerSpace => {
-      session.requestHitTestSource({ space: viewerSpace }).then(src => {
-        hitTestSource = src;
-      });
-    });
-    hitTestSourceRequested = true;
-  }
-
-  if (hitTestSource) {
-    const hits = frame.getHitTestResults(hitTestSource);
-    if (hits.length > 0) {
-      const hit = hits[0];
-      const pose = hit.getPose(refSpace);
-      reticle.visible = true;
-      reticle.matrix.fromArray(pose.transform.matrix);
-
-      if (!panelPlaced) {
-        document.getElementById('btn-place').style.display = 'block';
-        document.getElementById('scan-hint').textContent = 'Bề mặt phát hiện! Nhấn đặt portal.';
-        document.getElementById('hud-status-text').textContent = 'BỀ MẶT PHÁT HIỆN';
-      }
-    } else {
-      reticle.visible = false;
-      if (!panelPlaced) {
-        document.getElementById('btn-place').style.display = 'none';
-        document.getElementById('scan-hint').textContent = 'Hướng camera xuống bề mặt phẳng';
-        document.getElementById('hud-status-text').textContent = 'ĐANG QUÉT...';
-      }
-    }
-  }
-
-  // ── Hand tracking update ──
-  if (handTrackingAvailable && frame) {
-    try { updateHandTracking(frame, refSpace); } catch(e) {}
-  }
-
-  // ── Gaze interaction update ──
-  if (panelPlaced) {
-    updateGaze(time);
-    gazeCursor.visible = true;
-  } else {
-    if (gazeCursor) gazeCursor.visible = false;
-  }
-
-  // Animate panel
-  if (panelGroup) {
-    panelGroup.rotation.y = Math.sin(time * 0.0003) * 0.08;
-    const particles = panelGroup.getObjectByName('particles');
-    if (particles) particles.rotation.z = time * 0.0005;
-    panelGroup.position.y += Math.sin(time * 0.001) * 0.0002;
-  }
-
-  // Animate reticle
-  reticle.rotation.z = time * 0.001;
-
-  renderer.render(scene, camera);
-}
-
-// ── Start AR ──
-window.startAR = async function() {
-  document.getElementById('loading-screen').style.display = 'flex';
-
-  if (!navigator.xr) {
-    startFallbackAR();
-    return;
-  }
-
-  const supported = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
-  if (!supported) {
-    startFallbackAR();
-    return;
-  }
-
-  await fetchUserData();
-  initThree();
-
-  try {
-    xrSession = await navigator.xr.requestSession('immersive-ar', {
-      requiredFeatures: ['hit-test'],
-      optionalFeatures: ['dom-overlay', 'hand-tracking'],
-      domOverlay: { root: document.getElementById('ar-hud') }
-    });
-
-    renderer.xr.setReferenceSpaceType('local');
-    await renderer.xr.setSession(xrSession);
-
-    // ── Detect hand tracking support ──
-    xrSession.addEventListener('inputsourceschange', (e) => {
-      e.added.forEach(src => {
-        if (src.hand) {
-          handTrackingAvailable = true;
-          initHandJoints('left');
-          initHandJoints('right');
-          document.getElementById('hud-status-text').textContent = 'HAND TRACKING ON';
-          handPointerLine.visible = true;
-        }
-      });
-      e.removed.forEach(src => {
-        if (src.hand) handPointerLine.visible = false;
-      });
-    });
-
-    // ── Screen tap / controller trigger ──
-    xrSession.addEventListener('select', handleSelect);
-
-    xrSession.addEventListener('end', () => {
-      hitTestSource = null;
-      hitTestSourceRequested = false;
-      exitAR();
-    });
-
-    renderer.setAnimationLoop(onXRFrame);
-
-    document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('ar-hud').style.display = 'block';
-
-    // ── Instruction hint update ──
-    document.getElementById('scan-hint').textContent = 'Nhìn vào tab để chọn (1.5s) · Chạm màn hình để tương tác';
-
-  } catch (err) {
-    console.error('XR error:', err);
-    startFallbackAR();
-  }
-};
-
-// ── Fallback AR (camera + canvas overlay for non-WebXR) ──
-async function startFallbackAR() {
-  await fetchUserData();
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
-      audio: false
-    });
-
-    document.getElementById('fallback-screen').style.display = 'block';
-    document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('loading-screen').style.display = 'none';
-
-    const video = document.getElementById('camera-feed');
-    video.srcObject = stream;
-    await video.play();
-
-    const canvas = document.getElementById('ar-overlay-canvas');
+  function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    const ctx = canvas.getContext('2d');
+  }
+  resize();
+  window.addEventListener('resize', resize);
 
-    // HUD overlay
-    const hudEl = document.createElement('div');
-    hudEl.id = 'fallback-hud';
-    hudEl.style.cssText = 'position:fixed;inset:0;z-index:160;pointer-events:none;';
-    hudEl.innerHTML = `
-      <div style="position:absolute;top:0;left:0;right:0;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,transparent 100%)">
-        <div style="font-family:Orbitron,sans-serif;font-size:12px;font-weight:900;color:#00ffff;letter-spacing:4px;text-shadow:0 0 15px #00ffff88">VƯƠNG ĐẾ AR</div>
-        <div style="font-size:9px;color:#ffaa00;letter-spacing:2px">⚠ CHẾ ĐỘ MÔ PHỎNG</div>
-      </div>
-      <div style="position:absolute;bottom:0;left:0;right:0;padding:20px;display:flex;flex-direction:column;align-items:center;gap:12px;background:linear-gradient(0deg,rgba(0,0,0,.7) 0%,transparent 100%);pointer-events:all">
-        <div style="font-size:10px;color:rgba(255,170,0,0.8);letter-spacing:2px;text-align:center">Thiết bị không hỗ trợ WebXR — Đang chạy chế độ mô phỏng AR</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center" id="sim-tabs">
-          <button class="panel-btn active" onclick="simSwitch('agents')" style="padding:8px 16px;background:rgba(0,255,255,.15);border:1px solid #00ffff;color:#00ffff;font-family:Orbitron,sans-serif;font-size:8px;letter-spacing:2px;cursor:pointer">THẦN LINH</button>
-          <button class="panel-btn" onclick="simSwitch('char')" style="padding:8px 16px;background:rgba(0,255,255,.05);border:1px solid rgba(0,255,255,.3);color:rgba(0,255,255,.7);font-family:Orbitron,sans-serif;font-size:8px;letter-spacing:2px;cursor:pointer">NHÂN VẬT</button>
-          <button class="panel-btn" onclick="simSwitch('chat')" style="padding:8px 16px;background:rgba(0,255,255,.05);border:1px solid rgba(0,255,255,.3);color:rgba(0,255,255,.7);font-family:Orbitron,sans-serif;font-size:8px;letter-spacing:2px;cursor:pointer">ĐỐI THOẠI</button>
-          <button class="panel-btn" onclick="simSwitch('vault')" style="padding:8px 16px;background:rgba(0,255,255,.05);border:1px solid rgba(0,255,255,.3);color:rgba(0,255,255,.7);font-family:Orbitron,sans-serif;font-size:8px;letter-spacing:2px;cursor:pointer">KHO BÁU</button>
-        </div>
-        <button onclick="exitFallbackAR(stream)" style="padding:10px 28px;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);font-family:Orbitron,sans-serif;font-size:9px;letter-spacing:2px;cursor:pointer">✕ THOÁT AR</button>
-      </div>
-    `;
-    document.body.appendChild(hudEl);
+  function drawFrame() {
+    animFrame = requestAnimationFrame(drawFrame);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    t++;
 
-    let simPanel = 'agents';
-    let animFrame;
-    let panelOpacity = 0;
-    let panelY = 0;
-    let swipeTouchStartX = 0, swipeTouchStartY = 0;
-
-    window.simSwitch = function(type) {
-      simPanel = type;
-    };
-
-    // ── Swipe left/right to switch panels ──
-    canvas.addEventListener('touchstart', e => {
-      swipeTouchStartX = e.touches[0].clientX;
-      swipeTouchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    canvas.addEventListener('touchend', e => {
-      const dx = e.changedTouches[0].clientX - swipeTouchStartX;
-      const dy = e.changedTouches[0].clientY - swipeTouchStartY;
-      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-        const idx = panels.indexOf(simPanel);
-        if (dx < 0) simPanel = panels[(idx + 1) % panels.length];
-        else         simPanel = panels[(idx + panels.length - 1) % panels.length];
-        showSimToast(simPanel);
-      }
-    }, { passive: true });
-
-    // ── Double tap to switch panel ──
-    let lastTap = 0;
-    canvas.addEventListener('touchend', e => {
-      const now = Date.now();
-      if (now - lastTap < 300) {
-        const idx = panels.indexOf(simPanel);
-        simPanel = panels[(idx + 1) % panels.length];
-        showSimToast(simPanel);
-      }
-      lastTap = now;
-    }, { passive: true });
-
-    function showSimToast(type) {
-      const names = { agents: '⬡ THẦN LINH', char: '☯ NHÂN VẬT', chat: '💬 ĐỐI THOẠI', vault: '🏺 KHO BÁU' };
-      let t = document.getElementById('sim-toast');
-      if (!t) {
-        t = document.createElement('div');
-        t.id = 'sim-toast';
-        t.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,255,255,0.15);border:1px solid rgba(0,255,255,0.5);color:#00ffff;font-family:Orbitron,sans-serif;font-size:13px;letter-spacing:3px;padding:14px 28px;z-index:500;pointer-events:none;transition:opacity 0.3s;';
-        document.body.appendChild(t);
-      }
-      t.textContent = names[type] || type;
-      t.style.opacity = '1';
-      setTimeout(() => { t.style.opacity = '0'; }, 1000);
+    // Scanlines
+    ctx.strokeStyle = 'rgba(0,255,255,0.025)';
+    ctx.lineWidth = 1;
+    for (let y = 0; y < canvas.height; y += 5) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
     }
 
-    window.exitFallbackAR = function(s) {
-      s.getTracks().forEach(t => t.stop());
-      cancelAnimationFrame(animFrame);
-      hudEl.remove();
-      document.getElementById('fallback-screen').style.display = 'none';
-      document.getElementById('start-screen').style.display = 'flex';
-    };
+    // Corner HUD brackets
+    const bw = 28, bh = 28, pad = 14;
+    ctx.strokeStyle = 'rgba(0,255,255,0.35)';
+    ctx.lineWidth = 2;
+    const corners = [
+      [pad, pad, 1, 1],
+      [canvas.width-pad, pad, -1, 1],
+      [pad, canvas.height-pad, 1, -1],
+      [canvas.width-pad, canvas.height-pad, -1, -1]
+    ];
+    corners.forEach(([x,y,sx,sy]) => {
+      ctx.beginPath();
+      ctx.moveTo(x, y + sy*bh);
+      ctx.lineTo(x, y);
+      ctx.lineTo(x + sx*bw, y);
+      ctx.stroke();
+    });
 
-    function renderOverlay(ts) {
-      animFrame = requestAnimationFrame(renderOverlay);
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    // Floating particles at bottom of panel
+    if (document.getElementById('ar-panel-wrapper').style.display !== 'none') {
+      const pw = document.getElementById('ar-panel');
+      const rect = pw.getBoundingClientRect();
+      const cx = rect.left + rect.width/2;
+      const cy = rect.bottom;
 
-      panelOpacity = Math.min(1, panelOpacity + 0.03);
-      panelY = Math.sin(ts * 0.001) * 5;
-
-      const PW = Math.min(window.innerWidth * 0.85, 540);
-      const PH = Math.min(window.innerHeight * 0.6, 500);
-      const px = (window.innerWidth - PW) / 2;
-      const py = (window.innerHeight - PH) / 2 + panelY - 40;
-
-      // Scan lines on camera
-      ctx.strokeStyle = 'rgba(0,255,255,0.04)';
-      ctx.lineWidth = 1;
-      for (let y = 0; y < canvas.height; y += 6) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-      }
-
-      // Corner brackets on screen
-      const bsize = 30;
-      ctx.strokeStyle = `rgba(0,255,255,${0.4 * panelOpacity})`;
-      ctx.lineWidth = 2;
-      [[0,0],[canvas.width,0],[0,canvas.height],[canvas.width,canvas.height]].forEach(([x,y]) => {
-        const sx = x === 0 ? 20 : canvas.width - 20 - bsize;
-        const sy = y === 0 ? 20 : canvas.height - 20 - bsize;
+      for (let i = 0; i < 3; i++) {
+        const px = cx + (Math.random()-0.5)*rect.width*0.6;
+        const py = cy + Math.random()*20;
+        const alpha = Math.random()*0.4;
         ctx.beginPath();
-        ctx.moveTo(sx, y === 0 ? sy + bsize : sy);
-        ctx.lineTo(sx, y === 0 ? sy : sy + bsize);
-        ctx.lineTo(x === 0 ? sx + bsize : sx, y === 0 ? sy : sy + bsize);
-        ctx.stroke();
-      });
-
-      // Panel shadow/glow
-      ctx.save();
-      ctx.globalAlpha = panelOpacity * 0.3;
-      ctx.shadowColor = '#00ffff';
-      ctx.shadowBlur = 40;
-      ctx.fillStyle = 'rgba(0,255,255,0.1)';
-      ctx.fillRect(px - 10, py - 10, PW + 20, PH + 20);
-      ctx.restore();
-
-      // Draw panel
-      ctx.save();
-      ctx.globalAlpha = panelOpacity;
-      const offscreen = document.createElement('canvas');
-      offscreen.width = 1024; offscreen.height = 768;
-      const octx = offscreen.getContext('2d');
-
-      switch(simPanel) {
-        case 'agents': drawAgentsPanel(octx, 1024, 768); break;
-        case 'char':   drawCharPanel(octx, 1024, 768); break;
-        case 'chat':   drawChatPanel(octx, 1024, 768); break;
-        case 'vault':  drawVaultPanel(octx, 1024, 768); break;
-      }
-
-      ctx.drawImage(offscreen, px, py, PW, PH);
-      ctx.restore();
-
-      // Floating particles around panel
-      for (let i = 0; i < 8; i++) {
-        const angle = (i / 8) * Math.PI * 2 + ts * 0.001;
-        const r = Math.max(PW, PH) * 0.55;
-        const px2 = window.innerWidth/2 + Math.cos(angle) * r;
-        const py2 = window.innerHeight/2 - 40 + Math.sin(angle) * r * 0.4;
-        ctx.beginPath();
-        ctx.arc(px2, py2, 3, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(0,255,255,${0.3 * panelOpacity})`;
+        ctx.arc(px, py - (t*0.5)%60, 2, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(0,255,255,${alpha})`;
         ctx.fill();
       }
+
+      // Bottom beam
+      const grad = ctx.createLinearGradient(cx, cy, cx, cy+30);
+      grad.addColorStop(0, 'rgba(0,255,255,0.3)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(cx-1, cy, 2, 30);
     }
 
-    requestAnimationFrame(renderOverlay);
+    // Subtle vignette
+    const vg = ctx.createRadialGradient(
+      canvas.width/2, canvas.height/2, canvas.width*0.3,
+      canvas.width/2, canvas.height/2, canvas.width*0.75
+    );
+    vg.addColorStop(0, 'transparent');
+    vg.addColorStop(1, 'rgba(0,0,0,0.45)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
 
-  } catch (err) {
-    document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('start-screen').style.display = 'flex';
-    document.getElementById('ar-support-msg').textContent =
-      '⚠ Không thể truy cập camera. Vui lòng cấp quyền camera và thử lại.';
-    document.getElementById('ar-support-msg').style.color = '#ff6644';
+  drawFrame();
+}
+
+// ═══════════════════════════════════════
+// DEVICE ORIENTATION (tilt panel)
+// ═══════════════════════════════════════
+function initOrientation() {
+  if (!window.DeviceOrientationEvent) return;
+
+  const handler = (e) => {
+    if (!tiltEnabled) return;
+    const beta = Math.max(-30, Math.min(30, (e.beta || 0) - 70));
+    const gamma = Math.max(-30, Math.min(30, e.gamma || 0));
+    targetTiltX = beta * 0.3;
+    targetTiltY = gamma * 0.3;
+  };
+
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission().then(p => {
+      if (p === 'granted') window.addEventListener('deviceorientation', handler);
+    }).catch(() => {});
+  } else {
+    window.addEventListener('deviceorientation', handler);
   }
 }
 
-// ── Exit AR ──
+// ═══════════════════════════════════════
+// PANEL TILT ANIMATION LOOP
+// ═══════════════════════════════════════
+function animatePanelTilt() {
+  panelTiltX += (targetTiltX - panelTiltX) * 0.06;
+  panelTiltY += (targetTiltY - panelTiltY) * 0.06;
+
+  const panel = document.getElementById('ar-panel');
+  if (panel) {
+    panel.style.transform = `
+      scale(${panelScale})
+      translateX(${panelOffsetX}px)
+      translateY(${panelOffsetY}px)
+      rotateX(${panelTiltX}deg)
+      rotateY(${panelTiltY}deg)
+    `;
+  }
+  requestAnimationFrame(animatePanelTilt);
+}
+
+// ═══════════════════════════════════════
+// TOUCH DRAG TO MOVE PANEL
+// ═══════════════════════════════════════
+function initDrag() {
+  const wrapper = document.getElementById('ar-panel-wrapper');
+  const panel = document.getElementById('ar-panel');
+  const header = document.getElementById('ar-panel-header');
+
+  header.addEventListener('touchstart', e => {
+    isDragging = true;
+    dragStartX = e.touches[0].clientX;
+    dragStartY = e.touches[0].clientY;
+    dragStartOX = panelOffsetX;
+    dragStartOY = panelOffsetY;
+    e.stopPropagation();
+  }, { passive: true });
+
+  header.addEventListener('touchmove', e => {
+    if (!isDragging) return;
+    const dx = e.touches[0].clientX - dragStartX;
+    const dy = e.touches[0].clientY - dragStartY;
+    panelOffsetX = dragStartOX + dx;
+    panelOffsetY = dragStartOY + dy;
+    e.stopPropagation();
+  }, { passive: true });
+
+  header.addEventListener('touchend', () => { isDragging = false; });
+
+  // Mouse drag too (for desktop testing)
+  header.addEventListener('mousedown', e => {
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    dragStartOX = panelOffsetX;
+    dragStartOY = panelOffsetY;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    panelOffsetX = dragStartOX + (e.clientX - dragStartX);
+    panelOffsetY = dragStartOY + (e.clientY - dragStartY);
+  });
+  document.addEventListener('mouseup', () => { isDragging = false; });
+}
+
+// ═══════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════
+window.zoomPanel = function(dir) {
+  panelScale = Math.max(0.4, Math.min(1.6, panelScale + dir * 0.1));
+};
+
+window.toggleTilt = function() {
+  tiltEnabled = !tiltEnabled;
+  if (!tiltEnabled) { targetTiltX = 0; targetTiltY = 0; }
+};
+
+window.resetPanelPos = function() {
+  panelOffsetX = 0;
+  panelOffsetY = 0;
+  panelScale = 1;
+};
+
+// ═══════════════════════════════════════
+// SCANNING ANIMATION
+// ═══════════════════════════════════════
+function runScanAnimation() {
+  return new Promise(resolve => {
+    const screen = document.getElementById('scan-screen');
+    const fill = document.getElementById('scan-progress-fill');
+    const label = document.getElementById('scan-label');
+    screen.style.display = 'flex';
+
+    const steps = [
+      { pct: 20, txt: 'KHỞI TẠO CAMERA AR...' },
+      { pct: 45, txt: 'PHÂN TÍCH KHÔNG GIAN...' },
+      { pct: 70, txt: 'KẾT NỐI TIÊN GIỚI...' },
+      { pct: 90, txt: 'CẮM PORTAL...' },
+      { pct: 100, txt: 'HOÀN TẤT ✓' },
+    ];
+
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i >= steps.length) {
+        clearInterval(interval);
+        setTimeout(() => {
+          screen.style.display = 'none';
+          resolve();
+        }, 400);
+        return;
+      }
+      fill.style.width = steps[i].pct + '%';
+      label.textContent = steps[i].txt;
+      i++;
+    }, 500);
+  });
+}
+
+// ═══════════════════════════════════════
+// PANEL APPEAR ANIMATION
+// ═══════════════════════════════════════
+function showPanel() {
+  const wrapper = document.getElementById('ar-panel-wrapper');
+  const panel = document.getElementById('ar-panel');
+  wrapper.style.display = 'flex';
+  panel.style.opacity = '0';
+  panel.style.transform = `scale(0.6) translateY(60px)`;
+  panel.style.transition = 'opacity .6s ease, transform .6s cubic-bezier(.2,.8,.3,1)';
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      panel.style.opacity = '1';
+      panel.style.transform = `scale(1) translateY(0px)`;
+      setTimeout(() => {
+        panel.style.transition = '';
+        document.getElementById('size-controls').style.display = 'flex';
+      }, 600);
+    });
+  });
+}
+
+// ═══════════════════════════════════════
+// START AR
+// ═══════════════════════════════════════
+window.startAR = async function() {
+  document.getElementById('start-screen').style.display = 'none';
+
+  // Request camera
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      },
+      audio: false
+    });
+  } catch(err) {
+    // Try front camera as fallback
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    } catch(err2) {
+      document.getElementById('error-msg').style.display = 'flex';
+      document.getElementById('start-screen').style.display = 'flex';
+      return;
+    }
+  }
+
+  // Set camera feed
+  const video = document.getElementById('camera-bg');
+  video.srcObject = cameraStream;
+  await video.play().catch(() => {});
+
+  // Show AR HUD
+  document.getElementById('ar-hud').style.display = 'block';
+
+  // Start canvas effects
+  initARCanvas();
+
+  // Start clock
+  updateClock();
+  clockInterval = setInterval(updateClock, 1000);
+
+  // Init orientation
+  initOrientation();
+
+  // Run scan animation
+  await runScanAnimation();
+
+  // Show the main app panel
+  showPanel();
+
+  // Init drag + tilt animation
+  initDrag();
+  animatePanelTilt();
+
+  // Update footer coordinates
+  setInterval(() => {
+    const el = document.getElementById('ftr-coord');
+    if (el) {
+      const t = new Date();
+      el.textContent = `AR · ${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')} · PORTAL HOẠT ĐỘNG`;
+    }
+  }, 5000);
+};
+
+// ═══════════════════════════════════════
+// EXIT AR
+// ═══════════════════════════════════════
 window.exitAR = function() {
-  if (xrSession) { xrSession.end(); xrSession = null; }
-  if (renderer) renderer.setAnimationLoop(null);
-  hitTestSource = null;
-  hitTestSourceRequested = false;
-  panelPlaced = false;
-  panelGroup = null;
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
 
+  document.getElementById('camera-bg').srcObject = null;
+  document.getElementById('ar-panel-wrapper').style.display = 'none';
   document.getElementById('ar-hud').style.display = 'none';
+  document.getElementById('size-controls').style.display = 'none';
   document.getElementById('start-screen').style.display = 'flex';
-
-  resetPanel();
 };
 </script>
 
