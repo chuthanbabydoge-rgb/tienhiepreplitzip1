@@ -3,1054 +3,909 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>VƯƠNG ĐẾ AR — Tiên Giới</title>
+  <title>VƯƠNG ĐẾ AR — Tiên Giới 3D</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100vw; height:100vh; overflow:hidden; background:#000; font-family:'Share Tech Mono',monospace; }
 
-    html, body {
-      width: 100vw; height: 100vh;
-      overflow: hidden;
-      background: #000;
-      font-family: 'Share Tech Mono', monospace;
-    }
+    canvas#three-canvas { position:fixed; inset:0; width:100%!important; height:100%!important; }
 
-    /* ═══════════════════════════════
-       CAMERA BACKGROUND
-    ═══════════════════════════════ */
-    #camera-bg {
-      position: fixed;
-      inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      z-index: 0;
-      filter: brightness(0.75) saturate(0.9);
-    }
-
-    /* ═══════════════════════════════
-       AR EFFECTS CANVAS (scanlines, particles)
-    ═══════════════════════════════ */
-    #ar-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%; height: 100%;
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    /* ═══════════════════════════════
-       START SCREEN
-    ═══════════════════════════════ */
+    /* ── Start Screen ── */
     #start-screen {
-      position: fixed;
-      inset: 0;
-      z-index: 300;
-      background: radial-gradient(ellipse at center, #000d1a 0%, #000 70%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 28px;
+      position:fixed; inset:0; z-index:200;
+      background:radial-gradient(ellipse at center,#000d1a 0%,#000 70%);
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px;
+    }
+    .ar-logo { font-family:'Orbitron',sans-serif; font-size:clamp(20px,5vw,32px); font-weight:900; color:#00ffff; letter-spacing:8px; text-shadow:0 0 30px #00ffff88; animation:logoPulse 3s ease-in-out infinite; }
+    @keyframes logoPulse { 0%,100%{text-shadow:0 0 30px #00ffff88} 50%{text-shadow:0 0 60px #00ffffcc,0 0 100px #00ffff44} }
+
+    .ar-ring-wrap { position:relative; width:140px; height:140px; }
+    .ar-ring { position:absolute; inset:0; border-radius:50%; border:2px solid rgba(0,255,255,.3); animation:spin 8s linear infinite; }
+    .ar-ring::after { content:''; position:absolute; inset:-14px; border-radius:50%; border:1px solid rgba(0,255,255,.1); animation:spin 5s linear infinite reverse; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .ar-icon { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:56px; filter:drop-shadow(0 0 16px #00ffff); }
+
+    .ar-desc { font-size:11px; color:rgba(0,255,255,.5); letter-spacing:3px; text-align:center; line-height:2; max-width:300px; }
+
+    #btn-xr {
+      padding:14px 48px; background:transparent; border:2px solid #00ffff; color:#00ffff;
+      font-family:'Orbitron',sans-serif; font-size:12px; font-weight:700; letter-spacing:5px;
+      cursor:pointer; transition:all .3s; position:relative; overflow:hidden;
+    }
+    #btn-xr::before { content:''; position:absolute; inset:0; background:rgba(0,255,255,.08); transform:scaleX(0); transition:.3s; }
+    #btn-xr:hover { box-shadow:0 0 40px rgba(0,255,255,.4); }
+    #btn-xr:hover::before { transform:scaleX(1); }
+    #btn-xr:disabled { opacity:.4; cursor:not-allowed; }
+
+    #no-xr-note { font-size:9px; color:rgba(255,180,60,.6); text-align:center; max-width:280px; line-height:1.8; letter-spacing:1px; display:none; }
+
+    #btn-fallback {
+      padding:10px 28px; background:transparent; border:1px solid rgba(0,255,255,.3);
+      color:rgba(0,255,255,.6); font-family:'Orbitron',sans-serif; font-size:9px; letter-spacing:3px;
+      cursor:pointer; transition:all .25s; display:none;
+    }
+    #btn-fallback:hover { border-color:#00ffff; color:#00ffff; }
+
+    #btn-back { padding:9px 26px; background:transparent; border:1px solid rgba(255,255,255,.15); color:rgba(255,255,255,.35); font-family:'Orbitron',sans-serif; font-size:9px; letter-spacing:3px; cursor:pointer; transition:all .25s; }
+    #btn-back:hover { color:#fff; border-color:rgba(255,255,255,.6); }
+
+    /* ── DOM Overlay (inside XR session) ── */
+    #xr-overlay {
+      position:fixed; inset:0; z-index:10;
+      display:none; flex-direction:column; pointer-events:none;
     }
 
-    .ar-logo {
-      font-family: 'Orbitron', sans-serif;
-      font-size: clamp(22px, 5vw, 34px);
-      font-weight: 900;
-      color: #00ffff;
-      letter-spacing: 8px;
-      text-shadow: 0 0 30px #00ffff88, 0 0 60px #00ffff33;
-      animation: logoPulse 3s ease-in-out infinite;
+    #xr-hud-top {
+      padding:10px 16px; display:flex; align-items:center; gap:10px;
+      background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,transparent 100%);
     }
-    @keyframes logoPulse {
-      0%,100% { text-shadow: 0 0 30px #00ffff88, 0 0 60px #00ffff33; }
-      50%      { text-shadow: 0 0 60px #00ffffcc, 0 0 100px #00ffff66; }
-    }
+    .hud-logo { font-family:'Orbitron',sans-serif; font-size:10px; font-weight:900; color:#00ffff; letter-spacing:4px; }
+    .hud-badge { padding:3px 10px; background:rgba(0,255,136,.08); border:1px solid rgba(0,255,136,.3); color:#00ff88; font-size:8px; letter-spacing:2px; display:flex; align-items:center; gap:5px; }
+    .hud-dot { width:5px; height:5px; border-radius:50%; background:#00ff88; box-shadow:0 0 6px #00ff88; animation:blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+    .hud-sp { flex:1; }
+    #hud-clock { font-size:9px; color:rgba(0,255,255,.45); letter-spacing:2px; }
 
-    .ar-ring-wrap {
-      position: relative;
-      width: 160px; height: 160px;
+    #xr-hud-mid {
+      flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding-bottom:40px; gap:10px;
     }
-    .ar-ring {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      border: 2px solid rgba(0,255,255,.35);
-      animation: ringRotate 8s linear infinite;
+    #xr-hint {
+      font-family:'Orbitron',sans-serif; font-size:10px; color:rgba(0,255,255,.7); letter-spacing:3px;
+      text-align:center; padding:8px 20px; background:rgba(0,0,0,.5); border:1px solid rgba(0,255,255,.2);
+      animation:fadeHint 3s ease-in-out infinite; display:none;
     }
-    .ar-ring::before {
-      content: '';
-      position: absolute;
-      inset: -16px;
-      border-radius: 50%;
-      border: 1px solid rgba(0,255,255,.12);
-      animation: ringRotate 5s linear infinite reverse;
-    }
-    .ar-ring-center {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 62px;
-      filter: drop-shadow(0 0 18px #00ffff);
-    }
-    @keyframes ringRotate { to { transform: rotate(360deg); } }
+    @keyframes fadeHint { 0%,100%{opacity:.5} 50%{opacity:1} }
+    #xr-placed-hint { font-size:9px; color:rgba(0,255,136,.6); letter-spacing:3px; text-align:center; display:none; }
 
-    .ar-subtitle {
-      font-size: 11px;
-      color: rgba(0,255,255,.5);
-      letter-spacing: 4px;
-      text-align: center;
-      line-height: 2;
+    #xr-hud-bottom {
+      padding:12px 16px; display:flex; align-items:center; justify-content:center; gap:10px;
+      background:linear-gradient(0deg,rgba(0,0,0,.6) 0%,transparent 100%);
+      pointer-events:all;
     }
+    .xr-btn {
+      padding:8px 16px; background:rgba(0,0,0,.5); border:1px solid rgba(0,255,255,.3);
+      color:rgba(0,255,255,.7); font-family:'Orbitron',sans-serif; font-size:8px; letter-spacing:2px;
+      cursor:pointer; transition:all .2s; backdrop-filter:blur(4px);
+    }
+    .xr-btn:hover { background:rgba(0,255,255,.1); border-color:#00ffff; color:#00ffff; }
+    #btn-reset-place { display:none; }
+    #btn-end-xr { border-color:rgba(255,100,100,.35); color:rgba(255,120,120,.7); }
+    #btn-end-xr:hover { background:rgba(255,80,80,.12); border-color:rgba(255,100,100,.8); color:#ff8888; }
 
-    #btn-start {
-      padding: 15px 50px;
-      background: transparent;
-      border: 2px solid #00ffff;
-      color: #00ffff;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 5px;
-      cursor: pointer;
-      transition: all .3s;
-      position: relative;
-      overflow: hidden;
+    /* ── Fallback AR Mode ── */
+    #fallback-ar {
+      position:fixed; inset:0; z-index:100; display:none;
     }
-    #btn-start::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(0,255,255,.08);
-      transform: scaleX(0);
-      transition: transform .3s;
+    #fallback-video {
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; filter:brightness(0.8) saturate(0.9);
     }
-    #btn-start:hover { box-shadow: 0 0 40px rgba(0,255,255,.4); }
-    #btn-start:hover::before { transform: scaleX(1); }
+    #fallback-panel-wrap {
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      perspective:900px;
+    }
+    #fallback-panel {
+      width:min(92vw,440px); height:min(82vh,680px);
+      display:flex; flex-direction:column;
+      transform-style:preserve-3d;
+      transition:transform .05s linear;
+      border:1.5px solid rgba(0,255,255,.7);
+      box-shadow:0 0 40px rgba(0,255,255,.25), inset 0 0 30px rgba(0,255,255,.04);
+    }
+    #fallback-panel-hdr {
+      flex-shrink:0; height:40px;
+      background:linear-gradient(90deg,rgba(0,10,28,.97),rgba(0,18,40,.97));
+      border-bottom:1px solid rgba(0,255,255,.25);
+      display:flex; align-items:center; padding:0 12px; gap:8px;
+    }
+    .fp-dot { width:6px;height:6px;border-radius:50%;background:#00ff88;box-shadow:0 0 8px #00ff88;animation:blink 1s infinite; }
+    .fp-title { font-family:'Orbitron',sans-serif; font-size:9px; font-weight:900; color:#00ffff; letter-spacing:3px; flex:1; }
+    .fp-status { font-size:8px; color:rgba(0,255,136,.6); letter-spacing:2px; }
+    #fallback-iframe-wrap {
+      flex:1; overflow:hidden; background:#000a14; position:relative;
+    }
+    #fallback-iframe-wrap::after {
+      content:''; position:absolute; inset:0;
+      background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,255,.012) 3px,rgba(0,255,255,.012) 4px);
+      pointer-events:none; z-index:5;
+    }
+    #fallback-iframe {
+      width:100%; height:100%; border:none; display:block;
+    }
+    #fallback-panel-ftr {
+      flex-shrink:0; height:36px;
+      background:linear-gradient(90deg,rgba(0,10,28,.97),rgba(0,18,40,.97));
+      border-top:1px solid rgba(0,255,255,.2);
+      display:flex; align-items:center; padding:0 10px; gap:8px;
+    }
+    .fp-lbl { font-size:8px; color:rgba(0,255,255,.3); letter-spacing:2px; flex:1; }
+    .fp-btn { padding:5px 12px; background:transparent; border:1px solid rgba(255,100,100,.3); color:rgba(255,120,120,.7); font-family:'Orbitron',sans-serif; font-size:7px; letter-spacing:2px; cursor:pointer; transition:.2s; }
+    .fp-btn:hover { background:rgba(255,80,80,.12); border-color:rgba(255,100,100,.7); color:#ff8888; }
+    #fallback-hud {
+      position:absolute; top:0; left:0; right:0;
+      padding:10px 14px; display:flex; align-items:center; gap:10px;
+      background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,transparent 100%);
+      pointer-events:none;
+    }
+    .fb-logo { font-family:'Orbitron',sans-serif; font-size:10px; font-weight:900; color:#00ffff; letter-spacing:4px; }
+    .fb-badge { padding:3px 9px; background:rgba(0,255,136,.07); border:1px solid rgba(0,255,136,.25); color:#00ff88; font-size:8px; letter-spacing:2px; display:flex;align-items:center;gap:4px; }
+    .fb-sp { flex:1; }
+    #fb-clock { font-size:9px; color:rgba(0,255,255,.4); letter-spacing:2px; }
 
-    .start-note {
-      font-size: 10px;
-      color: rgba(255,170,0,.6);
-      text-align: center;
-      max-width: 320px;
-      line-height: 1.7;
-      letter-spacing: 1px;
+    /* ── Popup (for full-screen panel interaction) ── */
+    #xr-popup {
+      position:fixed; inset:0; z-index:300;
+      background:rgba(0,5,15,.96); display:none; flex-direction:column;
+      border:1px solid rgba(0,255,255,.3);
     }
-
-    #btn-back {
-      padding: 9px 26px;
-      background: transparent;
-      border: 1px solid rgba(255,255,255,.2);
-      color: rgba(255,255,255,.4);
-      font-family: 'Orbitron', sans-serif;
-      font-size: 9px;
-      letter-spacing: 3px;
-      cursor: pointer;
-      transition: all .25s;
-    }
-    #btn-back:hover { border-color: rgba(255,255,255,.6); color: #fff; }
-
-    /* ═══════════════════════════════
-       SCANNING ANIMATION
-    ═══════════════════════════════ */
-    #scan-screen {
-      position: fixed;
-      inset: 0;
-      z-index: 200;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      pointer-events: none;
-    }
-
-    #scan-reticle {
-      width: min(70vw, 70vh);
-      height: min(70vw, 70vh);
-      position: relative;
-    }
-    .scan-corner {
-      position: absolute;
-      width: 40px; height: 40px;
-      border-color: #00ffff;
-      border-style: solid;
-      border-width: 0;
-    }
-    .scan-corner.tl { top:0; left:0;  border-top-width: 3px; border-left-width: 3px; }
-    .scan-corner.tr { top:0; right:0; border-top-width: 3px; border-right-width: 3px; }
-    .scan-corner.bl { bottom:0; left:0; border-bottom-width: 3px; border-left-width: 3px; }
-    .scan-corner.br { bottom:0; right:0; border-bottom-width: 3px; border-right-width: 3px; }
-
-    #scan-line {
-      position: absolute;
-      left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #00ffff, #00ff88, #00ffff, transparent);
-      box-shadow: 0 0 12px #00ffff;
-      animation: scanDown 1.8s ease-in-out infinite;
-      top: 0;
-    }
-    @keyframes scanDown {
-      0%   { top: 0%; opacity: 0; }
-      10%  { opacity: 1; }
-      90%  { opacity: 1; }
-      100% { top: 100%; opacity: 0; }
-    }
-
-    #scan-label {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 12px;
-      color: #00ffff;
-      letter-spacing: 5px;
-      animation: blinkText 1s ease-in-out infinite;
-    }
-    @keyframes blinkText { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-    #scan-progress-bar {
-      width: 200px; height: 3px;
-      background: rgba(0,255,255,.15);
-      border: 1px solid rgba(0,255,255,.3);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    #scan-progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #00ffff, #00ff88);
-      box-shadow: 0 0 10px #00ffff;
-      transition: width .1s linear;
-    }
-
-    /* ═══════════════════════════════
-       FLOATING APP PANEL
-    ═══════════════════════════════ */
-    #ar-panel-wrapper {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      perspective: 1200px;
-    }
-
-    #ar-panel {
-      width: min(96vw, 520px);
-      height: min(86vh, 780px);
-      display: flex;
-      flex-direction: column;
-      transform-style: preserve-3d;
-      animation: floatPanel 5s ease-in-out infinite;
-      transition: transform .15s ease-out;
-      position: relative;
-    }
-    @keyframes floatPanel {
-      0%,100% { transform: translateY(0px) rotateX(1deg); }
-      50%      { transform: translateY(-8px) rotateX(-1deg); }
-    }
-
-    /* Holographic glow behind panel */
-    #ar-panel::before {
-      content: '';
-      position: absolute;
-      inset: -20px;
-      background: radial-gradient(ellipse, rgba(0,255,255,.12) 0%, transparent 70%);
-      border-radius: 4px;
-      z-index: -1;
-      animation: glowPulse 3s ease-in-out infinite;
-    }
-    @keyframes glowPulse {
-      0%,100% { opacity: .6; }
-      50%      { opacity: 1; }
-    }
-
-    /* Panel header */
-    #ar-panel-header {
-      flex-shrink: 0;
-      height: 44px;
-      background: linear-gradient(90deg, rgba(0,10,25,.95), rgba(0,20,40,.95));
-      border: 1px solid rgba(0,255,255,.5);
-      border-bottom: none;
-      display: flex;
-      align-items: center;
-      padding: 0 14px;
-      gap: 10px;
-      position: relative;
-      overflow: hidden;
-    }
-    #ar-panel-header::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, #00ffff, #00ff88, #00ffff, transparent);
-    }
-
-    .panel-hdr-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: #00ff88;
-      box-shadow: 0 0 8px #00ff88;
-      animation: dotBlink 1.5s infinite;
-      flex-shrink: 0;
-    }
-    @keyframes dotBlink { 0%,100%{opacity:1} 50%{opacity:.2} }
-
-    .panel-hdr-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 9px;
-      font-weight: 900;
-      color: #00ffff;
-      letter-spacing: 3px;
-      text-shadow: 0 0 10px #00ffff88;
-      flex: 1;
-    }
-
-    .panel-hdr-status {
-      font-size: 8px;
-      color: rgba(0,255,136,.7);
-      letter-spacing: 2px;
-    }
-
-    /* Corner accents on header */
-    .hdr-corner {
-      position: absolute;
-      width: 10px; height: 10px;
-      border-color: #00ffff;
-      border-style: solid;
-      border-width: 0;
-    }
-    .hdr-corner.tl { top:0; left:0; border-top-width:2px; border-left-width:2px; }
-    .hdr-corner.tr { top:0; right:0; border-top-width:2px; border-right-width:2px; }
-
-    /* Main iframe container */
-    #ar-iframe-wrap {
-      flex: 1;
-      position: relative;
-      border-left: 1px solid rgba(0,255,255,.5);
-      border-right: 1px solid rgba(0,255,255,.5);
-      overflow: hidden;
-      background: #000;
-    }
-
-    #main-app-iframe {
-      width: 100%; height: 100%;
-      border: none;
-      display: block;
-    }
-
-    /* Scanline overlay on iframe */
-    #ar-iframe-wrap::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 3px,
-        rgba(0,255,255,.015) 3px,
-        rgba(0,255,255,.015) 4px
-      );
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    /* Panel footer */
-    #ar-panel-footer {
-      flex-shrink: 0;
-      height: 40px;
-      background: linear-gradient(90deg, rgba(0,10,25,.95), rgba(0,20,40,.95));
-      border: 1px solid rgba(0,255,255,.5);
-      border-top: none;
-      display: flex;
-      align-items: center;
-      padding: 0 14px;
-      gap: 12px;
-      position: relative;
-      overflow: hidden;
-    }
-    #ar-panel-footer::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, #00ffff44, transparent);
-    }
-    .hdr-corner.bl { bottom:0; left:0; border-bottom-width:2px; border-left-width:2px; }
-    .hdr-corner.br { bottom:0; right:0; border-bottom-width:2px; border-right-width:2px; }
-
-    .ftr-label {
-      font-size: 8px;
-      color: rgba(0,255,255,.4);
-      letter-spacing: 2px;
-      flex: 1;
-    }
-
-    .ftr-btn {
-      padding: 5px 12px;
-      background: transparent;
-      border: 1px solid rgba(255,100,100,.35);
-      color: rgba(255,120,120,.7);
-      font-family: 'Orbitron', sans-serif;
-      font-size: 7px;
-      letter-spacing: 2px;
-      cursor: pointer;
-      transition: all .2s;
-    }
-    .ftr-btn:hover { background: rgba(255,100,100,.12); border-color: rgba(255,100,100,.7); color: #ff8888; }
-
-    .ftr-btn-zoom {
-      padding: 5px 12px;
-      background: transparent;
-      border: 1px solid rgba(0,255,255,.25);
-      color: rgba(0,255,255,.5);
-      font-family: 'Orbitron', sans-serif;
-      font-size: 7px;
-      letter-spacing: 2px;
-      cursor: pointer;
-      transition: all .2s;
-    }
-    .ftr-btn-zoom:hover { background: rgba(0,255,255,.08); border-color: rgba(0,255,255,.6); color: #00ffff; }
-
-    /* Left/right side glow bars */
-    .side-glow {
-      position: absolute;
-      top: 44px;
-      width: 2px;
-      bottom: 40px;
-      background: linear-gradient(180deg, transparent, #00ffff, #00ff88, #00ffff, transparent);
-      opacity: .5;
-      animation: sideGlowPulse 2s ease-in-out infinite;
-    }
-    .side-glow.left  { left: -1px; }
-    .side-glow.right { right: -1px; }
-    @keyframes sideGlowPulse { 0%,100%{opacity:.3} 50%{opacity:.7} }
-
-    /* Floating particles around panel */
-    .ar-particle {
-      position: fixed;
-      width: 4px; height: 4px;
-      border-radius: 50%;
-      background: #00ffff;
-      box-shadow: 0 0 6px #00ffff;
-      pointer-events: none;
-      z-index: 99;
-      animation: particleFloat linear infinite;
-      opacity: 0;
-    }
-    @keyframes particleFloat {
-      0%   { opacity: 0; transform: translateY(0) scale(0); }
-      20%  { opacity: .7; transform: translateY(-20px) scale(1); }
-      80%  { opacity: .4; transform: translateY(-80px) scale(.8); }
-      100% { opacity: 0; transform: translateY(-120px) scale(0); }
-    }
-
-    /* ═══════════════════════════════
-       AR HUD (top/bottom bar)
-    ═══════════════════════════════ */
-    #ar-hud {
-      position: fixed;
-      inset: 0;
-      z-index: 150;
-      pointer-events: none;
-      display: none;
-    }
-
-    #hud-top {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: linear-gradient(180deg, rgba(0,0,0,.7) 0%, transparent 100%);
-    }
-
-    .hud-logo {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 11px;
-      font-weight: 900;
-      color: #00ffff;
-      letter-spacing: 4px;
-      text-shadow: 0 0 12px #00ffff88;
-    }
-
-    .hud-badge {
-      padding: 3px 10px;
-      background: rgba(0,255,136,.1);
-      border: 1px solid rgba(0,255,136,.35);
-      color: #00ff88;
-      font-size: 8px;
-      letter-spacing: 2px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .hud-badge-dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: #00ff88;
-      box-shadow: 0 0 6px #00ff88;
-      animation: dotBlink 1s infinite;
-    }
-
-    .hud-spacer { flex: 1; }
-
-    #hud-clock {
-      font-size: 10px;
-      color: rgba(0,255,255,.5);
-      letter-spacing: 2px;
-    }
-
-    #hud-bottom {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      background: linear-gradient(0deg, rgba(0,0,0,.7) 0%, transparent 100%);
-      pointer-events: all;
-    }
-
-    .hud-ctrl-btn {
-      padding: 8px 18px;
-      background: rgba(0,0,0,.5);
-      border: 1px solid rgba(0,255,255,.3);
-      color: rgba(0,255,255,.7);
-      font-family: 'Orbitron', sans-serif;
-      font-size: 8px;
-      letter-spacing: 2px;
-      cursor: pointer;
-      transition: all .2s;
-      backdrop-filter: blur(4px);
-    }
-    .hud-ctrl-btn:hover { background: rgba(0,255,255,.12); border-color: #00ffff; color: #00ffff; }
-
-    #btn-exit {
-      padding: 8px 18px;
-      background: rgba(0,0,0,.5);
-      border: 1px solid rgba(255,100,100,.3);
-      color: rgba(255,120,120,.7);
-      font-family: 'Orbitron', sans-serif;
-      font-size: 8px;
-      letter-spacing: 2px;
-      cursor: pointer;
-      transition: all .2s;
-      backdrop-filter: blur(4px);
-    }
-    #btn-exit:hover { background: rgba(255,80,80,.15); border-color: rgba(255,100,100,.8); color: #ff8888; }
-
-    /* ═══════════════════════════════
-       SIZE CONTROLS
-    ═══════════════════════════════ */
-    #size-controls {
-      position: fixed;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 160;
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .size-btn {
-      width: 36px; height: 36px;
-      background: rgba(0,10,25,.8);
-      border: 1px solid rgba(0,255,255,.35);
-      color: #00ffff;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all .2s;
-      backdrop-filter: blur(4px);
-    }
-    .size-btn:hover { background: rgba(0,255,255,.12); border-color: #00ffff; box-shadow: 0 0 10px rgba(0,255,255,.3); }
-
-    /* ═══════════════════════════════
-       ERROR / LOADING
-    ═══════════════════════════════ */
-    #error-msg {
-      position: fixed;
-      inset: 0;
-      z-index: 500;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      background: rgba(0,0,0,.9);
-    }
-    .err-icon { font-size: 40px; }
-    .err-text { font-size: 12px; color: rgba(255,150,100,.8); letter-spacing: 2px; text-align: center; line-height: 1.8; max-width: 300px; }
-    .err-btn { padding: 10px 24px; background: transparent; border: 1px solid rgba(255,150,100,.5); color: rgba(255,150,100,.8); font-family: 'Orbitron', sans-serif; font-size: 9px; letter-spacing: 2px; cursor: pointer; }
+    #popup-header { padding:14px 18px; border-bottom:1px solid rgba(0,255,255,.15); display:flex; align-items:center; gap:10px; background:rgba(0,10,25,.8); }
+    #popup-title { font-family:'Orbitron',sans-serif; font-size:11px; font-weight:900; color:#00ffff; letter-spacing:3px; flex:1; }
+    #btn-close-popup { padding:6px 16px; background:transparent; border:1px solid rgba(255,100,100,.3); color:rgba(255,100,100,.7); font-family:'Orbitron',sans-serif; font-size:8px; letter-spacing:2px; cursor:pointer; }
+    #popup-body { flex:1; overflow:hidden; }
+    #popup-iframe { width:100%; height:100%; border:none; display:block; }
   </style>
 </head>
 <body>
 
-<!-- Camera background -->
-<video id="camera-bg" autoplay playsinline muted></video>
+<!-- Three.js canvas -->
+<canvas id="three-canvas"></canvas>
 
-<!-- AR effects canvas (scanlines, particles, HUD decorations) -->
-<canvas id="ar-canvas"></canvas>
-
-<!-- Start screen -->
+<!-- Start Screen -->
 <div id="start-screen">
   <div class="ar-logo">VƯƠNG ĐẾ AR</div>
   <div class="ar-ring-wrap">
     <div class="ar-ring"></div>
-    <div class="ar-ring-center">⬡</div>
+    <div class="ar-icon">⬡</div>
   </div>
-  <div class="ar-subtitle">KÍCH HOẠT ĐỂ MỞ TIÊN GIỚI<br>GIAO DIỆN CHÍNH HIỂN THỊ TRONG KHÔNG GIAN 3D</div>
-  <button id="btn-start" onclick="startAR()">▶ MỞ TIÊN GIỚI AR</button>
-  <div class="start-note">App sẽ xin quyền camera để tạo nền thực tế.<br>Giao diện chính sẽ hiện ra như màn hình hologram nổi trên không gian thực.</div>
+  <div class="ar-desc">QUÉT BỀ MẶT THẬT · NEO GIAO DIỆN VÀO KHÔNG GIAN 3D<br>PANEL ĐỨNG YÊN KHI DI CHUYỂN ĐIỆN THOẠI</div>
+  <button id="btn-xr" onclick="startXR()">▶ MỞ TIÊN GIỚI AR</button>
+  <div id="no-xr-note">Thiết bị không hỗ trợ WebXR AR.<br>Yêu cầu: Chrome Android 12+ hoặc thiết bị VR/AR.<br>Dùng chế độ mô phỏng:</div>
+  <button id="btn-fallback" onclick="startFallback()">▶ MÔ PHỎNG AR (camera + 3D)</button>
   <button id="btn-back" onclick="history.back()">← QUAY LẠI</button>
 </div>
 
-<!-- Scanning animation -->
-<div id="scan-screen">
-  <div id="scan-reticle">
-    <div class="scan-corner tl"></div>
-    <div class="scan-corner tr"></div>
-    <div class="scan-corner bl"></div>
-    <div class="scan-corner br"></div>
-    <div id="scan-line"></div>
-  </div>
-  <div id="scan-label">ĐANG KHỞI TẠO TIÊN GIỚI...</div>
-  <div id="scan-progress-bar"><div id="scan-progress-fill"></div></div>
-</div>
-
-<!-- Floating App Panel -->
-<div id="ar-panel-wrapper">
-  <div id="ar-panel">
-    <!-- Side glow bars -->
-    <div class="side-glow left"></div>
-    <div class="side-glow right"></div>
-
-    <!-- Header -->
-    <div id="ar-panel-header">
-      <div class="hdr-corner tl"></div>
-      <div class="hdr-corner tr"></div>
-      <div class="panel-hdr-dot"></div>
-      <div class="panel-hdr-title">⬡ TIÊN GIỚI CỔNG — VƯƠNG ĐẾ AI</div>
-      <div class="panel-hdr-status" id="hdr-status">● HOẠT ĐỘNG</div>
-    </div>
-
-    <!-- Main app iframe -->
-    <div id="ar-iframe-wrap">
-      <iframe id="main-app-iframe" src="/" allow="camera; microphone; autoplay" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"></iframe>
-    </div>
-
-    <!-- Footer -->
-    <div id="ar-panel-footer">
-      <div class="hdr-corner bl"></div>
-      <div class="hdr-corner br"></div>
-      <span class="ftr-label" id="ftr-coord">AR PORTAL · KHÔNG GIAN 3D</span>
-      <button class="ftr-btn-zoom" onclick="zoomPanel(-1)">⊖</button>
-      <button class="ftr-btn-zoom" onclick="zoomPanel(1)">⊕</button>
-      <button class="ftr-btn" onclick="exitAR()">✕ THOÁT</button>
-    </div>
-  </div>
-</div>
-
-<!-- AR HUD -->
-<div id="ar-hud">
-  <div id="hud-top">
+<!-- DOM Overlay (shown inside XR session) -->
+<div id="xr-overlay">
+  <div id="xr-hud-top">
     <div class="hud-logo">VƯƠNG ĐẾ AR</div>
-    <div class="hud-badge">
-      <div class="hud-badge-dot"></div>
-      <span>PORTAL HOẠT ĐỘNG</span>
+    <div class="hud-badge"><div class="hud-dot"></div><span id="hud-status">ĐANG QUÉT...</span></div>
+    <div class="hud-sp"></div>
+    <div id="hud-clock">--:--</div>
+  </div>
+  <div id="xr-hud-mid">
+    <div id="xr-hint">HƯỚNG CAMERA XUỐNG BỀ MẶT → NHẤN ĐỂ ĐẶT PORTAL</div>
+    <div id="xr-placed-hint">NHẤN VÀO PANEL ĐỂ MỞ GIAO DIỆN ĐẦY ĐỦ</div>
+  </div>
+  <div id="xr-hud-bottom">
+    <button class="xr-btn" id="btn-reset-place" onclick="resetPlacement()">↺ ĐẶT LẠI</button>
+    <button class="xr-btn" id="btn-end-xr" onclick="endXR()">✕ THOÁT AR</button>
+  </div>
+</div>
+
+<!-- Fallback AR (camera + deviceorientation tracking) -->
+<div id="fallback-ar">
+  <video id="fallback-video" autoplay playsinline muted></video>
+  <div id="fallback-hud">
+    <div class="fb-logo">VƯƠNG ĐẾ AR</div>
+    <div class="fb-badge"><div class="hud-dot"></div><span>MÔ PHỎNG AR</span></div>
+    <div class="fb-sp"></div>
+    <div id="fb-clock">--:--</div>
+  </div>
+  <div id="fallback-panel-wrap">
+    <div id="fallback-panel">
+      <div id="fallback-panel-hdr">
+        <div class="fp-dot"></div>
+        <div class="fp-title">⬡ TIÊN GIỚI CỔNG — VƯƠNG ĐẾ AI</div>
+        <div class="fp-status">● ĐANG CHẠY</div>
+      </div>
+      <div id="fallback-iframe-wrap">
+        <iframe id="fallback-iframe" src="/" allow="camera; microphone; autoplay" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"></iframe>
+      </div>
+      <div id="fallback-panel-ftr">
+        <span class="fp-lbl">MÔ PHỎNG SPATIAL AR · CON QUAY ĐIỆN THOẠI</span>
+        <button class="fp-btn" onclick="exitFallback()">✕ THOÁT</button>
+      </div>
     </div>
-    <div class="hud-spacer"></div>
-    <div id="hud-clock">--:--:--</div>
-  </div>
-  <div id="hud-bottom">
-    <button class="hud-ctrl-btn" onclick="toggleTilt()">⟳ TILT</button>
-    <button class="hud-ctrl-btn" onclick="resetPanelPos()">⌖ CĂNG GIỮA</button>
-    <button id="btn-exit" onclick="exitAR()">✕ THOÁT AR</button>
   </div>
 </div>
 
-<!-- Size controls -->
-<div id="size-controls">
-  <button class="size-btn" onclick="zoomPanel(1)" title="Phóng to">+</button>
-  <button class="size-btn" onclick="zoomPanel(-1)" title="Thu nhỏ">−</button>
-  <button class="size-btn" onclick="resetPanelPos()" title="Reset">⌖</button>
+<!-- Full-screen popup for actual app interaction -->
+<div id="xr-popup">
+  <div id="popup-header">
+    <div id="popup-title">⬡ TIÊN GIỚI — VƯƠNG ĐẾ AI</div>
+    <button id="btn-close-popup" onclick="closePopup()">✕ ĐÓNG</button>
+  </div>
+  <div id="popup-body">
+    <iframe id="popup-iframe" src="/" allow="camera; microphone; autoplay"></iframe>
+  </div>
 </div>
 
-<!-- Error -->
-<div id="error-msg">
-  <div class="err-icon">📷</div>
-  <div class="err-text" id="err-text">Không thể truy cập camera.<br>Vui lòng cấp quyền camera và thử lại.</div>
-  <button class="err-btn" onclick="location.reload()">↺ THỬ LẠI</button>
-</div>
+<script type="module">
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
-<script>
 // ═══════════════════════════════════════
-// STATE
+// GLOBALS
 // ═══════════════════════════════════════
-let cameraStream = null;
-let animFrame = null;
-let panelScale = 1;
-let tiltEnabled = true;
-let panelTiltX = 0, panelTiltY = 0;
-let targetTiltX = 0, targetTiltY = 0;
-let touchStartX = 0, touchStartY = 0;
-let isDragging = false;
-let panelOffsetX = 0, panelOffsetY = 0;
-let dragStartX = 0, dragStartY = 0;
-let dragStartOX = 0, dragStartOY = 0;
-let clockInterval = null;
+let renderer, scene, camera;
+let reticle, reticleVisible = false;
+let panelMesh = null, panelPlaced = false;
+let hitTestSource = null, hitTestSourceRequested = false;
+let xrSession = null;
+let panelCanvas, panelCtx, panelTexture;
+let clockInterval;
+let currentTab = 0;
+let panelInteractive = true;
+
+const PANEL_W = 0.56;   // metres
+const PANEL_H = 0.84;   // metres
+const TABS = ['THẦN LINH', 'NHÂN VẬT', 'CHAT', 'KHO BÁU'];
+const TAB_ICONS = ['⚡','👤','💬','💎'];
+
+// ═══════════════════════════════════════
+// CHECK XR SUPPORT
+// ═══════════════════════════════════════
+async function checkXRSupport() {
+  if (!navigator.xr) return false;
+  try { return await navigator.xr.isSessionSupported('immersive-ar'); }
+  catch(e) { return false; }
+}
+
+window.addEventListener('load', async () => {
+  const supported = await checkXRSupport();
+  if (!supported) {
+    document.getElementById('no-xr-note').style.display = 'block';
+    document.getElementById('btn-fallback').style.display = 'inline-block';
+    document.getElementById('btn-xr').disabled = true;
+    document.getElementById('btn-xr').textContent = '✗ THIẾT BỊ CHƯA HỖ TRỢ';
+  }
+});
+
+// ═══════════════════════════════════════
+// INIT THREE.JS
+// ═══════════════════════════════════════
+function initThree() {
+  const canvas = document.getElementById('three-canvas');
+
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.xr.enabled = true;
+  renderer.xr.setReferenceSpaceType('local');
+
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+
+  // Ambient light
+  scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+  const dlight = new THREE.DirectionalLight(0x88ffff, 0.8);
+  dlight.position.set(0, 2, 1);
+  scene.add(dlight);
+
+  // Reticle (surface indicator ring)
+  const reticleGeo = new THREE.RingGeometry(0.10, 0.13, 32);
+  const reticleMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide });
+  reticleGeo.rotateX(-Math.PI / 2);
+  reticle = new THREE.Mesh(reticleGeo, reticleMat);
+  reticle.matrixAutoUpdate = false;
+  reticle.visible = false;
+  scene.add(reticle);
+
+  // Inner reticle dot
+  const dotGeo = new THREE.CircleGeometry(0.015, 16);
+  const dotMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
+  dotGeo.rotateX(-Math.PI / 2);
+  const dot = new THREE.Mesh(dotGeo, dotMat);
+  reticle.add(dot);
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+}
+
+// ═══════════════════════════════════════
+// PANEL CANVAS TEXTURE
+// ═══════════════════════════════════════
+function createPanelCanvas() {
+  panelCanvas = document.createElement('canvas');
+  panelCanvas.width = 512;
+  panelCanvas.height = 768;
+  panelCtx = panelCanvas.getContext('2d');
+  panelTexture = new THREE.CanvasTexture(panelCanvas);
+  drawPanelUI();
+}
+
+function drawPanelUI() {
+  const ctx = panelCtx;
+  const W = 512, H = 768;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, 'rgba(0,10,28,0.97)');
+  bg.addColorStop(1, 'rgba(0,5,15,0.97)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Scanlines
+  ctx.fillStyle = 'rgba(0,255,255,0.012)';
+  for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 2);
+
+  // Outer border
+  ctx.strokeStyle = 'rgba(0,255,255,0.7)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(4, 4, W-8, H-8);
+
+  // Corner accents
+  const clen = 30;
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 3;
+  [[0,0,1,1],[W,0,-1,1],[0,H,1,-1],[W,H,-1,-1]].forEach(([x,y,sx,sy]) => {
+    ctx.beginPath(); ctx.moveTo(x+sx*8, y+sy*8+sy*clen); ctx.lineTo(x+sx*8, y+sy*8); ctx.lineTo(x+sx*8+sx*clen, y+sy*8); ctx.stroke();
+  });
+
+  // Header bar
+  const hdrGrad = ctx.createLinearGradient(0, 10, W, 60);
+  hdrGrad.addColorStop(0, 'rgba(0,30,60,0.9)');
+  hdrGrad.addColorStop(1, 'rgba(0,10,25,0.9)');
+  ctx.fillStyle = hdrGrad;
+  ctx.fillRect(10, 10, W-20, 56);
+
+  // Header border bottom
+  ctx.strokeStyle = 'rgba(0,255,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(10, 66); ctx.lineTo(W-10, 66); ctx.stroke();
+
+  // Status dot
+  ctx.beginPath(); ctx.arc(26, 38, 5, 0, Math.PI*2);
+  ctx.fillStyle = '#00ff88';
+  ctx.shadowColor = '#00ff88'; ctx.shadowBlur = 10;
+  ctx.fill(); ctx.shadowBlur = 0;
+
+  // Title
+  ctx.font = 'bold 14px Orbitron, monospace';
+  ctx.fillStyle = '#00ffff';
+  ctx.fillText('⬡ TIÊN GIỚI CỔNG', 40, 43);
+
+  ctx.font = '9px Share Tech Mono, monospace';
+  ctx.fillStyle = 'rgba(0,255,136,0.6)';
+  ctx.fillText('● PORTAL HOẠT ĐỘNG', W-155, 43);
+
+  // Sub-header
+  ctx.font = '9px Share Tech Mono, monospace';
+  ctx.fillStyle = 'rgba(0,255,255,0.3)';
+  ctx.fillText('VƯƠNG ĐẾ AI — HỆ THỐNG TỐI CAO', 10, 80);
+
+  // Decorative line
+  const lineGrad = ctx.createLinearGradient(0, 88, W, 88);
+  lineGrad.addColorStop(0, 'transparent');
+  lineGrad.addColorStop(0.3, '#00ffff');
+  lineGrad.addColorStop(0.7, '#00ff88');
+  lineGrad.addColorStop(1, 'transparent');
+  ctx.strokeStyle = lineGrad; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(10, 88); ctx.lineTo(W-10, 88); ctx.stroke();
+
+  // TAB BUTTONS
+  const tabW = Math.floor((W - 20) / 4);
+  const tabY = 96;
+  TABS.forEach((tab, i) => {
+    const tx = 10 + i * tabW;
+    const active = i === currentTab;
+    // Tab background
+    ctx.fillStyle = active ? 'rgba(0,255,255,0.18)' : 'rgba(0,255,255,0.04)';
+    ctx.fillRect(tx, tabY, tabW-2, 44);
+    // Tab border
+    ctx.strokeStyle = active ? 'rgba(0,255,255,0.8)' : 'rgba(0,255,255,0.2)';
+    ctx.lineWidth = active ? 1.5 : 0.5;
+    ctx.strokeRect(tx, tabY, tabW-2, 44);
+    // Tab bottom highlight
+    if (active) {
+      ctx.fillStyle = '#00ffff';
+      ctx.fillRect(tx, tabY+41, tabW-2, 3);
+    }
+    // Icon
+    ctx.font = '16px sans-serif';
+    ctx.fillStyle = active ? '#00ffff' : 'rgba(0,200,200,0.5)';
+    ctx.textAlign = 'center';
+    ctx.fillText(TAB_ICONS[i], tx + tabW/2 - 1, tabY + 18);
+    // Label
+    ctx.font = `bold ${active ? 7.5 : 7}px Orbitron, monospace`;
+    ctx.fillStyle = active ? '#00ffff' : 'rgba(0,200,200,0.45)';
+    ctx.fillText(tab, tx + tabW/2 - 1, tabY + 34);
+    ctx.textAlign = 'left';
+  });
+
+  // Content area
+  const contentY = tabY + 52;
+  const contentH = H - contentY - 80;
+  ctx.strokeStyle = 'rgba(0,255,255,0.12)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(10, contentY, W-20, contentH);
+
+  // Draw content based on active tab
+  drawTabContent(ctx, currentTab, 10, contentY, W-20, contentH);
+
+  // Footer
+  ctx.fillStyle = 'rgba(0,10,25,0.9)';
+  ctx.fillRect(10, H-70, W-20, 56);
+  ctx.strokeStyle = 'rgba(0,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(10, H-70, W-20, 56);
+
+  // Tap to interact hint
+  ctx.font = '9px Share Tech Mono, monospace';
+  ctx.fillStyle = 'rgba(0,255,255,0.35)';
+  ctx.textAlign = 'center';
+  ctx.fillText('NHẤN VÀO PANEL ĐỂ MỞ GIAO DIỆN ĐẦY ĐỦ', W/2, H-47);
+  ctx.font = 'bold 11px Orbitron, monospace';
+  ctx.fillStyle = 'rgba(0,255,136,0.5)';
+  ctx.fillText('[ MỞ TIÊN GIỚI → ]', W/2, H-25);
+  ctx.textAlign = 'left';
+
+  panelTexture.needsUpdate = true;
+}
+
+function drawTabContent(ctx, tab, x, y, w, h) {
+  const pad = 14;
+  const cx = x + pad, cy = y + pad, cw = w - pad*2;
+
+  ctx.font = '9px Share Tech Mono, monospace';
+
+  if (tab === 0) {
+    // THẦN LINH
+    ctx.fillStyle = 'rgba(0,255,255,0.5)';
+    ctx.fillText('● THẦN LINH TIÊN GIỚI', cx, cy + 14);
+    ctx.strokeStyle = 'rgba(0,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, cy+20); ctx.lineTo(cx+cw, cy+20); ctx.stroke();
+
+    const agents = [
+      { name:'THIÊN CƠ CÁC', role:'Chiến Lược', color:'#00ffff', lv:99 },
+      { name:'HỎA THẦN', role:'Công Kích', color:'#ff6644', lv:77 },
+      { name:'THỦY LINH', role:'Hỗ Trợ', color:'#44aaff', lv:63 },
+    ];
+    agents.forEach((a, i) => {
+      const ay = cy + 30 + i * 50;
+      // Agent card
+      ctx.fillStyle = 'rgba(0,255,255,0.04)';
+      ctx.strokeStyle = `${a.color}33`;
+      ctx.lineWidth = 0.5;
+      ctx.fillRect(cx, ay, cw, 44);
+      ctx.strokeRect(cx, ay, cw, 44);
+      // Color bar
+      ctx.fillStyle = a.color;
+      ctx.fillRect(cx, ay, 3, 44);
+      // Name
+      ctx.font = 'bold 10px Orbitron, monospace';
+      ctx.fillStyle = a.color;
+      ctx.fillText(a.name, cx+12, ay+14);
+      // Role
+      ctx.font = '8px Share Tech Mono, monospace';
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.fillText(a.role, cx+12, ay+28);
+      // Level
+      ctx.font = 'bold 9px Orbitron, monospace';
+      ctx.fillStyle = 'rgba(255,215,0,0.7)';
+      ctx.fillText(`Lv.${a.lv}`, cx+cw-38, ay+22);
+    });
+
+  } else if (tab === 1) {
+    // NHÂN VẬT
+    ctx.fillStyle = 'rgba(0,255,255,0.5)';
+    ctx.fillText('● THÔNG TIN NHÂN VẬT', cx, cy + 14);
+    ctx.strokeStyle = 'rgba(0,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, cy+20); ctx.lineTo(cx+cw, cy+20); ctx.stroke();
+
+    // Character silhouette (circle placeholder)
+    ctx.beginPath(); ctx.arc(cx + cw/2, cy + 75, 40, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(0,255,255,0.25)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.font = '40px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🧑‍💻', cx + cw/2, cy + 90); ctx.textAlign = 'left';
+
+    ctx.font = 'bold 12px Orbitron, monospace'; ctx.fillStyle = '#ffd700';
+    ctx.textAlign = 'center';
+    ctx.fillText('KÝ CHỦ', cx + cw/2, cy + 135); ctx.textAlign = 'left';
+
+    const stats = [['LỰC','★★★★☆'],['TRÍ','★★★☆☆'],['ĐẠO','★★★★★']];
+    stats.forEach(([k,v], i) => {
+      ctx.font = '9px Share Tech Mono, monospace';
+      ctx.fillStyle = 'rgba(0,255,255,0.5)'; ctx.fillText(k, cx + i*60, cy+160);
+      ctx.fillStyle = 'rgba(255,215,0,0.7)'; ctx.fillText(v, cx + i*60, cy+174);
+    });
+
+  } else if (tab === 2) {
+    // CHAT
+    ctx.fillStyle = 'rgba(0,255,255,0.5)';
+    ctx.fillText('● THIÊN CƠ CÁC · HỘI THOẠI', cx, cy + 14);
+    ctx.strokeStyle = 'rgba(0,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, cy+20); ctx.lineTo(cx+cw, cy+20); ctx.stroke();
+
+    const msgs = [
+      { who:'THIÊN CƠ', txt:'Đạo hữu, portal AR đã mở.', color:'#00ffff' },
+      { who:'KÝ CHỦ', txt:'Giao diện này neo vào không gian thật.', color:'#ffd700' },
+      { who:'THIÊN CƠ', txt:'Chính xác! Di chuyển điện thoại để kiểm tra.', color:'#00ffff' },
+    ];
+    msgs.forEach((m, i) => {
+      const my = cy + 34 + i * 46;
+      ctx.font = 'bold 8px Orbitron, monospace';
+      ctx.fillStyle = m.color;
+      ctx.fillText(m.who + ':', cx, my);
+      ctx.font = '9px Share Tech Mono, monospace';
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      // Word wrap manually
+      const words = m.txt.split(' ');
+      let line = '', lines = [];
+      words.forEach(w => { const test = line + w + ' '; if (ctx.measureText(test).width > cw - 10) { lines.push(line); line = w + ' '; } else line = test; });
+      lines.push(line);
+      lines.forEach((l, li) => ctx.fillText(l.trim(), cx, my + 14 + li*12));
+    });
+
+  } else if (tab === 3) {
+    // KHO BÁU
+    ctx.fillStyle = 'rgba(0,255,255,0.5)';
+    ctx.fillText('● KHO BÁU TIÊN GIỚI', cx, cy + 14);
+    ctx.strokeStyle = 'rgba(0,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, cy+20); ctx.lineTo(cx+cw, cy+20); ctx.stroke();
+
+    const items = [
+      { icon:'💰', name:'Linh Thạch', val:'99,999', color:'#ffd700' },
+      { icon:'🏆', name:'Phong Hiệu', val:'Tiên Đế', color:'#ff88aa' },
+      { icon:'🗡️', name:'Thần Khí', val:'Lv.MAX', color:'#00ffff' },
+      { icon:'📜', name:'Bí Kíp', val:'x47', color:'#88ff88' },
+    ];
+    items.forEach((it, i) => {
+      const iy = cy + 30 + i * 38;
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      ctx.strokeStyle = `rgba(255,215,0,0.1)`;
+      ctx.lineWidth = 0.5;
+      ctx.fillRect(cx, iy, cw, 32); ctx.strokeRect(cx, iy, cw, 32);
+      ctx.font = '14px sans-serif'; ctx.fillText(it.icon, cx + 6, iy + 22);
+      ctx.font = 'bold 9px Orbitron, monospace'; ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText(it.name, cx + 28, iy + 14);
+      ctx.font = '9px Share Tech Mono, monospace'; ctx.fillStyle = it.color;
+      ctx.fillText(it.val, cx + 28, iy + 26);
+    });
+  }
+}
+
+// ═══════════════════════════════════════
+// CREATE 3D PANEL MESH
+// ═══════════════════════════════════════
+function createPanel(position, quaternion) {
+  createPanelCanvas();
+
+  // Main panel plane
+  const geo = new THREE.PlaneGeometry(PANEL_W, PANEL_H);
+  const mat = new THREE.MeshBasicMaterial({
+    map: panelTexture,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  panelMesh = new THREE.Mesh(geo, mat);
+  panelMesh.position.copy(position);
+  panelMesh.position.y += PANEL_H / 2 + 0.02;
+  panelMesh.quaternion.copy(quaternion);
+  // Face camera (billboard Y only)
+  scene.add(panelMesh);
+
+  // Glow border frame (slightly larger plane)
+  const borderGeo = new THREE.PlaneGeometry(PANEL_W + 0.01, PANEL_H + 0.01);
+  const borderCanvas = document.createElement('canvas');
+  borderCanvas.width = 64; borderCanvas.height = 96;
+  const bctx = borderCanvas.getContext('2d');
+  bctx.strokeStyle = 'rgba(0,255,255,0.9)';
+  bctx.lineWidth = 4;
+  bctx.strokeRect(2, 2, 60, 92);
+  bctx.strokeStyle = 'rgba(0,255,255,0.25)';
+  bctx.lineWidth = 1;
+  bctx.strokeRect(0, 0, 64, 96);
+  const borderTex = new THREE.CanvasTexture(borderCanvas);
+  const borderMat = new THREE.MeshBasicMaterial({ map: borderTex, transparent: true, depthWrite: false });
+  const border = new THREE.Mesh(borderGeo, borderMat);
+  border.position.z = -0.001;
+  panelMesh.add(border);
+
+  // Bottom glow beam
+  const beamGeo = new THREE.CylinderGeometry(0.005, 0.06, PANEL_H/2 + position.y + 0.02, 6, 1, true);
+  const beamCanvas = document.createElement('canvas');
+  beamCanvas.width = 8; beamCanvas.height = 32;
+  const bec = beamCanvas.getContext('2d');
+  const bg = bec.createLinearGradient(0, 0, 0, 32);
+  bg.addColorStop(0, 'rgba(0,255,255,0.4)');
+  bg.addColorStop(1, 'rgba(0,255,255,0)');
+  bec.fillStyle = bg;
+  bec.fillRect(0, 0, 8, 32);
+  const beamMat = new THREE.MeshBasicMaterial({
+    map: new THREE.CanvasTexture(beamCanvas),
+    transparent: true, side: THREE.DoubleSide, depthWrite: false
+  });
+  const beam = new THREE.Mesh(beamGeo, beamMat);
+  beam.position.copy(position);
+  beam.position.y = (PANEL_H/2 + position.y + 0.02) / 2 - PANEL_H/4;
+  scene.add(beam);
+
+  // Ground ring
+  const groundRingGeo = new THREE.RingGeometry(0.12, 0.18, 32);
+  groundRingGeo.rotateX(-Math.PI/2);
+  const groundRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+  const groundRing = new THREE.Mesh(groundRingGeo, groundRingMat);
+  groundRing.position.copy(position);
+  groundRing.position.y += 0.005;
+  scene.add(groundRing);
+}
+
+// ═══════════════════════════════════════
+// START WEBXR AR
+// ═══════════════════════════════════════
+window.startXR = async function() {
+  document.getElementById('start-screen').style.display = 'none';
+  initThree();
+
+  const sessionInit = {
+    requiredFeatures: ['hit-test'],
+    optionalFeatures: ['dom-overlay', 'anchors'],
+    domOverlay: { root: document.getElementById('xr-overlay') }
+  };
+
+  try {
+    xrSession = await navigator.xr.requestSession('immersive-ar', sessionInit);
+  } catch(e) {
+    console.error('XR session error:', e);
+    document.getElementById('start-screen').style.display = 'flex';
+    return;
+  }
+
+  renderer.xr.setSession(xrSession);
+  document.getElementById('xr-overlay').style.display = 'flex';
+  document.getElementById('xr-hint').style.display = 'block';
+
+  xrSession.addEventListener('end', () => {
+    document.getElementById('xr-overlay').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'flex';
+    clearInterval(clockInterval);
+    panelMesh = null; panelPlaced = false;
+    hitTestSource = null; hitTestSourceRequested = false;
+  });
+
+  xrSession.addEventListener('select', onXRSelect);
+
+  // Clock
+  updateClock();
+  clockInterval = setInterval(updateClock, 1000);
+
+  renderer.setAnimationLoop(renderXRFrame);
+};
+
+// ═══════════════════════════════════════
+// XR RENDER LOOP
+// ═══════════════════════════════════════
+function renderXRFrame(timestamp, frame) {
+  if (!frame) { renderer.render(scene, camera); return; }
+
+  const refSpace = renderer.xr.getReferenceSpace();
+  const session = renderer.xr.getSession();
+
+  // Request hit test source once
+  if (!hitTestSourceRequested) {
+    session.requestReferenceSpace('viewer').then(vs => {
+      session.requestHitTestSource({ space: vs }).then(src => {
+        hitTestSource = src;
+      });
+    });
+    hitTestSourceRequested = true;
+  }
+
+  // Hit test
+  if (!panelPlaced && hitTestSource) {
+    const hitResults = frame.getHitTestResults(hitTestSource);
+    if (hitResults.length > 0) {
+      const hit = hitResults[0];
+      const pose = hit.getPose(refSpace);
+      if (pose) {
+        reticle.visible = true;
+        reticle.matrix.fromArray(pose.transform.matrix);
+        reticleVisible = true;
+        document.getElementById('xr-hint').style.display = 'block';
+      }
+    } else {
+      reticle.visible = false;
+      reticleVisible = false;
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+
+// ═══════════════════════════════════════
+// PLACE PANEL ON TAP
+// ═══════════════════════════════════════
+function onXRSelect(event) {
+  if (panelPlaced) {
+    // Tap on already-placed panel → open popup
+    openPopup();
+    return;
+  }
+  if (!reticleVisible) return;
+
+  // Get position from reticle
+  const pos = new THREE.Vector3();
+  const quat = new THREE.Quaternion();
+  reticle.matrix.decompose(pos, quat, new THREE.Vector3());
+
+  createPanel(pos, quat);
+  panelPlaced = true;
+  reticle.visible = false;
+
+  document.getElementById('xr-hint').style.display = 'none';
+  document.getElementById('xr-placed-hint').style.display = 'block';
+  document.getElementById('btn-reset-place').style.display = 'inline-block';
+  document.getElementById('hud-status').textContent = 'PORTAL ĐÃ NEO';
+}
+
+// ═══════════════════════════════════════
+// RESET PLACEMENT
+// ═══════════════════════════════════════
+window.resetPlacement = function() {
+  if (panelMesh) {
+    // Remove all objects added during placement
+    const toRemove = [];
+    scene.traverse(obj => { if (obj !== scene && obj !== reticle && !reticle.children.includes(obj) && obj !== camera) toRemove.push(obj); });
+    toRemove.forEach(obj => scene.remove(obj));
+    panelMesh = null;
+  }
+  panelPlaced = false;
+  reticle.visible = false;
+  reticleVisible = false;
+  hitTestSourceRequested = false;
+  if (hitTestSource) { hitTestSource.cancel?.(); hitTestSource = null; }
+
+  document.getElementById('xr-hint').style.display = 'block';
+  document.getElementById('xr-placed-hint').style.display = 'none';
+  document.getElementById('btn-reset-place').style.display = 'none';
+  document.getElementById('hud-status').textContent = 'ĐANG QUÉT...';
+};
+
+// ═══════════════════════════════════════
+// END XR
+// ═══════════════════════════════════════
+window.endXR = function() {
+  if (xrSession) { xrSession.end(); xrSession = null; }
+};
+
+// ═══════════════════════════════════════
+// POPUP (full app)
+// ═══════════════════════════════════════
+function openPopup() {
+  document.getElementById('xr-popup').style.display = 'flex';
+}
+window.closePopup = function() {
+  document.getElementById('xr-popup').style.display = 'none';
+};
 
 // ═══════════════════════════════════════
 // CLOCK
 // ═══════════════════════════════════════
 function updateClock() {
   const now = new Date();
-  const h = String(now.getHours()).padStart(2,'0');
-  const m = String(now.getMinutes()).padStart(2,'0');
-  const s = String(now.getSeconds()).padStart(2,'0');
-  const el = document.getElementById('hud-clock');
-  if (el) el.textContent = `${h}:${m}:${s}`;
+  document.getElementById('hud-clock').textContent =
+    `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 }
 
 // ═══════════════════════════════════════
-// AR CANVAS EFFECTS
+// FALLBACK MODE (camera + deviceorientation)
 // ═══════════════════════════════════════
-function initARCanvas() {
-  const canvas = document.getElementById('ar-canvas');
-  const ctx = canvas.getContext('2d');
-  let t = 0;
+let fbStream = null, fbClockInt = null;
+let fbTiltX = 0, fbTiltY = 0, fbTargetX = 0, fbTargetY = 0;
+let fbBaseAlpha = null, fbBaseBeta = null, fbBaseGamma = null;
+let fbAnimating = false;
 
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  function drawFrame() {
-    animFrame = requestAnimationFrame(drawFrame);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    t++;
-
-    // Scanlines
-    ctx.strokeStyle = 'rgba(0,255,255,0.025)';
-    ctx.lineWidth = 1;
-    for (let y = 0; y < canvas.height; y += 5) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-    }
-
-    // Corner HUD brackets
-    const bw = 28, bh = 28, pad = 14;
-    ctx.strokeStyle = 'rgba(0,255,255,0.35)';
-    ctx.lineWidth = 2;
-    const corners = [
-      [pad, pad, 1, 1],
-      [canvas.width-pad, pad, -1, 1],
-      [pad, canvas.height-pad, 1, -1],
-      [canvas.width-pad, canvas.height-pad, -1, -1]
-    ];
-    corners.forEach(([x,y,sx,sy]) => {
-      ctx.beginPath();
-      ctx.moveTo(x, y + sy*bh);
-      ctx.lineTo(x, y);
-      ctx.lineTo(x + sx*bw, y);
-      ctx.stroke();
-    });
-
-    // Floating particles at bottom of panel
-    if (document.getElementById('ar-panel-wrapper').style.display !== 'none') {
-      const pw = document.getElementById('ar-panel');
-      const rect = pw.getBoundingClientRect();
-      const cx = rect.left + rect.width/2;
-      const cy = rect.bottom;
-
-      for (let i = 0; i < 3; i++) {
-        const px = cx + (Math.random()-0.5)*rect.width*0.6;
-        const py = cy + Math.random()*20;
-        const alpha = Math.random()*0.4;
-        ctx.beginPath();
-        ctx.arc(px, py - (t*0.5)%60, 2, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(0,255,255,${alpha})`;
-        ctx.fill();
-      }
-
-      // Bottom beam
-      const grad = ctx.createLinearGradient(cx, cy, cx, cy+30);
-      grad.addColorStop(0, 'rgba(0,255,255,0.3)');
-      grad.addColorStop(1, 'transparent');
-      ctx.fillStyle = grad;
-      ctx.fillRect(cx-1, cy, 2, 30);
-    }
-
-    // Subtle vignette
-    const vg = ctx.createRadialGradient(
-      canvas.width/2, canvas.height/2, canvas.width*0.3,
-      canvas.width/2, canvas.height/2, canvas.width*0.75
-    );
-    vg.addColorStop(0, 'transparent');
-    vg.addColorStop(1, 'rgba(0,0,0,0.45)');
-    ctx.fillStyle = vg;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-
-  drawFrame();
-}
-
-// ═══════════════════════════════════════
-// DEVICE ORIENTATION (tilt panel)
-// ═══════════════════════════════════════
-function initOrientation() {
-  if (!window.DeviceOrientationEvent) return;
-
-  const handler = (e) => {
-    if (!tiltEnabled) return;
-    const beta = Math.max(-30, Math.min(30, (e.beta || 0) - 70));
-    const gamma = Math.max(-30, Math.min(30, e.gamma || 0));
-    targetTiltX = beta * 0.3;
-    targetTiltY = gamma * 0.3;
-  };
-
-  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-    DeviceOrientationEvent.requestPermission().then(p => {
-      if (p === 'granted') window.addEventListener('deviceorientation', handler);
-    }).catch(() => {});
-  } else {
-    window.addEventListener('deviceorientation', handler);
-  }
-}
-
-// ═══════════════════════════════════════
-// PANEL TILT ANIMATION LOOP
-// ═══════════════════════════════════════
-function animatePanelTilt() {
-  panelTiltX += (targetTiltX - panelTiltX) * 0.06;
-  panelTiltY += (targetTiltY - panelTiltY) * 0.06;
-
-  const panel = document.getElementById('ar-panel');
-  if (panel) {
-    panel.style.transform = `
-      scale(${panelScale})
-      translateX(${panelOffsetX}px)
-      translateY(${panelOffsetY}px)
-      rotateX(${panelTiltX}deg)
-      rotateY(${panelTiltY}deg)
-    `;
-  }
-  requestAnimationFrame(animatePanelTilt);
-}
-
-// ═══════════════════════════════════════
-// TOUCH DRAG TO MOVE PANEL
-// ═══════════════════════════════════════
-function initDrag() {
-  const wrapper = document.getElementById('ar-panel-wrapper');
-  const panel = document.getElementById('ar-panel');
-  const header = document.getElementById('ar-panel-header');
-
-  header.addEventListener('touchstart', e => {
-    isDragging = true;
-    dragStartX = e.touches[0].clientX;
-    dragStartY = e.touches[0].clientY;
-    dragStartOX = panelOffsetX;
-    dragStartOY = panelOffsetY;
-    e.stopPropagation();
-  }, { passive: true });
-
-  header.addEventListener('touchmove', e => {
-    if (!isDragging) return;
-    const dx = e.touches[0].clientX - dragStartX;
-    const dy = e.touches[0].clientY - dragStartY;
-    panelOffsetX = dragStartOX + dx;
-    panelOffsetY = dragStartOY + dy;
-    e.stopPropagation();
-  }, { passive: true });
-
-  header.addEventListener('touchend', () => { isDragging = false; });
-
-  // Mouse drag too (for desktop testing)
-  header.addEventListener('mousedown', e => {
-    isDragging = true;
-    dragStartX = e.clientX;
-    dragStartY = e.clientY;
-    dragStartOX = panelOffsetX;
-    dragStartOY = panelOffsetY;
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', e => {
-    if (!isDragging) return;
-    panelOffsetX = dragStartOX + (e.clientX - dragStartX);
-    panelOffsetY = dragStartOY + (e.clientY - dragStartY);
-  });
-  document.addEventListener('mouseup', () => { isDragging = false; });
-}
-
-// ═══════════════════════════════════════
-// CONTROLS
-// ═══════════════════════════════════════
-window.zoomPanel = function(dir) {
-  panelScale = Math.max(0.4, Math.min(1.6, panelScale + dir * 0.1));
-};
-
-window.toggleTilt = function() {
-  tiltEnabled = !tiltEnabled;
-  if (!tiltEnabled) { targetTiltX = 0; targetTiltY = 0; }
-};
-
-window.resetPanelPos = function() {
-  panelOffsetX = 0;
-  panelOffsetY = 0;
-  panelScale = 1;
-};
-
-// ═══════════════════════════════════════
-// SCANNING ANIMATION
-// ═══════════════════════════════════════
-function runScanAnimation() {
-  return new Promise(resolve => {
-    const screen = document.getElementById('scan-screen');
-    const fill = document.getElementById('scan-progress-fill');
-    const label = document.getElementById('scan-label');
-    screen.style.display = 'flex';
-
-    const steps = [
-      { pct: 20, txt: 'KHỞI TẠO CAMERA AR...' },
-      { pct: 45, txt: 'PHÂN TÍCH KHÔNG GIAN...' },
-      { pct: 70, txt: 'KẾT NỐI TIÊN GIỚI...' },
-      { pct: 90, txt: 'CẮM PORTAL...' },
-      { pct: 100, txt: 'HOÀN TẤT ✓' },
-    ];
-
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i >= steps.length) {
-        clearInterval(interval);
-        setTimeout(() => {
-          screen.style.display = 'none';
-          resolve();
-        }, 400);
-        return;
-      }
-      fill.style.width = steps[i].pct + '%';
-      label.textContent = steps[i].txt;
-      i++;
-    }, 500);
-  });
-}
-
-// ═══════════════════════════════════════
-// PANEL APPEAR ANIMATION
-// ═══════════════════════════════════════
-function showPanel() {
-  const wrapper = document.getElementById('ar-panel-wrapper');
-  const panel = document.getElementById('ar-panel');
-  wrapper.style.display = 'flex';
-  panel.style.opacity = '0';
-  panel.style.transform = `scale(0.6) translateY(60px)`;
-  panel.style.transition = 'opacity .6s ease, transform .6s cubic-bezier(.2,.8,.3,1)';
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      panel.style.opacity = '1';
-      panel.style.transform = `scale(1) translateY(0px)`;
-      setTimeout(() => {
-        panel.style.transition = '';
-        document.getElementById('size-controls').style.display = 'flex';
-      }, 600);
-    });
-  });
-}
-
-// ═══════════════════════════════════════
-// START AR
-// ═══════════════════════════════════════
-window.startAR = async function() {
+window.startFallback = async function() {
   document.getElementById('start-screen').style.display = 'none';
 
-  // Request camera
+  // Request camera (rear preferred)
   try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: 'environment',
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
-      },
-      audio: false
-    });
-  } catch(err) {
-    // Try front camera as fallback
-    try {
-      cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    } catch(err2) {
-      document.getElementById('error-msg').style.display = 'flex';
-      document.getElementById('start-screen').style.display = 'flex';
-      return;
+    fbStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+  } catch(e) {
+    try { fbStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); }
+    catch(e2) { alert('Không thể truy cập camera.'); document.getElementById('start-screen').style.display = 'flex'; return; }
+  }
+
+  const vid = document.getElementById('fallback-video');
+  vid.srcObject = fbStream;
+  await vid.play().catch(() => {});
+
+  document.getElementById('fallback-ar').style.display = 'block';
+
+  // Clock
+  const fbClockEl = document.getElementById('fb-clock');
+  function fbTick() {
+    const n = new Date();
+    fbClockEl.textContent = `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+  }
+  fbTick(); fbClockInt = setInterval(fbTick, 1000);
+
+  // Device orientation for spatial feel
+  function applyOrientation(e) {
+    if (fbBaseBeta === null) { fbBaseBeta = e.beta; fbBaseGamma = e.gamma; fbBaseAlpha = e.alpha; }
+    const db = Math.max(-25, Math.min(25, (e.beta - fbBaseBeta) * 0.6));
+    const dg = Math.max(-25, Math.min(25, (e.gamma - fbBaseGamma) * 0.6));
+    fbTargetX = db;
+    fbTargetY = dg;
+  }
+
+  if (typeof DeviceOrientationEvent !== 'undefined') {
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(p => {
+        if (p === 'granted') window.addEventListener('deviceorientation', applyOrientation);
+      }).catch(() => {});
+    } else {
+      window.addEventListener('deviceorientation', applyOrientation);
     }
   }
 
-  // Set camera feed
-  const video = document.getElementById('camera-bg');
-  video.srcObject = cameraStream;
-  await video.play().catch(() => {});
-
-  // Show AR HUD
-  document.getElementById('ar-hud').style.display = 'block';
-
-  // Start canvas effects
-  initARCanvas();
-
-  // Start clock
-  updateClock();
-  clockInterval = setInterval(updateClock, 1000);
-
-  // Init orientation
-  initOrientation();
-
-  // Run scan animation
-  await runScanAnimation();
-
-  // Show the main app panel
-  showPanel();
-
-  // Init drag + tilt animation
-  initDrag();
-  animatePanelTilt();
-
-  // Update footer coordinates
-  setInterval(() => {
-    const el = document.getElementById('ftr-coord');
-    if (el) {
-      const t = new Date();
-      el.textContent = `AR · ${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')} · PORTAL HOẠT ĐỘNG`;
-    }
-  }, 5000);
+  // Animation loop for smooth tilt
+  const panel = document.getElementById('fallback-panel');
+  fbAnimating = true;
+  function fbLoop() {
+    if (!fbAnimating) return;
+    fbTiltX += (fbTargetX - fbTiltX) * 0.07;
+    fbTiltY += (fbTargetY - fbTiltY) * 0.07;
+    // Float animation
+    const floatY = Math.sin(Date.now() / 2200) * 5;
+    panel.style.transform = `rotateX(${fbTiltX}deg) rotateY(${fbTiltY}deg) translateY(${floatY}px)`;
+    requestAnimationFrame(fbLoop);
+  }
+  fbLoop();
 };
 
-// ═══════════════════════════════════════
-// EXIT AR
-// ═══════════════════════════════════════
-window.exitAR = function() {
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(t => t.stop());
-    cameraStream = null;
-  }
-  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
-  if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
-
-  document.getElementById('camera-bg').srcObject = null;
-  document.getElementById('ar-panel-wrapper').style.display = 'none';
-  document.getElementById('ar-hud').style.display = 'none';
-  document.getElementById('size-controls').style.display = 'none';
+window.exitFallback = function() {
+  fbAnimating = false;
+  if (fbStream) { fbStream.getTracks().forEach(t => t.stop()); fbStream = null; }
+  if (fbClockInt) { clearInterval(fbClockInt); fbClockInt = null; }
+  window.removeEventListener('deviceorientation', () => {});
+  fbBaseBeta = null; fbBaseGamma = null; fbBaseAlpha = null;
+  document.getElementById('fallback-video').srcObject = null;
+  document.getElementById('fallback-ar').style.display = 'none';
   document.getElementById('start-screen').style.display = 'flex';
 };
+
+// ═══════════════════════════════════════
+// TAB SWITCH (for panel canvas)
+// ═══════════════════════════════════════
+window.switchTab = function(i) {
+  currentTab = i;
+  if (panelMesh) drawPanelUI();
+};
+
+// Expose for in-AR tab switching via XR controller
+window._arSwitchTab = window.switchTab;
 </script>
 
 </body>
