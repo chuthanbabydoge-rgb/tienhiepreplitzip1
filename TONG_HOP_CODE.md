@@ -1,14 +1,14 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **02:52:38 15/5/2026**
+> Cập nhật lần cuối: **03:05:19 15/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(38 dòng, 966 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,275 dòng, 56.9 KB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,279 dòng, 57.0 KB)*
 - [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,114 dòng, 1.23 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
-- [`user.html`](#user-html) — User page *(707 dòng, 24.6 KB)*
+- [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
 - [`inject2.js`](#inject2-js) — Inject script 2 *(55 dòng, 3.8 KB)*
 - [`inject3.js`](#inject3-js) — Inject script 3 *(156 dòng, 7.1 KB)*
@@ -22,10 +22,10 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 38 | 966 B |
-| `server.js` | 1,275 | 56.9 KB |
+| `server.js` | 1,279 | 57.0 KB |
 | `tienhiepv3.html` | 14,114 | 1.23 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
-| `user.html` | 707 | 24.6 KB |
+| `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
 | `inject2.js` | 55 | 3.8 KB |
 | `inject3.js` | 156 | 7.1 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **19,108** | **1.45 MB** |
+| **TỔNG** | **19,113** | **1.45 MB** |
 
 ---
 
@@ -90,7 +90,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,275 dòng · 56.9 KB
+> 1,279 dòng · 57.0 KB
 
 ```javascript
 const express = require('express');
@@ -550,6 +550,10 @@ app.get('/admin/users', requireAdminPassword, (req, res) => {
 
 app.get('/create-character', (req, res) => {
   res.sendFile(path.join(__dirname, 'create-character.html'));
+});
+
+app.get('/ar', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'ar.html'));
 });
 
 app.get('/profile', requireAuth, (req, res) => {
@@ -17706,7 +17710,7 @@ init();
 <a name="user-html"></a>
 
 > User page  
-> 707 dòng · 24.6 KB
+> 708 dòng · 25.1 KB
 
 ```html
 <!DOCTYPE html>
@@ -18146,6 +18150,7 @@ init();
   <div id="user-badge">◈ ĐẠO HỮU</div>
   <div id="topbar-right">
     <span id="clock">--:--:--</span>
+    <button id="btn-ar" onclick="location.href='/ar'" style="display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.35);color:#00ff88;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all .25s;" onmouseover="this.style.background='rgba(0,255,136,.22)';this.style.boxShadow='0 0 12px rgba(0,255,136,.4)'" onmouseout="this.style.background='rgba(0,255,136,.08)';this.style.boxShadow='none'">⬡ AR 3D</button>
     <button id="btn-logout" onclick="location.href='/'">⬅ THOÁT</button>
   </div>
 </div>

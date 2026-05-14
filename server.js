@@ -457,6 +457,10 @@ app.get('/create-character', (req, res) => {
   res.sendFile(path.join(__dirname, 'create-character.html'));
 });
 
+app.get('/ar', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'ar.html'));
+});
+
 app.get('/profile', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'profile.html'));
 });
