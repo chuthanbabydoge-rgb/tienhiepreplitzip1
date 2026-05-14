@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **03:08:37 15/5/2026**
+> Cập nhật lần cuối: **03:27:12 15/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(38 dòng, 966 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,279 dòng, 57.0 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,114 dòng, 1.23 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,118 dòng, 1.23 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 38 | 966 B |
 | `server.js` | 1,279 | 57.0 KB |
-| `tienhiepv3.html` | 14,114 | 1.23 MB |
+| `tienhiepv3.html` | 14,118 | 1.23 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **19,113** | **1.45 MB** |
+| **TỔNG** | **19,117** | **1.45 MB** |
 
 ---
 
@@ -1380,7 +1380,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 14,114 dòng · 1.23 MB
+> 14,118 dòng · 1.23 MB
 
 ```html
 <!DOCTYPE html>
@@ -4559,6 +4559,10 @@ app.listen(PORT, '0.0.0.0', () => {
     <div id="topbar">
       <div class="brand glitch-text">⬡ VŨ TRỤ AI</div>
       <button id="btn-back-home" onclick="window.location.href='/api/logout'" title="Đăng xuất">⬅ THOÁT</button>
+      <button id="btn-ar-mode" onclick="window.location.href='/ar'" title="Chế độ AR 3D"
+        style="display:none;align-items:center;gap:6px;padding:5px 13px;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.4);color:#00ff88;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all .25s;margin-left:8px;"
+        onmouseover="this.style.background='rgba(0,255,136,.22)';this.style.boxShadow='0 0 14px rgba(0,255,136,.5)'"
+        onmouseout="this.style.background='rgba(0,255,136,.08)';this.style.boxShadow='none'">⬡ AR 3D</button>
       <div id="topbar-user" onclick="window.location.href='/profile'" title="Xem hồ sơ" style="display:none; align-items:center; gap:8px; margin-left:10px; background:rgba(0,40,40,0.7); border:1px solid rgba(0,255,255,0.3); border-radius:20px; padding:4px 12px 4px 6px; cursor:pointer; transition:all 0.2s;"
         onmouseover="this.style.background='rgba(0,60,60,0.85)';this.style.boxShadow='0 0 14px rgba(0,255,255,0.3)'"
         onmouseout="this.style.background='rgba(0,40,40,0.7)';this.style.boxShadow='none'">
