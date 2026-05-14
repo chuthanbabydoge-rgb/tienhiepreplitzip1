@@ -389,6 +389,27 @@ let agentsData = [];
 let panelMeshes = {};
 let currentTextures = {};
 
+// ── Hand Tracking State ──
+let handTrackingAvailable = false;
+let handJointMeshes = { left: {}, right: {} };
+let pinchActive = { left: false, right: false };
+let lastPinchTime = 0;
+const PINCH_THRESHOLD = 0.035; // meters
+
+// ── Gaze / Interaction State ──
+let gazeRaycaster = new THREE.Raycaster();
+let gazeCursor = null;
+let gazeProgressMesh = null;
+let interactiveZones = [];
+let gazeTarget = null;
+let gazeDwellStart = null;
+const GAZE_DWELL_MS = 1500;
+let handPointerLine = null;
+
+// ── Swipe / Touch State ──
+let touchStartX = 0, touchStartY = 0;
+const panels = ['agents', 'char', 'chat', 'vault'];
+
 // ── Init Three.js ──
 function initThree() {
   scene = new THREE.Scene();
@@ -424,6 +445,37 @@ function initThree() {
   const dot = new THREE.Mesh(dotGeo, dotMat);
   reticle.add(dot);
 
+  // ── Gaze cursor (center crosshair + dwell ring) ──
+  const cursorGroup = new THREE.Group();
+
+  const crossH = new THREE.PlaneGeometry(0.012, 0.002);
+  const crossV = new THREE.PlaneGeometry(0.002, 0.012);
+  const crossMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, depthTest: false });
+  cursorGroup.add(new THREE.Mesh(crossH, crossMat));
+  cursorGroup.add(new THREE.Mesh(crossV, crossMat));
+
+  const outerRingGeo = new THREE.RingGeometry(0.007, 0.009, 32);
+  const outerRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.6, side: THREE.DoubleSide, depthTest: false });
+  cursorGroup.add(new THREE.Mesh(outerRingGeo, outerRingMat));
+
+  const progressGeo = new THREE.RingGeometry(0.010, 0.013, 32, 1, 0, 0);
+  const progressMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0, side: THREE.DoubleSide, depthTest: false });
+  gazeProgressMesh = new THREE.Mesh(progressGeo, progressMat);
+  cursorGroup.add(gazeProgressMesh);
+
+  cursorGroup.name = 'gaze-cursor';
+  cursorGroup.renderOrder = 999;
+  scene.add(cursorGroup);
+  gazeCursor = cursorGroup;
+
+  // ── Hand pointer line (rendered when hand tracking active) ──
+  const lineMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.7, depthTest: false });
+  const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-1)]);
+  handPointerLine = new THREE.Line(lineGeo, lineMat);
+  handPointerLine.visible = false;
+  handPointerLine.renderOrder = 998;
+  scene.add(handPointerLine);
+
   window.addEventListener('resize', onResize);
 }
 
@@ -431,6 +483,286 @@ function onResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ── Hand Tracking: Create joint sphere meshes ──
+function initHandJoints(side) {
+  const tipJoints = ['index-finger-tip', 'thumb-tip', 'middle-finger-tip'];
+  tipJoints.forEach(joint => {
+    const geo = new THREE.SphereGeometry(joint.includes('tip') ? 0.007 : 0.005, 8, 8);
+    const mat = new THREE.MeshBasicMaterial({
+      color: joint === 'index-finger-tip' ? 0x00ffff : joint === 'thumb-tip' ? 0x00ff88 : 0xffffff,
+      transparent: true, opacity: 0.85
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.visible = false;
+    scene.add(mesh);
+    handJointMeshes[side][joint] = mesh;
+  });
+}
+
+// ── Hand Tracking: Update joints per frame ──
+function updateHandTracking(frame, refSpace) {
+  const session = renderer.xr.getSession();
+  if (!session.hand) return;
+
+  ['left', 'right'].forEach(side => {
+    const hand = session.inputSources.find(s => s.handedness === side && s.hand);
+    if (!hand?.hand) {
+      Object.values(handJointMeshes[side]).forEach(m => m.visible = false);
+      return;
+    }
+    const tipJoints = ['index-finger-tip', 'thumb-tip', 'middle-finger-tip'];
+    tipJoints.forEach(jointName => {
+      const joint = hand.hand.get(jointName);
+      if (!joint) return;
+      const pose = frame.getJointPose(joint, refSpace);
+      if (!pose) return;
+      const m = handJointMeshes[side][jointName];
+      if (m) {
+        m.visible = true;
+        m.position.set(
+          pose.transform.position.x,
+          pose.transform.position.y,
+          pose.transform.position.z
+        );
+      }
+    });
+
+    // ── Pinch detection ──
+    const indexTip = hand.hand.get('index-finger-tip');
+    const thumbTip = hand.hand.get('thumb-tip');
+    if (indexTip && thumbTip) {
+      const iPose = frame.getJointPose(indexTip, refSpace);
+      const tPose = frame.getJointPose(thumbTip, refSpace);
+      if (iPose && tPose) {
+        const dx = iPose.transform.position.x - tPose.transform.position.x;
+        const dy = iPose.transform.position.y - tPose.transform.position.y;
+        const dz = iPose.transform.position.z - tPose.transform.position.z;
+        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        const nowPinching = dist < PINCH_THRESHOLD;
+        if (nowPinching && !pinchActive[side]) {
+          pinchActive[side] = true;
+          const now = performance.now();
+          if (now - lastPinchTime > 600) {
+            lastPinchTime = now;
+            // Cast ray from index tip forward
+            if (iPose && panelGroup) {
+              const origin = new THREE.Vector3(
+                iPose.transform.position.x,
+                iPose.transform.position.y,
+                iPose.transform.position.z
+              );
+              const camPos = new THREE.Vector3();
+              camera.getWorldPosition(camPos);
+              const dir = origin.clone().sub(camPos).normalize();
+              gazeRaycaster.set(origin, dir);
+              const targets = interactiveZones.map(z => z.mesh);
+              const hits = gazeRaycaster.intersectObjects(targets);
+              if (hits.length > 0) {
+                const zone = interactiveZones.find(z => z.mesh === hits[0].object);
+                if (zone) activateZone(zone);
+              }
+            }
+          }
+        } else if (!nowPinching) {
+          pinchActive[side] = false;
+        }
+
+        // Update hand pointer line (from index tip toward panel)
+        if (side === 'right' && iPose) {
+          const origin = new THREE.Vector3(
+            iPose.transform.position.x,
+            iPose.transform.position.y,
+            iPose.transform.position.z
+          );
+          const camPos = new THREE.Vector3();
+          camera.getWorldPosition(camPos);
+          const dir = origin.clone().sub(camPos).normalize();
+          const end = origin.clone().add(dir.clone().multiplyScalar(1.5));
+          handPointerLine.geometry.setFromPoints([origin, end]);
+          handPointerLine.visible = true;
+        }
+      }
+    }
+  });
+}
+
+// ── Create interactive 3D zone meshes for tab switching ──
+function createInteractiveZones(group) {
+  interactiveZones = [];
+  const tabDefs = [
+    { id: 'agents', label: '⬡ THẦN LINH', color: 0x00ffff },
+    { id: 'char',   label: '☯ NHÂN VẬT',  color: 0xffaa00 },
+    { id: 'chat',   label: '💬 ĐỐI THOẠI', color: 0x00ff88 },
+    { id: 'vault',  label: '🏺 KHO BÁU',   color: 0xaa88ff },
+  ];
+
+  const totalW = 0.78;
+  const tabW = totalW / tabDefs.length - 0.01;
+  const tabH = 0.06;
+  const startX = -totalW / 2 + tabW / 2;
+  const tabY = 0.38;
+
+  tabDefs.forEach((tab, i) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    const isActive = tab.id === activePanel;
+    ctx.fillStyle = isActive ? `rgba(${hexToRGB(tab.color)},0.25)` : 'rgba(0,5,20,0.85)';
+    ctx.fillRect(0, 0, 256, 64);
+    ctx.strokeStyle = `rgba(${hexToRGB(tab.color)},${isActive ? 0.9 : 0.4})`;
+    ctx.lineWidth = isActive ? 3 : 1.5;
+    ctx.strokeRect(2, 2, 252, 60);
+    ctx.font = 'bold 18px Orbitron, monospace';
+    ctx.fillStyle = isActive ? `rgb(${hexToRGB(tab.color)})` : `rgba(${hexToRGB(tab.color)},0.6)`;
+    ctx.textAlign = 'center';
+    ctx.shadowColor = `rgb(${hexToRGB(tab.color)})`;
+    ctx.shadowBlur = isActive ? 15 : 0;
+    ctx.fillText(tab.label, 128, 40);
+    const tex = new THREE.CanvasTexture(canvas);
+    const geo = new THREE.PlaneGeometry(tabW, tabH);
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(startX + i * (tabW + 0.01), tabY, 0.001);
+    group.add(mesh);
+
+    interactiveZones.push({ mesh, action: () => window.switchPanel(tab.id), label: tab.label, tabId: tab.id, color: tab.color, tabIdx: i, tabW, tabH, startX });
+  });
+}
+
+function hexToRGB(hex) {
+  const r = (hex >> 16) & 255;
+  const g = (hex >> 8) & 255;
+  const b = hex & 255;
+  return `${r},${g},${b}`;
+}
+
+// ── Refresh tab meshes when active panel changes ──
+function refreshTabMeshes() {
+  if (!panelGroup) return;
+  interactiveZones.forEach(zone => {
+    const tab = { agents: { label:'⬡ THẦN LINH', color:0x00ffff }, char: { label:'☯ NHÂN VẬT', color:0xffaa00 }, chat: { label:'💬 ĐỐI THOẠI', color:0x00ff88 }, vault: { label:'🏺 KHO BÁU', color:0xaa88ff } }[zone.tabId];
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    const isActive = zone.tabId === activePanel;
+    ctx.fillStyle = isActive ? `rgba(${hexToRGB(tab.color)},0.25)` : 'rgba(0,5,20,0.85)';
+    ctx.fillRect(0, 0, 256, 64);
+    ctx.strokeStyle = `rgba(${hexToRGB(tab.color)},${isActive ? 0.9 : 0.4})`;
+    ctx.lineWidth = isActive ? 3 : 1.5;
+    ctx.strokeRect(2, 2, 252, 60);
+    ctx.font = 'bold 18px Orbitron, monospace';
+    ctx.fillStyle = isActive ? `rgb(${hexToRGB(tab.color)})` : `rgba(${hexToRGB(tab.color)},0.6)`;
+    ctx.textAlign = 'center';
+    ctx.shadowColor = `rgb(${hexToRGB(tab.color)})`;
+    ctx.shadowBlur = isActive ? 15 : 0;
+    ctx.fillText(tab.label, 128, 40);
+    if (zone.mesh.material.map) zone.mesh.material.map.dispose();
+    zone.mesh.material.map = new THREE.CanvasTexture(canvas);
+    zone.mesh.material.needsUpdate = true;
+  });
+}
+
+// ── Activate zone action ──
+function activateZone(zone) {
+  zone.action();
+  // Flash effect on mesh
+  const origOpacity = zone.mesh.material.opacity;
+  zone.mesh.material.opacity = 1;
+  setTimeout(() => { if(zone.mesh.material) zone.mesh.material.opacity = origOpacity; }, 200);
+  refreshTabMeshes();
+  showGestureToast(zone.label);
+}
+
+// ── Gaze update: project center ray, detect dwell ──
+function updateGaze(time) {
+  if (!gazeCursor || !panelGroup) return;
+
+  // Place gaze cursor 1m in front of camera
+  const camDir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+  const camPos = new THREE.Vector3();
+  camera.getWorldPosition(camPos);
+  gazeCursor.position.copy(camPos).add(camDir.clone().multiplyScalar(1.0));
+  gazeCursor.quaternion.copy(camera.quaternion);
+
+  // Raycast from camera center
+  gazeRaycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  const targets = interactiveZones.map(z => z.mesh);
+  const hits = gazeRaycaster.intersectObjects(targets);
+
+  if (hits.length > 0) {
+    const zone = interactiveZones.find(z => z.mesh === hits[0].object);
+    if (zone !== gazeTarget) {
+      gazeTarget = zone;
+      gazeDwellStart = time;
+      gazeProgressMesh.material.opacity = 0.9;
+    } else {
+      const elapsed = time - gazeDwellStart;
+      const progress = Math.min(elapsed / GAZE_DWELL_MS, 1);
+      // Update progress ring arc
+      gazeProgressMesh.geometry.dispose();
+      gazeProgressMesh.geometry = new THREE.RingGeometry(0.010, 0.013, 32, 1, 0, progress * Math.PI * 2);
+      gazeProgressMesh.material.opacity = progress > 0 ? 0.9 : 0;
+      if (progress >= 1) {
+        activateZone(gazeTarget);
+        gazeTarget = null;
+        gazeDwellStart = null;
+        gazeProgressMesh.geometry.dispose();
+        gazeProgressMesh.geometry = new THREE.RingGeometry(0.010, 0.013, 32, 1, 0, 0);
+        gazeProgressMesh.material.opacity = 0;
+      }
+    }
+    // Highlight hovered tab
+    updateHoverHighlight(zone);
+  } else {
+    if (gazeTarget !== null) {
+      gazeTarget = null;
+      gazeDwellStart = null;
+      gazeProgressMesh.geometry.dispose();
+      gazeProgressMesh.geometry = new THREE.RingGeometry(0.010, 0.013, 32, 1, 0, 0);
+      gazeProgressMesh.material.opacity = 0;
+      updateHoverHighlight(null);
+    }
+  }
+}
+
+let hoveredZone = null;
+function updateHoverHighlight(zone) {
+  if (hoveredZone === zone) return;
+  hoveredZone = zone;
+  interactiveZones.forEach(z => {
+    const scale = z === zone ? 1.08 : 1.0;
+    z.mesh.scale.set(scale, scale, 1);
+  });
+}
+
+// ── Handle XR select event (screen tap / controller trigger) ──
+function handleSelect(event) {
+  if (!panelGroup) return;
+  const source = event.inputSource;
+  // Use gaze ray from camera center
+  gazeRaycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  const targets = interactiveZones.map(z => z.mesh);
+  const hits = gazeRaycaster.intersectObjects(targets);
+  if (hits.length > 0) {
+    const zone = interactiveZones.find(z => z.mesh === hits[0].object);
+    if (zone) activateZone(zone);
+  }
+}
+
+// ── Toast notification inside AR ──
+function showGestureToast(msg) {
+  let toast = document.getElementById('ar-gesture-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'ar-gesture-toast';
+    toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,255,255,0.15);border:1px solid rgba(0,255,255,0.5);color:#00ffff;font-family:Orbitron,sans-serif;font-size:12px;letter-spacing:3px;padding:12px 24px;border-radius:2px;z-index:400;pointer-events:none;transition:opacity 0.3s;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = '✓ ' + msg;
+  toast.style.opacity = '1';
+  setTimeout(() => { toast.style.opacity = '0'; }, 1200);
 }
 
 // ── Fetch user data ──
@@ -839,6 +1171,9 @@ function createPanelGroup() {
   beam.position.y = -panelH/2 - 0.15;
   group.add(beam);
 
+  // ── Interactive tab zones (gaze / pinch / tap targets) ──
+  createInteractiveZones(group);
+
   return group;
 }
 
@@ -855,6 +1190,7 @@ window.switchPanel = function(type) {
     panelMeshes['main'].material.map = tex;
     panelMeshes['main'].material.needsUpdate = true;
   }
+  refreshTabMeshes();
 };
 
 // ── Place Panel ──
@@ -931,12 +1267,24 @@ function onXRFrame(time, frame) {
     }
   }
 
+  // ── Hand tracking update ──
+  if (handTrackingAvailable && frame) {
+    try { updateHandTracking(frame, refSpace); } catch(e) {}
+  }
+
+  // ── Gaze interaction update ──
+  if (panelPlaced) {
+    updateGaze(time);
+    gazeCursor.visible = true;
+  } else {
+    if (gazeCursor) gazeCursor.visible = false;
+  }
+
   // Animate panel
   if (panelGroup) {
     panelGroup.rotation.y = Math.sin(time * 0.0003) * 0.08;
     const particles = panelGroup.getObjectByName('particles');
     if (particles) particles.rotation.z = time * 0.0005;
-    // Gentle float
     panelGroup.position.y += Math.sin(time * 0.001) * 0.0002;
   }
 
@@ -967,12 +1315,31 @@ window.startAR = async function() {
   try {
     xrSession = await navigator.xr.requestSession('immersive-ar', {
       requiredFeatures: ['hit-test'],
-      optionalFeatures: ['dom-overlay'],
+      optionalFeatures: ['dom-overlay', 'hand-tracking'],
       domOverlay: { root: document.getElementById('ar-hud') }
     });
 
     renderer.xr.setReferenceSpaceType('local');
     await renderer.xr.setSession(xrSession);
+
+    // ── Detect hand tracking support ──
+    xrSession.addEventListener('inputsourceschange', (e) => {
+      e.added.forEach(src => {
+        if (src.hand) {
+          handTrackingAvailable = true;
+          initHandJoints('left');
+          initHandJoints('right');
+          document.getElementById('hud-status-text').textContent = 'HAND TRACKING ON';
+          handPointerLine.visible = true;
+        }
+      });
+      e.removed.forEach(src => {
+        if (src.hand) handPointerLine.visible = false;
+      });
+    });
+
+    // ── Screen tap / controller trigger ──
+    xrSession.addEventListener('select', handleSelect);
 
     xrSession.addEventListener('end', () => {
       hitTestSource = null;
@@ -985,6 +1352,9 @@ window.startAR = async function() {
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('ar-hud').style.display = 'block';
+
+    // ── Instruction hint update ──
+    document.getElementById('scan-hint').textContent = 'Nhìn vào tab để chọn (1.5s) · Chạm màn hình để tương tác';
 
   } catch (err) {
     console.error('XR error:', err);
@@ -1041,10 +1411,54 @@ async function startFallbackAR() {
     let animFrame;
     let panelOpacity = 0;
     let panelY = 0;
+    let swipeTouchStartX = 0, swipeTouchStartY = 0;
 
     window.simSwitch = function(type) {
       simPanel = type;
     };
+
+    // ── Swipe left/right to switch panels ──
+    canvas.addEventListener('touchstart', e => {
+      swipeTouchStartX = e.touches[0].clientX;
+      swipeTouchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - swipeTouchStartX;
+      const dy = e.changedTouches[0].clientY - swipeTouchStartY;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+        const idx = panels.indexOf(simPanel);
+        if (dx < 0) simPanel = panels[(idx + 1) % panels.length];
+        else         simPanel = panels[(idx + panels.length - 1) % panels.length];
+        showSimToast(simPanel);
+      }
+    }, { passive: true });
+
+    // ── Double tap to switch panel ──
+    let lastTap = 0;
+    canvas.addEventListener('touchend', e => {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        const idx = panels.indexOf(simPanel);
+        simPanel = panels[(idx + 1) % panels.length];
+        showSimToast(simPanel);
+      }
+      lastTap = now;
+    }, { passive: true });
+
+    function showSimToast(type) {
+      const names = { agents: '⬡ THẦN LINH', char: '☯ NHÂN VẬT', chat: '💬 ĐỐI THOẠI', vault: '🏺 KHO BÁU' };
+      let t = document.getElementById('sim-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'sim-toast';
+        t.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,255,255,0.15);border:1px solid rgba(0,255,255,0.5);color:#00ffff;font-family:Orbitron,sans-serif;font-size:13px;letter-spacing:3px;padding:14px 28px;z-index:500;pointer-events:none;transition:opacity 0.3s;';
+        document.body.appendChild(t);
+      }
+      t.textContent = names[type] || type;
+      t.style.opacity = '1';
+      setTimeout(() => { t.style.opacity = '0'; }, 1000);
+    }
 
     window.exitFallbackAR = function(s) {
       s.getTracks().forEach(t => t.stop());
