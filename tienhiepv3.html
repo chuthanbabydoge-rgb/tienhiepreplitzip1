@@ -3092,10 +3092,24 @@
          <button class="lang-opt" onclick="setThemeAndStyle(this, 'en')" style="background:transparent; border:1px solid #00ffff55; margin:0 5px; display:inline-block;">🇬🇧 ENGLISH</button>
       </div>
 
-      <div class="sys-panel-footer" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-        <button id="sys-start-btn" style="display:none;" onclick="showAuth()">[ ĐỒNG Ý ]</button>
-        <button id="sys-admin-btn" style="display:none;" onclick="window.location.href='/admin/login'">⚙ [ ADMIN ]</button>
+      <div class="sys-panel-footer" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; flex-direction:column; align-items:center;">
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+          <button id="sys-start-btn" style="display:none;" onclick="showAuth()">[ ĐỒNG Ý ]</button>
+          <button id="sys-admin-btn" style="display:none;" onclick="window.location.href='/admin/login'">⚙ [ ADMIN ]</button>
+        </div>
+        <button id="sys-ar-btn" style="display:none; margin-top:6px; padding:11px 28px; background:linear-gradient(135deg,rgba(0,255,136,0.12),rgba(0,180,80,0.06)); border:1px solid rgba(0,255,136,0.6); color:#00ff88; font-family:'Orbitron',sans-serif; font-size:10px; letter-spacing:3px; cursor:pointer; transition:all 0.3s; box-shadow:0 0 16px rgba(0,255,136,0.2); animation: arPulse 2.5s ease-in-out infinite;"
+          onclick="window.location.href='/ar'"
+          onmouseover="this.style.background='linear-gradient(135deg,rgba(0,255,136,0.25),rgba(0,180,80,0.15))';this.style.boxShadow='0 0 30px rgba(0,255,136,0.5)'"
+          onmouseout="this.style.background='linear-gradient(135deg,rgba(0,255,136,0.12),rgba(0,180,80,0.06))';this.style.boxShadow='0 0 16px rgba(0,255,136,0.2)'">
+          ⬡ MỞ TIÊN GIỚI (CHẾ ĐỘ AR)
+        </button>
       </div>
+      <style>
+        @keyframes arPulse {
+          0%,100% { box-shadow: 0 0 16px rgba(0,255,136,0.2); border-color: rgba(0,255,136,0.6); }
+          50%      { box-shadow: 0 0 32px rgba(0,255,136,0.5); border-color: rgba(0,255,136,1); }
+        }
+      </style>
     </div>
     
     <div class="sys-panel-box" id="auth-box" style="display:none; text-align:center;">
@@ -4347,6 +4361,7 @@
       await new Promise(r => setTimeout(r, 600));
       document.getElementById('sys-theme-selector').style.display = 'block';
       document.getElementById('sys-start-btn').style.display = 'inline-block';
+      document.getElementById('sys-ar-btn').style.display = 'inline-block';
       // sys-admin-btn intentionally hidden — access via /admin URL or voice
     }
 

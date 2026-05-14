@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **03:27:12 15/5/2026**
+> Cập nhật lần cuối: **03:32:38 15/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(38 dòng, 966 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,279 dòng, 57.0 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,118 dòng, 1.23 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,133 dòng, 1.23 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 38 | 966 B |
 | `server.js` | 1,279 | 57.0 KB |
-| `tienhiepv3.html` | 14,118 | 1.23 MB |
+| `tienhiepv3.html` | 14,133 | 1.23 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **19,117** | **1.45 MB** |
+| **TỔNG** | **19,132** | **1.45 MB** |
 
 ---
 
@@ -552,7 +552,7 @@ app.get('/create-character', (req, res) => {
   res.sendFile(path.join(__dirname, 'create-character.html'));
 });
 
-app.get('/ar', requireAuth, (req, res) => {
+app.get('/ar', (req, res) => {
   res.sendFile(path.join(__dirname, 'ar.html'));
 });
 
@@ -1380,7 +1380,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 14,118 dòng · 1.23 MB
+> 14,133 dòng · 1.23 MB
 
 ```html
 <!DOCTYPE html>
@@ -4477,10 +4477,24 @@ app.listen(PORT, '0.0.0.0', () => {
          <button class="lang-opt" onclick="setThemeAndStyle(this, 'en')" style="background:transparent; border:1px solid #00ffff55; margin:0 5px; display:inline-block;">🇬🇧 ENGLISH</button>
       </div>
 
-      <div class="sys-panel-footer" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-        <button id="sys-start-btn" style="display:none;" onclick="showAuth()">[ ĐỒNG Ý ]</button>
-        <button id="sys-admin-btn" style="display:none;" onclick="window.location.href='/admin/login'">⚙ [ ADMIN ]</button>
+      <div class="sys-panel-footer" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; flex-direction:column; align-items:center;">
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+          <button id="sys-start-btn" style="display:none;" onclick="showAuth()">[ ĐỒNG Ý ]</button>
+          <button id="sys-admin-btn" style="display:none;" onclick="window.location.href='/admin/login'">⚙ [ ADMIN ]</button>
+        </div>
+        <button id="sys-ar-btn" style="display:none; margin-top:6px; padding:11px 28px; background:linear-gradient(135deg,rgba(0,255,136,0.12),rgba(0,180,80,0.06)); border:1px solid rgba(0,255,136,0.6); color:#00ff88; font-family:'Orbitron',sans-serif; font-size:10px; letter-spacing:3px; cursor:pointer; transition:all 0.3s; box-shadow:0 0 16px rgba(0,255,136,0.2); animation: arPulse 2.5s ease-in-out infinite;"
+          onclick="window.location.href='/ar'"
+          onmouseover="this.style.background='linear-gradient(135deg,rgba(0,255,136,0.25),rgba(0,180,80,0.15))';this.style.boxShadow='0 0 30px rgba(0,255,136,0.5)'"
+          onmouseout="this.style.background='linear-gradient(135deg,rgba(0,255,136,0.12),rgba(0,180,80,0.06))';this.style.boxShadow='0 0 16px rgba(0,255,136,0.2)'">
+          ⬡ MỞ TIÊN GIỚI (CHẾ ĐỘ AR)
+        </button>
       </div>
+      <style>
+        @keyframes arPulse {
+          0%,100% { box-shadow: 0 0 16px rgba(0,255,136,0.2); border-color: rgba(0,255,136,0.6); }
+          50%      { box-shadow: 0 0 32px rgba(0,255,136,0.5); border-color: rgba(0,255,136,1); }
+        }
+      </style>
     </div>
     
     <div class="sys-panel-box" id="auth-box" style="display:none; text-align:center;">
@@ -5877,6 +5891,7 @@ app.listen(PORT, '0.0.0.0', () => {
         }
 
         document.getElementById('topbar-user').style.display = 'flex';
+        document.getElementById('btn-ar-mode').style.display = 'flex';
         return user;
       } catch (e) {
         return null;
