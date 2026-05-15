@@ -520,102 +520,6 @@
       transition: opacity .3s;
     }
 
-    /* ── Galaxy Labels ── */
-    .galaxy-label {
-      position: absolute;
-      pointer-events: all;
-      cursor: pointer;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      transition: opacity 0.4s;
-      z-index: 4;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-    .galaxy-label .gl-emoji {
-      font-size: 18px;
-      line-height: 1;
-      filter: drop-shadow(0 0 8px currentColor);
-    }
-    .galaxy-label .gl-name {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 8px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      white-space: nowrap;
-      padding: 3px 10px;
-      border-radius: 2px;
-      border: 1px solid;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(4px);
-    }
-    .galaxy-label:hover .gl-name {
-      background: rgba(255,255,255,0.08);
-    }
-
-    /* ── Galaxy Nav Panel ── */
-    #galaxy-panel {
-      position: fixed;
-      bottom: 68px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(0,0,8,0.75);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 4px;
-      padding: 7px 10px;
-      z-index: 30;
-      backdrop-filter: blur(10px);
-      max-width: 96vw;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    #galaxy-panel-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 7px;
-      letter-spacing: 2px;
-      color: rgba(255,255,255,0.3);
-      white-space: nowrap;
-      margin-right: 4px;
-    }
-    .gal-btn {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 7.5px;
-      letter-spacing: 1px;
-      padding: 4px 9px;
-      border-radius: 2px;
-      border: 1px solid;
-      background: transparent;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s;
-      opacity: 0.7;
-    }
-    .gal-btn:hover {
-      opacity: 1;
-      background: rgba(255,255,255,0.08);
-    }
-    .gal-btn-home {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 7.5px;
-      letter-spacing: 1px;
-      padding: 4px 9px;
-      border-radius: 2px;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: transparent;
-      color: rgba(255,255,255,0.4);
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s;
-    }
-    .gal-btn-home:hover {
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.8);
-    }
 
     .planet-label .name {
       font-family: 'Orbitron', sans-serif;
@@ -3900,9 +3804,6 @@
 
   <!-- PLANET LABELS (dynamic) -->
   <div id="labels"></div>
-  <div id="galaxy-panel">
-    <span id="galaxy-panel-title">✦ THIÊN HÀ</span>
-  </div>
 
   <!-- HUD OVERLAY (FULL SCREEN) -->
   <div id="hud">
@@ -6239,57 +6140,7 @@
           if (isHovered) label.style.textShadow = `0 0 20px ${pm.agent.color}`;
         });
 
-        // Update galaxy labels
-        galaxyLabelEls.forEach((gel, gi) => {
-          const g = GALAXY_GROUPS[gi];
-          const gProj = g.centerVec.clone().project(camera);
-          if (gProj.z > 1 || gProj.z < -1) { gel.style.opacity = '0'; return; }
-          const gx = (gProj.x * widthHalf) + widthHalf;
-          const gy = -(gProj.y * heightHalf) + heightHalf;
-          gel.style.left = gx + 'px';
-          gel.style.top = gy + 'px';
-          const gdist = camera.position.distanceTo(g.centerVec);
-          gel.style.opacity = gdist < 200 ? String(Math.min(1, Math.max(0.15, 1 - gdist / 220))) : '0.15';
-        });
-
-        // Pulse galaxy nebulas & lights
-        galaxyNebulas.forEach((gn, gi) => {
-          const pulse = 0.85 + Math.abs(Math.sin(time * 0.7 + gi * 0.8)) * 0.3;
-          gn.starMesh.scale.setScalar(pulse);
-          gn.gLight.intensity = 1.4 + Math.sin(time * 1.1 + gi * 0.6) * 0.6;
-        });
-
         renderer.render(scene, camera);
-      }
-
-      // ---- GALAXY NAV PANEL BUTTONS ----
-      const gpEl = document.getElementById('galaxy-panel');
-      if (gpEl) {
-        const homeBtn = document.createElement('button');
-        homeBtn.className = 'gal-btn-home';
-        homeBtn.textContent = '🏠 TÂM';
-        homeBtn.addEventListener('click', () => {
-          cameraTargetPos = new THREE.Vector3(0, 40, 150);
-          cameraTargetLook = new THREE.Vector3(0, 0, 0);
-        });
-        gpEl.appendChild(homeBtn);
-
-        const sep = document.createElement('span');
-        sep.style.cssText = 'width:1px;height:16px;background:rgba(255,255,255,0.1);margin:0 3px;flex-shrink:0;';
-        gpEl.appendChild(sep);
-
-        GALAXY_GROUPS.forEach(g => {
-          const btn = document.createElement('button');
-          btn.className = 'gal-btn';
-          btn.style.color = g.color;
-          btn.style.borderColor = g.color + '55';
-          btn.textContent = g.emoji + ' ' + g.name.replace(' Thiên Hà', '');
-          btn.addEventListener('click', () => {
-            cameraTargetPos = g.centerVec.clone().add(new THREE.Vector3(0, 14, 48));
-            cameraTargetLook = g.centerVec.clone();
-          });
-          gpEl.appendChild(btn);
-        });
       }
 
       window._planetMeshes = planetMeshes;
