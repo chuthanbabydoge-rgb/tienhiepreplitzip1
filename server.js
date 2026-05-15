@@ -1271,6 +1271,90 @@ Tạo chiến lược hashtag tối ưu theo JSON sau (không markdown, chỉ JS
   }
 });
 
+// ── AI Agent Mode: 30-Day Content Plan ───────────────────────────────────
+app.post('/api/agent-mode/content-plan', async (req, res) => {
+  const { niche, platform, style, language } = req.body;
+  if (!niche) return res.status(400).json({ error: 'Thiếu thông tin chủ đề' });
+
+  const platMap = {
+    tiktok: 'TikTok (short-form video, trending audio, hooks)',
+    youtube: 'YouTube (long-form video, SEO titles, thumbnails)',
+    instagram: 'Instagram (Reels + carousels + Stories)',
+    facebook: 'Facebook (posts, livestream, groups)',
+    linkedin: 'LinkedIn (professional thought leadership)',
+    twitter: 'X/Twitter (threads, hooks, viral takes)',
+  };
+  const platDesc = platMap[platform] || platform || 'đa nền tảng';
+
+  const styleMap = {
+    educational: 'giáo dục, hướng dẫn, chia sẻ kiến thức',
+    entertaining: 'giải trí, hài hước, trending, viral',
+    storytelling: 'kể chuyện cá nhân, cảm xúc, trải nghiệm thực tế',
+    promotional: 'quảng bá thương hiệu, bán hàng, review sản phẩm',
+    motivational: 'truyền cảm hứng, động lực, mindset',
+  };
+  const styleDesc = styleMap[style] || style || 'đa dạng';
+  const lang = language === 'en' ? 'English' : 'Vietnamese (Tiếng Việt)';
+
+  const prompt = `Bạn là AI Content Strategist chuyên nghiệp. Tạo kế hoạch content 30 ngày hoàn chỉnh cho:
+
+- CHỦ ĐỀ/NICHE: ${niche}
+- NỀN TẢNG: ${platDesc}
+- PHONG CÁCH: ${styleDesc}
+- NGÔN NGỮ NỘI DUNG: ${lang}
+
+Trả về JSON hợp lệ theo đúng cấu trúc sau (không markdown, chỉ JSON thuần):
+{
+  "plan_title": "Tên kế hoạch 30 ngày",
+  "niche": "${niche}",
+  "platform": "${platform || 'multi'}",
+  "style": "${style || 'mixed'}",
+  "overview": "Tóm tắt chiến lược 2-3 câu",
+  "weeks": [
+    {
+      "week": 1,
+      "theme": "Chủ đề tuần 1",
+      "goal": "Mục tiêu tuần"
+    }
+  ],
+  "days": [
+    {
+      "day": 1,
+      "week": 1,
+      "content_type": "Video/Carousel/Reel/Post/Thread/Story",
+      "title": "Tiêu đề hấp dẫn",
+      "hook": "Câu mở đầu gây chú ý (hook)",
+      "caption": "Caption đầy đủ cho bài đăng",
+      "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
+      "best_time": "HH:MM",
+      "cta": "Call-to-action cụ thể",
+      "tip": "Mẹo thực hiện nội dung này"
+    }
+  ],
+  "content_pillars": ["Trụ cột 1", "Trụ cột 2", "Trụ cột 3"],
+  "kpis": ["KPI 1", "KPI 2", "KPI 3"]
+}
+
+Tạo đủ 30 ngày (day 1 đến day 30), mỗi ngày phải khác nhau, đa dạng loại content. Tuần 1 xây nền, tuần 2 tăng tốc, tuần 3 viral, tuần 4 chuyển đổi. Trả về JSON hợp lệ 100%.`;
+
+  try {
+    const response = await getAI().models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: { maxOutputTokens: 16000 }
+    });
+    let text = (response.text || '').replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) text = text.slice(firstBrace, lastBrace + 1);
+    const plan = JSON.parse(text);
+    res.json({ plan });
+  } catch (err) {
+    console.error('Content plan error:', err);
+    res.status(500).json({ error: 'Lỗi tạo content plan: ' + err.message });
+  }
+});
+
 // ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${PORT}`);

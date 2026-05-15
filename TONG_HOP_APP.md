@@ -1,6 +1,6 @@
 # 🏯 TỔNG HỢP APP — VƯƠNG ĐẾ AI
 > ⚡ Tự động cập nhật khi code thay đổi — build xong feature → file này tự tick ✅
-> 🕐 Cập nhật lần cuối: **03:08:27 16/5/2026**
+> 🕐 Cập nhật lần cuối: **03:15:00 16/5/2026**
 
 ---
 
@@ -25,7 +25,7 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 **21 packages:** `@google/genai` · `@imgly/background-removal-node` · `@types/connect-pg-simple` · `@types/express-session` · `@types/memoizee` · `@types/passport` · `connect-pg-simple` · `drizzle-zod` · `express` · `express-session` · `jimp` · `jsdom` · `memoizee` · `openid-client` · `p-limit` · `p-retry` · `passport` · `passport-google-oauth20` · `pg` · `zod` · `zod-validation-error`
 
 ## 4. API ROUTES
-> 48 routes phát hiện từ `server.js`
+> 49 routes phát hiện từ `server.js`
 
 | Method | Path | Mô tả |
 |--------|------|-------|
@@ -77,6 +77,7 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 | `POST` | `/api/kocraft/rate-card` | — |
 | `POST` | `/api/kocraft/brand-pitch` | — |
 | `POST` | `/api/kocraft/hashtag-strategy` | — |
+| `POST` | `/api/agent-mode/content-plan` | — |
 
 ## 5. CHECKLIST TÍNH NĂNG ĐÃ CÓ (AUTO-DETECT)
 
@@ -169,12 +170,12 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 - [x] Resize chatbox bằng kéo góc (desktop & mobile)
 
 ## 6. THỐNG KÊ FILE
-> **14 file** | **20,792 dòng** | **1.56 MB**
+> **14 file** | **20,883 dòng** | **1.57 MB**
 
 | File | Dòng | Kích thước | Vai trò |
 |------|------|------------|---------|
-| `server.js` | 1,280 | 57.0 KB | Backend — Express + Auth + Gemini AI + DB |
-| `tienhiepv3.html` | 14,655 | 1.27 MB | Frontend chính — UI + Three.js 3D |
+| `server.js` | 1,364 | 60.5 KB | Backend — Express + Auth + Gemini AI + DB |
+| `tienhiepv3.html` | 14,662 | 1.27 MB | Frontend chính — UI + Three.js 3D |
 | `create-character.html` | 2,194 | 99.3 KB | Trang tạo nhân vật AI |
 | `profile.html` | 582 | 25.5 KB | Trang hồ sơ người dùng |
 | `admin.html` | 442 | 22.9 KB | Admin Dashboard |
@@ -187,7 +188,7 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 | `inject4.js` | 51 | 3.1 KB | Script inject 4 |
 | `inject5.js` | 92 | 5.0 KB | Script inject 5 |
 | `inject6.js` | 35 | 2.4 KB | Script inject 6 |
-| **TỔNG** | **20,792** | **1.56 MB** | — |
+| **TỔNG** | **20,883** | **1.57 MB** | — |
 
 ## 7. TRANG (PAGES)
 
@@ -286,4 +287,4 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 > *(Chưa có feature roadmap nào mới hoàn thành kể từ lần cập nhật trước)*
 
 ---
-*Auto-generated bởi `generate-app-summary.js` lúc 03:08:27 16/5/2026 — Build xong feature → file tự cập nhật ✅*
+*Auto-generated bởi `generate-app-summary.js` lúc 03:15:00 16/5/2026 — Build xong feature → file tự cập nhật ✅*

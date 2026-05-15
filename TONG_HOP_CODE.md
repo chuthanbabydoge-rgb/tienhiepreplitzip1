@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **03:08:27 16/5/2026**
+> Cập nhật lần cuối: **03:14:59 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,280 dòng, 57.0 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,655 dòng, 1.27 MB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,364 dòng, 60.5 KB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,662 dòng, 1.27 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -22,8 +22,8 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 39 | 987 B |
-| `server.js` | 1,280 | 57.0 KB |
-| `tienhiepv3.html` | 14,655 | 1.27 MB |
+| `server.js` | 1,364 | 60.5 KB |
+| `tienhiepv3.html` | 14,662 | 1.27 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **19,656** | **1.49 MB** |
+| **TỔNG** | **19,747** | **1.50 MB** |
 
 ---
 
@@ -91,7 +91,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,280 dòng · 57.0 KB
+> 1,364 dòng · 60.5 KB
 
 ```javascript
 const express = require('express');
@@ -1367,6 +1367,90 @@ Tạo chiến lược hashtag tối ưu theo JSON sau (không markdown, chỉ JS
   }
 });
 
+// ── AI Agent Mode: 30-Day Content Plan ───────────────────────────────────
+app.post('/api/agent-mode/content-plan', async (req, res) => {
+  const { niche, platform, style, language } = req.body;
+  if (!niche) return res.status(400).json({ error: 'Thiếu thông tin chủ đề' });
+
+  const platMap = {
+    tiktok: 'TikTok (short-form video, trending audio, hooks)',
+    youtube: 'YouTube (long-form video, SEO titles, thumbnails)',
+    instagram: 'Instagram (Reels + carousels + Stories)',
+    facebook: 'Facebook (posts, livestream, groups)',
+    linkedin: 'LinkedIn (professional thought leadership)',
+    twitter: 'X/Twitter (threads, hooks, viral takes)',
+  };
+  const platDesc = platMap[platform] || platform || 'đa nền tảng';
+
+  const styleMap = {
+    educational: 'giáo dục, hướng dẫn, chia sẻ kiến thức',
+    entertaining: 'giải trí, hài hước, trending, viral',
+    storytelling: 'kể chuyện cá nhân, cảm xúc, trải nghiệm thực tế',
+    promotional: 'quảng bá thương hiệu, bán hàng, review sản phẩm',
+    motivational: 'truyền cảm hứng, động lực, mindset',
+  };
+  const styleDesc = styleMap[style] || style || 'đa dạng';
+  const lang = language === 'en' ? 'English' : 'Vietnamese (Tiếng Việt)';
+
+  const prompt = `Bạn là AI Content Strategist chuyên nghiệp. Tạo kế hoạch content 30 ngày hoàn chỉnh cho:
+
+- CHỦ ĐỀ/NICHE: ${niche}
+- NỀN TẢNG: ${platDesc}
+- PHONG CÁCH: ${styleDesc}
+- NGÔN NGỮ NỘI DUNG: ${lang}
+
+Trả về JSON hợp lệ theo đúng cấu trúc sau (không markdown, chỉ JSON thuần):
+{
+  "plan_title": "Tên kế hoạch 30 ngày",
+  "niche": "${niche}",
+  "platform": "${platform || 'multi'}",
+  "style": "${style || 'mixed'}",
+  "overview": "Tóm tắt chiến lược 2-3 câu",
+  "weeks": [
+    {
+      "week": 1,
+      "theme": "Chủ đề tuần 1",
+      "goal": "Mục tiêu tuần"
+    }
+  ],
+  "days": [
+    {
+      "day": 1,
+      "week": 1,
+      "content_type": "Video/Carousel/Reel/Post/Thread/Story",
+      "title": "Tiêu đề hấp dẫn",
+      "hook": "Câu mở đầu gây chú ý (hook)",
+      "caption": "Caption đầy đủ cho bài đăng",
+      "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
+      "best_time": "HH:MM",
+      "cta": "Call-to-action cụ thể",
+      "tip": "Mẹo thực hiện nội dung này"
+    }
+  ],
+  "content_pillars": ["Trụ cột 1", "Trụ cột 2", "Trụ cột 3"],
+  "kpis": ["KPI 1", "KPI 2", "KPI 3"]
+}
+
+Tạo đủ 30 ngày (day 1 đến day 30), mỗi ngày phải khác nhau, đa dạng loại content. Tuần 1 xây nền, tuần 2 tăng tốc, tuần 3 viral, tuần 4 chuyển đổi. Trả về JSON hợp lệ 100%.`;
+
+  try {
+    const response = await getAI().models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: { maxOutputTokens: 16000 }
+    });
+    let text = (response.text || '').replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) text = text.slice(firstBrace, lastBrace + 1);
+    const plan = JSON.parse(text);
+    res.json({ plan });
+  } catch (err) {
+    console.error('Content plan error:', err);
+    res.status(500).json({ error: 'Lỗi tạo content plan: ' + err.message });
+  }
+});
+
 // ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${PORT}`);
@@ -1382,7 +1466,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 14,655 dòng · 1.27 MB
+> 14,662 dòng · 1.27 MB
 
 ```html
 <!DOCTYPE html>
@@ -5141,6 +5225,13 @@ app.listen(PORT, '0.0.0.0', () => {
         <div>
           <div class="pbtn-label" style="color:#ff6eb4;">KOCRAFT AI</div>
           <div class="pbtn-sub">TẠO KOC ẢO</div>
+        </div>
+      </div>
+      <div class="panel-btn" onclick="openAgentMode()" id="agentmode-btn" style="border-color:rgba(255,80,200,0.7);box-shadow:0 0 22px rgba(255,80,200,0.45),0 0 40px rgba(136,0,255,0.3),inset 0 0 12px rgba(255,80,200,0.12);animation:agentModeBtnPulse 2.5s ease-in-out infinite;">
+        <span class="pbtn-icon" style="animation:agentModeBtnPulse 2.5s ease-in-out infinite;">🤖</span>
+        <div>
+          <div class="pbtn-label" style="color:#ff50c8;text-shadow:0 0 12px rgba(255,80,200,0.8);">AI AGENT MODE</div>
+          <div class="pbtn-sub" style="color:rgba(255,80,200,0.6);">CONTENT PLAN 30 NGÀY</div>
         </div>
       </div>
       <div class="panel-btn" onclick="openAppSummary()" id="app-summary-btn" style="display:none;border-color:rgba(0,255,128,0.5);box-shadow:0 0 18px rgba(0,255,128,0.2),inset 0 0 8px rgba(0,255,128,0.08);">
