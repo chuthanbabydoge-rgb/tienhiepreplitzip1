@@ -4011,22 +4011,6 @@
     ];
 
     // ============================================================
-    // GALAXY GROUPS — Thiên Hà Nhóm (8 cụm thiên hà)
-    // ============================================================
-    const GALAXY_GROUPS = [
-      { id: 0, name: "Tài Chính Thiên Hà",  emoji: "💰", color: "#ffaa00", cx: -80, cy: 8,   cz: -8,  agentIds: [4,7,21,36,48,51,53,65,73,89,93] },
-      { id: 1, name: "Nội Dung Thiên Hà",   emoji: "✍️", color: "#00ffff", cx: 75,  cy: -8,  cz: 20,  agentIds: [0,6,15,24,27,32,52,54,55,62,63] },
-      { id: 2, name: "Video Thiên Hà",       emoji: "🎬", color: "#ff0044", cx: 15,  cy: -55, cz: 75,  agentIds: [1,2,9,20,28,39,58,61,74,79] },
-      { id: 3, name: "Thương Mại Thiên Hà",  emoji: "🛒", color: "#ff6600", cx: -48, cy: -48, cz: -72, agentIds: [8,10,11,12,18,19,23,25,26,30,42,43,57,59,82,86,91] },
-      { id: 4, name: "Công Nghệ Thiên Hà",   emoji: "💻", color: "#00ff88", cx: 62,  cy: 50,  cz: -52, agentIds: [3,5,14,16,17,22,33,40,60,78,81,84,94] },
-      { id: 5, name: "Khoa Học Thiên Hà",    emoji: "🔬", color: "#4466ff", cx: -62, cy: 60,  cz: 60,  agentIds: [41,44,46,49,68,75,76,77,80,85,90,95] },
-      { id: 6, name: "Dịch Vụ Thiên Hà",     emoji: "🏢", color: "#cc44ff", cx: 72,  cy: 0,   cz: -72, agentIds: [29,34,35,37,38,45,47,50,56,66,67,69,70,71,72,83,87,88,92] },
-      { id: 7, name: "Thần Cấp Thiên Hà",    emoji: "👁️", color: "#ffffff", cx: 0,   cy: 105, cz: 0,   agentIds: [13,31,64,96,97,98,99,100] },
-    ];
-    const agentGalaxyMap = {};
-    GALAXY_GROUPS.forEach(g => g.agentIds.forEach(aid => { agentGalaxyMap[aid] = g; }));
-
-    // ============================================================
     // XIANXIA NAMES + ANNOTATIONS
     // ============================================================
     const XIANXIA_MAP = {
@@ -5189,11 +5173,6 @@
       dirLight.position.set(10, 20, 10);
       scene.add(dirLight);
 
-      // ---- Init galaxy centerVec ----
-      GALAXY_GROUPS.forEach(g => {
-        g.centerVec = new THREE.Vector3(g.cx, g.cy, g.cz);
-      });
-
       // ---- 100 AI PLANETS ----
       const planetMeshes = [];
       const labelEls = [];
@@ -5203,19 +5182,16 @@
 
       for (let i = 0; i < AI_AGENTS.length; i++) {
         const agent = AI_AGENTS[i];
-        const galaxy = agentGalaxyMap[agent.id] || GALAXY_GROUPS[0];
-        const localIdx = galaxy.agentIds.indexOf(agent.id);
-        const localCount = galaxy.agentIds.length;
-        const localOrbitRadius = 6 + (localIdx % 4) * 6 + Math.random() * 4;
+        const orbitRadius = 15 + Math.random() * 85;
         const orbitSpeed = 0.0004 + Math.random() * 0.001;
-        const orbitAngle = (localIdx / Math.max(localCount, 1)) * Math.PI * 2 + Math.random() * 0.3;
+        const orbitAngle = Math.random() * Math.PI * 2;
         const orbitInclination = (Math.random() - 0.5) * 0.8;
         const size = 0.8 + Math.random() * 1.4;
         const yOffset = (Math.random() - 0.5) * 12;
 
         // Create planet group
         const planetGroup = new THREE.Group();
-        planetGroup.userData = { agent, localOrbitRadius, orbitSpeed, orbitAngle, orbitInclination, yOffset, size, galaxyCenter: galaxy.centerVec, baseEmissive: new THREE.Color(agent.glow).multiplyScalar(0.3) };
+        planetGroup.userData = { agent, orbitRadius, orbitSpeed, orbitAngle, orbitInclination, yOffset, size, baseEmissive: new THREE.Color(agent.glow).multiplyScalar(0.3) };
 
         const col = planetColors[i];
 
@@ -5268,72 +5244,6 @@
         labelsContainer.appendChild(label);
         labelEls.push(label);
       }
-
-      // ---- GALAXY-LOCAL ORBIT RINGS ----
-      GALAXY_GROUPS.forEach(g => {
-        const gc = g.centerVec;
-        const gc3 = new THREE.Color(g.color);
-        [8, 16, 24].forEach((r, ri) => {
-          const pts = [];
-          for (let k = 0; k <= 96; k++) {
-            const a = (k / 96) * Math.PI * 2;
-            pts.push(new THREE.Vector3(gc.x + Math.cos(a) * r, gc.y, gc.z + Math.sin(a) * r));
-          }
-          const geo = new THREE.BufferGeometry().setFromPoints(pts);
-          const mat = new THREE.LineBasicMaterial({ color: gc3, transparent: true, opacity: 0.07 - ri * 0.018 });
-          scene.add(new THREE.Line(geo, mat));
-        });
-      });
-
-      // ---- GALAXY NEBULA CLOUDS ----
-      const galaxyNebulas = [];
-      GALAXY_GROUPS.forEach(g => {
-        const gc = g.centerVec;
-        const gcol = new THREE.Color(g.color);
-
-        // Outer nebula
-        const nebGeo = new THREE.SphereGeometry(30, 14, 14);
-        const nebMat = new THREE.MeshBasicMaterial({ color: gcol, transparent: true, opacity: 0.03, side: THREE.BackSide });
-        const nebMesh = new THREE.Mesh(nebGeo, nebMat);
-        nebMesh.position.copy(gc);
-        scene.add(nebMesh);
-
-        // Inner glow
-        const innerGeo = new THREE.SphereGeometry(16, 10, 10);
-        const innerMat = new THREE.MeshBasicMaterial({ color: gcol, transparent: true, opacity: 0.055, side: THREE.BackSide });
-        const innerMesh = new THREE.Mesh(innerGeo, innerMat);
-        innerMesh.position.copy(gc);
-        scene.add(innerMesh);
-
-        // Center star (galaxy core)
-        const starGeo = new THREE.SphereGeometry(0.9, 8, 8);
-        const starMat = new THREE.MeshBasicMaterial({ color: gcol });
-        const starMesh = new THREE.Mesh(starGeo, starMat);
-        starMesh.position.copy(gc);
-        scene.add(starMesh);
-
-        // Point light
-        const gLight = new THREE.PointLight(gcol, 1.8, 70);
-        gLight.position.copy(gc);
-        scene.add(gLight);
-
-        galaxyNebulas.push({ nebMesh, innerMesh, starMesh, gLight, g });
-      });
-
-      // ---- GALAXY HTML LABELS ----
-      const galaxyLabelEls = [];
-      GALAXY_GROUPS.forEach(g => {
-        const gel = document.createElement('div');
-        gel.className = 'galaxy-label';
-        gel.style.color = g.color;
-        gel.innerHTML = `<span class="gl-emoji">${g.emoji}</span><span class="gl-name" style="border-color:${g.color}55;text-shadow:0 0 12px ${g.color};">${g.name}</span>`;
-        gel.addEventListener('click', () => {
-          cameraTargetPos = g.centerVec.clone().add(new THREE.Vector3(0, 12, 45));
-          cameraTargetLook = g.centerVec.clone();
-        });
-        labelsContainer.appendChild(gel);
-        galaxyLabelEls.push(gel);
-      });
 
       // ---- RAYCASTER FOR CLICK ----
       const raycaster = new THREE.Raycaster();
@@ -6090,17 +6000,16 @@
           if (typeof charLight !== 'undefined') charLight.intensity = 2 + Math.sin(time * 2) * 1;
         }
 
-        // Animate planets (galaxy-relative orbits)
+        // Animate planets
         planetMeshes.forEach((pm, i) => {
           const ud = pm.group.userData;
           ud.orbitAngle += ud.orbitSpeed;
 
-          const gc = ud.galaxyCenter;
-          const lx = Math.cos(ud.orbitAngle) * ud.localOrbitRadius;
-          const lz = Math.sin(ud.orbitAngle) * ud.localOrbitRadius;
-          const ly = ud.yOffset + Math.sin(time * 0.3 + i) * 1.5 + Math.sin(ud.orbitAngle * 2) * ud.localOrbitRadius * Math.sin(ud.orbitInclination);
+          const lx = Math.cos(ud.orbitAngle) * ud.orbitRadius;
+          const lz = Math.sin(ud.orbitAngle) * ud.orbitRadius;
+          const ly = ud.yOffset + Math.sin(time * 0.3 + i) * 1.5 + Math.sin(ud.orbitAngle * 2) * ud.orbitRadius * Math.sin(ud.orbitInclination);
 
-          pm.group.position.set(gc.x + lx, gc.y + ly, gc.z + lz);
+          pm.group.position.set(lx, ly, lz);
           pm.planet.rotation.y += 0.005 + i * 0.0001;
           pm.planet.rotation.x += 0.002;
 
