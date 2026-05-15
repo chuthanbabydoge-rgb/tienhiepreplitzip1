@@ -1,5 +1,5 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **01:48:21 16/5/2026**
+> Cập nhật lần cuối: **02:13:23 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
@@ -4648,10 +4648,10 @@ app.listen(PORT, '0.0.0.0', () => {
         position: absolute;
         bottom: 80px;
         left: 20px;
-        width: 270px;
-        height: 390px;
-        min-width: 220px;
-        min-height: 180px;
+        width: 220px;
+        height: 260px;
+        min-width: 180px;
+        min-height: 140px;
         max-width: 600px;
         max-height: 80vh;
         background: rgba(0, 5, 18, 0.93);
