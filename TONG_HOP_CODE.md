@@ -1,11 +1,11 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **13:36:37 15/5/2026**
+> Cập nhật lần cuối: **13:48:01 15/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(38 dòng, 966 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,279 dòng, 57.0 KB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,280 dòng, 57.0 KB)*
 - [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,134 dòng, 1.23 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
@@ -22,7 +22,7 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 38 | 966 B |
-| `server.js` | 1,279 | 57.0 KB |
+| `server.js` | 1,280 | 57.0 KB |
 | `tienhiepv3.html` | 14,134 | 1.23 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **19,133** | **1.45 MB** |
+| **TỔNG** | **19,134** | **1.45 MB** |
 
 ---
 
@@ -90,7 +90,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,279 dòng · 57.0 KB
+> 1,280 dòng · 57.0 KB
 
 ```javascript
 const express = require('express');
@@ -516,8 +516,9 @@ function serveMain(req, res) {
   res.set('Expires', '0');
   res.sendFile(path.join(__dirname, 'tienhiepv3.html'));
 }
-app.get('/', serveMain);
+app.get('/app', serveMain);
 app.get('/user', requireAuth, serveMain);
+app.get('/', (req, res) => res.redirect('/ar'));
 
 // Admin login page
 app.get('/admin/login', (req, res) => {

@@ -421,8 +421,9 @@ function serveMain(req, res) {
   res.set('Expires', '0');
   res.sendFile(path.join(__dirname, 'tienhiepv3.html'));
 }
-app.get('/', serveMain);
+app.get('/app', serveMain);
 app.get('/user', requireAuth, serveMain);
+app.get('/', (req, res) => res.redirect('/ar'));
 
 // Admin login page
 app.get('/admin/login', (req, res) => {

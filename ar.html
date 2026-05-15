@@ -221,7 +221,7 @@
         <div class="fp-status">● ĐANG CHẠY</div>
       </div>
       <div id="fallback-iframe-wrap">
-        <iframe id="fallback-iframe" src="/" allow="camera; microphone; autoplay" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"></iframe>
+        <iframe id="fallback-iframe" src="/app" allow="camera; microphone; autoplay" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"></iframe>
       </div>
       <div id="fallback-panel-ftr">
         <span class="fp-lbl">MÔ PHỎNG SPATIAL AR · CON QUAY ĐIỆN THOẠI</span>
@@ -238,7 +238,7 @@
     <button id="btn-close-popup" onclick="closePopup()">✕ ĐÓNG</button>
   </div>
   <div id="popup-body">
-    <iframe id="popup-iframe" src="/" allow="camera; microphone; autoplay"></iframe>
+    <iframe id="popup-iframe" src="/app" allow="camera; microphone; autoplay"></iframe>
   </div>
 </div>
 
@@ -274,13 +274,39 @@ async function checkXRSupport() {
 
 window.addEventListener('load', async () => {
   const supported = await checkXRSupport();
-  if (!supported) {
+
+  if (supported) {
+    // WebXR supported — try auto-start (needs gesture on some browsers, fallback to tap)
+    try {
+      await startXR();
+    } catch(e) {
+      showTapScreen(true);
+    }
+  } else {
+    // No WebXR — try auto-start fallback camera mode
+    try {
+      await startFallback();
+    } catch(e) {
+      showTapScreen(false);
+    }
+    // If camera was denied or failed, startFallback already shows start-screen
+  }
+});
+
+function showTapScreen(hasXR) {
+  const ss = document.getElementById('start-screen');
+  ss.style.display = 'flex';
+  if (!hasXR) {
     document.getElementById('no-xr-note').style.display = 'block';
     document.getElementById('btn-fallback').style.display = 'inline-block';
     document.getElementById('btn-xr').disabled = true;
     document.getElementById('btn-xr').textContent = '✗ THIẾT BỊ CHƯA HỖ TRỢ';
   }
-});
+  // Auto-click on any interaction to enter AR immediately
+  ss.addEventListener('click', () => {
+    if (hasXR) startXR(); else startFallback();
+  }, { once: true });
+}
 
 // ═══════════════════════════════════════
 // INIT THREE.JS
