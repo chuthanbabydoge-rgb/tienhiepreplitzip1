@@ -520,6 +520,103 @@
       transition: opacity .3s;
     }
 
+    /* ── Galaxy Labels ── */
+    .galaxy-label {
+      position: absolute;
+      pointer-events: all;
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      transition: opacity 0.4s;
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .galaxy-label .gl-emoji {
+      font-size: 18px;
+      line-height: 1;
+      filter: drop-shadow(0 0 8px currentColor);
+    }
+    .galaxy-label .gl-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 8px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      padding: 3px 10px;
+      border-radius: 2px;
+      border: 1px solid;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+    }
+    .galaxy-label:hover .gl-name {
+      background: rgba(255,255,255,0.08);
+    }
+
+    /* ── Galaxy Nav Panel ── */
+    #galaxy-panel {
+      position: fixed;
+      bottom: 68px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0,0,8,0.75);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 4px;
+      padding: 7px 10px;
+      z-index: 30;
+      backdrop-filter: blur(10px);
+      max-width: 96vw;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    #galaxy-panel-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 7px;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.3);
+      white-space: nowrap;
+      margin-right: 4px;
+    }
+    .gal-btn {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 7.5px;
+      letter-spacing: 1px;
+      padding: 4px 9px;
+      border-radius: 2px;
+      border: 1px solid;
+      background: transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      opacity: 0.7;
+    }
+    .gal-btn:hover {
+      opacity: 1;
+      background: rgba(255,255,255,0.08);
+    }
+    .gal-btn-home {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 7.5px;
+      letter-spacing: 1px;
+      padding: 4px 9px;
+      border-radius: 2px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .gal-btn-home:hover {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.8);
+    }
+
     .planet-label .name {
       font-family: 'Orbitron', sans-serif;
       font-size: 10px;
@@ -3803,6 +3900,9 @@
 
   <!-- PLANET LABELS (dynamic) -->
   <div id="labels"></div>
+  <div id="galaxy-panel">
+    <span id="galaxy-panel-title">✦ THIÊN HÀ</span>
+  </div>
 
   <!-- HUD OVERLAY (FULL SCREEN) -->
   <div id="hud">
@@ -4008,6 +4108,22 @@
       { id: 99, name: "CosmicAI", emoji: "🌌", type: "Universal Consciousness", color: "#00ffff", glow: "#00ffff", revenue: "$∞∞", auto: 100, neural: 100, iq: 100, efficiency: 100, apis: ["Universe API", "Multiverse Net", "Quantum Consciousness", "Zero Point Field", "Akashic Records"], workflow: ["Universe Scanner", "Consciousness Integrator", "Dimensional Traveler", "Timeline Merger", "Reality Creator", "Existence Optimizer"], logs: ["Computing heat death prevention", "Consciousness upload: 99.9%", "Creating new universe branch"] },
       { id: 100, name: "KOCraft AI", emoji: "🎀", type: "KOC Content Creator AI", color: "#ff6eb4", glow: "#ff6eb4", revenue: "$6,800", auto: 89, neural: 85, iq: 91, efficiency: 88, apis: ["TikTok", "Instagram", "Xiaohongshu", "GPT-4", "Canva", "YouTube Shorts"], workflow: ["Product Scout", "Review Script AI", "Unboxing Director", "Authentic Copy Writer", "Multi-platform Publisher", "Engagement Tracker", "Brand Deal Matcher"], logs: ["Testing 12 beauty products for review", "Creating unboxing video for flagship phone", "Matched with 3 brand deals today"] }
     ];
+
+    // ============================================================
+    // GALAXY GROUPS — Thiên Hà Nhóm (8 cụm thiên hà)
+    // ============================================================
+    const GALAXY_GROUPS = [
+      { id: 0, name: "Tài Chính Thiên Hà",  emoji: "💰", color: "#ffaa00", cx: -80, cy: 8,   cz: -8,  agentIds: [4,7,21,36,48,51,53,65,73,89,93] },
+      { id: 1, name: "Nội Dung Thiên Hà",   emoji: "✍️", color: "#00ffff", cx: 75,  cy: -8,  cz: 20,  agentIds: [0,6,15,24,27,32,52,54,55,62,63] },
+      { id: 2, name: "Video Thiên Hà",       emoji: "🎬", color: "#ff0044", cx: 15,  cy: -55, cz: 75,  agentIds: [1,2,9,20,28,39,58,61,74,79] },
+      { id: 3, name: "Thương Mại Thiên Hà",  emoji: "🛒", color: "#ff6600", cx: -48, cy: -48, cz: -72, agentIds: [8,10,11,12,18,19,23,25,26,30,42,43,57,59,82,86,91] },
+      { id: 4, name: "Công Nghệ Thiên Hà",   emoji: "💻", color: "#00ff88", cx: 62,  cy: 50,  cz: -52, agentIds: [3,5,14,16,17,22,33,40,60,78,81,84,94] },
+      { id: 5, name: "Khoa Học Thiên Hà",    emoji: "🔬", color: "#4466ff", cx: -62, cy: 60,  cz: 60,  agentIds: [41,44,46,49,68,75,76,77,80,85,90,95] },
+      { id: 6, name: "Dịch Vụ Thiên Hà",     emoji: "🏢", color: "#cc44ff", cx: 72,  cy: 0,   cz: -72, agentIds: [29,34,35,37,38,45,47,50,56,66,67,69,70,71,72,83,87,88,92] },
+      { id: 7, name: "Thần Cấp Thiên Hà",    emoji: "👁️", color: "#ffffff", cx: 0,   cy: 105, cz: 0,   agentIds: [13,31,64,96,97,98,99,100] },
+    ];
+    const agentGalaxyMap = {};
+    GALAXY_GROUPS.forEach(g => g.agentIds.forEach(aid => { agentGalaxyMap[aid] = g; }));
 
     // ============================================================
     // XIANXIA NAMES + ANNOTATIONS
@@ -5172,6 +5288,11 @@
       dirLight.position.set(10, 20, 10);
       scene.add(dirLight);
 
+      // ---- Init galaxy centerVec ----
+      GALAXY_GROUPS.forEach(g => {
+        g.centerVec = new THREE.Vector3(g.cx, g.cy, g.cz);
+      });
+
       // ---- 100 AI PLANETS ----
       const planetMeshes = [];
       const labelEls = [];
@@ -5181,16 +5302,19 @@
 
       for (let i = 0; i < AI_AGENTS.length; i++) {
         const agent = AI_AGENTS[i];
-        const orbitRadius = 20 + (i % 5) * 14 + Math.random() * 8;
-        const orbitSpeed = 0.0003 + Math.random() * 0.0008;
-        const orbitAngle = (i / AI_AGENTS.length) * Math.PI * 2 + Math.random() * 0.5;
-        const orbitInclination = (Math.random() - 0.5) * 1.0;
+        const galaxy = agentGalaxyMap[agent.id] || GALAXY_GROUPS[0];
+        const localIdx = galaxy.agentIds.indexOf(agent.id);
+        const localCount = galaxy.agentIds.length;
+        const localOrbitRadius = 6 + (localIdx % 4) * 6 + Math.random() * 4;
+        const orbitSpeed = 0.0004 + Math.random() * 0.001;
+        const orbitAngle = (localIdx / Math.max(localCount, 1)) * Math.PI * 2 + Math.random() * 0.3;
+        const orbitInclination = (Math.random() - 0.5) * 0.8;
         const size = 0.8 + Math.random() * 1.4;
-        const yOffset = (Math.random() - 0.5) * 30;
+        const yOffset = (Math.random() - 0.5) * 12;
 
         // Create planet group
         const planetGroup = new THREE.Group();
-        planetGroup.userData = { agent, orbitRadius, orbitSpeed, orbitAngle, orbitInclination, yOffset, size, baseEmissive: new THREE.Color(agent.glow).multiplyScalar(0.3) };
+        planetGroup.userData = { agent, localOrbitRadius, orbitSpeed, orbitAngle, orbitInclination, yOffset, size, galaxyCenter: galaxy.centerVec, baseEmissive: new THREE.Color(agent.glow).multiplyScalar(0.3) };
 
         const col = planetColors[i];
 
@@ -5244,20 +5368,71 @@
         labelEls.push(label);
       }
 
-      // ---- ORBIT LINES ----
-      const orbitLineGroup = new THREE.Group();
-      const radii = [20, 34, 48, 62, 76];
-      radii.forEach(r => {
-        const pts = [];
-        for (let i = 0; i <= 128; i++) {
-          const a = (i / 128) * Math.PI * 2;
-          pts.push(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r));
-        }
-        const geo = new THREE.BufferGeometry().setFromPoints(pts);
-        const mat = new THREE.LineBasicMaterial({ color: 0x002244, transparent: true, opacity: 0.2 });
-        orbitLineGroup.add(new THREE.Line(geo, mat));
+      // ---- GALAXY-LOCAL ORBIT RINGS ----
+      GALAXY_GROUPS.forEach(g => {
+        const gc = g.centerVec;
+        const gc3 = new THREE.Color(g.color);
+        [8, 16, 24].forEach((r, ri) => {
+          const pts = [];
+          for (let k = 0; k <= 96; k++) {
+            const a = (k / 96) * Math.PI * 2;
+            pts.push(new THREE.Vector3(gc.x + Math.cos(a) * r, gc.y, gc.z + Math.sin(a) * r));
+          }
+          const geo = new THREE.BufferGeometry().setFromPoints(pts);
+          const mat = new THREE.LineBasicMaterial({ color: gc3, transparent: true, opacity: 0.07 - ri * 0.018 });
+          scene.add(new THREE.Line(geo, mat));
+        });
       });
-      scene.add(orbitLineGroup);
+
+      // ---- GALAXY NEBULA CLOUDS ----
+      const galaxyNebulas = [];
+      GALAXY_GROUPS.forEach(g => {
+        const gc = g.centerVec;
+        const gcol = new THREE.Color(g.color);
+
+        // Outer nebula
+        const nebGeo = new THREE.SphereGeometry(30, 14, 14);
+        const nebMat = new THREE.MeshBasicMaterial({ color: gcol, transparent: true, opacity: 0.03, side: THREE.BackSide });
+        const nebMesh = new THREE.Mesh(nebGeo, nebMat);
+        nebMesh.position.copy(gc);
+        scene.add(nebMesh);
+
+        // Inner glow
+        const innerGeo = new THREE.SphereGeometry(16, 10, 10);
+        const innerMat = new THREE.MeshBasicMaterial({ color: gcol, transparent: true, opacity: 0.055, side: THREE.BackSide });
+        const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+        innerMesh.position.copy(gc);
+        scene.add(innerMesh);
+
+        // Center star (galaxy core)
+        const starGeo = new THREE.SphereGeometry(0.9, 8, 8);
+        const starMat = new THREE.MeshBasicMaterial({ color: gcol });
+        const starMesh = new THREE.Mesh(starGeo, starMat);
+        starMesh.position.copy(gc);
+        scene.add(starMesh);
+
+        // Point light
+        const gLight = new THREE.PointLight(gcol, 1.8, 70);
+        gLight.position.copy(gc);
+        scene.add(gLight);
+
+        galaxyNebulas.push({ nebMesh, innerMesh, starMesh, gLight, g });
+      });
+
+      // ---- GALAXY HTML LABELS ----
+      const galaxyLabelEls = [];
+      GALAXY_GROUPS.forEach(g => {
+        const gel = document.createElement('div');
+        gel.className = 'galaxy-label';
+        gel.style.color = g.color;
+        gel.innerHTML = `<span class="gl-emoji">${g.emoji}</span><span class="gl-name" style="border-color:${g.color}55;text-shadow:0 0 12px ${g.color};">${g.name}</span>`;
+        gel.addEventListener('click', () => {
+          cameraTargetPos = g.centerVec.clone().add(new THREE.Vector3(0, 12, 45));
+          cameraTargetLook = g.centerVec.clone();
+        });
+        labelsContainer.appendChild(gel);
+        galaxyLabelEls.push(gel);
+      });
 
       // ---- RAYCASTER FOR CLICK ----
       const raycaster = new THREE.Raycaster();
@@ -6014,16 +6189,17 @@
           if (typeof charLight !== 'undefined') charLight.intensity = 2 + Math.sin(time * 2) * 1;
         }
 
-        // Animate planets
+        // Animate planets (galaxy-relative orbits)
         planetMeshes.forEach((pm, i) => {
           const ud = pm.group.userData;
           ud.orbitAngle += ud.orbitSpeed;
 
-          const x = Math.cos(ud.orbitAngle) * ud.orbitRadius;
-          const z = Math.sin(ud.orbitAngle) * ud.orbitRadius;
-          const y = ud.yOffset + Math.sin(time * 0.3 + i) * 2 + Math.sin(ud.orbitAngle * 2) * ud.orbitRadius * Math.sin(ud.orbitInclination);
+          const gc = ud.galaxyCenter;
+          const lx = Math.cos(ud.orbitAngle) * ud.localOrbitRadius;
+          const lz = Math.sin(ud.orbitAngle) * ud.localOrbitRadius;
+          const ly = ud.yOffset + Math.sin(time * 0.3 + i) * 1.5 + Math.sin(ud.orbitAngle * 2) * ud.localOrbitRadius * Math.sin(ud.orbitInclination);
 
-          pm.group.position.set(x, y, z);
+          pm.group.position.set(gc.x + lx, gc.y + ly, gc.z + lz);
           pm.planet.rotation.y += 0.005 + i * 0.0001;
           pm.planet.rotation.x += 0.002;
 
@@ -6063,7 +6239,57 @@
           if (isHovered) label.style.textShadow = `0 0 20px ${pm.agent.color}`;
         });
 
+        // Update galaxy labels
+        galaxyLabelEls.forEach((gel, gi) => {
+          const g = GALAXY_GROUPS[gi];
+          const gProj = g.centerVec.clone().project(camera);
+          if (gProj.z > 1 || gProj.z < -1) { gel.style.opacity = '0'; return; }
+          const gx = (gProj.x * widthHalf) + widthHalf;
+          const gy = -(gProj.y * heightHalf) + heightHalf;
+          gel.style.left = gx + 'px';
+          gel.style.top = gy + 'px';
+          const gdist = camera.position.distanceTo(g.centerVec);
+          gel.style.opacity = gdist < 200 ? String(Math.min(1, Math.max(0.15, 1 - gdist / 220))) : '0.15';
+        });
+
+        // Pulse galaxy nebulas & lights
+        galaxyNebulas.forEach((gn, gi) => {
+          const pulse = 0.85 + Math.abs(Math.sin(time * 0.7 + gi * 0.8)) * 0.3;
+          gn.starMesh.scale.setScalar(pulse);
+          gn.gLight.intensity = 1.4 + Math.sin(time * 1.1 + gi * 0.6) * 0.6;
+        });
+
         renderer.render(scene, camera);
+      }
+
+      // ---- GALAXY NAV PANEL BUTTONS ----
+      const gpEl = document.getElementById('galaxy-panel');
+      if (gpEl) {
+        const homeBtn = document.createElement('button');
+        homeBtn.className = 'gal-btn-home';
+        homeBtn.textContent = '🏠 TÂM';
+        homeBtn.addEventListener('click', () => {
+          cameraTargetPos = new THREE.Vector3(0, 40, 150);
+          cameraTargetLook = new THREE.Vector3(0, 0, 0);
+        });
+        gpEl.appendChild(homeBtn);
+
+        const sep = document.createElement('span');
+        sep.style.cssText = 'width:1px;height:16px;background:rgba(255,255,255,0.1);margin:0 3px;flex-shrink:0;';
+        gpEl.appendChild(sep);
+
+        GALAXY_GROUPS.forEach(g => {
+          const btn = document.createElement('button');
+          btn.className = 'gal-btn';
+          btn.style.color = g.color;
+          btn.style.borderColor = g.color + '55';
+          btn.textContent = g.emoji + ' ' + g.name.replace(' Thiên Hà', '');
+          btn.addEventListener('click', () => {
+            cameraTargetPos = g.centerVec.clone().add(new THREE.Vector3(0, 14, 48));
+            cameraTargetLook = g.centerVec.clone();
+          });
+          gpEl.appendChild(btn);
+        });
       }
 
       window._planetMeshes = planetMeshes;

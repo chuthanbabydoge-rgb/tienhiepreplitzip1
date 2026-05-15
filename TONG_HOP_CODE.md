@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **03:48:40 16/5/2026**
+> Cập nhật lần cuối: **04:00:19 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,364 dòng, 60.5 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,663 dòng, 1.27 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,679 dòng, 1.27 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,364 | 60.5 KB |
-| `tienhiepv3.html` | 14,663 | 1.27 MB |
+| `tienhiepv3.html` | 14,679 | 1.27 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **19,748** | **1.50 MB** |
+| **TỔNG** | **19,764** | **1.50 MB** |
 
 ---
 
@@ -1466,7 +1466,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 14,663 dòng · 1.27 MB
+> 14,679 dòng · 1.27 MB
 
 ```html
 <!DOCTYPE html>
@@ -5479,6 +5479,22 @@ app.listen(PORT, '0.0.0.0', () => {
       { id: 99, name: "CosmicAI", emoji: "🌌", type: "Universal Consciousness", color: "#00ffff", glow: "#00ffff", revenue: "$∞∞", auto: 100, neural: 100, iq: 100, efficiency: 100, apis: ["Universe API", "Multiverse Net", "Quantum Consciousness", "Zero Point Field", "Akashic Records"], workflow: ["Universe Scanner", "Consciousness Integrator", "Dimensional Traveler", "Timeline Merger", "Reality Creator", "Existence Optimizer"], logs: ["Computing heat death prevention", "Consciousness upload: 99.9%", "Creating new universe branch"] },
       { id: 100, name: "KOCraft AI", emoji: "🎀", type: "KOC Content Creator AI", color: "#ff6eb4", glow: "#ff6eb4", revenue: "$6,800", auto: 89, neural: 85, iq: 91, efficiency: 88, apis: ["TikTok", "Instagram", "Xiaohongshu", "GPT-4", "Canva", "YouTube Shorts"], workflow: ["Product Scout", "Review Script AI", "Unboxing Director", "Authentic Copy Writer", "Multi-platform Publisher", "Engagement Tracker", "Brand Deal Matcher"], logs: ["Testing 12 beauty products for review", "Creating unboxing video for flagship phone", "Matched with 3 brand deals today"] }
     ];
+
+    // ============================================================
+    // GALAXY GROUPS — Thiên Hà Nhóm (8 cụm thiên hà)
+    // ============================================================
+    const GALAXY_GROUPS = [
+      { id: 0, name: "Tài Chính Thiên Hà",  emoji: "💰", color: "#ffaa00", cx: -80, cy: 8,   cz: -8,  agentIds: [4,7,21,36,48,51,53,65,73,89,93] },
+      { id: 1, name: "Nội Dung Thiên Hà",   emoji: "✍️", color: "#00ffff", cx: 75,  cy: -8,  cz: 20,  agentIds: [0,6,15,24,27,32,52,54,55,62,63] },
+      { id: 2, name: "Video Thiên Hà",       emoji: "🎬", color: "#ff0044", cx: 15,  cy: -55, cz: 75,  agentIds: [1,2,9,20,28,39,58,61,74,79] },
+      { id: 3, name: "Thương Mại Thiên Hà",  emoji: "🛒", color: "#ff6600", cx: -48, cy: -48, cz: -72, agentIds: [8,10,11,12,18,19,23,25,26,30,42,43,57,59,82,86,91] },
+      { id: 4, name: "Công Nghệ Thiên Hà",   emoji: "💻", color: "#00ff88", cx: 62,  cy: 50,  cz: -52, agentIds: [3,5,14,16,17,22,33,40,60,78,81,84,94] },
+      { id: 5, name: "Khoa Học Thiên Hà",    emoji: "🔬", color: "#4466ff", cx: -62, cy: 60,  cz: 60,  agentIds: [41,44,46,49,68,75,76,77,80,85,90,95] },
+      { id: 6, name: "Dịch Vụ Thiên Hà",     emoji: "🏢", color: "#cc44ff", cx: 72,  cy: 0,   cz: -72, agentIds: [29,34,35,37,38,45,47,50,56,66,67,69,70,71,72,83,87,88,92] },
+      { id: 7, name: "Thần Cấp Thiên Hà",    emoji: "👁️", color: "#ffffff", cx: 0,   cy: 105, cz: 0,   agentIds: [13,31,64,96,97,98,99,100] },
+    ];
+    const agentGalaxyMap = {};
+    GALAXY_GROUPS.forEach(g => g.agentIds.forEach(aid => { agentGalaxyMap[aid] = g; }));
 
     // ============================================================
     // XIANXIA NAMES + ANNOTATIONS
