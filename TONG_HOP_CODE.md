@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **05:01:13 16/5/2026**
+> Cập nhật lần cuối: **05:10:52 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,364 dòng, 60.5 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,870 dòng, 1.29 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,955 dòng, 1.30 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,364 | 60.5 KB |
-| `tienhiepv3.html` | 14,870 | 1.29 MB |
+| `tienhiepv3.html` | 14,955 | 1.30 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **19,955** | **1.52 MB** |
+| **TỔNG** | **20,040** | **1.52 MB** |
 
 ---
 
@@ -1466,7 +1466,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 14,870 dòng · 1.29 MB
+> 14,955 dòng · 1.30 MB
 
 ```html
 <!DOCTYPE html>
@@ -16096,18 +16096,103 @@ console.log('[KC] KOCraft script v3 loading...');
   };
 
   /* ══ DEMO DATA ════════════════════════════════════════════════════════ */
-  window.kcuLoadDemo = function() {
-    const demo = [
-      { name: 'Linh Ngọc – Beauty Queen', gender: 'nữ', age: '22', niche: '💄 Làm đẹp / Skincare', style: '🌸 Nhẹ nhàng & Tinh tế', toneOfVoice: 'Dịu dàng, truyền cảm hứng', targetAudience: 'Nữ 18-30, quan tâm skincare & lifestyle', catchphrase: 'Đẹp từ bên trong, tỏa sáng ra ngoài ✨', videoCount: 24, savedAt: Date.now() - 864e5 * 5 },
-      { name: 'Minh Khoa – Tech Reviewer', gender: 'nam', age: '26', niche: '📱 Công nghệ / Gadget', style: '🤓 Thông thái & Phân tích', toneOfVoice: 'Chuyên sâu, dễ hiểu, khách quan', targetAudience: 'Nam 18-35, yêu tech & gadget', catchphrase: 'Review thật — Không quảng cáo giả 🔍', videoCount: 41, savedAt: Date.now() - 864e5 * 12 },
-      { name: 'Hà Trang – Food Explorer', gender: 'nữ', age: '28', niche: '🍜 Ẩm thực / F&B', style: '🎉 Vui tươi & Năng động', toneOfVoice: 'Vui vẻ, hóm hỉnh, gần gũi', targetAudience: 'Cả hai giới 20-40, mê ăn uống & du lịch', catchphrase: 'Ăn là nghệ thuật, sống là phiêu lưu 🍽️', videoCount: 18, savedAt: Date.now() - 864e5 * 3 },
-      { name: 'Khánh Duy – Fitness Coach', gender: 'nam', age: '30', niche: '💪 Sức khỏe / Fitness', style: '🔥 Bold & Táo bạo', toneOfVoice: 'Mạnh mẽ, truyền động lực, thực chiến', targetAudience: 'Nam nữ 20-40, muốn có thân hình đẹp', catchphrase: 'No pain no gain — Luyện đến khi tự hào 💯', videoCount: 55, savedAt: Date.now() - 864e5 * 20 },
-      { name: 'Vân Anh – Finance Guru', gender: 'nữ', age: '32', niche: '💰 Tài chính / Đầu tư', style: '✨ Chuyên nghiệp & Uy tín', toneOfVoice: 'Chuyên nghiệp, rõ ràng, đáng tin', targetAudience: 'Người đi làm 25-40, muốn đầu tư thông minh', catchphrase: 'Tiền làm việc cho bạn — không phải ngược lại 💹', videoCount: 9, savedAt: Date.now() - 864e5 * 1 },
-    ];
-    try { localStorage.setItem('vdai_koc_universe', JSON.stringify(demo)); } catch(e) {}
+  /* ── Mock KOC data used by both kcuLoadDemo & auto-seed ── */
+  const KCU_DEMO_DATA = [
+    {
+      name: 'Khánh Duy – Fitness Coach', gender: 'nam', age: '30',
+      niche: '💪 Sức khỏe / Fitness', style: '🔥 Bold & Táo bạo',
+      toneOfVoice: 'Mạnh mẽ, truyền động lực, thực chiến',
+      targetAudience: 'Nam nữ 20-40, muốn có thân hình đẹp & lối sống khoẻ',
+      catchphrase: 'No pain no gain — Luyện đến khi tự hào 💯',
+      bio: 'PT chứng chỉ ISSA. 8 năm kinh nghiệm. Review honest về workout & nutrition. Không bán hàng ảo.',
+      personality: 'Quyết đoán, không ngại nói thẳng, luôn dẫn chứng bằng bằng chứng thực tế.',
+      platforms: ['TikTok','YouTube','Instagram'],
+      followersTarget: '800K', avgViews: '300K-1.2M views/video',
+      contentTypes: ['Workout challenge','Nutrition myth-busting','Day in life','Transformation story'],
+      hashtags: ['#fitness','#gymlife','#trainhard','#healthyvietnam','#workoutvietnam'],
+      brandValues: ['Chân thực','Khoa học','Kết quả thật'],
+      imagePrompt: 'Athletic Vietnamese male, 30 years old, muscular build, confident smile, wearing modern gym wear, fitness studio background with equipment, dramatic lighting, professional sports photography',
+      videoCount: 55, savedAt: Date.now() - 864e5 * 20
+    },
+    {
+      name: 'Minh Khoa – Tech Reviewer', gender: 'nam', age: '26',
+      niche: '📱 Công nghệ / Gadget', style: '🤓 Thông thái & Phân tích',
+      toneOfVoice: 'Chuyên sâu, dễ hiểu, khách quan',
+      targetAudience: 'Nam 18-35, yêu tech & gadget, muốn mua hàng thông minh',
+      catchphrase: 'Review thật — Không quảng cáo giả 🔍',
+      bio: 'Engineer turned creator. Unbox & review 100% honest. Không nhận quảng cáo nếu sản phẩm tệ.',
+      personality: 'Nghiêm túc nhưng hài hước, luôn test kỹ trước khi kết luận.',
+      platforms: ['YouTube','TikTok'],
+      followersTarget: '500K', avgViews: '200K-800K views/video',
+      contentTypes: ['Unboxing','So sánh sản phẩm','Tutorial','Tin tức công nghệ'],
+      hashtags: ['#techvietnam','#review','#gadget','#smartphone','#unboxing'],
+      brandValues: ['Trung thực','Chuyên môn','Độc lập'],
+      imagePrompt: 'Young Vietnamese male tech reviewer, 26, smart casual outfit, holding latest smartphone, modern minimalist studio setup with screens in background, soft studio lighting, editorial photography style',
+      videoCount: 41, savedAt: Date.now() - 864e5 * 12
+    },
+    {
+      name: 'Linh Ngọc – Beauty Queen', gender: 'nữ', age: '22',
+      niche: '💄 Làm đẹp / Skincare', style: '🌸 Nhẹ nhàng & Tinh tế',
+      toneOfVoice: 'Dịu dàng, chân thành, truyền cảm hứng',
+      targetAudience: 'Nữ 18-30, quan tâm skincare & lifestyle tối giản',
+      catchphrase: 'Đẹp từ bên trong, tỏa sáng ra ngoài ✨',
+      bio: 'Skincare addict 5 năm. Da dầu mụn cải thiện hoàn toàn nhờ routine đúng. Chia sẻ để cùng đẹp.',
+      personality: 'Nhẹ nhàng, chu đáo, luôn giải thích nguyên nhân thay vì chỉ đưa ra công thức.',
+      platforms: ['TikTok','Instagram'],
+      followersTarget: '400K', avgViews: '150K-600K views/video',
+      contentTypes: ['Skincare routine','Review sản phẩm','GRWM','Skin transformation'],
+      hashtags: ['#skincare','#beautyvietnam','#chamsocda','#glowup','#kbeauty'],
+      brandValues: ['Tự nhiên','Kiên nhẫn','Khoa học da liễu'],
+      imagePrompt: 'Beautiful Vietnamese female beauty influencer, 22 years old, flawless glowing skin, minimal makeup, pastel aesthetic studio with flowers and skincare products, soft natural lighting, Instagram editorial style',
+      videoCount: 24, savedAt: Date.now() - 864e5 * 5
+    },
+    {
+      name: 'Hà Trang – Food Explorer', gender: 'nữ', age: '28',
+      niche: '🍜 Ẩm thực / F&B', style: '🎉 Vui tươi & Năng động',
+      toneOfVoice: 'Vui vẻ, hóm hỉnh, gần gũi như người bạn',
+      targetAudience: 'Cả hai giới 20-40, mê ăn uống, du lịch ẩm thực & review quán',
+      catchphrase: 'Ăn là nghệ thuật, sống là phiêu lưu 🍽️',
+      bio: 'Đã ăn thử 500+ quán ở 15 tỉnh thành. Không nhận booking quán tệ. Honest review từ người thật.',
+      personality: 'Cởi mở, hào phóng, không ngại thử đồ ăn lạ, luôn miêu tả hương vị sống động.',
+      platforms: ['TikTok','YouTube Shorts','Instagram'],
+      followersTarget: '350K', avgViews: '100K-500K views/video',
+      contentTypes: ['Quán ăn review','Street food','Cook along','Ẩm thực vùng miền'],
+      hashtags: ['#amthuc','#reviewquan','#streetfood','#foodvietnam','#anngon'],
+      brandValues: ['Trải nghiệm thật','Đam mê ẩm thực','Khám phá'],
+      imagePrompt: 'Cheerful Vietnamese female food vlogger, 28, casual chic outfit, holding bowl of pho at vibrant street food market, warm golden hour lighting, candid joyful expression, cinematic food photography',
+      videoCount: 18, savedAt: Date.now() - 864e5 * 3
+    },
+    {
+      name: 'Vân Anh – Finance Guru', gender: 'nữ', age: '32',
+      niche: '💰 Tài chính / Đầu tư', style: '✨ Chuyên nghiệp & Uy tín',
+      toneOfVoice: 'Chuyên nghiệp, rõ ràng, dễ hiểu cho người không có nền tài chính',
+      targetAudience: 'Người đi làm 25-40 muốn đầu tư thông minh & quản lý tiền hiệu quả',
+      catchphrase: 'Tiền làm việc cho bạn — không phải ngược lại 💹',
+      bio: 'CFA candidate. 8 năm quản lý quỹ đầu tư. Giờ chia sẻ kiến thức tài chính miễn phí cho người Việt.',
+      personality: 'Nghiêm túc nhưng không khô khan, dùng ví dụ đời thực để giải thích khái niệm phức tạp.',
+      platforms: ['YouTube','TikTok','LinkedIn'],
+      followersTarget: '250K', avgViews: '80K-400K views/video',
+      contentTypes: ['Phân tích thị trường','Personal finance tips','Đầu tư cho người mới','Case study'],
+      hashtags: ['#taichinh','#dautu','#chungkhoan','#personalfinance','#richdadpoordad'],
+      brandValues: ['Minh bạch','Kiến thức thực chiến','Độc lập tài chính'],
+      imagePrompt: 'Professional Vietnamese female finance expert, 32, business attire, confident pose at modern office with financial charts on screen background, clean corporate lighting, LinkedIn professional headshot style',
+      videoCount: 9, savedAt: Date.now() - 864e5 * 1
+    },
+  ];
+
+  window.kcuLoadDemo = function(silent) {
+    try { localStorage.setItem('vdai_koc_universe', JSON.stringify(KCU_DEMO_DATA)); } catch(e) {}
     if (typeof kcRenderUniverse === 'function') kcRenderUniverse();
-    if (typeof showToast === 'function') showToast('🎭 Đã load 5 KOC/KOL mẫu vào Vũ Trụ!', 'success');
+    if (!silent && typeof showToast === 'function') showToast('🎭 Đã load 5 KOC/KOL mẫu vào Vũ Trụ!', 'success');
   };
+
+  /* ── Auto-seed demo when universe is empty (first visit) ── */
+  (function() {
+    try {
+      const existing = JSON.parse(localStorage.getItem('vdai_koc_universe') || '[]');
+      if (existing.length === 0) window.kcuLoadDemo(true);
+    } catch(e) {}
+  })();
 
   /* ══ LEADERBOARD ══════════════════════════════════════════════════════ */
   window.kcuRenderLeaderboard = function(sortBy) {
