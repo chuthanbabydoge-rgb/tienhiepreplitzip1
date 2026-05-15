@@ -13844,7 +13844,10 @@ console.log('[KC] KOCraft script v3 loading...');
       <div style="font-size:60px;opacity:0.2;">&#127756;</div>
       <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:rgba(255,255,255,0.25);letter-spacing:3px;text-align:center;">VŨ TRỤ ĐANG TRỐNG</div>
       <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,0.18);text-align:center;max-width:320px;line-height:1.9;">Tạo KOC/KOL đầu tiên trong tab <span style="color:rgba(255,110,180,0.5);">TẠO KOC/KOL</span> để đưa nhân vật vào vũ trụ này</div>
-      <button onclick="kcShowTab('wizard')" style="padding:10px 26px;background:rgba(255,110,180,0.12);border:1px solid rgba(255,110,180,0.5);color:#ff6eb4;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,110,180,0.25)'" onmouseout="this.style.background='rgba(255,110,180,0.12)'">&#10024; TẠO KOC/KOL ĐẦU TIÊN</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <button onclick="kcShowTab('wizard')" style="padding:10px 26px;background:rgba(255,110,180,0.12);border:1px solid rgba(255,110,180,0.5);color:#ff6eb4;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,110,180,0.25)'" onmouseout="this.style.background='rgba(255,110,180,0.12)'">&#10024; TẠO KOC/KOL ĐẦU TIÊN</button>
+        <button onclick="kcuLoadDemo()" style="padding:10px 22px;background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.35);color:#00c8ff;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(0,200,255,0.18)'" onmouseout="this.style.background='rgba(0,200,255,0.08)'">&#127926; XEM DEMO</button>
+      </div>
     </div>
 
     <!-- KOC/KOL Grid -->
@@ -14619,6 +14622,20 @@ console.log('[KC] KOCraft script v3 loading...');
       setResultEl(resultEl, reply);
     } catch(e) { setResultEl(resultEl, '❌ '+e.message, '#ff4466'); }
     finally { if(btn){ btn.disabled=false; btn.textContent='⚡ TẠO COLLAB SCRIPT'; } }
+  };
+
+  /* ══ DEMO DATA ════════════════════════════════════════════════════════ */
+  window.kcuLoadDemo = function() {
+    const demo = [
+      { name: 'Linh Ngọc – Beauty Queen', gender: 'nữ', age: '22', niche: '💄 Làm đẹp / Skincare', style: '🌸 Nhẹ nhàng & Tinh tế', toneOfVoice: 'Dịu dàng, truyền cảm hứng', targetAudience: 'Nữ 18-30, quan tâm skincare & lifestyle', catchphrase: 'Đẹp từ bên trong, tỏa sáng ra ngoài ✨', videoCount: 24, savedAt: Date.now() - 864e5 * 5 },
+      { name: 'Minh Khoa – Tech Reviewer', gender: 'nam', age: '26', niche: '📱 Công nghệ / Gadget', style: '🤓 Thông thái & Phân tích', toneOfVoice: 'Chuyên sâu, dễ hiểu, khách quan', targetAudience: 'Nam 18-35, yêu tech & gadget', catchphrase: 'Review thật — Không quảng cáo giả 🔍', videoCount: 41, savedAt: Date.now() - 864e5 * 12 },
+      { name: 'Hà Trang – Food Explorer', gender: 'nữ', age: '28', niche: '🍜 Ẩm thực / F&B', style: '🎉 Vui tươi & Năng động', toneOfVoice: 'Vui vẻ, hóm hỉnh, gần gũi', targetAudience: 'Cả hai giới 20-40, mê ăn uống & du lịch', catchphrase: 'Ăn là nghệ thuật, sống là phiêu lưu 🍽️', videoCount: 18, savedAt: Date.now() - 864e5 * 3 },
+      { name: 'Khánh Duy – Fitness Coach', gender: 'nam', age: '30', niche: '💪 Sức khỏe / Fitness', style: '🔥 Bold & Táo bạo', toneOfVoice: 'Mạnh mẽ, truyền động lực, thực chiến', targetAudience: 'Nam nữ 20-40, muốn có thân hình đẹp', catchphrase: 'No pain no gain — Luyện đến khi tự hào 💯', videoCount: 55, savedAt: Date.now() - 864e5 * 20 },
+      { name: 'Vân Anh – Finance Guru', gender: 'nữ', age: '32', niche: '💰 Tài chính / Đầu tư', style: '✨ Chuyên nghiệp & Uy tín', toneOfVoice: 'Chuyên nghiệp, rõ ràng, đáng tin', targetAudience: 'Người đi làm 25-40, muốn đầu tư thông minh', catchphrase: 'Tiền làm việc cho bạn — không phải ngược lại 💹', videoCount: 9, savedAt: Date.now() - 864e5 * 1 },
+    ];
+    try { localStorage.setItem('vdai_koc_universe', JSON.stringify(demo)); } catch(e) {}
+    if (typeof kcRenderUniverse === 'function') kcRenderUniverse();
+    if (typeof showToast === 'function') showToast('🎭 Đã load 5 KOC/KOL mẫu vào Vũ Trụ!', 'success');
   };
 
   /* ══ LEADERBOARD ══════════════════════════════════════════════════════ */
