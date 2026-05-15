@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **05:26:54 16/5/2026**
+> Cập nhật lần cuối: **05:35:03 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,381 dòng, 61.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,955 dòng, 1.30 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,288 dòng, 1.31 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,381 | 61.2 KB |
-| `tienhiepv3.html` | 14,955 | 1.30 MB |
+| `tienhiepv3.html` | 15,288 | 1.31 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **20,057** | **1.52 MB** |
+| **TỔNG** | **20,390** | **1.53 MB** |
 
 ---
 
@@ -1483,7 +1483,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 14,955 dòng · 1.30 MB
+> 15,288 dòng · 1.31 MB
 
 ```html
 <!DOCTYPE html>
@@ -1509,14 +1509,347 @@ app.listen(PORT, '0.0.0.0', () => {
       cursor: default;
     }
 
-    /* ── AR MODE ─────────────────────────────────── */
-    body.ar-mode { background: transparent !important; }
+    /* ══ AR MODE — IRON MAN HOLOGRAM HUD ══════════════════════════════════ */
+
+    @keyframes arScanline {
+      0%   { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+    @keyframes arFlicker {
+      0%,100% { opacity: 1; }
+      92%      { opacity: 1; }
+      93%      { opacity: 0.85; }
+      94%      { opacity: 1; }
+      97%      { opacity: 0.92; }
+      98%      { opacity: 1; }
+    }
+    @keyframes arBorderPulse {
+      0%,100% { box-shadow: 0 0 6px rgba(0,255,255,0.35), inset 0 0 6px rgba(0,255,255,0.07); }
+      50%     { box-shadow: 0 0 16px rgba(0,255,255,0.65), inset 0 0 14px rgba(0,255,255,0.14); }
+    }
+
+    /* ── Base ── */
+    body.ar-mode { background: transparent !important; animation: arFlicker 9s ease-in-out infinite; }
     body.ar-mode #canvas { background: transparent !important; }
     body.ar-mode #system-panel-boot { background: transparent !important; }
-    body.ar-mode .sys-panel-box { background: rgba(0,5,15,0.82) !important; backdrop-filter: blur(8px); }
+
+    /* ── Global scanline overlay ── */
+    body.ar-mode::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 99998;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,255,255,0.018) 2px,
+        rgba(0,255,255,0.018) 4px
+      );
+    }
+
+    /* ── TOP BAR ── */
+    body.ar-mode #topbar {
+      background: rgba(0,10,20,0.12) !important;
+      backdrop-filter: blur(2px);
+      border-bottom: 1px solid rgba(0,255,255,0.38) !important;
+      box-shadow: 0 2px 20px rgba(0,255,255,0.18), inset 0 -1px 0 rgba(0,255,255,0.12);
+    }
+
+    /* ── STATUS BAR ── */
+    body.ar-mode #statusbar {
+      background: rgba(0,10,20,0.10) !important;
+      border-top: 1px solid rgba(0,255,255,0.3) !important;
+      box-shadow: 0 -2px 16px rgba(0,255,255,0.14);
+    }
+
+    /* ── MAIN PANELS ── */
+    body.ar-mode .panel {
+      background: rgba(0,20,40,0.08) !important;
+      border-color: rgba(0,255,255,0.45) !important;
+      box-shadow: 0 0 10px rgba(0,255,255,0.22), inset 0 0 8px rgba(0,255,255,0.05);
+    }
+    body.ar-mode .panel-container {
+      background: rgba(0,10,25,0.07) !important;
+      backdrop-filter: blur(1px);
+      border: 1px solid rgba(0,255,255,0.28) !important;
+      box-shadow: 0 0 18px rgba(0,255,255,0.18), inset 0 0 12px rgba(0,255,255,0.04) !important;
+    }
+    body.ar-mode .sys-panel-box {
+      background: rgba(0,10,25,0.12) !important;
+      backdrop-filter: blur(2px);
+      border-color: rgba(0,255,255,0.45) !important;
+      box-shadow: 0 0 14px rgba(0,255,255,0.3), inset 0 0 10px rgba(0,255,255,0.07) !important;
+      animation: arBorderPulse 3.5s ease-in-out infinite;
+    }
+
+    /* ── HUD BACKDROP: fully transparent so camera shows through ── */
+    body.ar-mode #hud-backdrop {
+      background: transparent !important;
+    }
+    body.ar-mode #hud-backdrop::before { display: none; }
+
+    /* ── HUD PANELS ── */
+    body.ar-mode .hud-panel {
+      background: rgba(0,20,40,0.08) !important;
+      border-color: rgba(0,255,255,0.5) !important;
+      backdrop-filter: blur(2px);
+      box-shadow: 0 0 14px rgba(0,255,255,0.28), inset 0 0 10px rgba(0,255,255,0.05) !important;
+      animation: arBorderPulse 4s ease-in-out infinite;
+    }
+    body.ar-mode .hud-panel::before {
+      background: linear-gradient(135deg, rgba(0,255,255,0.03) 0%, transparent 60%) !important;
+    }
+    body.ar-mode #hud-left {
+      background: rgba(0,15,30,0.09) !important;
+      border-right-color: rgba(0,255,255,0.3) !important;
+      backdrop-filter: blur(2px);
+    }
+    body.ar-mode #hud-close {
+      background: rgba(0,20,40,0.12) !important;
+      border-color: rgba(0,255,255,0.5) !important;
+    }
+    body.ar-mode #hud-info-bar {
+      background: rgba(0,15,30,0.10) !important;
+      border-color: rgba(0,255,255,0.22) !important;
+    }
+    body.ar-mode #hud-action-strip {
+      background: rgba(0,10,20,0.08) !important;
+      border-color: rgba(0,255,255,0.18) !important;
+    }
+
+    /* ── MODALS ── */
+    body.ar-mode #agent-chat-modal,
+    body.ar-mode #app-summary-modal,
+    body.ar-mode #alerts-modal,
+    body.ar-mode #leaderboard-modal,
+    body.ar-mode #compare-modal,
+    body.ar-mode #neural-modal,
+    body.ar-mode #mission-modal {
+      background: rgba(0,8,20,0.22) !important;
+      backdrop-filter: blur(4px);
+    }
+    body.ar-mode #kocraft-modal {
+      background: rgba(0,5,15,0.20) !important;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ── MODAL INNER BOXES ── */
+    body.ar-mode .modal-box,
+    body.ar-mode .lb-modal-box,
+    body.ar-mode .cmp-modal-box {
+      background: rgba(0,15,35,0.14) !important;
+      border-color: rgba(0,255,255,0.4) !important;
+      box-shadow: 0 0 22px rgba(0,255,255,0.22), inset 0 0 16px rgba(0,255,255,0.05) !important;
+    }
+
+    /* ── AGENT CARDS ── */
+    body.ar-mode .agent-card {
+      background: rgba(0,15,30,0.09) !important;
+      border-color: rgba(0,255,255,0.28) !important;
+    }
+    body.ar-mode .agent-card:hover {
+      background: rgba(0,30,60,0.16) !important;
+      border-color: rgba(0,255,255,0.6) !important;
+      box-shadow: 0 0 18px rgba(0,255,255,0.32) !important;
+    }
+
+    /* ── Text glow boost ── */
+    body.ar-mode .hud-title,
+    body.ar-mode #topbar .brand {
+      text-shadow: 0 0 10px #00ffff, 0 0 22px rgba(0,255,255,0.45) !important;
+    }
+
+    /* ── 3D tilt for gyroscope ── */
     body.ar-mode #ui { transform-style: preserve-3d; transition: transform 0.05s linear; }
-    body.ar-mode #topbar { background: rgba(0,5,15,0.75) !important; backdrop-filter: blur(8px); }
-    body.ar-mode .panel-container { background: rgba(0,5,18,0.82) !important; backdrop-filter: blur(8px); }
+
+    /* ══ AR MODE — EXTENDED HOLOGRAM TARGETS ══════════════════════════════ */
+
+    /* Universe Chatbox */
+    body.ar-mode #universe-chatbox {
+      background: rgba(0,10,25,0.10) !important;
+      backdrop-filter: blur(2px) !important;
+      border-color: rgba(0,255,255,0.4) !important;
+      box-shadow: 0 0 16px rgba(0,255,255,0.22), inset 0 0 12px rgba(0,255,255,0.05) !important;
+    }
+    body.ar-mode #uc-header {
+      background: rgba(0,255,255,0.05) !important;
+    }
+
+    /* Workflow modal */
+    body.ar-mode #wfm-modal {
+      background: rgba(0,5,15,0.18) !important;
+      backdrop-filter: blur(3px) !important;
+    }
+    body.ar-mode .wfm-header {
+      background: rgba(0,5,18,0.12) !important;
+    }
+    body.ar-mode .wfm-col {
+      background: rgba(0,5,18,0.08) !important;
+      border-color: rgba(136,0,255,0.35) !important;
+    }
+
+    /* Filter tabs */
+    body.ar-mode .filter-tab {
+      background: rgba(0,10,25,0.10) !important;
+      border-color: rgba(0,255,255,0.25) !important;
+    }
+    body.ar-mode .filter-tab:hover,
+    body.ar-mode .filter-tab.active {
+      background: rgba(0,40,80,0.18) !important;
+      border-color: rgba(0,255,255,0.55) !important;
+    }
+
+    /* Vault modal */
+    body.ar-mode #vault-modal {
+      background: rgba(0,5,15,0.18) !important;
+    }
+    body.ar-mode #vault-box {
+      background: rgba(0,10,25,0.12) !important;
+      border-color: rgba(0,255,255,0.4) !important;
+    }
+
+    /* Node Edit panel */
+    body.ar-mode #hud-node-edit {
+      background: rgba(0,8,20,0.14) !important;
+      backdrop-filter: blur(3px);
+    }
+    body.ar-mode #hne-body {
+      background: transparent !important;
+    }
+    body.ar-mode .hne-input,
+    body.ar-mode .hne-textarea {
+      background: rgba(0,10,25,0.18) !important;
+    }
+
+    /* Builder modal */
+    body.ar-mode .builder-modal-content {
+      background: rgba(0,10,20,0.12) !important;
+      backdrop-filter: blur(3px);
+    }
+    body.ar-mode #builder-sidebar {
+      background: rgba(0,15,30,0.10) !important;
+    }
+
+    /* Topbar user chip & theme dropdown */
+    body.ar-mode #topbar-user {
+      background: rgba(0,40,40,0.15) !important;
+      border-color: rgba(0,255,255,0.3) !important;
+    }
+    body.ar-mode #theme-toggle-btn {
+      background: rgba(0,40,40,0.15) !important;
+    }
+    body.ar-mode #theme-dropdown-menu {
+      background: rgba(0,10,25,0.20) !important;
+      backdrop-filter: blur(4px) !important;
+    }
+
+    /* Agent chat modal inner box */
+    body.ar-mode #agent-chat-modal > div:not([style]) {
+      background: rgba(0,10,25,0.12) !important;
+    }
+
+    /* KOCraft cards inside modal */
+    body.ar-mode #kocraft-modal [style*="background"] {
+      background: rgba(0,10,25,0.10) !important;
+    }
+
+    /* HUD tabs */
+    body.ar-mode #hud-tabs {
+      background: rgba(0,10,20,0.08) !important;
+    }
+    body.ar-mode .hud-tab-btn {
+      background: transparent !important;
+    }
+    body.ar-mode .hud-tab-btn.active,
+    body.ar-mode .hud-tab-btn:hover {
+      background: rgba(0,255,255,0.08) !important;
+    }
+
+    /* App summary modal inner */
+    body.ar-mode #app-summary-modal > * {
+      background: rgba(0,10,30,0.14) !important;
+    }
+
+    /* ── Universe Chatbox full transparent treatment ── */
+    body.ar-mode #universe-chatbox {
+      background: rgba(0,10,25,0.09) !important;
+      backdrop-filter: blur(1px) !important;
+      border-color: rgba(0,255,255,0.42) !important;
+      box-shadow: 0 0 18px rgba(0,255,255,0.22), inset 0 0 14px rgba(0,255,255,0.04) !important;
+    }
+    body.ar-mode #uc-messages {
+      background: transparent !important;
+    }
+    body.ar-mode #uc-input-area {
+      background: rgba(0,10,20,0.10) !important;
+      border-top-color: rgba(0,255,255,0.2) !important;
+    }
+    body.ar-mode #uc-advisor {
+      background: rgba(10,3,0,0.10) !important;
+      border-color: rgba(255,68,0,0.4) !important;
+      box-shadow: 0 0 16px rgba(255,68,0,0.2), inset 0 0 10px rgba(255,68,0,0.04) !important;
+    }
+
+    /* ── Vault modal ── */
+    body.ar-mode #vault-modal {
+      background: rgba(0,5,15,0.15) !important;
+    }
+    body.ar-mode #vault-box {
+      background: rgba(0,8,22,0.12) !important;
+      border-color: rgba(255,170,0,0.45) !important;
+    }
+    body.ar-mode #vault-detail {
+      background: rgba(0,8,22,0.12) !important;
+    }
+
+    /* ── Compare modal ── */
+    body.ar-mode #compare-modal {
+      background: rgba(0,5,15,0.18) !important;
+    }
+
+    /* ── Modal overlay ── */
+    body.ar-mode .modal-overlay {
+      background: rgba(0,5,20,0.15) !important;
+    }
+
+    /* ── HUD node space ── */
+    body.ar-mode #hud-node-space {
+      background: transparent !important;
+    }
+
+    /* ── Workflow builder ── */
+    body.ar-mode .wfm-col {
+      background: rgba(0,5,18,0.09) !important;
+    }
+    body.ar-mode .wfm-card {
+      background: rgba(0,5,18,0.10) !important;
+      border-color: rgba(136,0,255,0.3) !important;
+    }
+    body.ar-mode .wfm-card:hover {
+      background: rgba(0,10,30,0.16) !important;
+    }
+
+    /* ── Neural/Mission modal inner content ── */
+    body.ar-mode [id$="-modal"] > div:first-child,
+    body.ar-mode [id$="-modal"] > section:first-child {
+      background: rgba(0,8,20,0.12) !important;
+    }
+
+    /* ── Input fields in AR mode: more transparent ── */
+    body.ar-mode input:not([type=range]),
+    body.ar-mode textarea,
+    body.ar-mode select {
+      background: rgba(0,10,25,0.15) !important;
+    }
+
+    /* ── Inner content panels (generic) ── */
+    body.ar-mode [class*="-content"],
+    body.ar-mode [class*="-body"],
+    body.ar-mode [class*="-inner"] {
+      background: transparent !important;
+    }
 
     #canvas {
       position: fixed;
