@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **04:00:19 16/5/2026**
+> Cập nhật lần cuối: **05:01:13 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,364 dòng, 60.5 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,679 dòng, 1.27 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,870 dòng, 1.29 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,364 | 60.5 KB |
-| `tienhiepv3.html` | 14,679 | 1.27 MB |
+| `tienhiepv3.html` | 14,870 | 1.29 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **19,764** | **1.50 MB** |
+| **TỔNG** | **19,955** | **1.52 MB** |
 
 ---
 
@@ -1466,7 +1466,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 14,679 dòng · 1.27 MB
+> 14,870 dòng · 1.29 MB
 
 ```html
 <!DOCTYPE html>
@@ -1990,6 +1990,7 @@ app.listen(PORT, '0.0.0.0', () => {
       opacity: 0;
       transition: opacity .3s;
     }
+
 
     .planet-label .name {
       font-family: 'Orbitron', sans-serif;
@@ -5481,22 +5482,6 @@ app.listen(PORT, '0.0.0.0', () => {
     ];
 
     // ============================================================
-    // GALAXY GROUPS — Thiên Hà Nhóm (8 cụm thiên hà)
-    // ============================================================
-    const GALAXY_GROUPS = [
-      { id: 0, name: "Tài Chính Thiên Hà",  emoji: "💰", color: "#ffaa00", cx: -80, cy: 8,   cz: -8,  agentIds: [4,7,21,36,48,51,53,65,73,89,93] },
-      { id: 1, name: "Nội Dung Thiên Hà",   emoji: "✍️", color: "#00ffff", cx: 75,  cy: -8,  cz: 20,  agentIds: [0,6,15,24,27,32,52,54,55,62,63] },
-      { id: 2, name: "Video Thiên Hà",       emoji: "🎬", color: "#ff0044", cx: 15,  cy: -55, cz: 75,  agentIds: [1,2,9,20,28,39,58,61,74,79] },
-      { id: 3, name: "Thương Mại Thiên Hà",  emoji: "🛒", color: "#ff6600", cx: -48, cy: -48, cz: -72, agentIds: [8,10,11,12,18,19,23,25,26,30,42,43,57,59,82,86,91] },
-      { id: 4, name: "Công Nghệ Thiên Hà",   emoji: "💻", color: "#00ff88", cx: 62,  cy: 50,  cz: -52, agentIds: [3,5,14,16,17,22,33,40,60,78,81,84,94] },
-      { id: 5, name: "Khoa Học Thiên Hà",    emoji: "🔬", color: "#4466ff", cx: -62, cy: 60,  cz: 60,  agentIds: [41,44,46,49,68,75,76,77,80,85,90,95] },
-      { id: 6, name: "Dịch Vụ Thiên Hà",     emoji: "🏢", color: "#cc44ff", cx: 72,  cy: 0,   cz: -72, agentIds: [29,34,35,37,38,45,47,50,56,66,67,69,70,71,72,83,87,88,92] },
-      { id: 7, name: "Thần Cấp Thiên Hà",    emoji: "👁️", color: "#ffffff", cx: 0,   cy: 105, cz: 0,   agentIds: [13,31,64,96,97,98,99,100] },
-    ];
-    const agentGalaxyMap = {};
-    GALAXY_GROUPS.forEach(g => g.agentIds.forEach(aid => { agentGalaxyMap[aid] = g; }));
-
-    // ============================================================
     // XIANXIA NAMES + ANNOTATIONS
     // ============================================================
     const XIANXIA_MAP = {
@@ -6668,12 +6653,12 @@ app.listen(PORT, '0.0.0.0', () => {
 
       for (let i = 0; i < AI_AGENTS.length; i++) {
         const agent = AI_AGENTS[i];
-        const orbitRadius = 20 + (i % 5) * 14 + Math.random() * 8;
-        const orbitSpeed = 0.0003 + Math.random() * 0.0008;
-        const orbitAngle = (i / AI_AGENTS.length) * Math.PI * 2 + Math.random() * 0.5;
-        const orbitInclination = (Math.random() - 0.5) * 1.0;
+        const orbitRadius = 15 + Math.random() * 85;
+        const orbitSpeed = 0.0004 + Math.random() * 0.001;
+        const orbitAngle = Math.random() * Math.PI * 2;
+        const orbitInclination = (Math.random() - 0.5) * 0.8;
         const size = 0.8 + Math.random() * 1.4;
-        const yOffset = (Math.random() - 0.5) * 30;
+        const yOffset = (Math.random() - 0.5) * 12;
 
         // Create planet group
         const planetGroup = new THREE.Group();
@@ -6730,21 +6715,6 @@ app.listen(PORT, '0.0.0.0', () => {
         labelsContainer.appendChild(label);
         labelEls.push(label);
       }
-
-      // ---- ORBIT LINES ----
-      const orbitLineGroup = new THREE.Group();
-      const radii = [20, 34, 48, 62, 76];
-      radii.forEach(r => {
-        const pts = [];
-        for (let i = 0; i <= 128; i++) {
-          const a = (i / 128) * Math.PI * 2;
-          pts.push(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r));
-        }
-        const geo = new THREE.BufferGeometry().setFromPoints(pts);
-        const mat = new THREE.LineBasicMaterial({ color: 0x002244, transparent: true, opacity: 0.2 });
-        orbitLineGroup.add(new THREE.Line(geo, mat));
-      });
-      scene.add(orbitLineGroup);
 
       // ---- RAYCASTER FOR CLICK ----
       const raycaster = new THREE.Raycaster();
@@ -7506,11 +7476,11 @@ app.listen(PORT, '0.0.0.0', () => {
           const ud = pm.group.userData;
           ud.orbitAngle += ud.orbitSpeed;
 
-          const x = Math.cos(ud.orbitAngle) * ud.orbitRadius;
-          const z = Math.sin(ud.orbitAngle) * ud.orbitRadius;
-          const y = ud.yOffset + Math.sin(time * 0.3 + i) * 2 + Math.sin(ud.orbitAngle * 2) * ud.orbitRadius * Math.sin(ud.orbitInclination);
+          const lx = Math.cos(ud.orbitAngle) * ud.orbitRadius;
+          const lz = Math.sin(ud.orbitAngle) * ud.orbitRadius;
+          const ly = ud.yOffset + Math.sin(time * 0.3 + i) * 1.5 + Math.sin(ud.orbitAngle * 2) * ud.orbitRadius * Math.sin(ud.orbitInclination);
 
-          pm.group.position.set(x, y, z);
+          pm.group.position.set(lx, ly, lz);
           pm.planet.rotation.y += 0.005 + i * 0.0001;
           pm.planet.rotation.x += 0.002;
 
@@ -15302,12 +15272,53 @@ console.log('[KC] KOCraft script v3 loading...');
       <div id="kcu-collab-result" style="display:none;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.82);background:rgba(0,0,0,0.38);border:1px solid rgba(0,255,200,0.18);border-radius:8px;padding:10px 12px;line-height:1.8;max-height:220px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,255,200,0.3) transparent;white-space:pre-wrap;"></div>
     </div>
 
+    <!-- Leaderboard -->
+    <div id="kcu-leaderboard" style="display:none;background:rgba(255,170,0,0.03);border:1px solid rgba(255,170,0,0.15);border-radius:12px;padding:16px 18px;flex-direction:column;gap:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px;font-weight:900;color:#ffaa00;">🏆 Bảng Xếp Hạng</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,170,0,0.5);margin-top:2px;letter-spacing:1px;">Xếp hạng KOC/KOL theo hiệu suất</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="kcuRenderLeaderboard('views')" id="kcu-lb-views" style="padding:5px 10px;background:rgba(255,170,0,0.18);border:1px solid rgba(255,170,0,0.45);color:#ffaa00;font-family:'Share Tech Mono',monospace;font-size:8px;border-radius:5px;cursor:pointer;">👁️ View</button>
+          <button onclick="kcuRenderLeaderboard('engagement')" id="kcu-lb-eng" style="padding:5px 10px;background:transparent;border:1px solid rgba(255,170,0,0.2);color:rgba(255,170,0,0.5);font-family:'Share Tech Mono',monospace;font-size:8px;border-radius:5px;cursor:pointer;">💬 Engage</button>
+          <button onclick="kcuRenderLeaderboard('videos')" id="kcu-lb-vid" style="padding:5px 10px;background:transparent;border:1px solid rgba(255,170,0,0.2);color:rgba(255,170,0,0.5);font-family:'Share Tech Mono',monospace;font-size:8px;border-radius:5px;cursor:pointer;">🎬 Video</button>
+        </div>
+      </div>
+      <div id="kcu-lb-table" style="display:flex;flex-direction:column;gap:4px;"></div>
+    </div>
+
+    <!-- Compare KOC/KOL -->
+    <div id="kcu-compare" style="display:none;background:rgba(0,136,255,0.03);border:1px solid rgba(0,136,255,0.15);border-radius:12px;padding:16px 18px;flex-direction:column;gap:12px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px;font-weight:900;color:#0088ff;">📊 So Sánh KOC/KOL</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,136,255,0.5);margin-top:2px;letter-spacing:1px;">AI phân tích điểm mạnh/yếu 2 nhân vật</div>
+        </div>
+        <button onclick="kcuRunCompare()" id="kcu-cmp-btn" style="margin-left:auto;padding:8px 18px;background:rgba(0,136,255,0.1);border:1px solid rgba(0,136,255,0.38);color:#0088ff;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1.5px;border-radius:6px;cursor:pointer;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(0,136,255,0.22)'" onmouseout="this.style.background='rgba(0,136,255,0.1)'">⚡ SO SÁNH NGAY</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:2px;color:rgba(0,136,255,0.4);margin-bottom:5px;">NHÂN VẬT A</div>
+          <select id="kcu-cmp-a" style="width:100%;background:rgba(0,0,0,0.45);border:1px solid rgba(0,136,255,0.22);border-radius:6px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 9px;outline:none;cursor:pointer;"></select>
+        </div>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:2px;color:rgba(0,136,255,0.4);margin-bottom:5px;">NHÂN VẬT B</div>
+          <select id="kcu-cmp-b" style="width:100%;background:rgba(0,0,0,0.45);border:1px solid rgba(0,136,255,0.22);border-radius:6px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 9px;outline:none;cursor:pointer;"></select>
+        </div>
+      </div>
+      <div id="kcu-cmp-result" style="display:none;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.82);background:rgba(0,0,0,0.38);border:1px solid rgba(0,136,255,0.18);border-radius:8px;padding:10px 12px;line-height:1.8;max-height:240px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,136,255,0.3) transparent;white-space:pre-wrap;"></div>
+    </div>
+
     <!-- Empty state -->
     <div id="kcu-empty" style="display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:60px 20px;min-height:300px;">
       <div style="font-size:60px;opacity:0.2;">&#127756;</div>
       <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:rgba(255,255,255,0.25);letter-spacing:3px;text-align:center;">VŨ TRỤ ĐANG TRỐNG</div>
       <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,0.18);text-align:center;max-width:320px;line-height:1.9;">Tạo KOC/KOL đầu tiên trong tab <span style="color:rgba(255,110,180,0.5);">TẠO KOC/KOL</span> để đưa nhân vật vào vũ trụ này</div>
-      <button onclick="kcShowTab('wizard')" style="padding:10px 26px;background:rgba(255,110,180,0.12);border:1px solid rgba(255,110,180,0.5);color:#ff6eb4;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,110,180,0.25)'" onmouseout="this.style.background='rgba(255,110,180,0.12)'">&#10024; TẠO KOC/KOL ĐẦU TIÊN</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <button onclick="kcShowTab('wizard')" style="padding:10px 26px;background:rgba(255,110,180,0.12);border:1px solid rgba(255,110,180,0.5);color:#ff6eb4;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,110,180,0.25)'" onmouseout="this.style.background='rgba(255,110,180,0.12)'">&#10024; TẠO KOC/KOL ĐẦU TIÊN</button>
+        <button onclick="kcuLoadDemo()" style="padding:10px 22px;background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.35);color:#00c8ff;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(0,200,255,0.18)'" onmouseout="this.style.background='rgba(0,200,255,0.08)'">&#127926; XEM DEMO</button>
+      </div>
     </div>
 
     <!-- KOC/KOL Grid -->
@@ -15875,6 +15886,26 @@ console.log('[KC] KOCraft script v3 loading...');
 
         </div>
 
+        <!-- Advanced AI Tools -->
+        <div style="border-top:1px solid rgba(255,255,255,0.05);padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:7px;color:rgba(255,255,255,0.18);letter-spacing:2px;margin-bottom:2px;">⚡ CÔNG CỤ AI NÂNG CAO</div>
+
+          <!-- Viral Score -->
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button onclick="kcuGenViralScore(${idx})" id="kcu-vs-btn-${idx}" style="flex:1;padding:7px;background:rgba(255,60,0,0.1);border:1px solid rgba(255,60,0,0.35);color:#ff3c00;font-family:'Orbitron',sans-serif;font-size:7.5px;letter-spacing:1px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,0,0.22)'" onmouseout="this.style.background='rgba(255,60,0,0.1)'">🔥 VIRAL SCORE</button>
+            <div id="kcu-vs-badge-${idx}" style="display:none;font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#ff3c00;min-width:44px;text-align:center;text-shadow:0 0 12px #ff3c00;"></div>
+          </div>
+          <div id="kcu-vs-result-${idx}" style="display:none;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.8);background:rgba(255,60,0,0.05);border:1px solid rgba(255,60,0,0.15);border-radius:7px;padding:9px 11px;line-height:1.75;max-height:160px;overflow-y:auto;scrollbar-width:thin;white-space:pre-wrap;"></div>
+
+          <!-- Roadmap -->
+          <button onclick="kcuGenRoadmap(${idx})" id="kcu-rm-btn-${idx}" style="padding:7px;background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.35);color:#00c864;font-family:'Orbitron',sans-serif;font-size:7.5px;letter-spacing:1px;border-radius:6px;cursor:pointer;transition:all 0.2s;width:100%;" onmouseover="this.style.background='rgba(0,200,100,0.22)'" onmouseout="this.style.background='rgba(0,200,100,0.1)'">🚀 CHIẾN LƯỢC PHÁT TRIỂN</button>
+          <div id="kcu-rm-result-${idx}" style="display:none;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.8);background:rgba(0,200,100,0.04);border:1px solid rgba(0,200,100,0.15);border-radius:7px;padding:9px 11px;line-height:1.75;max-height:200px;overflow-y:auto;scrollbar-width:thin;white-space:pre-wrap;"></div>
+
+          <!-- Brand Deal Matcher -->
+          <button onclick="kcuGenBrandMatch(${idx})" id="kcu-bd-btn-${idx}" style="padding:7px;background:rgba(180,80,255,0.1);border:1px solid rgba(180,80,255,0.35);color:#b450ff;font-family:'Orbitron',sans-serif;font-size:7.5px;letter-spacing:1px;border-radius:6px;cursor:pointer;transition:all 0.2s;width:100%;" onmouseover="this.style.background='rgba(180,80,255,0.22)'" onmouseout="this.style.background='rgba(180,80,255,0.1)'">🤝 BRAND DEAL MATCHER</button>
+          <div id="kcu-bd-result-${idx}" style="display:none;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.8);background:rgba(180,80,255,0.04);border:1px solid rgba(180,80,255,0.15);border-radius:7px;padding:9px 11px;line-height:1.75;max-height:200px;overflow-y:auto;scrollbar-width:thin;white-space:pre-wrap;"></div>
+        </div>
+
         <!-- Footer -->
         <div style="padding:4px 12px 10px;font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(255,255,255,0.15);text-align:right;">${savedDate?'💾 '+savedDate:''}</div>
 
@@ -16015,20 +16046,33 @@ console.log('[KC] KOCraft script v3 loading...');
   window.kcRenderUniverse = function() {
     _origRender();
     const list = kcuLoad();
-    const dashEl = document.getElementById('kcu-dashboard');
-    const collabSec = document.getElementById('kcu-collab-section');
-    const selA = document.getElementById('kcu-collab-a');
-    const selB = document.getElementById('kcu-collab-b');
+    const dashEl     = document.getElementById('kcu-dashboard');
+    const collabSec  = document.getElementById('kcu-collab-section');
+    const lbSec      = document.getElementById('kcu-leaderboard');
+    const cmpSec     = document.getElementById('kcu-compare');
+    const selA       = document.getElementById('kcu-collab-a');
+    const selB       = document.getElementById('kcu-collab-b');
+    const selCmpA    = document.getElementById('kcu-cmp-a');
+    const selCmpB    = document.getElementById('kcu-cmp-b');
 
     if (list.length > 0) {
-      if (dashEl) dashEl.style.display = 'block';
+      if (dashEl)    dashEl.style.display    = 'block';
       if (collabSec) collabSec.style.display = 'flex';
+      if (lbSec)     lbSec.style.display     = 'flex';
+      if (cmpSec)    cmpSec.style.display    = list.length >= 2 ? 'flex' : 'none';
+
       const opts = list.map((k,i)=>`<option value="${i}">${k.name||'KOC '+i}</option>`).join('');
-      if (selA) selA.innerHTML = opts;
-      if (selB) { selB.innerHTML = opts; if(list.length>1) selB.selectedIndex=1; }
+      if (selA)    selA.innerHTML = opts;
+      if (selB)    { selB.innerHTML = opts; if(list.length>1) selB.selectedIndex=1; }
+      if (selCmpA) selCmpA.innerHTML = opts;
+      if (selCmpB) { selCmpB.innerHTML = opts; if(list.length>1) selCmpB.selectedIndex=1; }
+
+      kcuRenderLeaderboard('views');
     } else {
-      if (dashEl) dashEl.style.display = 'none';
+      if (dashEl)    dashEl.style.display    = 'none';
       if (collabSec) collabSec.style.display = 'none';
+      if (lbSec)     lbSec.style.display     = 'none';
+      if (cmpSec)    cmpSec.style.display    = 'none';
     }
   };
 
@@ -16049,6 +16093,153 @@ console.log('[KC] KOCraft script v3 loading...');
       setResultEl(resultEl, reply);
     } catch(e) { setResultEl(resultEl, '❌ '+e.message, '#ff4466'); }
     finally { if(btn){ btn.disabled=false; btn.textContent='⚡ TẠO COLLAB SCRIPT'; } }
+  };
+
+  /* ══ DEMO DATA ════════════════════════════════════════════════════════ */
+  window.kcuLoadDemo = function() {
+    const demo = [
+      { name: 'Linh Ngọc – Beauty Queen', gender: 'nữ', age: '22', niche: '💄 Làm đẹp / Skincare', style: '🌸 Nhẹ nhàng & Tinh tế', toneOfVoice: 'Dịu dàng, truyền cảm hứng', targetAudience: 'Nữ 18-30, quan tâm skincare & lifestyle', catchphrase: 'Đẹp từ bên trong, tỏa sáng ra ngoài ✨', videoCount: 24, savedAt: Date.now() - 864e5 * 5 },
+      { name: 'Minh Khoa – Tech Reviewer', gender: 'nam', age: '26', niche: '📱 Công nghệ / Gadget', style: '🤓 Thông thái & Phân tích', toneOfVoice: 'Chuyên sâu, dễ hiểu, khách quan', targetAudience: 'Nam 18-35, yêu tech & gadget', catchphrase: 'Review thật — Không quảng cáo giả 🔍', videoCount: 41, savedAt: Date.now() - 864e5 * 12 },
+      { name: 'Hà Trang – Food Explorer', gender: 'nữ', age: '28', niche: '🍜 Ẩm thực / F&B', style: '🎉 Vui tươi & Năng động', toneOfVoice: 'Vui vẻ, hóm hỉnh, gần gũi', targetAudience: 'Cả hai giới 20-40, mê ăn uống & du lịch', catchphrase: 'Ăn là nghệ thuật, sống là phiêu lưu 🍽️', videoCount: 18, savedAt: Date.now() - 864e5 * 3 },
+      { name: 'Khánh Duy – Fitness Coach', gender: 'nam', age: '30', niche: '💪 Sức khỏe / Fitness', style: '🔥 Bold & Táo bạo', toneOfVoice: 'Mạnh mẽ, truyền động lực, thực chiến', targetAudience: 'Nam nữ 20-40, muốn có thân hình đẹp', catchphrase: 'No pain no gain — Luyện đến khi tự hào 💯', videoCount: 55, savedAt: Date.now() - 864e5 * 20 },
+      { name: 'Vân Anh – Finance Guru', gender: 'nữ', age: '32', niche: '💰 Tài chính / Đầu tư', style: '✨ Chuyên nghiệp & Uy tín', toneOfVoice: 'Chuyên nghiệp, rõ ràng, đáng tin', targetAudience: 'Người đi làm 25-40, muốn đầu tư thông minh', catchphrase: 'Tiền làm việc cho bạn — không phải ngược lại 💹', videoCount: 9, savedAt: Date.now() - 864e5 * 1 },
+    ];
+    try { localStorage.setItem('vdai_koc_universe', JSON.stringify(demo)); } catch(e) {}
+    if (typeof kcRenderUniverse === 'function') kcRenderUniverse();
+    if (typeof showToast === 'function') showToast('🎭 Đã load 5 KOC/KOL mẫu vào Vũ Trụ!', 'success');
+  };
+
+  /* ══ LEADERBOARD ══════════════════════════════════════════════════════ */
+  window.kcuRenderLeaderboard = function(sortBy) {
+    sortBy = sortBy || 'views';
+    const list = kcuLoad();
+    const table = document.getElementById('kcu-lb-table');
+    if (!table || list.length === 0) return;
+
+    const btns = { views: 'kcu-lb-views', engagement: 'kcu-lb-eng', videos: 'kcu-lb-vid' };
+    Object.keys(btns).forEach(k => {
+      const b = document.getElementById(btns[k]);
+      if (!b) return;
+      const active = k === sortBy;
+      b.style.background = active ? 'rgba(255,170,0,0.18)' : 'transparent';
+      b.style.borderColor = active ? 'rgba(255,170,0,0.45)' : 'rgba(255,170,0,0.2)';
+      b.style.color = active ? '#ffaa00' : 'rgba(255,170,0,0.5)';
+    });
+
+    const medals = ['🥇','🥈','🥉'];
+    const sorted = list.map((koc, origIdx) => {
+      const s = getStats(koc);
+      const viewNum = parseInt((s.views||'0').replace(/\D/g,'')) || 0;
+      const engNum = parseFloat((s.engagement||'0').replace('%','')) || 0;
+      const vidNum = koc.videoCount || 0;
+      return { koc, origIdx, viewNum, engNum, vidNum, stats: s };
+    }).sort((a,b) => {
+      if (sortBy === 'views') return b.viewNum - a.viewNum;
+      if (sortBy === 'engagement') return b.engNum - a.engNum;
+      return b.vidNum - a.vidNum;
+    });
+
+    table.innerHTML = sorted.map((item, rank) => {
+      const { koc, stats } = item;
+      const badge = medals[rank] || `#${rank+1}`;
+      const val = sortBy === 'views' ? stats.views : sortBy === 'engagement' ? stats.engagement : stats.videos;
+      const avatar = koc.avatarUrl
+        ? `<img src="${koc.avatarUrl}" style="width:28px;height:28px;border-radius:6px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">`
+        : `<div style="width:28px;height:28px;border-radius:6px;background:rgba(255,110,180,0.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🎀</div>`;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:rgba(0,0,0,${rank<3?'0.35':'0.2'});border-radius:8px;border:1px solid rgba(255,170,0,${rank===0?'0.3':'0.08'});">
+        <div style="font-size:${rank<3?'16px':'12px'};min-width:24px;text-align:center;">${badge}</div>
+        ${avatar}
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${koc.name||'KOC'}</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(255,255,255,0.3);">${koc.niche||''}</div>
+        </div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;color:#ffaa00;white-space:nowrap;">${val}</div>
+      </div>`;
+    }).join('');
+  };
+
+  /* ══ COMPARE KOC/KOL ══════════════════════════════════════════════════ */
+  window.kcuRunCompare = async function() {
+    const list = kcuLoad();
+    if (list.length < 2) { alert('Cần ít nhất 2 KOC/KOL để so sánh!'); return; }
+    const idxA = parseInt((document.getElementById('kcu-cmp-a')||{}).value||0);
+    const idxB = parseInt((document.getElementById('kcu-cmp-b')||{}).value||1);
+    if (idxA === idxB) { alert('Vui lòng chọn 2 nhân vật khác nhau!'); return; }
+    const kocA = list[idxA], kocB = list[idxB];
+    const btn = document.getElementById('kcu-cmp-btn');
+    const resultEl = document.getElementById('kcu-cmp-result');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ AI đang phân tích...'; }
+    if (resultEl) { resultEl.style.display = 'none'; resultEl.textContent = ''; }
+    try {
+      const reply = await aiCall(`Bạn là chuyên gia phân tích KOC/KOL. So sánh chi tiết 2 nhân vật sau:\n\nNHÂN VẬT A — ${kocA.name}:\nTUỔI: ${kocA.age||'N/A'} | GIỚI TÍNH: ${kocA.gender||'N/A'} | LĨNH VỰC: ${kocA.niche||'N/A'}\nPHONG CÁCH: ${kocA.style||'N/A'} | GIỌNG ĐIỆU: ${kocA.toneOfVoice||'N/A'}\nĐỐI TƯỢNG: ${kocA.targetAudience||'N/A'} | CATCHPHRASE: "${kocA.catchphrase||''}"\n\nNHÂN VẬT B — ${kocB.name}:\nTUỔI: ${kocB.age||'N/A'} | GIỚI TÍNH: ${kocB.gender||'N/A'} | LĨNH VỰC: ${kocB.niche||'N/A'}\nPHONG CÁCH: ${kocB.style||'N/A'} | GIỌNG ĐIỆU: ${kocB.toneOfVoice||'N/A'}\nĐỐI TƯỢNG: ${kocB.targetAudience||'N/A'} | CATCHPHRASE: "${kocB.catchphrase||''}"\n\nPhân tích theo format:\n⚔️ SO SÁNH TỔNG QUAN:\n\n💪 ĐIỂM MẠNH của ${kocA.name}:\n• ...\n\n💪 ĐIỂM MẠNH của ${kocB.name}:\n• ...\n\n⚠️ ĐIỂM YẾU cần cải thiện:\n${kocA.name}: ...\n${kocB.name}: ...\n\n🎯 PHÙ HỢP NHẤT với loại brand nào:\n${kocA.name}: ...\n${kocB.name}: ...\n\n🏆 KẾT LUẬN — Ai có tiềm năng viral cao hơn và lý do:`);
+      if (resultEl) { resultEl.textContent = reply; resultEl.style.display = 'block'; }
+    } catch(e) {
+      if (resultEl) { resultEl.style.color = '#ff4466'; resultEl.textContent = '❌ ' + e.message; resultEl.style.display = 'block'; }
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '⚡ SO SÁNH NGAY'; }
+    }
+  };
+
+  /* ══ VIRAL SCORE ══════════════════════════════════════════════════════ */
+  window.kcuGenViralScore = async function(idx) {
+    const list = kcuLoad(); const koc = list[idx]; if (!koc) return;
+    const btn = document.getElementById('kcu-vs-btn-'+idx);
+    const badge = document.getElementById('kcu-vs-badge-'+idx);
+    const resultEl = document.getElementById('kcu-vs-result-'+idx);
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ AI đang chấm...'; }
+    if (resultEl) { resultEl.style.display = 'none'; resultEl.textContent = ''; }
+    if (badge) badge.style.display = 'none';
+    try {
+      const reply = await aiCall(`Bạn là chuyên gia đánh giá tiềm năng viral mạng xã hội. Chấm điểm VIRAL SCORE (0-100) cho KOC/KOL này:\n\nTÊN: ${koc.name} | TUỔI: ${koc.age||'N/A'} | GIỚI TÍNH: ${koc.gender||'N/A'}\nLĨNH VỰC: ${koc.niche||'N/A'} | PHONG CÁCH: ${koc.style||'N/A'}\nGIỌNG ĐIỆU: ${koc.toneOfVoice||'N/A'} | ĐỐI TƯỢNG: ${koc.targetAudience||'N/A'}\nCATCHPHRASE: "${koc.catchphrase||''}"\n\nBắt đầu response NGAY LẬP TỨC bằng dòng: VIRAL SCORE: [số từ 0-100]\n\nSau đó phân tích theo format:\n🔥 ĐIỂM SỐ: [N]/100\n📊 ĐÁNH GIÁ TỪNG YẾU TỐ:\n• Độ hấp dẫn nhân cách (0-25): ...\n• Tính viral của nội dung (0-25): ...\n• Độ phù hợp xu hướng (0-25): ...\n• Khả năng giữ chân audience (0-25): ...\n💡 3 ĐIỀU CẦN LÀM NGAY để tăng Viral Score:\n1. ...\n2. ...\n3. ...`);
+      const match = reply.match(/VIRAL SCORE:\s*(\d+)/i);
+      const score = match ? parseInt(match[1]) : null;
+      if (badge && score !== null) {
+        badge.textContent = score;
+        const col = score >= 80 ? '#ff3c00' : score >= 60 ? '#ffaa00' : score >= 40 ? '#00aaff' : '#888';
+        badge.style.color = col;
+        badge.style.textShadow = `0 0 16px ${col}`;
+        badge.style.display = 'block';
+      }
+      if (resultEl) { resultEl.textContent = reply; resultEl.style.display = 'block'; }
+    } catch(e) {
+      if (resultEl) { resultEl.style.color = '#ff4466'; resultEl.textContent = '❌ ' + e.message; resultEl.style.display = 'block'; }
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🔥 VIRAL SCORE'; }
+    }
+  };
+
+  /* ══ CHIẾN LƯỢC PHÁT TRIỂN (ROADMAP) ════════════════════════════════ */
+  window.kcuGenRoadmap = async function(idx) {
+    const list = kcuLoad(); const koc = list[idx]; if (!koc) return;
+    const btn = document.getElementById('kcu-rm-btn-'+idx);
+    const resultEl = document.getElementById('kcu-rm-result-'+idx);
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ AI đang lập roadmap...'; }
+    if (resultEl) { resultEl.style.display = 'none'; resultEl.textContent = ''; }
+    try {
+      const reply = await aiCall(`Bạn là chuyên gia tư vấn chiến lược phát triển KOC/KOL. Tạo roadmap 30/60/90 ngày chi tiết cho:\n\nTÊN: ${koc.name} | LĨNH VỰC: ${koc.niche||'N/A'} | PHONG CÁCH: ${koc.style||'N/A'}\nĐỐI TƯỢNG: ${koc.targetAudience||'N/A'} | GIỌNG ĐIỆU: ${koc.toneOfVoice||'N/A'}\nCATCHPHRASE: "${koc.catchphrase||''}"\n\nFormat bắt buộc:\n🗓️ 30 NGÀY ĐẦU — NỀN TẢNG:\n• Mục tiêu: ...\n• Hành động: ...\n• KPI cần đạt: ...\n\n📈 NGÀY 31-60 — TĂNG TRƯỞNG:\n• Mục tiêu: ...\n• Hành động: ...\n• KPI cần đạt: ...\n\n🚀 NGÀY 61-90 — BỨT PHÁ:\n• Mục tiêu: ...\n• Hành động: ...\n• KPI cần đạt: ...\n\n💰 DỰ BÁO THU NHẬP SAU 90 NGÀY:\n• Brand deal tiềm năng: ...\n• Platform monetization: ...\n• Tổng ước tính: ...`);
+      if (resultEl) { resultEl.textContent = reply; resultEl.style.display = 'block'; }
+    } catch(e) {
+      if (resultEl) { resultEl.style.color = '#ff4466'; resultEl.textContent = '❌ ' + e.message; resultEl.style.display = 'block'; }
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🚀 CHIẾN LƯỢC PHÁT TRIỂN'; }
+    }
+  };
+
+  /* ══ BRAND DEAL MATCHER ══════════════════════════════════════════════ */
+  window.kcuGenBrandMatch = async function(idx) {
+    const list = kcuLoad(); const koc = list[idx]; if (!koc) return;
+    const btn = document.getElementById('kcu-bd-btn-'+idx);
+    const resultEl = document.getElementById('kcu-bd-result-'+idx);
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ AI đang tìm brand...'; }
+    if (resultEl) { resultEl.style.display = 'none'; resultEl.textContent = ''; }
+    try {
+      const reply = await aiCall(`Bạn là chuyên gia matchmaking brand-KOC/KOL tại thị trường Việt Nam. Gợi ý 5 loại brand phù hợp nhất để hợp tác với KOC/KOL này:\n\nTÊN: ${koc.name} | TUỔI: ${koc.age||'N/A'} | GIỚI TÍNH: ${koc.gender||'N/A'}\nLĨNH VỰC: ${koc.niche||'N/A'} | PHONG CÁCH: ${koc.style||'N/A'}\nĐỐI TƯỢNG: ${koc.targetAudience||'N/A'} | CATCHPHRASE: "${koc.catchphrase||''}"\n\nVới mỗi brand, viết:\n🤝 BRAND #[N] — [Tên loại brand]:\n• Ví dụ brand cụ thể ở VN: ...\n• Lý do phù hợp: ...\n• Hình thức hợp tác gợi ý: ...\n• Mức deal ước tính: ...\n• Cách tiếp cận (pitch angle): ...\n\nCuối cùng:\n⭐ BRAND PHÙ HỢP NHẤT: [Brand nào và lý do ngắn gọn]`);
+      if (resultEl) { resultEl.textContent = reply; resultEl.style.display = 'block'; }
+    } catch(e) {
+      if (resultEl) { resultEl.style.color = '#ff4466'; resultEl.textContent = '❌ ' + e.message; resultEl.style.display = 'block'; }
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🤝 BRAND DEAL MATCHER'; }
+    }
   };
 
   /* ── Expose getStats for dashboard ── */
