@@ -3262,10 +3262,10 @@
         position: absolute;
         bottom: 80px;
         left: 20px;
-        width: 220px;
-        height: 260px;
-        min-width: 180px;
-        min-height: 140px;
+        width: 270px;
+        height: 390px;
+        min-width: 220px;
+        min-height: 180px;
         max-width: 600px;
         max-height: 80vh;
         background: rgba(0, 5, 18, 0.93);
@@ -3577,6 +3577,7 @@
         <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
           <span onclick="document.getElementById('uc-advisor').style.display=document.getElementById('uc-advisor').style.display==='none'?'block':'none'" title="AI Advisor" style="cursor:pointer;color:#ff6622;opacity:0.7;font-size:10px;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">⚡</span>
           <span onclick="ucClearHistory()" title="Xóa lịch sử" style="cursor:pointer;font-size:11px;color:#ff4444;opacity:0.6;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑</span>
+          <span id="uc-collapse-btn" onclick="ucToggleCollapse()" title="Thu gọn / Mở rộng" style="cursor:pointer;font-size:13px;color:#00ffff;opacity:0.7;transition:opacity 0.2s;line-height:1;user-select:none;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">▼</span>
         </div>
       </div>
       <div id="uc-tabs">
@@ -3589,11 +3590,6 @@
         <input id="uc-input" placeholder="Nhập lệnh truyền âm..."
           onkeydown="if(event.key==='Enter') sendUniverseChat()">
         <div id="uc-send-btn" onclick="sendUniverseChat()">➤</div>
-      </div>
-      <div id="uc-resize-handle" title="Kéo để thay đổi kích thước">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M9 1L1 9M9 5L5 9M9 9H9" stroke="#00ffff44" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
       </div>
     </div>
 
@@ -7863,65 +7859,27 @@
       addUniverseLog('Lịch sử truyền âm đã được xóa.', 'HỆ THỐNG', false);
     }
 
-    // Resize logic for universe-chatbox
+    // Collapse/expand logic for universe-chatbox
     (function() {
-      const handle = document.getElementById('uc-resize-handle');
-      const box    = document.getElementById('universe-chatbox');
-      if (!handle || !box) return;
+      let _ucCollapsed = false;
+      const UC_COLLAPSED_HEIGHT = '32px'; // just header visible
+      const UC_EXPANDED_HEIGHT  = '390px';
 
-      let startX, startY, startW, startH;
-
-      handle.addEventListener('mousedown', function(e) {
-        e.preventDefault();
-        startX = e.clientX;
-        startY = e.clientY;
-        startW = box.offsetWidth;
-        startH = box.offsetHeight;
-
-        function onMove(e) {
-          const dw = e.clientX - startX;
-          const dh = startY - e.clientY; // dragging up = taller
-          const newW = Math.min(Math.max(startW + dw, 260), 700);
-          const newH = Math.min(Math.max(startH + dh, 200), window.innerHeight * 0.8);
-          box.style.width  = newW + 'px';
-          box.style.height = newH + 'px';
+      window.ucToggleCollapse = function() {
+        const box = document.getElementById('universe-chatbox');
+        const btn = document.getElementById('uc-collapse-btn');
+        if (!box) return;
+        _ucCollapsed = !_ucCollapsed;
+        if (_ucCollapsed) {
+          box.style.height = UC_COLLAPSED_HEIGHT;
+          box.style.overflow = 'hidden';
+          if (btn) btn.textContent = '▲';
+        } else {
+          box.style.height = UC_EXPANDED_HEIGHT;
+          box.style.overflow = '';
+          if (btn) btn.textContent = '▼';
         }
-
-        function onUp() {
-          document.removeEventListener('mousemove', onMove);
-          document.removeEventListener('mouseup', onUp);
-        }
-
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onUp);
-      });
-
-      // Touch support
-      handle.addEventListener('touchstart', function(e) {
-        const t = e.touches[0];
-        startX = t.clientX;
-        startY = t.clientY;
-        startW = box.offsetWidth;
-        startH = box.offsetHeight;
-
-        function onMove(e) {
-          const t = e.touches[0];
-          const dw = t.clientX - startX;
-          const dh = startY - t.clientY;
-          const newW = Math.min(Math.max(startW + dw, 260), 700);
-          const newH = Math.min(Math.max(startH + dh, 200), window.innerHeight * 0.8);
-          box.style.width  = newW + 'px';
-          box.style.height = newH + 'px';
-        }
-
-        function onUp() {
-          document.removeEventListener('touchmove', onMove);
-          document.removeEventListener('touchend', onUp);
-        }
-
-        document.addEventListener('touchmove', onMove, { passive: true });
-        document.addEventListener('touchend', onUp);
-      });
+      };
     })();
 
     // Load history when page is ready
