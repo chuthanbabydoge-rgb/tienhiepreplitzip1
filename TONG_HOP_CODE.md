@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **14:04:37 15/5/2026**
+> Cập nhật lần cuối: **01:48:21 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(38 dòng, 966 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,280 dòng, 57.0 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,137 dòng, 1.23 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,236 dòng, 1.24 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 38 | 966 B |
 | `server.js` | 1,280 | 57.0 KB |
-| `tienhiepv3.html` | 14,137 | 1.23 MB |
+| `tienhiepv3.html` | 14,236 | 1.24 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **19,137** | **1.45 MB** |
+| **TỔNG** | **19,236** | **1.46 MB** |
 
 ---
 
@@ -1381,7 +1381,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 14,137 dòng · 1.23 MB
+> 14,236 dòng · 1.24 MB
 
 ```html
 <!DOCTYPE html>
@@ -1406,6 +1406,15 @@ app.listen(PORT, '0.0.0.0', () => {
       font-family: 'Rajdhani', sans-serif;
       cursor: default;
     }
+
+    /* ── AR MODE ─────────────────────────────────── */
+    body.ar-mode { background: transparent !important; }
+    body.ar-mode #canvas { background: transparent !important; }
+    body.ar-mode #system-panel-boot { background: transparent !important; }
+    body.ar-mode .sys-panel-box { background: rgba(0,5,15,0.82) !important; backdrop-filter: blur(8px); }
+    body.ar-mode #ui { transform-style: preserve-3d; transition: transform 0.05s linear; }
+    body.ar-mode #topbar { background: rgba(0,5,15,0.75) !important; backdrop-filter: blur(8px); }
+    body.ar-mode .panel-container { background: rgba(0,5,18,0.82) !important; backdrop-filter: blur(8px); }
 
     #canvas {
       position: fixed;
@@ -4577,7 +4586,7 @@ app.listen(PORT, '0.0.0.0', () => {
     <div id="topbar">
       <div class="brand glitch-text">⬡ VŨ TRỤ AI</div>
       <button id="btn-back-home" onclick="window.location.href='/api/logout'" title="Đăng xuất">⬅ THOÁT</button>
-      <button id="btn-ar-mode" onclick="window.location.href='/ar'" title="Chế độ AR 3D"
+      <button id="btn-ar-mode" onclick="window.location.href='/app?ar=1'" title="Chế độ AR 3D"
         style="display:none;align-items:center;gap:6px;padding:5px 13px;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.4);color:#00ff88;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all .25s;margin-left:8px;"
         onmouseover="this.style.background='rgba(0,255,136,.22)';this.style.boxShadow='0 0 14px rgba(0,255,136,.5)'"
         onmouseout="this.style.background='rgba(0,255,136,.08)';this.style.boxShadow='none'">⬡ AR 3D</button>
@@ -6199,7 +6208,8 @@ app.listen(PORT, '0.0.0.0', () => {
       // Check if user is already authenticated — if so, skip boot directly to /user
       fetch('/api/auth/user').then(r => {
         if (r.ok) {
-          window.location.replace('/user');  // server will add _v= cache-bust param
+          const _arSuffix = new URLSearchParams(location.search).has('ar') ? '?ar=1' : '';
+          window.location.replace('/user' + _arSuffix);  // server will add _v= cache-bust param
         } else {
           runBoot();
         }
@@ -6275,6 +6285,7 @@ app.listen(PORT, '0.0.0.0', () => {
       renderer.setClearColor(0x000008, 0);
 
       const scene = new THREE.Scene();
+      window._arThreeScene = scene;
       const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 10000);
       camera.position.set(0, 30, 120);
 
@@ -15515,6 +15526,94 @@ console.log('[KC] KOCraft script v3 loading...');
 
   // expose copy helper
   window.kcCopyToClipboard = kcCopyToClipboard;
+})();
+</script>
+
+<!-- ══ AR MODE ENGINE ══════════════════════════════════════════════ -->
+<script>
+(function () {
+  if (!new URLSearchParams(location.search).has('ar')) return;
+
+  /* ── remove Three.js fog so camera shows through cleanly ── */
+  function removeFog() {
+    if (window._arThreeScene) { window._arThreeScene.fog = null; return; }
+    setTimeout(removeFog, 300);
+  }
+  removeFog();
+
+  /* ── gyroscope tilt on the whole #ui layer ── */
+  function initGyro() {
+    const ui = document.getElementById('ui');
+    if (!ui) return;
+    let tiltX = 0, tiltY = 0, targetX = 0, targetY = 0;
+    let baseBeta = null, baseGamma = null;
+
+    function onOrient(e) {
+      if (baseBeta === null) { baseBeta = e.beta || 0; baseGamma = e.gamma || 0; }
+      targetX = Math.max(-10, Math.min(10, (e.beta  - baseBeta)  * 0.35));
+      targetY = Math.max(-10, Math.min(10, (e.gamma - baseGamma) * 0.35));
+    }
+
+    function loop() {
+      tiltX += (targetX - tiltX) * 0.06;
+      tiltY += (targetY - tiltY) * 0.06;
+      ui.style.transform = `perspective(1200px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+      requestAnimationFrame(loop);
+    }
+
+    if (typeof DeviceOrientationEvent !== 'undefined') {
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+          .then(p => { if (p === 'granted') { window.addEventListener('deviceorientation', onOrient); loop(); } })
+          .catch(() => {});
+      } else {
+        window.addEventListener('deviceorientation', onOrient);
+        loop();
+      }
+    }
+  }
+
+  /* ── start camera and enable AR mode ── */
+  function startCamera() {
+    const vid = document.getElementById('ar-camera');
+    const constraints = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false };
+    navigator.mediaDevices.getUserMedia(constraints)
+      .catch(() => navigator.mediaDevices.getUserMedia({ video: true, audio: false }))
+      .then(stream => {
+        vid.srcObject = stream;
+        vid.style.display = 'block';
+        document.body.classList.add('ar-mode');
+        initGyro();
+      })
+      .catch(() => {
+        /* camera denied — app still works without AR bg */
+        document.body.classList.add('ar-mode');
+        initGyro();
+      });
+  }
+
+  /* ── on iOS getUserMedia requires a user gesture; try immediately,
+       if blocked show a minimal tap-to-enter overlay ── */
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      .then(s => { s.getTracks().forEach(t => t.stop()); startCamera(); }) // permission already granted
+      .catch(err => {
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          /* need gesture */
+          const ov = document.createElement('div');
+          ov.id = 'ar-tap-overlay';
+          ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,4,12,0.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;cursor:pointer;touch-action:manipulation;';
+          ov.innerHTML = `
+            <div style="font-family:'Orbitron',sans-serif;font-size:22px;color:#00ffff;letter-spacing:6px;text-shadow:0 0 24px #00ffff;">⬡ VƯƠNG ĐẾ AR</div>
+            <div style="font-size:14px;font-family:'Share Tech Mono',monospace;color:rgba(0,255,255,0.55);letter-spacing:3px;">NHẤN ĐỂ MỞ TIÊN GIỚI AR</div>
+            <div style="width:72px;height:72px;border:2px solid rgba(0,255,255,0.6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;animation:arPulse 2s ease-in-out infinite;">⬡</div>`;
+          document.body.appendChild(ov);
+          ov.addEventListener('click', () => { ov.remove(); startCamera(); }, { once: true });
+        } else {
+          startCamera(); /* other error — try anyway */
+        }
+      });
+  }
 })();
 </script>
 
