@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **13:51:55 15/5/2026**
+> Cập nhật lần cuối: **14:04:37 15/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(38 dòng, 966 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,280 dòng, 57.0 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,134 dòng, 1.23 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,137 dòng, 1.23 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 38 | 966 B |
 | `server.js` | 1,280 | 57.0 KB |
-| `tienhiepv3.html` | 14,134 | 1.23 MB |
+| `tienhiepv3.html` | 14,137 | 1.23 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **19,134** | **1.45 MB** |
+| **TỔNG** | **19,137** | **1.45 MB** |
 
 ---
 
@@ -518,7 +518,7 @@ function serveMain(req, res) {
 }
 app.get('/app', serveMain);
 app.get('/user', requireAuth, serveMain);
-app.get('/', (req, res) => res.redirect('/ar'));
+app.get('/', (req, res) => res.redirect('/app?ar=1'));
 
 // Admin login page
 app.get('/admin/login', (req, res) => {
@@ -1381,7 +1381,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 14,134 dòng · 1.23 MB
+> 14,137 dòng · 1.23 MB
 
 ```html
 <!DOCTYPE html>
@@ -4460,6 +4460,9 @@ app.listen(PORT, '0.0.0.0', () => {
 </head>
 
 <body>
+
+  <!-- AR camera background (shown when ?ar=1) -->
+  <video id="ar-camera" autoplay playsinline muted style="display:none;position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none;"></video>
 
   <div id="tooltip"></div>
 
