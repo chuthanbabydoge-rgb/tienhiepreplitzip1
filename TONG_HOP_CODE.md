@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **02:13:23 16/5/2026**
+> Cập nhật lần cuối: **03:08:27 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
-- [`package.json`](#package-json) — Package config & dependencies *(38 dòng, 966 B)*
+- [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,280 dòng, 57.0 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,236 dòng, 1.24 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,655 dòng, 1.27 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -21,9 +21,9 @@
 
 | File | Dòng | Kích thước |
 |------|------|------------|
-| `package.json` | 38 | 966 B |
+| `package.json` | 39 | 987 B |
 | `server.js` | 1,280 | 57.0 KB |
-| `tienhiepv3.html` | 14,236 | 1.24 MB |
+| `tienhiepv3.html` | 14,655 | 1.27 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **19,236** | **1.46 MB** |
+| **TỔNG** | **19,656** | **1.49 MB** |
 
 ---
 
@@ -41,7 +41,7 @@
 <a name="package-json"></a>
 
 > Package config & dependencies  
-> 38 dòng · 966 B
+> 39 dòng · 987 B
 
 ```json
 {
@@ -77,6 +77,7 @@
     "p-retry": "^7.1.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "pg": "^8.20.0",
     "zod": "^4.4.3",
     "zod-validation-error": "^5.0.0"
   }
@@ -1381,7 +1382,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 14,236 dòng · 1.24 MB
+> 14,655 dòng · 1.27 MB
 
 ```html
 <!DOCTYPE html>
@@ -4648,10 +4649,10 @@ app.listen(PORT, '0.0.0.0', () => {
         position: absolute;
         bottom: 80px;
         left: 20px;
-        width: 220px;
-        height: 260px;
-        min-width: 180px;
-        min-height: 140px;
+        width: 270px;
+        height: 390px;
+        min-width: 220px;
+        min-height: 180px;
         max-width: 600px;
         max-height: 80vh;
         background: rgba(0, 5, 18, 0.93);
@@ -4963,6 +4964,7 @@ app.listen(PORT, '0.0.0.0', () => {
         <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
           <span onclick="document.getElementById('uc-advisor').style.display=document.getElementById('uc-advisor').style.display==='none'?'block':'none'" title="AI Advisor" style="cursor:pointer;color:#ff6622;opacity:0.7;font-size:10px;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">⚡</span>
           <span onclick="ucClearHistory()" title="Xóa lịch sử" style="cursor:pointer;font-size:11px;color:#ff4444;opacity:0.6;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑</span>
+          <span id="uc-collapse-btn" onclick="ucToggleCollapse()" title="Thu gọn / Mở rộng" style="cursor:pointer;font-size:13px;color:#00ffff;opacity:0.7;transition:opacity 0.2s;line-height:1;user-select:none;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">▼</span>
         </div>
       </div>
       <div id="uc-tabs">
@@ -4976,13 +4978,17 @@ app.listen(PORT, '0.0.0.0', () => {
           onkeydown="if(event.key==='Enter') sendUniverseChat()">
         <div id="uc-send-btn" onclick="sendUniverseChat()">➤</div>
       </div>
-      <div id="uc-resize-handle" title="Kéo để thay đổi kích thước">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M9 1L1 9M9 5L5 9M9 9H9" stroke="#00ffff44" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </div>
     </div>
 
+    <!-- UNIVERSE CHATBOX COLLAPSED ICON -->
+    <div id="uc-collapsed-icon"
+      onclick="ucToggleCollapse()"
+      style="display:none;position:absolute;bottom:80px;left:20px;width:44px;height:44px;background:rgba(0,5,18,0.93);border:2px solid #00ffff;border-radius:50%;box-shadow:0 0 18px rgba(0,255,255,0.4);z-index:11;cursor:pointer;pointer-events:auto;align-items:center;justify-content:center;font-size:20px;transition:box-shadow 0.2s;"
+      onmouseover="this.style.boxShadow='0 0 30px rgba(0,255,255,0.8)'"
+      onmouseout="this.style.boxShadow='0 0 18px rgba(0,255,255,0.4)'"
+      title="Mở Vạn Giới Truyền Tin">
+      💬
+    </div>
 
     <!-- SEARCH BAR (Speech Bubble) -->
     <div id="search-wrap"
@@ -9249,65 +9255,26 @@ app.listen(PORT, '0.0.0.0', () => {
       addUniverseLog('Lịch sử truyền âm đã được xóa.', 'HỆ THỐNG', false);
     }
 
-    // Resize logic for universe-chatbox
+    // Collapse/expand logic for universe-chatbox (collapses to floating icon)
     (function() {
-      const handle = document.getElementById('uc-resize-handle');
-      const box    = document.getElementById('universe-chatbox');
-      if (!handle || !box) return;
+      let _ucCollapsed = false;
 
-      let startX, startY, startW, startH;
-
-      handle.addEventListener('mousedown', function(e) {
-        e.preventDefault();
-        startX = e.clientX;
-        startY = e.clientY;
-        startW = box.offsetWidth;
-        startH = box.offsetHeight;
-
-        function onMove(e) {
-          const dw = e.clientX - startX;
-          const dh = startY - e.clientY; // dragging up = taller
-          const newW = Math.min(Math.max(startW + dw, 260), 700);
-          const newH = Math.min(Math.max(startH + dh, 200), window.innerHeight * 0.8);
-          box.style.width  = newW + 'px';
-          box.style.height = newH + 'px';
+      window.ucToggleCollapse = function() {
+        const box  = document.getElementById('universe-chatbox');
+        const icon = document.getElementById('uc-collapsed-icon');
+        const btn  = document.getElementById('uc-collapse-btn');
+        if (!box || !icon) return;
+        _ucCollapsed = !_ucCollapsed;
+        if (_ucCollapsed) {
+          box.style.display  = 'none';
+          icon.style.display = 'flex';
+          if (btn) btn.textContent = '▲';
+        } else {
+          box.style.display  = 'flex';
+          icon.style.display = 'none';
+          if (btn) btn.textContent = '▼';
         }
-
-        function onUp() {
-          document.removeEventListener('mousemove', onMove);
-          document.removeEventListener('mouseup', onUp);
-        }
-
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onUp);
-      });
-
-      // Touch support
-      handle.addEventListener('touchstart', function(e) {
-        const t = e.touches[0];
-        startX = t.clientX;
-        startY = t.clientY;
-        startW = box.offsetWidth;
-        startH = box.offsetHeight;
-
-        function onMove(e) {
-          const t = e.touches[0];
-          const dw = t.clientX - startX;
-          const dh = startY - t.clientY;
-          const newW = Math.min(Math.max(startW + dw, 260), 700);
-          const newH = Math.min(Math.max(startH + dh, 200), window.innerHeight * 0.8);
-          box.style.width  = newW + 'px';
-          box.style.height = newH + 'px';
-        }
-
-        function onUp() {
-          document.removeEventListener('touchmove', onMove);
-          document.removeEventListener('touchend', onUp);
-        }
-
-        document.addEventListener('touchmove', onMove, { passive: true });
-        document.addEventListener('touchend', onUp);
-      });
+      };
     })();
 
     // Load history when page is ready
@@ -12992,6 +12959,7 @@ console.log('[KC] KOCraft script v3 loading...');
       const data = await r.json();
       if (!r.ok || data.error) throw new Error(data.error || 'Lỗi server');
       window._kocData = data.koc;
+      if (typeof kcuSave === 'function') kcuSave(data.koc);
       renderKCProfile(window._kocData);
     } catch(e) {
       document.getElementById('kc-profile-loading').innerHTML = `<div style="color:#ff4466;font-family:'Share Tech Mono',monospace;font-size:12px;">❌ ${e.message}<br><button onclick="showKCStep(1)" style="margin-top:12px;background:rgba(255,68,102,0.15);border:1px solid #ff4466;color:#ff4466;padding:6px 16px;border-radius:4px;cursor:pointer;font-family:'Share Tech Mono',monospace;">← THỬ LẠI</button></div>`;
@@ -14211,7 +14179,7 @@ console.log('[KC] KOCraft script v3 loading...');
   const WF_KEYS = ['productScout','reviewScript','unboxingDirector','authenticCopyWriter','multiplatformPublisher','engagementTracker','brandDealMatcher'];
 
   window.kcShowTab = function(tab) {
-    const ALL_TABS    = ['wizard','workflow','calendar','ratecard','pitch','hashtag'];
+    const ALL_TABS    = ['wizard','workflow','calendar','ratecard','pitch','hashtag','studio','universe'];
     const ALL_VIEWS   = {
       wizard:   null,
       workflow: 'kc-view-workflow',
@@ -14220,6 +14188,7 @@ console.log('[KC] KOCraft script v3 loading...');
       pitch:    'kc-view-pitch',
       hashtag:  'kc-view-hashtag',
       studio:   'kc-view-studio',
+      universe: 'kc-view-universe',
     };
     const stepInd    = document.getElementById('kc-step-indicator');
     const contentArea= document.getElementById('kc-content-area');
@@ -14254,6 +14223,7 @@ console.log('[KC] KOCraft script v3 loading...');
       }
     }
     if (modal) modal.style.overflowY = 'auto';
+    if (tab === 'universe' && typeof kcRenderUniverse === 'function') kcRenderUniverse();
   };
 
   window.kcWfAutoFill = async function() {
@@ -14471,6 +14441,7 @@ console.log('[KC] KOCraft script v3 loading...');
     <button class="kc-tab-btn" id="kc-tab-pitch" onclick="kcShowTab('pitch')">&#129309; BRAND PITCH</button>
     <button class="kc-tab-btn" id="kc-tab-hashtag" onclick="kcShowTab('hashtag')">#&#65039; HASHTAG</button>
     <button class="kc-tab-btn" id="kc-tab-studio" onclick="kcShowTab('studio')">&#127916; STUDIO</button>
+    <button class="kc-tab-btn" id="kc-tab-universe" onclick="kcShowTab('universe')">&#127756; VŨ TRỤ</button>
   </div>
 
   <!-- STEP INDICATOR -->
@@ -15182,6 +15153,65 @@ console.log('[KC] KOCraft script v3 loading...');
 
   </div>
 
+  <!-- ══ VŨ TRỤ KOC/KOL PANEL ══════════════════════════════════════════ -->
+  <div id="kc-view-universe" style="display:none;width:100%;max-width:1100px;flex:1;flex-direction:column;gap:20px;overflow-y:auto;padding-bottom:20px;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:15px;font-weight:900;color:#fff;">&#127756; Vũ Trụ KOC/KOL</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,110,180,0.5);margin-top:3px;letter-spacing:1px;">
+          <span id="kcu-count">0</span> nhân vật đang hoạt động trong vũ trụ AI
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="kcuClearAll()" id="kcu-clear-btn" style="padding:8px 14px;background:rgba(255,68,102,0.08);border:1px solid rgba(255,68,102,0.3);color:rgba(255,68,102,0.7);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,68,102,0.18)'" onmouseout="this.style.background='rgba(255,68,102,0.08)'">&#128465; XÓA TẤT CẢ</button>
+        <button onclick="kcShowTab('wizard')" style="padding:8px 16px;background:rgba(255,110,180,0.12);border:1px solid rgba(255,110,180,0.45);color:#ff6eb4;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,110,180,0.25)'" onmouseout="this.style.background='rgba(255,110,180,0.12)'">+ TẠO MỚI</button>
+      </div>
+    </div>
+
+    <!-- Dashboard Stats Bar -->
+    <div id="kcu-dashboard" style="display:none;"></div>
+
+    <!-- Collab Matcher Section -->
+    <div id="kcu-collab-section" style="display:none;background:rgba(0,255,200,0.03);border:1px solid rgba(0,255,200,0.15);border-radius:12px;padding:16px 18px;flex-direction:column;gap:12px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px;font-weight:900;color:#00ffc8;">&#129309; Collab Matcher</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,255,200,0.5);margin-top:2px;letter-spacing:1px;">Ghép 2 KOC/KOL — AI tạo kịch bản collab video chung</div>
+        </div>
+        <button onclick="kcuRunCollab()" id="kcu-collab-btn" style="margin-left:auto;padding:8px 18px;background:rgba(0,255,200,0.1);border:1px solid rgba(0,255,200,0.38);color:#00ffc8;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1.5px;border-radius:6px;cursor:pointer;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(0,255,200,0.22)'" onmouseout="this.style.background='rgba(0,255,200,0.1)'">&#9889; TẠO COLLAB SCRIPT</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:2px;color:rgba(0,255,200,0.4);margin-bottom:5px;">KOC/KOL A</div>
+          <select id="kcu-collab-a" style="width:100%;background:rgba(0,0,0,0.45);border:1px solid rgba(0,255,200,0.22);border-radius:6px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 9px;outline:none;cursor:pointer;"></select>
+        </div>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:2px;color:rgba(0,255,200,0.4);margin-bottom:5px;">KOC/KOL B</div>
+          <select id="kcu-collab-b" style="width:100%;background:rgba(0,0,0,0.45);border:1px solid rgba(0,255,200,0.22);border-radius:6px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 9px;outline:none;cursor:pointer;"></select>
+        </div>
+      </div>
+      <div id="kcu-collab-result" style="display:none;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.82);background:rgba(0,0,0,0.38);border:1px solid rgba(0,255,200,0.18);border-radius:8px;padding:10px 12px;line-height:1.8;max-height:220px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,255,200,0.3) transparent;white-space:pre-wrap;"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="kcu-empty" style="display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:60px 20px;min-height:300px;">
+      <div style="font-size:60px;opacity:0.2;">&#127756;</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:rgba(255,255,255,0.25);letter-spacing:3px;text-align:center;">VŨ TRỤ ĐANG TRỐNG</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,0.18);text-align:center;max-width:320px;line-height:1.9;">Tạo KOC/KOL đầu tiên trong tab <span style="color:rgba(255,110,180,0.5);">TẠO KOC/KOL</span> để đưa nhân vật vào vũ trụ này</div>
+      <button onclick="kcShowTab('wizard')" style="padding:10px 26px;background:rgba(255,110,180,0.12);border:1px solid rgba(255,110,180,0.5);color:#ff6eb4;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,110,180,0.25)'" onmouseout="this.style.background='rgba(255,110,180,0.12)'">&#10024; TẠO KOC/KOL ĐẦU TIÊN</button>
+    </div>
+
+    <!-- KOC/KOL Grid -->
+    <div id="kcu-grid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;"></div>
+
+    <style>
+      @keyframes kcuPulse { 0%,100%{opacity:0.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.4)} }
+    </style>
+
+  </div>
+
 </div>
 
 <script>
@@ -15526,6 +15556,396 @@ console.log('[KC] KOCraft script v3 loading...');
 
   // expose copy helper
   window.kcCopyToClipboard = kcCopyToClipboard;
+})();
+</script>
+
+<!-- ══ VŨ TRỤ KOC/KOL ENGINE ═══════════════════════════════════════ -->
+<script>
+(function() {
+  const KCU_KEY = 'vdai_koc_universe';
+  const KC = '#ff6eb4';
+
+  const INDUSTRIES = [
+    '💄 Làm đẹp / Skincare','👗 Thời trang','🍜 Ẩm thực / F&B','📱 Công nghệ / Gadget',
+    '🏠 Bất động sản','✈️ Du lịch','💪 Sức khỏe / Fitness','📚 Giáo dục / Kỹ năng',
+    '💰 Tài chính / Đầu tư','🎮 Gaming / Esports','🚗 Xe cộ / Automotive',
+    '👶 Gia đình / Parenting','🐾 Thú cưng','🌱 Nông nghiệp / Eco'
+  ];
+
+  const PERSONA_STYLES = [
+    '✨ Chuyên nghiệp & Uy tín','🎉 Vui tươi & Năng động','😎 Cool & Cá tính',
+    '🌸 Nhẹ nhàng & Tinh tế','🔥 Bold & Táo bạo','🤓 Thông thái & Phân tích',
+    '💕 Gần gũi & Chân thực','⚡ Trẻ trung & Gen Z'
+  ];
+
+  function kcuLoad() {
+    try { return JSON.parse(localStorage.getItem(KCU_KEY) || '[]'); } catch(e) { return []; }
+  }
+  function kcuSaveList(list) {
+    try { localStorage.setItem(KCU_KEY, JSON.stringify(list.slice(0,30))); } catch(e) {}
+  }
+
+  window.kcuSave = function(kocData) {
+    if (!kocData || !kocData.name) return;
+    const list = kcuLoad();
+    const idx = list.findIndex(k => k.name === kocData.name);
+    const entry = Object.assign({}, kocData, { savedAt: Date.now(), status: 'active', videoCount: (idx>=0 ? (list[idx].videoCount||0) : 0) });
+    if (idx >= 0) list[idx] = entry; else list.unshift(entry);
+    kcuSaveList(list);
+  };
+
+  window.kcuClearAll = function() {
+    if (!confirm('Xóa toàn bộ KOC/KOL trong vũ trụ?')) return;
+    localStorage.removeItem(KCU_KEY);
+    kcRenderUniverse();
+  };
+
+  window.kcuRemoveOne = function(idx) {
+    const list = kcuLoad(); list.splice(idx,1); kcuSaveList(list); kcRenderUniverse();
+  };
+
+  /* ── helpers ── */
+  function aiCall(prompt) {
+    return fetch('/api/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message: prompt, history: [] })
+    }).then(r=>r.json()).then(d=>{ if(d.error) throw new Error(d.error); return d.reply||''; });
+  }
+  function setResultEl(el, text, color) {
+    if(!el) return;
+    el.style.color = color || 'rgba(255,255,255,0.82)';
+    el.textContent = text;
+    el.style.display = 'block';
+  }
+  function clearResultEl(el) { if(el){ el.style.display='none'; el.textContent=''; } }
+
+  /* ── Stats mock helper (persisted per KOC) ── */
+  function getStats(koc) {
+    const base = Math.abs((koc.name||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0)) % 80000 + 20000;
+    const vc = koc.videoCount || 0;
+    return {
+      views: (base + vc*4200).toLocaleString('vi-VN'),
+      engagement: (3.2 + (vc*0.3)).toFixed(1) + '%',
+      videos: vc,
+      followers: (Math.round(base/12)).toLocaleString('vi-VN'),
+      reach: (Math.round(base*1.4)).toLocaleString('vi-VN')
+    };
+  }
+
+  /* ══ RENDER ══════════════════════════════════════════════════════════ */
+  window.kcRenderUniverse = function() {
+    const list = kcuLoad();
+    const container = document.getElementById('kcu-grid');
+    const emptyEl   = document.getElementById('kcu-empty');
+    const countEl   = document.getElementById('kcu-count');
+    const clearBtn  = document.getElementById('kcu-clear-btn');
+    if (!container) return;
+
+    if (countEl) countEl.textContent = list.length;
+    if (clearBtn) clearBtn.style.display = list.length ? 'inline-block' : 'none';
+
+    if (list.length === 0) {
+      container.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = 'flex';
+      return;
+    }
+    container.style.display = 'grid';
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    /* Dashboard totals */
+    const totalVideos = list.reduce((a,k)=>a+(k.videoCount||0),0);
+    const dashEl = document.getElementById('kcu-dashboard');
+    if (dashEl) {
+      const totalViews = list.reduce((a,k)=>a+Math.abs((k.name||'').split('').reduce((b,c)=>b+c.charCodeAt(0),0))%80000+20000+(k.videoCount||0)*4200, 0);
+      dashEl.innerHTML = `
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          ${[
+            ['👥 TỔNG NHÂN VẬT', list.length, '#ff6eb4'],
+            ['🎬 VIDEO ĐÃ TẠO', totalVideos, '#00aaff'],
+            ['👁️ TỔNG VIEW ƯỚC TÍNH', totalViews.toLocaleString('vi-VN'), '#00ff88'],
+            ['⭐ AVG ENGAGEMENT', (3.2+(totalVideos*0.3/Math.max(list.length,1))).toFixed(1)+'%', '#ffaa00'],
+          ].map(([label,val,color])=>`
+            <div style="flex:1;min-width:120px;background:rgba(0,0,0,0.3);border:1px solid ${color}22;border-radius:10px;padding:10px 14px;text-align:center;">
+              <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:${color}88;letter-spacing:1.5px;margin-bottom:4px;">${label}</div>
+              <div style="font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;color:${color};">${val}</div>
+            </div>`).join('')}
+        </div>`;
+    }
+
+    const industryOpts = INDUSTRIES.map(i=>`<option value="${i}">${i}</option>`).join('');
+    const personaOpts  = PERSONA_STYLES.map(p=>`<option value="${p}">${p}</option>`).join('');
+
+    container.innerHTML = list.map((koc, idx) => {
+      const avatar = koc.avatarUrl
+        ? `<img src="${koc.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div style="display:none;font-size:32px;align-items:center;justify-content:center;width:100%;height:100%;">🎀</div>`
+        : `<div style="font-size:32px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">🎀</div>`;
+      const stats = getStats(koc);
+      const savedDate = koc.savedAt ? new Date(koc.savedAt).toLocaleDateString('vi-VN') : '';
+
+      return `
+      <div style="background:rgba(255,110,180,0.04);border:1px solid rgba(255,110,180,0.2);border-radius:16px;padding:0;display:flex;flex-direction:column;gap:0;transition:border-color 0.2s,background 0.2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='rgba(255,110,180,0.5)';this.style.background='rgba(255,110,180,0.08)'" onmouseout="this.style.borderColor='rgba(255,110,180,0.2)';this.style.background='rgba(255,110,180,0.04)'">
+
+        <!-- Card Header -->
+        <div style="padding:14px 14px 10px;display:flex;gap:10px;align-items:flex-start;position:relative;">
+          <button onclick="kcuRemoveOne(${idx})" style="position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.25);color:rgba(255,68,102,0.6);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,68,102,0.3)';this.style.color='#ff4466'" onmouseout="this.style.background='rgba(255,68,102,0.1)';this.style.color='rgba(255,68,102,0.6)'">✕</button>
+          <div style="position:absolute;top:10px;left:14px;font-family:'Share Tech Mono',monospace;font-size:7px;color:#00ff88;letter-spacing:1px;display:flex;align-items:center;gap:3px;">
+            <div style="width:4px;height:4px;border-radius:50%;background:#00ff88;animation:kcuPulse 2s ease-in-out infinite;"></div>ACTIVE
+          </div>
+          <div style="width:60px;height:72px;border-radius:8px;border:1px solid rgba(255,110,180,0.3);background:rgba(255,110,180,0.07);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;margin-top:14px;">${avatar}</div>
+          <div style="flex:1;min-width:0;margin-top:14px;">
+            <div style="font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;color:${KC};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:18px;">${koc.name||'KOC/KOL'}</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,255,255,0.35);margin-top:2px;">${koc.age?koc.age+' tuổi · ':''}${koc.gender||''}</div>
+            <div style="margin-top:4px;font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,110,180,0.55);font-style:italic;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.5;">"${koc.catchphrase||''}"</div>
+          </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div style="padding:0 12px 10px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+          ${[['👁️',stats.views,'View'],['💬',stats.engagement,'Engage'],['🎬',stats.videos,'Video']].map(([ic,val,lbl])=>`
+            <div style="background:rgba(0,0,0,0.3);border-radius:7px;padding:6px 4px;text-align:center;">
+              <div style="font-size:10px;">${ic}</div>
+              <div style="font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#fff;margin-top:1px;">${val}</div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:6px;color:rgba(255,255,255,0.3);letter-spacing:1px;">${lbl}</div>
+            </div>`).join('')}
+        </div>
+
+        <!-- Tags -->
+        <div style="padding:0 12px 10px;display:flex;flex-wrap:wrap;gap:4px;">
+          ${koc.niche?`<span style="font-family:'Share Tech Mono',monospace;font-size:7px;padding:2px 7px;background:rgba(255,110,180,0.12);border:1px solid rgba(255,110,180,0.28);border-radius:4px;color:${KC};">${koc.niche}</span>`:''}
+          ${koc.style?`<span style="font-family:'Share Tech Mono',monospace;font-size:7px;padding:2px 7px;background:rgba(0,170,255,0.09);border:1px solid rgba(0,170,255,0.25);border-radius:4px;color:#00aaff;">${koc.style}</span>`:''}
+        </div>
+
+        <!-- Action Tabs -->
+        <div style="display:flex;border-top:1px solid rgba(255,110,180,0.1);border-bottom:1px solid rgba(255,110,180,0.1);">
+          ${[['video','🎬','Video'],['caption','✍️','Caption'],['schedule','🗓️','Lịch'],['persona','🎭','Persona'],['export','📦','Export']].map(([tab,ic,lbl],ti)=>`
+            <button onclick="kcuSwitchTab(${idx},'${tab}')" id="kcu-tab-${idx}-${tab}" style="flex:1;padding:7px 2px;background:${ti===0?'rgba(255,110,180,0.15)':'transparent'};border:none;border-right:1px solid rgba(255,110,180,0.08);color:${ti===0?KC:'rgba(255,255,255,0.35)'};font-family:'Share Tech Mono',monospace;font-size:8px;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:2px;" onmouseover="this.style.background='rgba(255,110,180,0.1)';this.style.color='${KC}'" onmouseout="kcuTabHover(${idx},'${tab}',this)">
+              <span>${ic}</span><span style="font-size:6px;letter-spacing:0.5px;">${lbl}</span>
+            </button>`).join('')}
+        </div>
+
+        <!-- Panels per card -->
+        <div style="padding:12px;">
+
+          <!-- VIDEO PANEL -->
+          <div id="kcu-panel-${idx}-video" style="display:flex;flex-direction:column;gap:8px;">
+            <select id="kcu-ind-${idx}" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,110,180,0.22);border-radius:6px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 9px;outline:none;cursor:pointer;width:100%;">${industryOpts}</select>
+            <button onclick="kcuGenerateVideo(${idx})" id="kcu-btn-${idx}" style="padding:8px;background:rgba(255,110,180,0.13);border:1px solid rgba(255,110,180,0.42);color:${KC};font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1.5px;border-radius:6px;cursor:pointer;transition:all 0.2s;width:100%;" onmouseover="this.style.background='rgba(255,110,180,0.26)'" onmouseout="this.style.background='rgba(255,110,180,0.13)'">🎬 TẠO KỊCH BẢN VIDEO</button>
+            <div id="kcu-result-${idx}" style="display:none;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.82);background:rgba(0,0,0,0.38);border:1px solid rgba(255,110,180,0.18);border-radius:8px;padding:10px 12px;line-height:1.75;max-height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,110,180,0.3) transparent;white-space:pre-wrap;"></div>
+          </div>
+
+          <!-- CAPTION PANEL -->
+          <div id="kcu-panel-${idx}-caption" style="display:none;flex-direction:column;gap:8px;">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,255,255,0.35);line-height:1.6;">AI viết 7 caption cho 7 ngày với đúng giọng điệu của <span style="color:${KC};">${koc.name||'nhân vật'}</span>.</div>
+            <button onclick="kcuGenCaption(${idx})" id="kcu-cap-btn-${idx}" style="padding:8px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.38);color:#00aaff;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1.5px;border-radius:6px;cursor:pointer;transition:all 0.2s;width:100%;" onmouseover="this.style.background='rgba(0,170,255,0.22)'" onmouseout="this.style.background='rgba(0,170,255,0.1)'">✍️ TẠO 7 CAPTION / TUẦN</button>
+            <div id="kcu-cap-result-${idx}" style="display:none;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.82);background:rgba(0,0,0,0.38);border:1px solid rgba(0,170,255,0.18);border-radius:8px;padding:10px 12px;line-height:1.8;max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,170,255,0.3) transparent;white-space:pre-wrap;"></div>
+          </div>
+
+          <!-- SCHEDULE PANEL -->
+          <div id="kcu-panel-${idx}-schedule" style="display:none;flex-direction:column;gap:8px;">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,255,255,0.35);line-height:1.6;">AI lên lịch đăng video với <span style="color:#ffaa00;">giờ vàng</span> cho TikTok, Instagram, YouTube.</div>
+            <select id="kcu-sch-ind-${idx}" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,170,0,0.22);border-radius:6px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 9px;outline:none;cursor:pointer;width:100%;">${industryOpts}</select>
+            <button onclick="kcuGenSchedule(${idx})" id="kcu-sch-btn-${idx}" style="padding:8px;background:rgba(255,170,0,0.1);border:1px solid rgba(255,170,0,0.38);color:#ffaa00;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1.5px;border-radius:6px;cursor:pointer;transition:all 0.2s;width:100%;" onmouseover="this.style.background='rgba(255,170,0,0.22)'" onmouseout="this.style.background='rgba(255,170,0,0.1)'">🗓️ LÊN LỊCH ĐĂNG</button>
+            <div id="kcu-sch-result-${idx}" style="display:none;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.82);background:rgba(0,0,0,0.38);border:1px solid rgba(255,170,0,0.18);border-radius:8px;padding:10px 12px;line-height:1.8;max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,170,0,0.3) transparent;white-space:pre-wrap;"></div>
+          </div>
+
+          <!-- PERSONA PANEL -->
+          <div id="kcu-panel-${idx}-persona" style="display:none;flex-direction:column;gap:8px;">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,255,255,0.35);line-height:1.6;">AI biến tấu phong cách của <span style="color:${KC};">${koc.name||'nhân vật'}</span> — không tạo lại từ đầu.</div>
+            <select id="kcu-per-style-${idx}" style="background:rgba(0,0,0,0.45);border:1px solid rgba(170,100,255,0.3);border-radius:6px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 9px;outline:none;cursor:pointer;width:100%;">${personaOpts}</select>
+            <button onclick="kcuChangePersona(${idx})" id="kcu-per-btn-${idx}" style="padding:8px;background:rgba(170,100,255,0.1);border:1px solid rgba(170,100,255,0.38);color:#aa64ff;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1.5px;border-radius:6px;cursor:pointer;transition:all 0.2s;width:100%;" onmouseover="this.style.background='rgba(170,100,255,0.22)'" onmouseout="this.style.background='rgba(170,100,255,0.1)'">🎭 ĐỔI PERSONA</button>
+            <div id="kcu-per-result-${idx}" style="display:none;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.82);background:rgba(0,0,0,0.38);border:1px solid rgba(170,100,255,0.18);border-radius:8px;padding:10px 12px;line-height:1.8;max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(170,100,255,0.3) transparent;white-space:pre-wrap;"></div>
+          </div>
+
+          <!-- EXPORT PANEL -->
+          <div id="kcu-panel-${idx}-export" style="display:none;flex-direction:column;gap:8px;">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,255,255,0.35);line-height:1.6;">Xuất toàn bộ hồ sơ + kịch bản của <span style="color:#00ff88;">${koc.name||'nhân vật'}</span> ra file text để gửi cho brand/agency.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+              <button onclick="kcuExportTxt(${idx})" style="padding:8px;background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);color:#00ff88;font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:1px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(0,255,136,0.2)'" onmouseout="this.style.background='rgba(0,255,136,0.08)'">📄 XUẤT .TXT</button>
+              <button onclick="kcuExportJson(${idx})" style="padding:8px;background:rgba(0,170,255,0.08);border:1px solid rgba(0,170,255,0.3);color:#00aaff;font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:1px;border-radius:6px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(0,170,255,0.2)'" onmouseout="this.style.background='rgba(0,170,255,0.08)'">📦 XUẤT .JSON</button>
+            </div>
+            <div id="kcu-exp-msg-${idx}" style="display:none;font-family:'Share Tech Mono',monospace;font-size:9px;color:#00ff88;text-align:center;padding:6px;">✓ File đã tải xuống!</div>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="padding:4px 12px 10px;font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(255,255,255,0.15);text-align:right;">${savedDate?'💾 '+savedDate:''}</div>
+
+      </div>`;
+    }).join('');
+  };
+
+  /* ── Tab switching per card ── */
+  window.kcuSwitchTab = function(idx, tab) {
+    const tabs = ['video','caption','schedule','persona','export'];
+    tabs.forEach(t => {
+      const btn   = document.getElementById('kcu-tab-'+idx+'-'+t);
+      const panel = document.getElementById('kcu-panel-'+idx+'-'+t);
+      const active = t === tab;
+      if (btn)   { btn.style.background = active ? 'rgba(255,110,180,0.15)' : 'transparent'; btn.style.color = active ? KC : 'rgba(255,255,255,0.35)'; }
+      if (panel) panel.style.display = active ? 'flex' : 'none';
+    });
+  };
+  window.kcuTabHover = function(idx, tab, btn) {
+    const tabs = ['video','caption','schedule','persona','export'];
+    tabs.forEach(t => {
+      const b = document.getElementById('kcu-tab-'+idx+'-'+t);
+      if (b && t !== tab) { b.style.background = 'transparent'; b.style.color = 'rgba(255,255,255,0.35)'; }
+    });
+  };
+
+  /* ── 1. VIDEO SCRIPT ── */
+  window.kcuGenerateVideo = async function(idx) {
+    const list = kcuLoad(); const koc = list[idx]; if(!koc) return;
+    const industry = (document.getElementById('kcu-ind-'+idx)||{}).value || INDUSTRIES[0];
+    const btn = document.getElementById('kcu-btn-'+idx);
+    const resultEl = document.getElementById('kcu-result-'+idx);
+    if(btn){ btn.disabled=true; btn.textContent='⏳ AI đang viết kịch bản...'; }
+    clearResultEl(resultEl);
+    try {
+      const reply = await aiCall(`Bạn là AI viết kịch bản cho KOC/KOL. Tạo kịch bản video ngắn TikTok/Reels 30-60 giây cho:\nTÊN: ${koc.name} | TUỔI: ${koc.age||'N/A'} | GIỚI TÍNH: ${koc.gender||'N/A'}\nLĨNH VỰC: ${koc.niche||'N/A'} | PHONG CÁCH: ${koc.style||'N/A'}\nGIỌNG ĐIỆU: ${koc.toneOfVoice||'N/A'} | ĐỐI TƯỢNG: ${koc.targetAudience||'N/A'}\nCATCHPHRASE: "${koc.catchphrase||''}"\nNGÀNH VIDEO: ${industry}\n\nĐịnh dạng:\n🎬 TIÊU ĐỀ:\n🪝 HOOK (3s đầu):\n📝 NỘI DUNG (3 phần):\n🎯 CTA:\n💬 CAPTION:\n#️⃣ HASHTAG:`);
+      setResultEl(resultEl, reply);
+      list[idx].videoCount = (list[idx].videoCount||0) + 1;
+      kcuSaveList(list);
+    } catch(e) { setResultEl(resultEl, '❌ '+e.message, '#ff4466'); }
+    finally { if(btn){ btn.disabled=false; btn.textContent='🎬 TẠO KỊCH BẢN VIDEO'; } }
+  };
+
+  /* ── 2. CAPTION 7 NGÀY ── */
+  window.kcuGenCaption = async function(idx) {
+    const list = kcuLoad(); const koc = list[idx]; if(!koc) return;
+    const btn = document.getElementById('kcu-cap-btn-'+idx);
+    const resultEl = document.getElementById('kcu-cap-result-'+idx);
+    if(btn){ btn.disabled=true; btn.textContent='⏳ AI đang viết caption...'; }
+    clearResultEl(resultEl);
+    try {
+      const reply = await aiCall(`Viết 7 caption mạng xã hội cho 7 ngày trong tuần, đúng giọng điệu của KOC/KOL:\nTÊN: ${koc.name} | PHONG CÁCH: ${koc.style||'N/A'} | GIỌNG ĐIỆU: ${koc.toneOfVoice||'N/A'}\nLĨNH VỰC: ${koc.niche||'N/A'} | ĐỐI TƯỢNG: ${koc.targetAudience||'N/A'}\nCATCHPHRASE: "${koc.catchphrase||''}"\n\nMỗi caption: 2-4 dòng + emoji + hashtag phù hợp. Ghi rõ Thứ 2 → Chủ Nhật. Mỗi ngày có chủ đề khác nhau.`);
+      setResultEl(resultEl, reply);
+    } catch(e) { setResultEl(resultEl, '❌ '+e.message, '#ff4466'); }
+    finally { if(btn){ btn.disabled=false; btn.textContent='✍️ TẠO 7 CAPTION / TUẦN'; } }
+  };
+
+  /* ── 3. LỊCH ĐĂNG ── */
+  window.kcuGenSchedule = async function(idx) {
+    const list = kcuLoad(); const koc = list[idx]; if(!koc) return;
+    const industry = (document.getElementById('kcu-sch-ind-'+idx)||{}).value || INDUSTRIES[0];
+    const btn = document.getElementById('kcu-sch-btn-'+idx);
+    const resultEl = document.getElementById('kcu-sch-result-'+idx);
+    if(btn){ btn.disabled=true; btn.textContent='⏳ AI đang lên lịch...'; }
+    clearResultEl(resultEl);
+    try {
+      const reply = await aiCall(`Tạo lịch đăng video 1 tuần (Thứ 2 → CN) cho KOC/KOL trong ngành ${industry}:\nTÊN: ${koc.name} | LĨNH VỰC: ${koc.niche||'N/A'} | ĐỐI TƯỢNG: ${koc.targetAudience||'N/A'}\n\nMỗi ngày ghi:\n📅 [Thứ N] - [Giờ vàng TikTok] / [Giờ vàng Instagram] / [Giờ vàng YouTube]\n📌 Chủ đề video:\n💡 Lý do chọn giờ này:\nGhi rõ giờ đăng tối ưu dựa trên hành vi user Việt Nam.`);
+      setResultEl(resultEl, reply, 'rgba(255,255,255,0.82)');
+    } catch(e) { setResultEl(resultEl, '❌ '+e.message, '#ff4466'); }
+    finally { if(btn){ btn.disabled=false; btn.textContent='🗓️ LÊN LỊCH ĐĂNG'; } }
+  };
+
+  /* ── 4. ĐỔI PERSONA ── */
+  window.kcuChangePersona = async function(idx) {
+    const list = kcuLoad(); const koc = list[idx]; if(!koc) return;
+    const newStyle = (document.getElementById('kcu-per-style-'+idx)||{}).value || PERSONA_STYLES[0];
+    const btn = document.getElementById('kcu-per-btn-'+idx);
+    const resultEl = document.getElementById('kcu-per-result-'+idx);
+    if(btn){ btn.disabled=true; btn.textContent='⏳ AI đang biến tấu...'; }
+    clearResultEl(resultEl);
+    try {
+      const reply = await aiCall(`Giữ nguyên nhân vật KOC/KOL, chỉ thay đổi phong cách thành: ${newStyle}\n\nNhân vật gốc:\nTÊN: ${koc.name} | TUỔI: ${koc.age||'N/A'} | GIỚI TÍNH: ${koc.gender||'N/A'}\nLĨNH VỰC: ${koc.niche||'N/A'} | ĐỐI TƯỢNG: ${koc.targetAudience||'N/A'}\nPhong cách cũ: ${koc.style||'N/A'} | Giọng điệu cũ: ${koc.toneOfVoice||'N/A'}\nCATCHPHRASE: "${koc.catchphrase||''}"\n\nHãy viết:\n✨ PHONG CÁCH MỚI:\n🗣️ GIỌNG ĐIỆU MỚI:\n💬 CATCHPHRASE MỚI:\n📝 VÍ DỤ SCRIPT 30s với persona mới:\n📌 3 TIPS để giữ tính nhất quán với persona mới này:`);
+      setResultEl(resultEl, reply);
+    } catch(e) { setResultEl(resultEl, '❌ '+e.message, '#ff4466'); }
+    finally { if(btn){ btn.disabled=false; btn.textContent='🎭 ĐỔI PERSONA'; } }
+  };
+
+  /* ── 5. EXPORT ── */
+  function buildExportText(koc) {
+    const stats = getStats(koc);
+    return [
+      '════════════════════════════════════════',
+      `  VƯƠNG ĐẾ AI — HỒ SƠ KOC/KOL`,
+      '════════════════════════════════════════',
+      `TÊN: ${koc.name||''}`,
+      `TUỔI: ${koc.age||'N/A'} | GIỚI TÍNH: ${koc.gender||'N/A'}`,
+      `LĨNH VỰC: ${koc.niche||'N/A'}`,
+      `PHONG CÁCH: ${koc.style||'N/A'}`,
+      `GIỌNG ĐIỆU: ${koc.toneOfVoice||'N/A'}`,
+      `ĐỐI TƯỢNG: ${koc.targetAudience||'N/A'}`,
+      `CATCHPHRASE: "${koc.catchphrase||''}"`,
+      '',
+      '── STATS ──────────────────────────────',
+      `View ước tính: ${stats.views}`,
+      `Engagement rate: ${stats.engagement}`,
+      `Video đã tạo: ${stats.videos}`,
+      `Followers ước tính: ${stats.followers}`,
+      '',
+      `Ngày lưu: ${koc.savedAt ? new Date(koc.savedAt).toLocaleString('vi-VN') : 'N/A'}`,
+      '════════════════════════════════════════',
+    ].join('\n');
+  }
+
+  window.kcuExportTxt = function(idx) {
+    const list = kcuLoad(); const koc = list[idx]; if(!koc) return;
+    const blob = new Blob([buildExportText(koc)], {type:'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (koc.name||'koc').replace(/\s+/g,'-').toLowerCase() + '-profile.txt';
+    a.click(); URL.revokeObjectURL(a.href);
+    const msg = document.getElementById('kcu-exp-msg-'+idx);
+    if(msg){ msg.style.display='block'; setTimeout(()=>{ msg.style.display='none'; },2500); }
+  };
+
+  window.kcuExportJson = function(idx) {
+    const list = kcuLoad(); const koc = list[idx]; if(!koc) return;
+    const blob = new Blob([JSON.stringify(koc, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (koc.name||'koc').replace(/\s+/g,'-').toLowerCase() + '-profile.json';
+    a.click(); URL.revokeObjectURL(a.href);
+    const msg = document.getElementById('kcu-exp-msg-'+idx);
+    if(msg){ msg.style.display='block'; setTimeout(()=>{ msg.style.display='none'; },2500); }
+  };
+
+  /* ── Show dashboard & collab section when list has items ── */
+  const _origRender = window.kcRenderUniverse;
+  window.kcRenderUniverse = function() {
+    _origRender();
+    const list = kcuLoad();
+    const dashEl = document.getElementById('kcu-dashboard');
+    const collabSec = document.getElementById('kcu-collab-section');
+    const selA = document.getElementById('kcu-collab-a');
+    const selB = document.getElementById('kcu-collab-b');
+
+    if (list.length > 0) {
+      if (dashEl) dashEl.style.display = 'block';
+      if (collabSec) collabSec.style.display = 'flex';
+      const opts = list.map((k,i)=>`<option value="${i}">${k.name||'KOC '+i}</option>`).join('');
+      if (selA) selA.innerHTML = opts;
+      if (selB) { selB.innerHTML = opts; if(list.length>1) selB.selectedIndex=1; }
+    } else {
+      if (dashEl) dashEl.style.display = 'none';
+      if (collabSec) collabSec.style.display = 'none';
+    }
+  };
+
+  /* ── 6. COLLAB MATCHER ── */
+  window.kcuRunCollab = async function() {
+    const list = kcuLoad();
+    if (list.length < 2) { alert('Cần ít nhất 2 KOC/KOL trong vũ trụ để ghép collab!'); return; }
+    const idxA = parseInt((document.getElementById('kcu-collab-a')||{}).value||0);
+    const idxB = parseInt((document.getElementById('kcu-collab-b')||{}).value||1);
+    if (idxA === idxB) { alert('Vui lòng chọn 2 nhân vật khác nhau!'); return; }
+    const kocA = list[idxA]; const kocB = list[idxB];
+    const btn = document.getElementById('kcu-collab-btn');
+    const resultEl = document.getElementById('kcu-collab-result');
+    if (btn) { btn.disabled=true; btn.textContent='⏳ AI đang ghép collab...'; }
+    clearResultEl(resultEl);
+    try {
+      const reply = await aiCall(`Bạn là AI viết kịch bản collab video. Tạo kịch bản TikTok/Reels 60-90 giây cho 2 KOC/KOL cùng xuất hiện:\n\nNHÂN VẬT A:\nTÊN: ${kocA.name} | LĨNH VỰC: ${kocA.niche||'N/A'} | PHONG CÁCH: ${kocA.style||'N/A'} | GIỌNG ĐIỆU: ${kocA.toneOfVoice||'N/A'}\nCATCHPHRASE: "${kocA.catchphrase||''}"\n\nNHÂN VẬT B:\nTÊN: ${kocB.name} | LĨNH VỰC: ${kocB.niche||'N/A'} | PHONG CÁCH: ${kocB.style||'N/A'} | GIỌNG ĐIỆU: ${kocB.toneOfVoice||'N/A'}\nCATCHPHRASE: "${kocB.catchphrase||''}"\n\nViết theo định dạng:\n🤝 TIÊU ĐỀ COLLAB:\n🔥 CONCEPT VIDEO:\n🪝 HOOK (5s đầu — cả 2 cùng xuất hiện):\n📝 KỊCH BẢN (ghi rõ ai nói gì):\n  [${kocA.name}]:\n  [${kocB.name}]:\n  [${kocA.name}]:\n  [${kocB.name}]:\n🎯 CTA CHUNG:\n💬 CAPTION:\n#️⃣ HASHTAG kết hợp cả 2 lĩnh vực:`);
+      setResultEl(resultEl, reply);
+    } catch(e) { setResultEl(resultEl, '❌ '+e.message, '#ff4466'); }
+    finally { if(btn){ btn.disabled=false; btn.textContent='⚡ TẠO COLLAB SCRIPT'; } }
+  };
+
+  /* ── Expose getStats for dashboard ── */
+  window._kcuGetStats = getStats;
 })();
 </script>
 
