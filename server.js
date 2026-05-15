@@ -907,10 +907,27 @@ Hãy tạo một hồ sơ KOC/KOL ảo hoàn chỉnh theo định dạng JSON sa
     const response = await getAI().models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [{ role: 'user', parts: [{ text: kocPrompt }] }],
-      config: { maxOutputTokens: 2048 }
+      config: { maxOutputTokens: 8192 }
     });
-    let text = (response.text || '').replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const koc = JSON.parse(text);
+    let text = (response.text || '')
+      .replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    // Extract only the JSON object in case there's surrounding text
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Không tìm thấy JSON trong phản hồi');
+    text = jsonMatch[0];
+    let koc;
+    try {
+      koc = JSON.parse(text);
+    } catch (parseErr) {
+      // Attempt to repair truncated JSON by closing open strings/objects
+      const repaired = text
+        .replace(/,\s*$/, '')          // trailing comma
+        .replace(/:\s*"[^"]*$/, ': ""') // unterminated string value
+        + (text.split('{').length > text.split('}').length
+            ? '}'.repeat(text.split('{').length - text.split('}').length)
+            : '');
+      koc = JSON.parse(repaired);
+    }
     res.json({ koc });
   } catch (err) {
     console.error('KOCraft create KOC error:', err);

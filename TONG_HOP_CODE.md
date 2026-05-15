@@ -1,11 +1,11 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **05:10:52 16/5/2026**
+> Cập nhật lần cuối: **05:26:54 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,364 dòng, 60.5 KB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,381 dòng, 61.2 KB)*
 - [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(14,955 dòng, 1.30 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
@@ -22,7 +22,7 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 39 | 987 B |
-| `server.js` | 1,364 | 60.5 KB |
+| `server.js` | 1,381 | 61.2 KB |
 | `tienhiepv3.html` | 14,955 | 1.30 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **20,040** | **1.52 MB** |
+| **TỔNG** | **20,057** | **1.52 MB** |
 
 ---
 
@@ -91,7 +91,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,364 dòng · 60.5 KB
+> 1,381 dòng · 61.2 KB
 
 ```javascript
 const express = require('express');
@@ -1003,10 +1003,27 @@ Hãy tạo một hồ sơ KOC/KOL ảo hoàn chỉnh theo định dạng JSON sa
     const response = await getAI().models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [{ role: 'user', parts: [{ text: kocPrompt }] }],
-      config: { maxOutputTokens: 2048 }
+      config: { maxOutputTokens: 8192 }
     });
-    let text = (response.text || '').replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const koc = JSON.parse(text);
+    let text = (response.text || '')
+      .replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    // Extract only the JSON object in case there's surrounding text
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Không tìm thấy JSON trong phản hồi');
+    text = jsonMatch[0];
+    let koc;
+    try {
+      koc = JSON.parse(text);
+    } catch (parseErr) {
+      // Attempt to repair truncated JSON by closing open strings/objects
+      const repaired = text
+        .replace(/,\s*$/, '')          // trailing comma
+        .replace(/:\s*"[^"]*$/, ': ""') // unterminated string value
+        + (text.split('{').length > text.split('}').length
+            ? '}'.repeat(text.split('{').length - text.split('}').length)
+            : '');
+      koc = JSON.parse(repaired);
+    }
     res.json({ koc });
   } catch (err) {
     console.error('KOCraft create KOC error:', err);
