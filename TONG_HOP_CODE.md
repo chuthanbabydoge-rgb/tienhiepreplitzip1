@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **19:42:40 16/5/2026**
+> Cập nhật lần cuối: **20:25:18 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,381 dòng, 61.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,041 dòng, 1.30 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,036 dòng, 1.30 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,381 | 61.2 KB |
-| `tienhiepv3.html` | 15,041 | 1.30 MB |
+| `tienhiepv3.html` | 15,036 | 1.30 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **20,143** | **1.52 MB** |
+| **TỔNG** | **20,138** | **1.52 MB** |
 
 ---
 
@@ -519,7 +519,7 @@ function serveMain(req, res) {
 }
 app.get('/app', serveMain);
 app.get('/user', requireAuth, serveMain);
-app.get('/', (req, res) => res.redirect('/app?ar=1'));
+app.get('/', (req, res) => res.redirect('/user'));
 
 // Admin login page
 app.get('/admin/login', (req, res) => {
@@ -1483,7 +1483,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 15,041 dòng · 1.30 MB
+> 15,036 dòng · 1.30 MB
 
 ```html
 <!DOCTYPE html>
@@ -1785,11 +1785,6 @@ app.listen(PORT, '0.0.0.0', () => {
     body.ar-mode #uc-input-area {
       background: rgba(0,10,20,0.10) !important;
       border-top-color: rgba(0,255,255,0.2) !important;
-    }
-    body.ar-mode #uc-advisor {
-      background: rgba(10,3,0,0.10) !important;
-      border-color: rgba(255,68,0,0.4) !important;
-      box-shadow: 0 0 16px rgba(255,68,0,0.2), inset 0 0 10px rgba(255,68,0,0.04) !important;
     }
 
     /* ── Vault modal ── */

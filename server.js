@@ -423,7 +423,7 @@ function serveMain(req, res) {
 }
 app.get('/app', serveMain);
 app.get('/user', requireAuth, serveMain);
-app.get('/', (req, res) => res.redirect('/app?ar=1'));
+app.get('/', (req, res) => res.redirect('/user'));
 
 // Admin login page
 app.get('/admin/login', (req, res) => {
