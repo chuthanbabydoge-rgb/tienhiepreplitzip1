@@ -11108,6 +11108,65 @@
   #as-body {
     padding: 14px 16px !important;
   }
+
+  /* ── KOCRAFT MODAL — iOS Safari / Mobile ── */
+  #kocraft-modal {
+    padding: 12px 0 max(12px,env(safe-area-inset-bottom)) 0 !important;
+    align-items: flex-start !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Header: compact, full-width */
+  #kocraft-modal > div:first-child {
+    max-width: 100% !important;
+    padding: 0 14px !important;
+    margin-bottom: 10px !important;
+  }
+  /* Tab nav: horizontal scrollable */
+  #kc-tab-nav {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none !important;
+    padding: 0 14px !important;
+    margin-bottom: 10px !important;
+    gap: 6px !important;
+    box-sizing: border-box !important;
+  }
+  #kc-tab-nav::-webkit-scrollbar { display: none !important; }
+  .kc-tab-btn {
+    flex-shrink: 0 !important;
+    font-size: 8px !important;
+    padding: 7px 10px !important;
+    letter-spacing: 1px !important;
+    white-space: nowrap !important;
+  }
+  /* Step indicator: compact */
+  #kc-step-indicator {
+    max-width: 100% !important;
+    padding: 0 14px !important;
+    margin-bottom: 12px !important;
+    box-sizing: border-box !important;
+  }
+  /* Content area: full-width, padded */
+  #kc-content-area {
+    max-width: 100% !important;
+    padding: 0 14px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    flex: none !important;
+  }
+  #kc-step-1, #kc-step-2, #kc-step-3, #kc-step-4 {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* KOCraft header title: smaller on mobile */
+  #kocraft-modal .kc-title,
+  #kocraft-modal [style*="font-size:18px"] {
+    font-size: 15px !important;
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -13206,7 +13265,7 @@ console.log('[KC] KOCraft script v3 loading...');
 #kc-wf-status.done { color:#00ff88; border-color:rgba(0,255,136,0.25); background:rgba(0,255,136,0.04); }
 </style>
 
-<div id="kocraft-modal" style="display:none;position:fixed;inset:0;z-index:199999;background:rgba(0,2,10,0.97);backdrop-filter:blur(16px);flex-direction:column;align-items:center;justify-content:flex-start;padding:20px;">
+<div id="kocraft-modal" style="display:none;position:fixed;inset:0;z-index:199999;background:rgba(0,2,10,0.97);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);flex-direction:column;align-items:center;justify-content:flex-start;padding:20px;padding-bottom:max(20px,env(safe-area-inset-bottom));">
 
   <!-- HEADER -->
   <div style="width:100%;max-width:960px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-shrink:0;">
@@ -13221,7 +13280,7 @@ console.log('[KC] KOCraft script v3 loading...');
   </div>
 
   <!-- TAB NAV -->
-  <div style="width:100%;max-width:960px;display:flex;gap:8px;margin-bottom:16px;flex-shrink:0;">
+  <div id="kc-tab-nav" style="width:100%;max-width:960px;display:flex;gap:8px;margin-bottom:16px;flex-shrink:0;">
     <button class="kc-tab-btn active" id="kc-tab-wizard" onclick="kcShowTab('wizard')">&#127872; TẠO KOC/KOL</button>
     <button class="kc-tab-btn" id="kc-tab-workflow" onclick="kcShowTab('workflow')">&#9889; WORKFLOW PIPELINE</button>
     <button class="kc-tab-btn" id="kc-tab-calendar" onclick="kcShowTab('calendar')">&#128197; LỊCH CONTENT</button>
