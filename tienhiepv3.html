@@ -11480,6 +11480,13 @@ console.log('[KC] KOCraft script v3 loading...');
       if (tf) tf.classList.remove('active');
     }
     showKCStep(1);
+    // Ẩn nhân vật 3D và các element liên quan khi mở KOCRAFT AI
+    const charCanvas = document.getElementById('canvas');
+    if (charCanvas) charCanvas.style.visibility = 'hidden';
+    const speechBubble = document.getElementById('character-speech-bubble');
+    if (speechBubble) speechBubble.style.display = 'none';
+    const microWorld = document.getElementById('micro-world-container');
+    if (microWorld) microWorld.style.display = 'none';
     console.log('[KC] openKOCraftModal called — modal display:', m.style.display, 'z-index:', m.style.zIndex);
   }
   window.openKOCraftModal = openKOCraftModal;
@@ -11487,6 +11494,11 @@ console.log('[KC] KOCraft script v3 loading...');
   function closeKOCraftModal() {
     const m = document.getElementById('kocraft-modal');
     if (m) m.style.display = 'none';
+    // Hiện lại nhân vật 3D khi đóng KOCRAFT AI
+    const charCanvas = document.getElementById('canvas');
+    if (charCanvas) charCanvas.style.visibility = 'visible';
+    const microWorld = document.getElementById('micro-world-container');
+    if (microWorld) microWorld.style.display = '';
   }
   window.closeKOCraftModal = closeKOCraftModal;
 

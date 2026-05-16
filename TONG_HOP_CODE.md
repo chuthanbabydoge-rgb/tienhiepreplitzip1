@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **20:35:35 16/5/2026**
+> Cập nhật lần cuối: **20:42:24 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,381 dòng, 61.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,060 dòng, 1.30 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,072 dòng, 1.30 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,381 | 61.2 KB |
-| `tienhiepv3.html` | 15,060 | 1.30 MB |
+| `tienhiepv3.html` | 15,072 | 1.30 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **20,162** | **1.52 MB** |
+| **TỔNG** | **20,174** | **1.53 MB** |
 
 ---
 
@@ -1483,7 +1483,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 15,060 dòng · 1.30 MB
+> 15,072 dòng · 1.30 MB
 
 ```html
 <!DOCTYPE html>
@@ -12968,6 +12968,13 @@ console.log('[KC] KOCraft script v3 loading...');
       if (tf) tf.classList.remove('active');
     }
     showKCStep(1);
+    // Ẩn nhân vật 3D và các element liên quan khi mở KOCRAFT AI
+    const charCanvas = document.getElementById('canvas');
+    if (charCanvas) charCanvas.style.visibility = 'hidden';
+    const speechBubble = document.getElementById('character-speech-bubble');
+    if (speechBubble) speechBubble.style.display = 'none';
+    const microWorld = document.getElementById('micro-world-container');
+    if (microWorld) microWorld.style.display = 'none';
     console.log('[KC] openKOCraftModal called — modal display:', m.style.display, 'z-index:', m.style.zIndex);
   }
   window.openKOCraftModal = openKOCraftModal;
@@ -12975,6 +12982,11 @@ console.log('[KC] KOCraft script v3 loading...');
   function closeKOCraftModal() {
     const m = document.getElementById('kocraft-modal');
     if (m) m.style.display = 'none';
+    // Hiện lại nhân vật 3D khi đóng KOCRAFT AI
+    const charCanvas = document.getElementById('canvas');
+    if (charCanvas) charCanvas.style.visibility = 'visible';
+    const microWorld = document.getElementById('micro-world-container');
+    if (microWorld) microWorld.style.display = '';
   }
   window.closeKOCraftModal = closeKOCraftModal;
 
