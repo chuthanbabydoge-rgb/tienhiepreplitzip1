@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **20:25:18 16/5/2026**
+> Cập nhật lần cuối: **20:35:35 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,381 dòng, 61.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,036 dòng, 1.30 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,060 dòng, 1.30 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,381 | 61.2 KB |
-| `tienhiepv3.html` | 15,036 | 1.30 MB |
+| `tienhiepv3.html` | 15,060 | 1.30 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **20,138** | **1.52 MB** |
+| **TỔNG** | **20,162** | **1.52 MB** |
 
 ---
 
@@ -1483,7 +1483,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 15,036 dòng · 1.30 MB
+> 15,060 dòng · 1.30 MB
 
 ```html
 <!DOCTYPE html>
@@ -2181,12 +2181,119 @@ app.listen(PORT, '0.0.0.0', () => {
     }
 
     #topbar .brand {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      cursor: default;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .brand-logo-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-emblem {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+    }
+    .brand-emblem svg {
+      width: 36px;
+      height: 36px;
+      animation: emblemSpin 12s linear infinite;
+      filter: drop-shadow(0 0 6px #00ffff99) drop-shadow(0 0 12px #ffd70055);
+    }
+    @keyframes emblemSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .brand-emblem-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      animation: emblemPulse 2.5s ease-in-out infinite;
+    }
+    @keyframes emblemPulse {
+      0%,100% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+    .brand-text-group {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+      gap: 1px;
+    }
+    .brand-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 3px;
+      color: #ffd70099;
+      text-transform: uppercase;
+    }
+    .brand-main {
       font-family: 'Orbitron', sans-serif;
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 900;
-      color: #00ffff;
-      letter-spacing: 4px;
-      text-shadow: 0 0 20px #00ffff88;
+      letter-spacing: 3px;
+      background: linear-gradient(90deg, #ffd700 0%, #00ffff 40%, #ff88ff 70%, #ffd700 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: brandShine 4s linear infinite;
+      filter: drop-shadow(0 0 8px #00ffff66);
+    }
+    @keyframes brandShine {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+    .brand-runes {
+      display: flex;
+      gap: 3px;
+      margin-top: 1px;
+    }
+    .brand-rune {
+      font-size: 8px;
+      color: #ffd70055;
+      animation: runeFade 3s ease-in-out infinite;
+    }
+    .brand-rune:nth-child(2) { animation-delay: 0.5s; }
+    .brand-rune:nth-child(3) { animation-delay: 1s; }
+    .brand-rune:nth-child(4) { animation-delay: 1.5s; }
+    @keyframes runeFade {
+      0%,100% { color: #ffd70033; }
+      50% { color: #ffd700cc; text-shadow: 0 0 6px #ffd700; }
+    }
+    .brand-particles {
+      position: absolute;
+      inset: -4px;
+      pointer-events: none;
+      overflow: visible;
+    }
+    .bp {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: #ffd700;
+      animation: bpFloat 3s ease-in-out infinite;
+    }
+    .bp:nth-child(1) { top:0; left:20%; animation-delay:0s; background:#00ffff; }
+    .bp:nth-child(2) { top:30%; left:95%; animation-delay:0.6s; background:#ffd700; }
+    .bp:nth-child(3) { top:80%; left:70%; animation-delay:1.2s; background:#ff88ff; }
+    .bp:nth-child(4) { top:60%; left:5%; animation-delay:1.8s; background:#00ffff; }
+    .bp:nth-child(5) { top:10%; left:60%; animation-delay:2.4s; background:#ffd700; }
+    @keyframes bpFloat {
+      0%,100% { opacity:0; transform:translateY(0) scale(1); }
+      30% { opacity:1; }
+      60% { opacity:0.6; transform:translateY(-8px) scale(1.5); }
     }
 
     #topbar .status {
@@ -5015,7 +5122,32 @@ app.listen(PORT, '0.0.0.0', () => {
   <!-- MAIN UI -->
   <div id="ui">
     <div id="topbar">
-      <div class="brand glitch-text">⬡ VŨ TRỤ AI</div>
+      <div class="brand">
+        <div class="brand-logo-wrap">
+          <div class="brand-particles">
+            <div class="bp"></div><div class="bp"></div><div class="bp"></div><div class="bp"></div><div class="bp"></div>
+          </div>
+          <div class="brand-emblem">
+            <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="18,2 22,14 34,14 24,22 28,34 18,26 8,34 12,22 2,14 14,14" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.7"/>
+              <circle cx="18" cy="18" r="6" fill="none" stroke="#00ffff" stroke-width="1" opacity="0.9"/>
+              <circle cx="18" cy="18" r="10" fill="none" stroke="#ffd700" stroke-width="0.5" stroke-dasharray="2 3" opacity="0.5"/>
+              <circle cx="18" cy="18" r="15" fill="none" stroke="#ff88ff" stroke-width="0.5" stroke-dasharray="1 4" opacity="0.3"/>
+            </svg>
+            <div class="brand-emblem-inner">龍</div>
+          </div>
+          <div class="brand-text-group">
+            <div class="brand-sub">仙道 · THIÊN ĐẠO</div>
+            <div class="brand-main">VŨ TRỤ AI</div>
+            <div class="brand-runes">
+              <span class="brand-rune">☯</span>
+              <span class="brand-rune">⬡</span>
+              <span class="brand-rune">✦</span>
+              <span class="brand-rune">⬡</span>
+            </div>
+          </div>
+        </div>
+      </div>
       <button id="btn-back-home" onclick="window.location.href='/api/logout'" title="Đăng xuất">⬅ THOÁT</button>
       <button id="btn-ar-mode" onclick="window.location.href='/app?ar=1'" title="Chế độ AR 3D"
         style="display:none;align-items:center;gap:6px;padding:5px 13px;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.4);color:#00ff88;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all .25s;margin-left:8px;"
@@ -5278,121 +5410,13 @@ app.listen(PORT, '0.0.0.0', () => {
         box-shadow: 0 0 10px rgba(0,255,255,0.3);
       }
 
-      /* AI ADVISOR FLOAT */
-      #uc-advisor {
-        position: absolute;
-        top: 108px;
-        left: 300px;
-        width: 310px;
-        background: rgba(15,3,0,0.95);
-        border: 1px solid #ff440066;
-        border-top: 2px solid #ff4400;
-        border-radius: 0 0 10px 10px;
-        box-shadow: 0 0 30px rgba(255,68,0,0.2), inset 0 0 20px rgba(255,68,0,0.03);
-        z-index: 11;
-        pointer-events: auto;
-        backdrop-filter: blur(12px);
-        animation: advisorIn 0.3s ease-out;
-      }
-      @keyframes advisorIn {
-        from { opacity:0; transform:translateY(-8px); }
-        to   { opacity:1; transform:translateY(0); }
-      }
-      #uc-advisor-header {
-        height: 28px;
-        display: flex;
-        align-items: center;
-        padding: 0 10px;
-        background: rgba(255,68,0,0.1);
-        border-bottom: 1px solid #ff440033;
-        gap: 8px;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 9px;
-        color: #ff6622;
-        letter-spacing: 2px;
-        font-weight: 700;
-      }
-      .advisor-tip {
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-        padding: 7px 12px;
-        border-bottom: 1px solid #ff440011;
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 10px;
-        color: #ffaa6688;
-        line-height: 1.4;
-        transition: background 0.2s;
-      }
-      .advisor-tip:last-of-type { border-bottom: none; }
-      .advisor-tip:hover { background: rgba(255,68,0,0.05); }
-      .advisor-tip-icon { color: #ff6622; flex-shrink: 0; margin-top: 1px; }
-      .advisor-tip-close {
-        margin-left: auto;
-        cursor: pointer;
-        color: #ff440044;
-        font-size: 11px;
-        flex-shrink: 0;
-        transition: color 0.2s;
-        padding-left: 6px;
-      }
-      .advisor-tip-close:hover { color: #ff4400; }
-      #uc-advisor-nav {
-        display: flex;
-        gap: 0;
-        border-top: 1px solid #ff440022;
-        background: rgba(255,68,0,0.04);
-      }
-      .advisor-nav-item {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 26px;
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 8.5px;
-        color: #ff440044;
-        cursor: pointer;
-        border-right: 1px solid #ff44001a;
-        transition: all 0.2s;
-        letter-spacing: 0.5px;
-        gap: 4px;
-      }
-      .advisor-nav-item:last-child { border-right: none; }
-      .advisor-nav-item:hover { color: #ff6622; background: rgba(255,68,0,0.08); }
-      .advisor-nav-item b { color: #ff4400; }
     </style>
-
-    <!-- AI ADVISOR FLOATING PANEL -->
-    <div id="uc-advisor">
-      <div id="uc-advisor-header">
-        <span style="color:#ff4400;font-size:11px;">⚡</span>
-        AI ADVISOR
-        <span onclick="document.getElementById('uc-advisor').style.display='none'" title="Đóng" style="margin-left:auto;cursor:pointer;color:#ff440066;font-size:14px;transition:color 0.2s;" onmouseover="this.style.color='#ff4400'" onmouseout="this.style.color='#ff440066'">✕</span>
-      </div>
-      <div class="advisor-tip" id="adv-tip-1">
-        <span class="advisor-tip-icon">🔍</span>
-        <span>Click vào chân sáng để xem agent</span>
-        <span class="advisor-tip-close" onclick="this.closest('.advisor-tip').style.display='none'">✕</span>
-      </div>
-      <div class="advisor-tip" id="adv-tip-2">
-        <span class="advisor-tip-icon">🎤</span>
-        <span>Đạo hữu chưa cấp quyền Micro – nhắn vào biểu tượng 🎤 trên thanh địa chỉ để bật!</span>
-        <span class="advisor-tip-close" onclick="this.closest('.advisor-tip').style.display='none'">✕</span>
-      </div>
-      <div id="uc-advisor-nav">
-        <div class="advisor-nav-item" onclick="setFilterCategory('analytics')" title="Analytics"><b>[2]</b> ANALYTICS</div>
-        <div class="advisor-nav-item" onclick="setFilterCategory('favorites')" title="Yêu thích"><b>[4]</b> YÊU THÍCH</div>
-        <div class="advisor-nav-item" onclick="setFilterCategory('history')" title="Lịch sử"><b>[8]</b> LỊCH SỬ</div>
-      </div>
-    </div>
 
     <div id="universe-chatbox">
       <div id="uc-header">
         <div id="uc-header-dot"></div>
         <span id="uc-title">VẠN GIỚI TRUYỀN TIN</span>
         <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-          <span onclick="document.getElementById('uc-advisor').style.display=document.getElementById('uc-advisor').style.display==='none'?'block':'none'" title="AI Advisor" style="cursor:pointer;color:#ff6622;opacity:0.7;font-size:10px;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">⚡</span>
           <span onclick="ucClearHistory()" title="Xóa lịch sử" style="cursor:pointer;font-size:11px;color:#ff4444;opacity:0.6;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑</span>
           <span id="uc-collapse-btn" onclick="ucToggleCollapse()" title="Thu gọn / Mở rộng" style="cursor:pointer;font-size:13px;color:#00ffff;opacity:0.7;transition:opacity 0.2s;line-height:1;user-select:none;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">▼</span>
         </div>
