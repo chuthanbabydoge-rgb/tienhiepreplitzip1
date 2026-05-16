@@ -3519,6 +3519,33 @@
 </head>
 
 <body>
+<script>
+  // ── UI Visibility Helpers ─────────────────────────────────────────────────
+  // Khi mở modal/quy trình: ẩn các phần giao diện chính, chỉ giữ topbar + statusbar
+  var _hiddenUIState = {};
+  window.hideMainUI = function() {
+    var ids = ['sidebar-right','metrics-bar','filter-wrap','search-wrap',
+               'universe-chatbox','uc-collapsed-icon','labels','shortcut-hint'];
+    ids.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) {
+        _hiddenUIState[id] = el.style.display;
+        el.style.display = 'none';
+      }
+    });
+  };
+  window.restoreMainUI = function() {
+    var ids = ['sidebar-right','metrics-bar','filter-wrap','search-wrap',
+               'universe-chatbox','uc-collapsed-icon','labels','shortcut-hint'];
+    ids.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && _hiddenUIState.hasOwnProperty(id)) {
+        el.style.display = _hiddenUIState[id];
+        delete _hiddenUIState[id];
+      }
+    });
+  };
+</script>
 
   <!-- AR camera background (shown when ?ar=1) -->
   <video id="ar-camera" autoplay playsinline muted style="display:none;position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none;"></video>
@@ -5706,6 +5733,7 @@
         cameraTargetLook = wp.clone();
 
         document.getElementById('hud').classList.add('active');
+        if (typeof window.hideMainUI === 'function') window.hideMainUI();
         document.getElementById('hud-agent-emoji').textContent = agent.emoji;
         document.getElementById('hud-agent-xname').textContent = agentName(agent);
         document.getElementById('hud-agent-xnote').textContent = '(' + agentNote(agent) + ')';
@@ -6285,6 +6313,7 @@
 
       function closeHUD() {
         document.getElementById('hud').classList.remove('active');
+        if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
         selectedPlanet = null;
         cameraTargetPos = new THREE.Vector3(0, 30, 120);
         cameraTargetLook = new THREE.Vector3(0, 0, 0);
@@ -9374,10 +9403,12 @@
       });
       wfmPage = 0;
       renderWFM();
+      if (typeof window.hideMainUI === 'function') window.hideMainUI();
       document.getElementById('wfm-modal').classList.add('show');
     }
 
     function closeWFM() {
+      if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
       document.getElementById('wfm-modal').classList.remove('show');
     }
 
@@ -10264,6 +10295,7 @@
       acRenderSidebarQuickQ(savedTopic, agent);
 
       modal.style.display = 'flex';
+      if (typeof window.hideMainUI === 'function') window.hideMainUI();
 
       // Load history
       const msgs = document.getElementById('ac-messages');
@@ -10337,6 +10369,7 @@
 
     function closeAgentChat() {
       document.getElementById('agent-chat-modal').style.display = 'none';
+      if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
     }
 
     function acAddMsg(text, role, agent, save) {
@@ -11446,6 +11479,7 @@ console.log('[KC] KOCraft script v3 loading...');
   function openKOCraftModal() {
     window._kocData = null;
     _currentStep = 1;
+    if (typeof window.hideMainUI === 'function') window.hideMainUI();
     let m = document.getElementById('kocraft-modal');
     if (!m) { console.error('[KC] #kocraft-modal NOT FOUND in DOM'); return; }
     // Move to body root to avoid stacking context traps
@@ -11494,6 +11528,7 @@ console.log('[KC] KOCraft script v3 loading...');
   function closeKOCraftModal() {
     const m = document.getElementById('kocraft-modal');
     if (m) m.style.display = 'none';
+    if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
     // Hiện lại nhân vật 3D khi đóng KOCRAFT AI
     const charCanvas = document.getElementById('canvas');
     if (charCanvas) charCanvas.style.visibility = 'visible';
