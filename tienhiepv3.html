@@ -3553,6 +3553,36 @@
       }
     });
   };
+
+  // ── Parent HUD hide/restore (AR Layer principle) ──────────────────────────
+  // Khi HUD con mở từ HUD hành tinh → ẩn HUD hành tinh, chỉ để HUD con + vũ trụ
+  // WFM (editing workflow) KHÔNG bị ẩn khi mở panel con
+  window.hideParentHUD = function() {
+    var hud = document.getElementById('hud');
+    if (hud && hud.classList.contains('active')) {
+      hud.dataset.arHiddenByChild = '1';
+      hud.style.transition = 'opacity 0.2s';
+      hud.style.opacity = '0';
+      hud.style.pointerEvents = 'none';
+      setTimeout(function() {
+        if (hud.dataset.arHiddenByChild) hud.classList.remove('active');
+      }, 200);
+    }
+  };
+  window.restoreParentHUD = function() {
+    var hud = document.getElementById('hud');
+    if (hud && hud.dataset.arHiddenByChild === '1') {
+      delete hud.dataset.arHiddenByChild;
+      hud.classList.add('active');
+      hud.style.opacity = '0';
+      hud.style.pointerEvents = '';
+      setTimeout(function() {
+        hud.style.transition = 'opacity 0.25s';
+        hud.style.opacity = '1';
+        setTimeout(function() { hud.style.opacity = ''; hud.style.transition = ''; }, 260);
+      }, 30);
+    }
+  };
 </script>
 
   <!-- AR camera background (shown when ?ar=1) -->
@@ -10304,6 +10334,8 @@
 
       modal.style.display = 'flex';
       if (typeof window.hideMainUI === 'function') window.hideMainUI();
+      // AR layer: ẩn HUD hành tinh cha nếu đang mở → chỉ còn HUD con + vũ trụ
+      if (typeof window.hideParentHUD === 'function') window.hideParentHUD();
 
       // Load history
       const msgs = document.getElementById('ac-messages');
@@ -10378,6 +10410,8 @@
     function closeAgentChat() {
       document.getElementById('agent-chat-modal').style.display = 'none';
       if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
+      // AR layer: khôi phục HUD hành tinh cha nếu đã bị ẩn
+      if (typeof window.restoreParentHUD === 'function') window.restoreParentHUD();
     }
 
     function acAddMsg(text, role, agent, save) {
