@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **17:23:18 16/5/2026**
+> Cập nhật lần cuối: **18:51:01 16/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,381 dòng, 61.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,288 dòng, 1.31 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,041 dòng, 1.30 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,381 | 61.2 KB |
-| `tienhiepv3.html` | 15,288 | 1.31 MB |
+| `tienhiepv3.html` | 15,041 | 1.30 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **20,390** | **1.53 MB** |
+| **TỔNG** | **20,143** | **1.52 MB** |
 
 ---
 
@@ -1483,7 +1483,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 15,288 dòng · 1.31 MB
+> 15,041 dòng · 1.30 MB
 
 ```html
 <!DOCTYPE html>
@@ -12037,253 +12037,6 @@ app.listen(PORT, '0.0.0.0', () => {
   </div>
 
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- PERSISTENT AVATAR WIDGET – bottom-right corner            -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<div id="persistent-avatar-widget" style="
-  position: fixed;
-  bottom: 22px;
-  right: 22px;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0;
-  pointer-events: none;
-">
-  <!-- Speech bubble -->
-  <div id="pav-bubble" style="
-    position: relative;
-    background: rgba(0,10,30,0.92);
-    border: 1px solid rgba(0,255,255,0.35);
-    border-radius: 12px 12px 4px 12px;
-    padding: 9px 13px;
-    margin-bottom: 8px;
-    max-width: 210px;
-    min-width: 130px;
-    box-shadow: 0 0 18px rgba(0,255,255,0.15), inset 0 0 20px rgba(0,60,120,0.15);
-    animation: pavBubbleFade 0.4s ease;
-    transform-origin: bottom right;
-  ">
-    <div id="pav-name" style="
-      font-family: 'Orbitron', sans-serif;
-      font-size: 8px;
-      letter-spacing: 2px;
-      color: #00ffff;
-      text-shadow: 0 0 8px #00ffff;
-      margin-bottom: 5px;
-      white-space: nowrap;
-    ">THIÊN CƠ CÁC</div>
-    <div id="pav-greeting" style="
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 10.5px;
-      color: rgba(180,230,255,0.9);
-      line-height: 1.5;
-    ">Đạo hữu, ta đang chờ lệnh...</div>
-    <!-- Tail of the bubble -->
-    <div style="
-      position: absolute;
-      bottom: -7px;
-      right: 18px;
-      width: 0; height: 0;
-      border-left: 7px solid transparent;
-      border-right: 0px solid transparent;
-      border-top: 7px solid rgba(0,255,255,0.35);
-    "></div>
-    <div style="
-      position: absolute;
-      bottom: -5px;
-      right: 19px;
-      width: 0; height: 0;
-      border-left: 6px solid transparent;
-      border-right: 0px solid transparent;
-      border-top: 6px solid rgba(0,10,30,0.92);
-    "></div>
-  </div>
-
-  <!-- Avatar frame -->
-  <div id="pav-frame"
-    data-glow="rgba(0,255,255,0.3)"
-    data-glow-hover="rgba(0,255,255,0.6)"
-    data-border="rgba(0,255,255,0.5)"
-    style="
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    border: 2px solid rgba(0,255,255,0.5);
-    box-shadow: 0 0 18px rgba(0,255,255,0.3), 0 0 40px rgba(0,100,200,0.2);
-    background: radial-gradient(circle at 40% 35%, rgba(0,80,160,0.6), rgba(0,10,30,0.9));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    animation: pavFloat 4s ease-in-out infinite;
-    cursor: pointer;
-    pointer-events: all;
-    flex-shrink: 0;
-    align-self: flex-end;
-    transition: box-shadow 0.3s, border-color 0.3s;
-  "
-  onmouseover="var g=this.dataset.glowHover||'rgba(0,255,255,0.6)';this.style.boxShadow='0 0 30px '+g+', 0 0 60px '+g.replace('0.6','0.3')"
-  onmouseout="var g=this.dataset.glow||'rgba(0,255,255,0.3)';this.style.boxShadow='0 0 18px '+g+', 0 0 40px '+g.replace('0.3','0.15');"
-  onclick="document.getElementById('universe-chatbox') && document.getElementById('universe-chatbox').style.display !== 'none' ? null : (document.getElementById('chat-btn') && document.getElementById('chat-btn').click())"
-  title="Mở hộp thoại">
-    <img id="pav-img" src="" alt="" style="
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: none;
-      border-radius: 50%;
-    ">
-    <div id="pav-default-icon" style="
-      font-size: 32px;
-      line-height: 1;
-      filter: drop-shadow(0 0 6px var(--pav-color, rgba(0,255,255,0.8)));
-      animation: pavIconPulse 2.5s ease-in-out infinite;
-      user-select: none;
-    ">☯️</div>
-  </div>
-</div>
-
-<style>
-  :root { --pav-color: rgba(0,255,255,0.8); }
-  @keyframes pavFloat {
-    0%, 100% { transform: translateY(0px); }
-    50%       { transform: translateY(-7px); }
-  }
-  @keyframes pavIconPulse {
-    0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px var(--pav-color)); }
-    50%       { opacity: 0.75; filter: drop-shadow(0 0 14px var(--pav-color)); }
-  }
-  @keyframes pavBubbleFade {
-    from { opacity: 0; transform: scale(0.88) translateY(6px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
-  }
-  #persistent-avatar-widget {
-    transition: opacity 0.3s;
-  }
-</style>
-
-<script>
-(function() {
-  const AVATAR_DATA = {
-    xx: {
-      name:     'THIÊN CƠ CÁC',
-      greeting: 'Đạo hữu, ta đang chờ lệnh...',
-      icon:     '☯️',
-      color:    '#00ffff',
-      border:   'rgba(0,255,255,0.5)',
-      glow:     'rgba(0,255,255,0.3)',
-    },
-    vi: {
-      name:     'TRỢ LÝ HỆ THỐNG',
-      greeting: 'Xin chào! Tôi sẵn sàng hỗ trợ...',
-      icon:     '🇻🇳',
-      color:    '#ffdd44',
-      border:   'rgba(255,210,40,0.5)',
-      glow:     'rgba(255,200,0,0.3)',
-    },
-    en: {
-      name:     'SYSTEM GUIDE',
-      greeting: 'System online. Awaiting command...',
-      icon:     '🤖',
-      color:    '#aa88ff',
-      border:   'rgba(160,100,255,0.5)',
-      glow:     'rgba(140,80,255,0.3)',
-    },
-  };
-
-  function loadCharacterPortrait() {
-    try {
-      const charData = JSON.parse(localStorage.getItem('vdai_character') || 'null');
-      if (charData && (charData.aiPortrait || charData.svgSnapshot)) {
-        const src = charData.aiPortrait
-          ? 'data:image/png;base64,' + charData.aiPortrait
-          : charData.svgSnapshot;
-        const img = document.getElementById('pav-img');
-        const icon = document.getElementById('pav-default-icon');
-        if (img && icon) {
-          img.src = src;
-          img.style.display = 'block';
-          icon.style.display = 'none';
-        }
-      }
-    } catch (e) {}
-  }
-
-  window.updatePersistentAvatar = function(lang) {
-    const d = AVATAR_DATA[lang] || AVATAR_DATA.xx;
-    const nameEl   = document.getElementById('pav-name');
-    const greetEl  = document.getElementById('pav-greeting');
-    const iconEl   = document.getElementById('pav-default-icon');
-    const frameEl  = document.getElementById('pav-frame');
-    const bubbleEl = document.getElementById('pav-bubble');
-
-    // Text content
-    if (nameEl)  nameEl.textContent = d.name;
-    if (greetEl) greetEl.textContent = d.greeting;
-    if (iconEl)  iconEl.textContent = d.icon;
-
-    // Name color
-    if (nameEl) {
-      nameEl.style.color = d.color;
-      nameEl.style.textShadow = '0 0 8px ' + d.color;
-    }
-
-    // Update CSS variable so the pavIconPulse animation uses the right color
-    document.documentElement.style.setProperty('--pav-color', d.color);
-
-    // Icon filter
-    if (iconEl) {
-      iconEl.style.filter = 'drop-shadow(0 0 6px ' + d.color + ')';
-    }
-
-    // Frame: update data attributes so hover handlers use the right glow,
-    // then apply the current (non-hover) glow
-    if (frameEl) {
-      const glowHover = d.glow.replace('0.3', '0.6');
-      frameEl.dataset.glow      = d.glow;
-      frameEl.dataset.glowHover = glowHover;
-      frameEl.dataset.border    = d.border;
-      frameEl.style.border      = '2px solid ' + d.border;
-      frameEl.style.boxShadow   = '0 0 18px ' + d.glow + ', 0 0 40px ' + d.glow.replace('0.3', '0.15');
-    }
-
-    // Bubble border + glow + tail arrows
-    if (bubbleEl) {
-      bubbleEl.style.borderColor = d.border;
-      bubbleEl.style.boxShadow   = '0 0 18px ' + d.glow + ', inset 0 0 20px rgba(0,60,120,0.15)';
-      // Update the two tail arrow divs (first & second child of last two children)
-      const tails = bubbleEl.querySelectorAll('div[style*="border-top"]');
-      if (tails[0]) tails[0].style.borderTopColor = d.border;
-      // (inner tail uses the bg color – no change needed)
-      // Restart the bubble pop animation
-      bubbleEl.style.animation = 'none';
-      bubbleEl.offsetHeight;
-      bubbleEl.style.animation = 'pavBubbleFade 0.4s ease';
-    }
-  };
-
-  // Init on DOM ready
-  document.addEventListener('DOMContentLoaded', function() {
-    loadCharacterPortrait();
-    // Also listen for storage changes (e.g. after character creation)
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'vdai_character') loadCharacterPortrait();
-    });
-  });
-
-  // Also try immediately if DOM already loaded
-  if (document.readyState !== 'loading') {
-    setTimeout(function() {
-      loadCharacterPortrait();
-      // Sync with whatever theme is already active
-      if (typeof currentTheme !== 'undefined') {
-        updatePersistentAvatar(currentTheme);
-      }
-    }, 500);
-  }
-})();
-</script>
 
 <style>
 /* ═══════════════════════════════════════════
