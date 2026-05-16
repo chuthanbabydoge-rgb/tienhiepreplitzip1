@@ -3524,8 +3524,12 @@
   // Khi mở modal/quy trình: ẩn các phần giao diện chính, chỉ giữ topbar + statusbar
   var _hiddenUIState = {};
   window.hideMainUI = function() {
-    var ids = ['sidebar-right','metrics-bar','filter-wrap','search-wrap',
-               'universe-chatbox','uc-collapsed-icon','labels','shortcut-hint'];
+    var ids = [
+      'sidebar-right','metrics-bar','filter-wrap','search-wrap',
+      'universe-chatbox','uc-collapsed-icon','shortcut-hint',
+      'dharma-wheel-container','dharma-wheel-ground',
+      'micro-world-container','char-placeholder','character-speech-bubble'
+    ];
     ids.forEach(function(id) {
       var el = document.getElementById(id);
       if (el) {
@@ -3535,8 +3539,12 @@
     });
   };
   window.restoreMainUI = function() {
-    var ids = ['sidebar-right','metrics-bar','filter-wrap','search-wrap',
-               'universe-chatbox','uc-collapsed-icon','labels','shortcut-hint'];
+    var ids = [
+      'sidebar-right','metrics-bar','filter-wrap','search-wrap',
+      'universe-chatbox','uc-collapsed-icon','shortcut-hint',
+      'dharma-wheel-container','dharma-wheel-ground',
+      'micro-world-container','char-placeholder','character-speech-bubble'
+    ];
     ids.forEach(function(id) {
       var el = document.getElementById(id);
       if (el && _hiddenUIState.hasOwnProperty(id)) {
@@ -11514,13 +11522,6 @@ console.log('[KC] KOCraft script v3 loading...');
       if (tf) tf.classList.remove('active');
     }
     showKCStep(1);
-    // Ẩn nhân vật 3D và các element liên quan khi mở KOCRAFT AI
-    const charCanvas = document.getElementById('canvas');
-    if (charCanvas) charCanvas.style.visibility = 'hidden';
-    const speechBubble = document.getElementById('character-speech-bubble');
-    if (speechBubble) speechBubble.style.display = 'none';
-    const microWorld = document.getElementById('micro-world-container');
-    if (microWorld) microWorld.style.display = 'none';
     console.log('[KC] openKOCraftModal called — modal display:', m.style.display, 'z-index:', m.style.zIndex);
   }
   window.openKOCraftModal = openKOCraftModal;
@@ -11529,11 +11530,6 @@ console.log('[KC] KOCraft script v3 loading...');
     const m = document.getElementById('kocraft-modal');
     if (m) m.style.display = 'none';
     if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
-    // Hiện lại nhân vật 3D khi đóng KOCRAFT AI
-    const charCanvas = document.getElementById('canvas');
-    if (charCanvas) charCanvas.style.visibility = 'visible';
-    const microWorld = document.getElementById('micro-world-container');
-    if (microWorld) microWorld.style.display = '';
   }
   window.closeKOCraftModal = closeKOCraftModal;
 
