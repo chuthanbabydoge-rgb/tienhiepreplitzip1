@@ -1055,6 +1055,54 @@
       color: #000;
     }
 
+    /* ── HUD SWIPE HINT (right edge) ── */
+    #hud-swipe-hint {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 80px;
+      border-radius: 4px 0 0 4px;
+      background: linear-gradient(180deg, transparent, #00ffff88, transparent);
+      box-shadow: 0 0 12px #00ffff55;
+      pointer-events: none;
+      z-index: 1001;
+      transition: opacity 0.3s;
+      animation: swipeHintPulse 2.5s ease-in-out infinite;
+    }
+    @keyframes swipeHintPulse {
+      0%, 100% { opacity: 0.3; width: 4px; }
+      50%       { opacity: 0.85; width: 6px; }
+    }
+
+    /* Swipe drag overlay (shown while dragging) */
+    #hud-swipe-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1500;
+      transition: background 0.1s;
+    }
+    #hud-swipe-overlay.dragging {
+      background: rgba(0, 255, 255, 0.03);
+    }
+
+    /* Swipe progress arc shown at edge while swiping */
+    #hud-swipe-arc {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 48px;
+      height: 48px;
+      pointer-events: none;
+      z-index: 1502;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    #hud-swipe-arc.visible { opacity: 1; }
+
     #hud-content {
       position: relative;
       z-index: 1;
@@ -4227,6 +4275,15 @@
   <div id="hud">
     <div id="hud-backdrop"></div>
     <button id="hud-close">✕</button>
+    <div id="hud-swipe-hint"></div>
+    <div id="hud-swipe-overlay"></div>
+    <svg id="hud-swipe-arc" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+      <circle id="hud-swipe-arc-bg" cx="24" cy="24" r="20" fill="none" stroke="rgba(0,255,255,0.15)" stroke-width="3"/>
+      <circle id="hud-swipe-arc-fill" cx="24" cy="24" r="20" fill="none" stroke="#00ffff" stroke-width="3"
+        stroke-dasharray="125.6" stroke-dashoffset="125.6" stroke-linecap="round"
+        transform="rotate(-90 24 24)" style="transition:stroke-dashoffset 0.08s linear;"/>
+      <text x="24" y="29" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="11" fill="#00ffff" opacity="0.9">✕</text>
+    </svg>
     <div id="hud-content">
 
       <!-- ══ SPACE NODE AREA (top ~62%) ══ -->
@@ -5748,6 +5805,99 @@
 
       document.getElementById('hud-close').addEventListener('click', closeHUD);
       document.getElementById('hud-backdrop').addEventListener('click', closeHUD);
+
+      // ── EDGE SWIPE TO CLOSE HUD ────────────────────────────────────────
+      (function() {
+        const SWIPE_THRESHOLD   = 80;   // px to trigger close
+        const EDGE_ZONE         = 44;   // px from right/bottom edge to start
+        const ARC_CIRCUMFERENCE = 125.6; // 2π×20
+
+        let _sx = 0, _sy = 0, _active = false, _edgeTrigger = false;
+        const hudEl      = document.getElementById('hud');
+        const overlay    = document.getElementById('hud-swipe-overlay');
+        const arcEl      = document.getElementById('hud-swipe-arc');
+        const arcFill    = document.getElementById('hud-swipe-arc-fill');
+        const hintEl     = document.getElementById('hud-swipe-hint');
+
+        function _arcProgress(ratio) {
+          const offset = ARC_CIRCUMFERENCE * (1 - Math.min(ratio, 1));
+          arcFill.setAttribute('stroke-dashoffset', offset.toFixed(1));
+          // Color shifts cyan → red as ratio increases
+          const r = Math.round(0 + 255 * Math.min(ratio * 1.5, 1));
+          const g = Math.round(255 * (1 - Math.min(ratio * 1.2, 1)));
+          arcFill.setAttribute('stroke', `rgb(${r},${g},255)`);
+        }
+
+        function _reset() {
+          _active = false; _edgeTrigger = false;
+          if (overlay) overlay.classList.remove('dragging');
+          if (arcEl)   { arcEl.classList.remove('visible'); _arcProgress(0); }
+          if (hintEl)  hintEl.style.opacity = '';
+        }
+
+        hudEl.addEventListener('touchstart', function(e) {
+          if (!hudEl.classList.contains('active')) return;
+          const t = e.touches[0];
+          _sx = t.clientX; _sy = t.clientY;
+          // Activate only from right-edge zone OR bottom-edge zone
+          const fromRight  = window.innerWidth  - _sx < EDGE_ZONE;
+          const fromBottom = window.innerHeight - _sy < EDGE_ZONE;
+          _edgeTrigger = fromRight || fromBottom;
+          _active = true;
+          if (_edgeTrigger) {
+            if (overlay) overlay.classList.add('dragging');
+            if (hintEl)  hintEl.style.opacity = '0';
+          }
+        }, { passive: true });
+
+        hudEl.addEventListener('touchmove', function(e) {
+          if (!_active || !_edgeTrigger) return;
+          const t = e.touches[0];
+          const dx = _sx - t.clientX;   // positive = swiped left
+          const dy = _sy - t.clientY;   // positive = swiped up
+
+          // Horizontal: swipe left from right edge
+          // Vertical:   swipe up from bottom edge
+          const fromRight  = window.innerWidth  - _sx < EDGE_ZONE;
+          const dist = fromRight ? Math.max(dx, 0) : Math.max(dy, 0);
+          const ratio = dist / SWIPE_THRESHOLD;
+
+          _arcProgress(ratio);
+          if (arcEl) {
+            arcEl.classList.toggle('visible', dist > 10);
+            // Position arc near finger
+            if (fromRight) {
+              arcEl.style.right  = '8px';
+              arcEl.style.top    = (t.clientY - 24) + 'px';
+              arcEl.style.transform = '';
+            } else {
+              arcEl.style.right  = (t.clientX - 24) + 'px';
+              arcEl.style.bottom = '8px';
+              arcEl.style.top    = 'auto';
+              arcEl.style.transform = '';
+            }
+          }
+        }, { passive: true });
+
+        hudEl.addEventListener('touchend', function(e) {
+          if (!_active || !_edgeTrigger) { _reset(); return; }
+          const t = e.changedTouches[0];
+          const dx = _sx - t.clientX;
+          const dy = _sy - t.clientY;
+          const fromRight = window.innerWidth - _sx < EDGE_ZONE;
+          const dist = fromRight ? Math.max(dx, 0) : Math.max(dy, 0);
+
+          if (dist >= SWIPE_THRESHOLD) {
+            // Trigger close with a flash animation on the arc
+            if (arcEl) { arcEl.style.transition = 'opacity 0.25s'; arcEl.style.opacity = '0'; }
+            setTimeout(closeHUD, 80);
+          }
+          _reset();
+        }, { passive: true });
+
+        hudEl.addEventListener('touchcancel', _reset, { passive: true });
+      })();
+      // ──────────────────────────────────────────────────────────────────
 
       function openHUD(pm) {
         selectedPlanet = pm;
