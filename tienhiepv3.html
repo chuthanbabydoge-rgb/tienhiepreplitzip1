@@ -1047,6 +1047,7 @@
       background: rgba(0, 10, 20, .8);
       font-family: 'Share Tech Mono', monospace;
       transition: all .3s;
+      z-index: 1000;
     }
 
     #hud-close:hover {
@@ -5772,6 +5773,10 @@
 
         document.getElementById('hud').classList.add('active');
         if (typeof window.hideMainUI === 'function') window.hideMainUI();
+        const _hudTb = document.getElementById('topbar');
+        const _hudSb = document.getElementById('statusbar');
+        if (_hudTb) { _hudTb.style.transition = 'opacity 0.2s'; _hudTb.style.opacity = '0'; setTimeout(() => { _hudTb.style.display = 'none'; }, 200); }
+        if (_hudSb) { _hudSb.style.transition = 'opacity 0.2s'; _hudSb.style.opacity = '0'; setTimeout(() => { _hudSb.style.display = 'none'; }, 200); }
         document.getElementById('hud-agent-emoji').textContent = agent.emoji;
         document.getElementById('hud-agent-xname').textContent = agentName(agent);
         document.getElementById('hud-agent-xnote').textContent = '(' + agentNote(agent) + ')';
@@ -6350,12 +6355,18 @@
       }
 
       function closeHUD() {
+        closeNodeEdit();
         document.getElementById('hud').classList.remove('active');
         if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
+        const _hudTb = document.getElementById('topbar');
+        const _hudSb = document.getElementById('statusbar');
+        if (_hudTb) { _hudTb.style.display = ''; requestAnimationFrame(() => { _hudTb.style.opacity = '1'; }); }
+        if (_hudSb) { _hudSb.style.display = ''; requestAnimationFrame(() => { _hudSb.style.opacity = '1'; }); }
         selectedPlanet = null;
         cameraTargetPos = new THREE.Vector3(0, 30, 120);
         cameraTargetLook = new THREE.Vector3(0, 0, 0);
       }
+      window.closeHUD = closeHUD;
 
       function hudUpdateStep(el) {
         const agentId = parseInt(el.dataset.agentId);

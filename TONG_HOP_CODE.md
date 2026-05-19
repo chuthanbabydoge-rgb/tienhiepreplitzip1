@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **21:13:54 16/5/2026**
+> Cập nhật lần cuối: **16:47:31 19/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,381 dòng, 61.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,099 dòng, 1.30 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,197 dòng, 1.31 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,381 | 61.2 KB |
-| `tienhiepv3.html` | 15,099 | 1.30 MB |
+| `tienhiepv3.html` | 15,197 | 1.31 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **20,201** | **1.53 MB** |
+| **TỔNG** | **20,299** | **1.53 MB** |
 
 ---
 
@@ -1483,7 +1483,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 15,099 dòng · 1.30 MB
+> 15,197 dòng · 1.31 MB
 
 ```html
 <!DOCTYPE html>
@@ -2465,7 +2465,7 @@ app.listen(PORT, '0.0.0.0', () => {
     #hud {
       position: fixed;
       inset: 0;
-      z-index: 100;
+      z-index: 10000;
       display: none;
       pointer-events: none;
     }
@@ -2535,6 +2535,7 @@ app.listen(PORT, '0.0.0.0', () => {
       background: rgba(0, 10, 20, .8);
       font-family: 'Share Tech Mono', monospace;
       transition: all .3s;
+      z-index: 1000;
     }
 
     #hud-close:hover {
@@ -4502,16 +4503,16 @@ app.listen(PORT, '0.0.0.0', () => {
     .hib-col:last-child { border-right: none; }
     .hib-col-hdr {
       font-family: 'Orbitron', sans-serif;
-      font-size: 6.5px;
+      font-size: 9px;
       letter-spacing: 3px;
-      color: rgba(0,255,255,0.3);
+      color: rgba(0,255,255,0.75);
       margin-bottom: 8px;
       flex-shrink: 0;
       display: flex;
       align-items: center;
       gap: 6px;
       padding-bottom: 5px;
-      border-bottom: 1px solid rgba(0,255,255,0.05);
+      border-bottom: 1px solid rgba(0,255,255,0.15);
     }
     .hib-col-hdr::before {
       content: '';
@@ -4861,10 +4862,10 @@ app.listen(PORT, '0.0.0.0', () => {
     .hne-field { margin-bottom: 16px; }
     .hne-field-label {
       font-family: 'Orbitron', sans-serif;
-      font-size: 7px;
+      font-size: 10px;
       letter-spacing: 3px;
       color: var(--ne-color,#00ffff);
-      opacity: 0.5;
+      opacity: 0.85;
       margin-bottom: 7px;
       display: flex;
       align-items: center;
@@ -4928,10 +4929,10 @@ app.listen(PORT, '0.0.0.0', () => {
     }
     .hne-param-key {
       font-family: 'Share Tech Mono', monospace;
-      font-size: 7.5px;
+      font-size: 11px;
       letter-spacing: 1px;
       color: var(--ne-color,#00ffff);
-      opacity: 0.55;
+      opacity: 0.85;
       min-width: 70px;
       flex-shrink: 0;
       text-transform: uppercase;
@@ -5012,8 +5013,12 @@ app.listen(PORT, '0.0.0.0', () => {
   // Khi mở modal/quy trình: ẩn các phần giao diện chính, chỉ giữ topbar + statusbar
   var _hiddenUIState = {};
   window.hideMainUI = function() {
-    var ids = ['sidebar-right','metrics-bar','filter-wrap','search-wrap',
-               'universe-chatbox','uc-collapsed-icon','labels','shortcut-hint'];
+    var ids = [
+      'sidebar-right','metrics-bar','filter-wrap','search-wrap',
+      'universe-chatbox','uc-collapsed-icon','shortcut-hint',
+      'dharma-wheel-container','dharma-wheel-ground',
+      'micro-world-container','char-placeholder','character-speech-bubble'
+    ];
     ids.forEach(function(id) {
       var el = document.getElementById(id);
       if (el) {
@@ -5023,8 +5028,12 @@ app.listen(PORT, '0.0.0.0', () => {
     });
   };
   window.restoreMainUI = function() {
-    var ids = ['sidebar-right','metrics-bar','filter-wrap','search-wrap',
-               'universe-chatbox','uc-collapsed-icon','labels','shortcut-hint'];
+    var ids = [
+      'sidebar-right','metrics-bar','filter-wrap','search-wrap',
+      'universe-chatbox','uc-collapsed-icon','shortcut-hint',
+      'dharma-wheel-container','dharma-wheel-ground',
+      'micro-world-container','char-placeholder','character-speech-bubble'
+    ];
     ids.forEach(function(id) {
       var el = document.getElementById(id);
       if (el && _hiddenUIState.hasOwnProperty(id)) {
@@ -5032,6 +5041,36 @@ app.listen(PORT, '0.0.0.0', () => {
         delete _hiddenUIState[id];
       }
     });
+  };
+
+  // ── Parent HUD hide/restore (AR Layer principle) ──────────────────────────
+  // Khi HUD con mở từ HUD hành tinh → ẩn HUD hành tinh, chỉ để HUD con + vũ trụ
+  // WFM (editing workflow) KHÔNG bị ẩn khi mở panel con
+  window.hideParentHUD = function() {
+    var hud = document.getElementById('hud');
+    if (hud && hud.classList.contains('active')) {
+      hud.dataset.arHiddenByChild = '1';
+      hud.style.transition = 'opacity 0.2s';
+      hud.style.opacity = '0';
+      hud.style.pointerEvents = 'none';
+      setTimeout(function() {
+        if (hud.dataset.arHiddenByChild) hud.classList.remove('active');
+      }, 200);
+    }
+  };
+  window.restoreParentHUD = function() {
+    var hud = document.getElementById('hud');
+    if (hud && hud.dataset.arHiddenByChild === '1') {
+      delete hud.dataset.arHiddenByChild;
+      hud.classList.add('active');
+      hud.style.opacity = '0';
+      hud.style.pointerEvents = '';
+      setTimeout(function() {
+        hud.style.transition = 'opacity 0.25s';
+        hud.style.opacity = '1';
+        setTimeout(function() { hud.style.opacity = ''; hud.style.transition = ''; }, 260);
+      }, 30);
+    }
   };
 </script>
 
@@ -7221,6 +7260,7 @@ app.listen(PORT, '0.0.0.0', () => {
         cameraTargetLook = wp.clone();
 
         document.getElementById('hud').classList.add('active');
+        if (typeof window.hideMainUI === 'function') window.hideMainUI();
         document.getElementById('hud-agent-emoji').textContent = agent.emoji;
         document.getElementById('hud-agent-xname').textContent = agentName(agent);
         document.getElementById('hud-agent-xnote').textContent = '(' + agentNote(agent) + ')';
@@ -7800,6 +7840,7 @@ app.listen(PORT, '0.0.0.0', () => {
 
       function closeHUD() {
         document.getElementById('hud').classList.remove('active');
+        if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
         selectedPlanet = null;
         cameraTargetPos = new THREE.Vector3(0, 30, 120);
         cameraTargetLook = new THREE.Vector3(0, 0, 0);
@@ -10579,13 +10620,13 @@ app.listen(PORT, '0.0.0.0', () => {
       max-width: 300px;
       display: flex;
       flex-direction: column;
-      border-right: 1px solid rgba(255,255,255,0.05);
+      border-right: 1px solid rgba(255,255,255,0.1);
       overflow: hidden;
-      background: rgba(0,3,14,0.65);
+      background: rgba(0,6,22,0.92);
       transition: background 0.3s;
     }
     .wfm-col:last-child { border-right: none; }
-    .wfm-col:hover { background: rgba(0,5,20,0.8); }
+    .wfm-col:hover { background: rgba(0,10,34,0.96); }
 
     .wfm-col-hdr {
       display: flex;
@@ -10600,7 +10641,7 @@ app.listen(PORT, '0.0.0.0', () => {
     .wfm-col-info { flex: 1; min-width: 0; }
     .wfm-col-name {
       font-family: 'Orbitron', sans-serif;
-      font-size: 8px;
+      font-size: 11px;
       letter-spacing: 1.2px;
       font-weight: 700;
       white-space: nowrap;
@@ -10608,8 +10649,8 @@ app.listen(PORT, '0.0.0.0', () => {
       text-overflow: ellipsis;
     }
     .wfm-col-type {
-      font-size: 6.5px;
-      color: rgba(255,255,255,0.35);
+      font-size: 9px;
+      color: rgba(255,255,255,0.65);
       letter-spacing: 0.4px;
       margin-top: 1px;
       white-space: nowrap;
@@ -10636,10 +10677,10 @@ app.listen(PORT, '0.0.0.0', () => {
     .wfm-step-wrap { display: flex; flex-direction: column; }
 
     .wfm-step-node {
-      background: rgba(0,8,22,0.9);
+      background: rgba(0,12,32,0.95);
       border: 1px solid var(--nc, #00ffff);
       border-radius: 3px;
-      padding: 6px 7px 5px 11px;
+      padding: 8px 9px 7px 13px;
       position: relative;
       transition: box-shadow 0.3s;
     }
@@ -10661,14 +10702,14 @@ app.listen(PORT, '0.0.0.0', () => {
     }
     .wfm-step-num {
       font-family: 'Orbitron', sans-serif;
-      font-size: 6.5px;
+      font-size: 9px;
       color: var(--nc, #00ffff);
-      opacity: 0.45;
+      opacity: 0.7;
       flex-shrink: 0;
       min-width: 14px;
     }
     .wfm-step-name {
-      font-size: 8.5px;
+      font-size: 11px;
       letter-spacing: 1px;
       color: var(--nc, #00ffff);
       flex: 1;
@@ -10706,8 +10747,8 @@ app.listen(PORT, '0.0.0.0', () => {
     .wfm-del-btn:hover { color: #ff4444; }
 
     .wfm-step-desc {
-      font-size: 6.5px;
-      color: rgba(255,255,255,0.3);
+      font-size: 9px;
+      color: rgba(255,255,255,0.65);
       letter-spacing: 0.3px;
       padding-left: 19px;
       margin-bottom: 4px;
@@ -10720,11 +10761,11 @@ app.listen(PORT, '0.0.0.0', () => {
       margin-bottom: 4px;
     }
     .wfm-step-tag {
-      font-size: 6px;
+      font-size: 9px;
       color: var(--nc, #00ffff);
-      opacity: 0.5;
+      opacity: 0.8;
       border: 1px solid currentColor;
-      padding: 1px 4px;
+      padding: 1px 5px;
       border-radius: 2px;
       letter-spacing: 0.5px;
     }
@@ -10889,10 +10930,12 @@ app.listen(PORT, '0.0.0.0', () => {
       });
       wfmPage = 0;
       renderWFM();
+      if (typeof window.hideMainUI === 'function') window.hideMainUI();
       document.getElementById('wfm-modal').classList.add('show');
     }
 
     function closeWFM() {
+      if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
       document.getElementById('wfm-modal').classList.remove('show');
     }
 
@@ -11779,6 +11822,9 @@ app.listen(PORT, '0.0.0.0', () => {
       acRenderSidebarQuickQ(savedTopic, agent);
 
       modal.style.display = 'flex';
+      if (typeof window.hideMainUI === 'function') window.hideMainUI();
+      // AR layer: ẩn HUD hành tinh cha nếu đang mở → chỉ còn HUD con + vũ trụ
+      if (typeof window.hideParentHUD === 'function') window.hideParentHUD();
 
       // Load history
       const msgs = document.getElementById('ac-messages');
@@ -11852,6 +11898,9 @@ app.listen(PORT, '0.0.0.0', () => {
 
     function closeAgentChat() {
       document.getElementById('agent-chat-modal').style.display = 'none';
+      if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
+      // AR layer: khôi phục HUD hành tinh cha nếu đã bị ẩn
+      if (typeof window.restoreParentHUD === 'function') window.restoreParentHUD();
     }
 
     function acAddMsg(text, role, agent, save) {
@@ -12548,6 +12597,65 @@ app.listen(PORT, '0.0.0.0', () => {
   #as-body {
     padding: 14px 16px !important;
   }
+
+  /* ── KOCRAFT MODAL — iOS Safari / Mobile ── */
+  #kocraft-modal {
+    padding: 12px 0 max(12px,env(safe-area-inset-bottom)) 0 !important;
+    align-items: flex-start !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Header: compact, full-width */
+  #kocraft-modal > div:first-child {
+    max-width: 100% !important;
+    padding: 0 14px !important;
+    margin-bottom: 10px !important;
+  }
+  /* Tab nav: horizontal scrollable */
+  #kc-tab-nav {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none !important;
+    padding: 0 14px !important;
+    margin-bottom: 10px !important;
+    gap: 6px !important;
+    box-sizing: border-box !important;
+  }
+  #kc-tab-nav::-webkit-scrollbar { display: none !important; }
+  .kc-tab-btn {
+    flex-shrink: 0 !important;
+    font-size: 8px !important;
+    padding: 7px 10px !important;
+    letter-spacing: 1px !important;
+    white-space: nowrap !important;
+  }
+  /* Step indicator: compact */
+  #kc-step-indicator {
+    max-width: 100% !important;
+    padding: 0 14px !important;
+    margin-bottom: 12px !important;
+    box-sizing: border-box !important;
+  }
+  /* Content area: full-width, padded */
+  #kc-content-area {
+    max-width: 100% !important;
+    padding: 0 14px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    flex: none !important;
+  }
+  #kc-step-1, #kc-step-2, #kc-step-3, #kc-step-4 {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* KOCraft header title: smaller on mobile */
+  #kocraft-modal .kc-title,
+  #kocraft-modal [style*="font-size:18px"] {
+    font-size: 15px !important;
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -12961,6 +13069,7 @@ console.log('[KC] KOCraft script v3 loading...');
   function openKOCraftModal() {
     window._kocData = null;
     _currentStep = 1;
+    if (typeof window.hideMainUI === 'function') window.hideMainUI();
     let m = document.getElementById('kocraft-modal');
     if (!m) { console.error('[KC] #kocraft-modal NOT FOUND in DOM'); return; }
     // Move to body root to avoid stacking context traps
@@ -12995,13 +13104,6 @@ console.log('[KC] KOCraft script v3 loading...');
       if (tf) tf.classList.remove('active');
     }
     showKCStep(1);
-    // Ẩn nhân vật 3D và các element liên quan khi mở KOCRAFT AI
-    const charCanvas = document.getElementById('canvas');
-    if (charCanvas) charCanvas.style.visibility = 'hidden';
-    const speechBubble = document.getElementById('character-speech-bubble');
-    if (speechBubble) speechBubble.style.display = 'none';
-    const microWorld = document.getElementById('micro-world-container');
-    if (microWorld) microWorld.style.display = 'none';
     console.log('[KC] openKOCraftModal called — modal display:', m.style.display, 'z-index:', m.style.zIndex);
   }
   window.openKOCraftModal = openKOCraftModal;
@@ -13009,11 +13111,7 @@ console.log('[KC] KOCraft script v3 loading...');
   function closeKOCraftModal() {
     const m = document.getElementById('kocraft-modal');
     if (m) m.style.display = 'none';
-    // Hiện lại nhân vật 3D khi đóng KOCRAFT AI
-    const charCanvas = document.getElementById('canvas');
-    if (charCanvas) charCanvas.style.visibility = 'visible';
-    const microWorld = document.getElementById('micro-world-container');
-    if (microWorld) microWorld.style.display = '';
+    if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
   }
   window.closeKOCraftModal = closeKOCraftModal;
 
@@ -14656,7 +14754,7 @@ console.log('[KC] KOCraft script v3 loading...');
 #kc-wf-status.done { color:#00ff88; border-color:rgba(0,255,136,0.25); background:rgba(0,255,136,0.04); }
 </style>
 
-<div id="kocraft-modal" style="display:none;position:fixed;inset:0;z-index:199999;background:rgba(0,2,10,0.97);backdrop-filter:blur(16px);flex-direction:column;align-items:center;justify-content:flex-start;padding:20px;">
+<div id="kocraft-modal" style="display:none;position:fixed;inset:0;z-index:199999;background:rgba(0,2,10,0.97);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);flex-direction:column;align-items:center;justify-content:flex-start;padding:20px;padding-bottom:max(20px,env(safe-area-inset-bottom));">
 
   <!-- HEADER -->
   <div style="width:100%;max-width:960px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-shrink:0;">
@@ -14671,7 +14769,7 @@ console.log('[KC] KOCraft script v3 loading...');
   </div>
 
   <!-- TAB NAV -->
-  <div style="width:100%;max-width:960px;display:flex;gap:8px;margin-bottom:16px;flex-shrink:0;">
+  <div id="kc-tab-nav" style="width:100%;max-width:960px;display:flex;gap:8px;margin-bottom:16px;flex-shrink:0;">
     <button class="kc-tab-btn active" id="kc-tab-wizard" onclick="kcShowTab('wizard')">&#127872; TẠO KOC/KOL</button>
     <button class="kc-tab-btn" id="kc-tab-workflow" onclick="kcShowTab('workflow')">&#9889; WORKFLOW PIPELINE</button>
     <button class="kc-tab-btn" id="kc-tab-calendar" onclick="kcShowTab('calendar')">&#128197; LỊCH CONTENT</button>
