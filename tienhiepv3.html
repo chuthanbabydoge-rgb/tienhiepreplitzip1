@@ -3668,7 +3668,8 @@
       'sidebar-right','metrics-bar','filter-wrap','search-wrap',
       'universe-chatbox','uc-collapsed-icon','shortcut-hint',
       'dharma-wheel-container','dharma-wheel-ground',
-      'micro-world-container','char-placeholder','character-speech-bubble'
+      'micro-world-container','char-placeholder','character-speech-bubble',
+      'universe-mic-btn'
     ];
     ids.forEach(function(id) {
       var el = document.getElementById(id);
@@ -3683,7 +3684,8 @@
       'sidebar-right','metrics-bar','filter-wrap','search-wrap',
       'universe-chatbox','uc-collapsed-icon','shortcut-hint',
       'dharma-wheel-container','dharma-wheel-ground',
-      'micro-world-container','char-placeholder','character-speech-bubble'
+      'micro-world-container','char-placeholder','character-speech-bubble',
+      'universe-mic-btn'
     ];
     ids.forEach(function(id) {
       var el = document.getElementById(id);
@@ -3922,8 +3924,72 @@
     <div id="statusbar">
       <div id="log-track"></div>
     </div>
-    <!-- UNIVERSE CHATBOX -->
+    <!-- UNIVERSE MIC BUTTON + CHATBOX -->
     <style>
+      /* ── UNIVERSE MIC FLOATING BUTTON ── */
+      #universe-mic-btn {
+        position: fixed;
+        bottom: 80px;
+        right: 16px;
+        width: 54px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        cursor: pointer;
+        pointer-events: auto;
+        z-index: 15;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #univ-mic-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: rgba(0,5,18,0.88);
+        border: 1.5px solid rgba(0,255,255,0.3);
+        box-shadow: 0 0 14px rgba(0,255,255,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        position: relative;
+        transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+      }
+      #universe-mic-btn:hover #univ-mic-icon {
+        border-color: rgba(0,255,255,0.7);
+        box-shadow: 0 0 22px rgba(0,255,255,0.4);
+      }
+      #universe-mic-btn.listening #univ-mic-icon {
+        background: rgba(0,255,255,0.14);
+        border-color: #00ffff;
+        box-shadow: 0 0 28px rgba(0,255,255,0.6), 0 0 60px rgba(0,255,255,0.2);
+      }
+      #univ-mic-ring {
+        position: absolute;
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        border: 2px solid rgba(0,255,255,0.55);
+        pointer-events: none;
+        opacity: 0;
+      }
+      #universe-mic-btn.listening #univ-mic-ring {
+        opacity: 1;
+        animation: voiceRingPulse 1.1s ease-out infinite;
+      }
+      #univ-mic-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 7px;
+        letter-spacing: 2px;
+        color: rgba(0,255,255,0.35);
+        transition: color 0.2s;
+      }
+      #universe-mic-btn.listening #univ-mic-label {
+        color: #00ffff;
+        text-shadow: 0 0 8px rgba(0,255,255,0.6);
+      }
+
       #universe-chatbox {
         position: absolute;
         bottom: 80px;
@@ -4152,6 +4218,13 @@
     </div>
 
     <!-- UNIVERSE CHATBOX COLLAPSED ICON -->
+    <!-- UNIVERSE VOICE MIC BUTTON (floating, always visible) -->
+    <div id="universe-mic-btn" title="Voice command — nói tên agent để bay tới">
+      <div id="univ-mic-icon">🎙️</div>
+      <div id="univ-mic-ring"></div>
+      <div id="univ-mic-label">VOICE</div>
+    </div>
+
     <div id="uc-collapsed-icon"
       onclick="ucToggleCollapse()"
       style="display:none;position:absolute;bottom:80px;left:20px;width:44px;height:44px;background:rgba(0,5,18,0.93);border:2px solid #00ffff;border-radius:50%;box-shadow:0 0 18px rgba(0,255,255,0.4);z-index:11;cursor:pointer;pointer-events:auto;align-items:center;justify-content:center;font-size:20px;transition:box-shadow 0.2s;"
@@ -6096,9 +6169,98 @@
         let _rec = null;
         let _listening = false;
         let _transcriptTimer = null;
+        let _agentIndex = null;
 
-        const voiceBtn   = document.getElementById('hud-voice-btn');
-        let transcriptEl = null;
+        const voiceBtn      = document.getElementById('hud-voice-btn');
+        const univMicBtn    = document.getElementById('universe-mic-btn');
+        let transcriptEl    = null;
+
+        /* ── Normalize Vietnamese → ASCII lowercase for fuzzy match ── */
+        function _norm(s) {
+          return (s || '').normalize('NFD')
+            .replace(/[\u0300-\u036f]/g,'')
+            .replace(/[đĐ]/gi, d => d === 'đ' ? 'd' : 'D')
+            .toLowerCase().trim();
+        }
+
+        /* ── Build agent keyword index (lazy, once) ── */
+        function _buildAgentIndex() {
+          return AI_AGENTS.map(a => {
+            const nn = _norm(a.name);
+            const noAI = nn.replace(/\s*ai\s*$/,'');
+            const words = nn.split(/\s+/).filter(w => w.length > 2);
+            return {
+              id: a.id, emoji: a.emoji, name: a.name,
+              keys: [...new Set([nn, noAI, ...words, _norm(a.type)])]
+                    .filter(k => k.length >= 3)
+            };
+          });
+        }
+
+        /* ── Try navigation command ── */
+        function _tryNavigate(transcript) {
+          const raw = _norm(transcript);
+
+          // Strip navigation prefixes
+          const PREFIXES = ['mo ','vao ','kich hoat ','chon ','tim ','xem ','open ','go to ',
+                            'activate ','select ','navigate to ','bat ','khoi dong '];
+          let target = raw;
+          for (const p of PREFIXES) {
+            const idx = raw.indexOf(p);
+            if (idx !== -1) { target = raw.slice(idx + p.length).trim(); break; }
+          }
+
+          // ── Special shortcuts ──────────────────────────────────────
+          if (/leaderboard|bang xep hang|xep hang/.test(target)) {
+            if (typeof openLeaderboard === 'function') openLeaderboard();
+            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → Bảng xếp hạng', 'info');
+            return true;
+          }
+          if (/kocraft|ko craft|koc kol/.test(target)) {
+            if (typeof window.openKOCraftModal === 'function') window.openKOCraftModal();
+            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → KOCraft AI', 'info');
+            return true;
+          }
+          if (/thien co cac|agent chat|truyen am/.test(target)) {
+            const firstAgent = AI_AGENTS[0];
+            if (firstAgent && typeof window.openAgentChat === 'function') window.openAgentChat(firstAgent);
+            if (typeof showToast === 'function') showToast('🎙️ Mở Thiên Cơ Các', 'info');
+            return true;
+          }
+          if (/chin coi|nine realm|cuu gioi/.test(target)) {
+            if (typeof window.openNineRealms === 'function') window.openNineRealms();
+            if (typeof showToast === 'function') showToast('🎙️ Mở Chín Cõi', 'info');
+            return true;
+          }
+
+          // ── Agent name matching ────────────────────────────────────
+          if (!_agentIndex) _agentIndex = _buildAgentIndex();
+          if (target.length < 3) return false;
+
+          let best = null, bestScore = 0;
+          for (const a of _agentIndex) {
+            for (const key of a.keys) {
+              if (target.includes(key) || key.includes(target)) {
+                const score = Math.min(key.length, target.length);
+                if (score > bestScore) { bestScore = score; best = a; }
+              }
+            }
+          }
+
+          if (best && bestScore >= 4) {
+            _showTranscript(transcript);
+            if (typeof showToast === 'function')
+              showToast('🎙️ ' + best.emoji + ' ' + best.name + ' — đang bay tới...', 'success');
+            setTimeout(() => {
+              if (window._planetMeshes) {
+                const pm = window._planetMeshes.find(p => p.agent.id === best.id);
+                if (pm && window._openHUD) window._openHUD(pm);
+              }
+            }, 300);
+            return true;
+          }
+          return false;
+        }
 
         function _getOrCreateTranscript() {
           if (!transcriptEl) {
@@ -6154,9 +6316,9 @@
               for (let i = e.resultIndex; i < e.results.length; i++) {
                 const transcript = e.results[i][0].transcript;
                 if (e.results[i].isFinal) {
-                  _tryClose(transcript);
+                  // Thử đóng trước, nếu không khớp thì thử điều hướng
+                  if (!_tryClose(transcript)) _tryNavigate(transcript);
                 } else {
-                  // Hiện interim transcript nhỏ
                   const el = _getOrCreateTranscript();
                   el.textContent = '🎙 ' + transcript;
                   el.classList.add('show');
@@ -6197,23 +6359,37 @@
           if (el) el.classList.remove('show');
         }
 
-        // Toggle bằng nút
-        if (voiceBtn) {
-          voiceBtn.addEventListener('click', function() {
-            if (_listening) {
-              _stopListening();
-              if (typeof showToast === 'function') showToast('🔇 Voice command đã tắt', 'info');
-            } else {
-              _startListening();
-              if (typeof showToast === 'function') showToast('🎙️ Voice command bật — nói "đóng" hoặc "close"', 'success');
-            }
-          });
+        /* ── Sync visual state of both mic buttons ── */
+        function _syncMicUI() {
+          if (voiceBtn)   voiceBtn.classList.toggle('listening', _listening);
+          if (univMicBtn) univMicBtn.classList.toggle('listening', _listening);
         }
+
+        /* ── Toggle helper (shared by both buttons) ── */
+        function _toggleVoice() {
+          if (_listening) {
+            _stopListening();
+            if (typeof showToast === 'function') showToast('🔇 Voice command đã tắt', 'info');
+          } else {
+            _startListening();
+            if (typeof showToast === 'function')
+              showToast('🎙️ Đang nghe — nói tên agent, "đóng", "leaderboard"…', 'success');
+          }
+        }
+
+        if (voiceBtn)   voiceBtn.addEventListener('click',   _toggleVoice);
+        if (univMicBtn) univMicBtn.addEventListener('click', _toggleVoice);
+
+        // Hook _syncMicUI into start/stop
+        const _origStart = _startListening, _origStop = _stopListening;
+        _startListening = function() { _origStart(); _syncMicUI(); };
+        _stopListening  = function() { _origStop();  _syncMicUI(); };
 
         // Tự động bật voice khi HUD mở (lần đầu), tắt khi HUD đóng
         window._voiceStartListening = _startListening;
         window._voiceStopListening  = _stopListening;
         window._voiceIsListening    = function() { return _listening; };
+        window._voiceToggle         = _toggleVoice;
       })();
       // ──────────────────────────────────────────────────────────────────
 

@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **16:47:31 19/5/2026**
+> Cập nhật lần cuối: **23:18:15 19/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,381 dòng, 61.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,197 dòng, 1.31 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,767 dòng, 1.33 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,381 | 61.2 KB |
-| `tienhiepv3.html` | 15,197 | 1.31 MB |
+| `tienhiepv3.html` | 15,767 | 1.33 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **20,299** | **1.53 MB** |
+| **TỔNG** | **20,869** | **1.55 MB** |
 
 ---
 
@@ -1483,7 +1483,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 15,197 dòng · 1.31 MB
+> 15,767 dòng · 1.33 MB
 
 ```html
 <!DOCTYPE html>
@@ -2542,6 +2542,145 @@ app.listen(PORT, '0.0.0.0', () => {
       background: #00ffff;
       color: #000;
     }
+
+    /* ── HUD SWIPE HINT (right edge) ── */
+    /* ── VOICE COMMAND BUTTON (bottom-left of HUD) ── */
+    #hud-voice-btn {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      width: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      pointer-events: all;
+      z-index: 1001;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #hud-voice-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(0,10,20,0.85);
+      border: 1.5px solid rgba(0,255,255,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      position: relative;
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    #hud-voice-btn:hover #hud-voice-icon {
+      border-color: rgba(0,255,255,0.6);
+      box-shadow: 0 0 14px rgba(0,255,255,0.3);
+    }
+    #hud-voice-btn.listening #hud-voice-icon {
+      background: rgba(0,255,255,0.12);
+      border-color: #00ffff;
+      box-shadow: 0 0 20px rgba(0,255,255,0.5);
+    }
+    #hud-voice-ring {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid rgba(0,255,255,0.5);
+      pointer-events: none;
+      opacity: 0;
+      animation: none;
+    }
+    #hud-voice-btn.listening #hud-voice-ring {
+      opacity: 1;
+      animation: voiceRingPulse 1.2s ease-out infinite;
+    }
+    @keyframes voiceRingPulse {
+      0%   { transform: scale(1);    opacity: 0.7; }
+      100% { transform: scale(2.2);  opacity: 0; }
+    }
+    #hud-voice-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 7px;
+      letter-spacing: 2px;
+      color: rgba(0,255,255,0.4);
+      transition: color 0.2s;
+    }
+    #hud-voice-btn.listening #hud-voice-label {
+      color: #00ffff;
+    }
+    /* Toast for voice transcript */
+    #hud-voice-transcript {
+      position: absolute;
+      bottom: 76px;
+      left: 14px;
+      max-width: 200px;
+      background: rgba(0,255,255,0.08);
+      border: 1px solid rgba(0,255,255,0.2);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: rgba(0,255,255,0.8);
+      letter-spacing: 1px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 1002;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #hud-voice-transcript.show { opacity: 1; }
+
+    /* ── HUD SWIPE HINT (right edge) ── */
+    #hud-swipe-hint {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 80px;
+      border-radius: 4px 0 0 4px;
+      background: linear-gradient(180deg, transparent, #00ffff88, transparent);
+      box-shadow: 0 0 12px #00ffff55;
+      pointer-events: none;
+      z-index: 1001;
+      transition: opacity 0.3s;
+      animation: swipeHintPulse 2.5s ease-in-out infinite;
+    }
+    @keyframes swipeHintPulse {
+      0%, 100% { opacity: 0.3; width: 4px; }
+      50%       { opacity: 0.85; width: 6px; }
+    }
+
+    /* Swipe drag overlay (shown while dragging) */
+    #hud-swipe-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1500;
+      transition: background 0.1s;
+    }
+    #hud-swipe-overlay.dragging {
+      background: rgba(0, 255, 255, 0.03);
+    }
+
+    /* Swipe progress arc shown at edge while swiping */
+    #hud-swipe-arc {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 48px;
+      height: 48px;
+      pointer-events: none;
+      z-index: 1502;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    #hud-swipe-arc.visible { opacity: 1; }
 
     #hud-content {
       position: relative;
@@ -5715,6 +5854,20 @@ app.listen(PORT, '0.0.0.0', () => {
   <div id="hud">
     <div id="hud-backdrop"></div>
     <button id="hud-close">✕</button>
+    <div id="hud-swipe-hint"></div>
+    <div id="hud-swipe-overlay"></div>
+    <div id="hud-voice-btn" title="Voice command (nhấn để bật/tắt)">
+      <div id="hud-voice-icon">🎙️</div>
+      <div id="hud-voice-ring"></div>
+      <div id="hud-voice-label">VOICE</div>
+    </div>
+    <svg id="hud-swipe-arc" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+      <circle id="hud-swipe-arc-bg" cx="24" cy="24" r="20" fill="none" stroke="rgba(0,255,255,0.15)" stroke-width="3"/>
+      <circle id="hud-swipe-arc-fill" cx="24" cy="24" r="20" fill="none" stroke="#00ffff" stroke-width="3"
+        stroke-dasharray="125.6" stroke-dashoffset="125.6" stroke-linecap="round"
+        transform="rotate(-90 24 24)" style="transition:stroke-dashoffset 0.08s linear;"/>
+      <text x="24" y="29" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="11" fill="#00ffff" opacity="0.9">✕</text>
+    </svg>
     <div id="hud-content">
 
       <!-- ══ SPACE NODE AREA (top ~62%) ══ -->
@@ -7237,6 +7390,410 @@ app.listen(PORT, '0.0.0.0', () => {
       document.getElementById('hud-close').addEventListener('click', closeHUD);
       document.getElementById('hud-backdrop').addEventListener('click', closeHUD);
 
+      // ── EDGE SWIPE TO CLOSE HUD ────────────────────────────────────────
+      (function() {
+        const SWIPE_THRESHOLD   = 80;   // px to trigger close
+        const EDGE_ZONE         = 44;   // px from right/bottom edge to start
+        const ARC_CIRCUMFERENCE = 125.6; // 2π×20
+
+        let _sx = 0, _sy = 0, _active = false, _edgeTrigger = false;
+        const hudEl      = document.getElementById('hud');
+        const overlay    = document.getElementById('hud-swipe-overlay');
+        const arcEl      = document.getElementById('hud-swipe-arc');
+        const arcFill    = document.getElementById('hud-swipe-arc-fill');
+        const hintEl     = document.getElementById('hud-swipe-hint');
+
+        function _arcProgress(ratio) {
+          const offset = ARC_CIRCUMFERENCE * (1 - Math.min(ratio, 1));
+          arcFill.setAttribute('stroke-dashoffset', offset.toFixed(1));
+          // Color shifts cyan → red as ratio increases
+          const r = Math.round(0 + 255 * Math.min(ratio * 1.5, 1));
+          const g = Math.round(255 * (1 - Math.min(ratio * 1.2, 1)));
+          arcFill.setAttribute('stroke', `rgb(${r},${g},255)`);
+        }
+
+        function _reset() {
+          _active = false; _edgeTrigger = false;
+          if (overlay) overlay.classList.remove('dragging');
+          if (arcEl)   { arcEl.classList.remove('visible'); _arcProgress(0); }
+          if (hintEl)  hintEl.style.opacity = '';
+        }
+
+        hudEl.addEventListener('touchstart', function(e) {
+          if (!hudEl.classList.contains('active')) return;
+          const t = e.touches[0];
+          _sx = t.clientX; _sy = t.clientY;
+          // Activate only from right-edge zone OR bottom-edge zone
+          const fromRight  = window.innerWidth  - _sx < EDGE_ZONE;
+          const fromBottom = window.innerHeight - _sy < EDGE_ZONE;
+          _edgeTrigger = fromRight || fromBottom;
+          _active = true;
+          if (_edgeTrigger) {
+            if (overlay) overlay.classList.add('dragging');
+            if (hintEl)  hintEl.style.opacity = '0';
+          }
+        }, { passive: true });
+
+        hudEl.addEventListener('touchmove', function(e) {
+          if (!_active || !_edgeTrigger) return;
+          const t = e.touches[0];
+          const dx = _sx - t.clientX;   // positive = swiped left
+          const dy = _sy - t.clientY;   // positive = swiped up
+
+          // Horizontal: swipe left from right edge
+          // Vertical:   swipe up from bottom edge
+          const fromRight  = window.innerWidth  - _sx < EDGE_ZONE;
+          const dist = fromRight ? Math.max(dx, 0) : Math.max(dy, 0);
+          const ratio = dist / SWIPE_THRESHOLD;
+
+          _arcProgress(ratio);
+          if (arcEl) {
+            arcEl.classList.toggle('visible', dist > 10);
+            // Position arc near finger
+            if (fromRight) {
+              arcEl.style.right  = '8px';
+              arcEl.style.top    = (t.clientY - 24) + 'px';
+              arcEl.style.transform = '';
+            } else {
+              arcEl.style.right  = (t.clientX - 24) + 'px';
+              arcEl.style.bottom = '8px';
+              arcEl.style.top    = 'auto';
+              arcEl.style.transform = '';
+            }
+          }
+        }, { passive: true });
+
+        hudEl.addEventListener('touchend', function(e) {
+          if (!_active || !_edgeTrigger) { _reset(); return; }
+          const t = e.changedTouches[0];
+          const dx = _sx - t.clientX;
+          const dy = _sy - t.clientY;
+          const fromRight = window.innerWidth - _sx < EDGE_ZONE;
+          const dist = fromRight ? Math.max(dx, 0) : Math.max(dy, 0);
+
+          if (dist >= SWIPE_THRESHOLD) {
+            // Trigger close with a flash animation on the arc
+            if (arcEl) { arcEl.style.transition = 'opacity 0.25s'; arcEl.style.opacity = '0'; }
+            setTimeout(closeHUD, 80);
+          }
+          _reset();
+        }, { passive: true });
+
+        hudEl.addEventListener('touchcancel', _reset, { passive: true });
+      })();
+      // ──────────────────────────────────────────────────────────────────
+
+      // ── SHAKE TO CLOSE HUD / MODAL ─────────────────────────────────────
+      (function() {
+        const SHAKE_THRESHOLD  = 22;   // m/s² — cần lắc mạnh, không bị trigger ngẫu nhiên
+        const SHAKE_COOLDOWN   = 1200; // ms — tránh trigger liên tiếp
+        const SHAKE_COUNT_REQ  = 2;    // số lần vượt ngưỡng liên tiếp trong 600ms
+
+        let _lastShakeTs  = 0;
+        let _lastAccel    = { x: 0, y: 0, z: 0 };
+        let _shakeBuffer  = []; // timestamps of spikes
+        let _permAsked    = false;
+
+        // Flash overlay (xanh cyan nhấp một cái khi shake trigger)
+        function _flashClose() {
+          const fl = document.createElement('div');
+          fl.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,255,255,0.12);pointer-events:none;transition:opacity 0.35s;';
+          document.body.appendChild(fl);
+          requestAnimationFrame(() => { fl.style.opacity = '0'; setTimeout(() => fl.remove(), 400); });
+        }
+
+        function _onMotion(e) {
+          const accel = e.accelerationIncludingGravity || e.acceleration;
+          if (!accel) return;
+
+          const now = Date.now();
+          const dx = Math.abs((accel.x || 0) - _lastAccel.x);
+          const dy = Math.abs((accel.y || 0) - _lastAccel.y);
+          const dz = Math.abs((accel.z || 0) - _lastAccel.z);
+          _lastAccel = { x: accel.x || 0, y: accel.y || 0, z: accel.z || 0 };
+
+          const spike = Math.max(dx, dy, dz);
+          if (spike > SHAKE_THRESHOLD) {
+            _shakeBuffer.push(now);
+            // Giữ chỉ các spike trong 700ms gần nhất
+            _shakeBuffer = _shakeBuffer.filter(t => now - t < 700);
+
+            if (_shakeBuffer.length >= SHAKE_COUNT_REQ && now - _lastShakeTs > SHAKE_COOLDOWN) {
+              _lastShakeTs = now;
+              _shakeBuffer = [];
+
+              const hud = document.getElementById('hud');
+              const agentChat = document.getElementById('agent-chat-modal');
+              const kocraft   = document.getElementById('kocraft-modal');
+
+              // Đóng modal đang mở (theo thứ tự ưu tiên: agent chat → kocraft → HUD)
+              if (agentChat && agentChat.style.display !== 'none') {
+                _flashClose();
+                if (typeof window.closeAgentChat === 'function') window.closeAgentChat();
+                else agentChat.style.display = 'none';
+                if (typeof showToast === 'function') showToast('📳 Lắc → đóng Thiên Cơ Các', 'info');
+              } else if (kocraft && kocraft.style.display !== 'none') {
+                _flashClose();
+                if (typeof window.closeKOCraftModal === 'function') window.closeKOCraftModal();
+                else kocraft.style.display = 'none';
+                if (typeof showToast === 'function') showToast('📳 Lắc → đóng KOCraft AI', 'info');
+              } else if (hud && hud.classList.contains('active')) {
+                _flashClose();
+                if (typeof closeHUD === 'function') closeHUD();
+                if (typeof showToast === 'function') showToast('📳 Lắc → đóng giao diện', 'info');
+              }
+            }
+          }
+        }
+
+        // iOS 13+ cần xin quyền DeviceMotion
+        window._requestShakePermission = function() {
+          if (_permAsked) return;
+          _permAsked = true;
+          if (typeof DeviceMotionEvent !== 'undefined' &&
+              typeof DeviceMotionEvent.requestPermission === 'function') {
+            DeviceMotionEvent.requestPermission().then(state => {
+              if (state === 'granted') {
+                window.addEventListener('devicemotion', _onMotion, { passive: true });
+                if (typeof showToast === 'function') showToast('📳 Đã bật lắc để đóng màn hình', 'success');
+              }
+            }).catch(() => {});
+          } else {
+            // Android / non-iOS — không cần xin quyền
+            window.addEventListener('devicemotion', _onMotion, { passive: true });
+          }
+        };
+
+        // Tự động kích hoạt trên Android; trên iOS cần user gesture → gọi trong openHUD
+        if (typeof DeviceMotionEvent === 'undefined' ||
+            typeof DeviceMotionEvent.requestPermission !== 'function') {
+          window.addEventListener('devicemotion', _onMotion, { passive: true });
+        }
+      })();
+      // ──────────────────────────────────────────────────────────────────
+
+      // ── VOICE COMMAND ENGINE ───────────────────────────────────────────
+      (function() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) return; // browser không hỗ trợ
+
+        const CLOSE_WORDS_VI = ['đóng','thoát','đóng lại','về','trở về','dừng','tắt','tắt đi','lui','back'];
+        const CLOSE_WORDS_EN = ['close','exit','back','stop','dismiss','go back','shut','off'];
+        const ALL_CLOSE = [...CLOSE_WORDS_VI, ...CLOSE_WORDS_EN];
+
+        let _rec = null;
+        let _listening = false;
+        let _transcriptTimer = null;
+        let _agentIndex = null;
+
+        const voiceBtn      = document.getElementById('hud-voice-btn');
+        const univMicBtn    = document.getElementById('universe-mic-btn');
+        let transcriptEl    = null;
+
+        /* ── Normalize Vietnamese → ASCII lowercase for fuzzy match ── */
+        function _norm(s) {
+          return (s || '').normalize('NFD')
+            .replace(/[\u0300-\u036f]/g,'')
+            .replace(/[đĐ]/gi, d => d === 'đ' ? 'd' : 'D')
+            .toLowerCase().trim();
+        }
+
+        /* ── Build agent keyword index (lazy, once) ── */
+        function _buildAgentIndex() {
+          return AI_AGENTS.map(a => {
+            const nn = _norm(a.name);
+            const noAI = nn.replace(/\s*ai\s*$/,'');
+            const words = nn.split(/\s+/).filter(w => w.length > 2);
+            return {
+              id: a.id, emoji: a.emoji, name: a.name,
+              keys: [...new Set([nn, noAI, ...words, _norm(a.type)])]
+                    .filter(k => k.length >= 3)
+            };
+          });
+        }
+
+        /* ── Try navigation command ── */
+        function _tryNavigate(transcript) {
+          const raw = _norm(transcript);
+
+          // Strip navigation prefixes
+          const PREFIXES = ['mo ','vao ','kich hoat ','chon ','tim ','xem ','open ','go to ',
+                            'activate ','select ','navigate to ','bat ','khoi dong '];
+          let target = raw;
+          for (const p of PREFIXES) {
+            const idx = raw.indexOf(p);
+            if (idx !== -1) { target = raw.slice(idx + p.length).trim(); break; }
+          }
+
+          // ── Special shortcuts ──────────────────────────────────────
+          if (/leaderboard|bang xep hang|xep hang/.test(target)) {
+            if (typeof openLeaderboard === 'function') openLeaderboard();
+            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → Bảng xếp hạng', 'info');
+            return true;
+          }
+          if (/kocraft|ko craft|koc kol/.test(target)) {
+            if (typeof window.openKOCraftModal === 'function') window.openKOCraftModal();
+            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → KOCraft AI', 'info');
+            return true;
+          }
+          if (/thien co cac|agent chat|truyen am/.test(target)) {
+            const firstAgent = AI_AGENTS[0];
+            if (firstAgent && typeof window.openAgentChat === 'function') window.openAgentChat(firstAgent);
+            if (typeof showToast === 'function') showToast('🎙️ Mở Thiên Cơ Các', 'info');
+            return true;
+          }
+          if (/chin coi|nine realm|cuu gioi/.test(target)) {
+            if (typeof window.openNineRealms === 'function') window.openNineRealms();
+            if (typeof showToast === 'function') showToast('🎙️ Mở Chín Cõi', 'info');
+            return true;
+          }
+
+          // ── Agent name matching ────────────────────────────────────
+          if (!_agentIndex) _agentIndex = _buildAgentIndex();
+          if (target.length < 3) return false;
+
+          let best = null, bestScore = 0;
+          for (const a of _agentIndex) {
+            for (const key of a.keys) {
+              if (target.includes(key) || key.includes(target)) {
+                const score = Math.min(key.length, target.length);
+                if (score > bestScore) { bestScore = score; best = a; }
+              }
+            }
+          }
+
+          if (best && bestScore >= 4) {
+            _showTranscript(transcript);
+            if (typeof showToast === 'function')
+              showToast('🎙️ ' + best.emoji + ' ' + best.name + ' — đang bay tới...', 'success');
+            setTimeout(() => {
+              if (window._planetMeshes) {
+                const pm = window._planetMeshes.find(p => p.agent.id === best.id);
+                if (pm && window._openHUD) window._openHUD(pm);
+              }
+            }, 300);
+            return true;
+          }
+          return false;
+        }
+
+        function _getOrCreateTranscript() {
+          if (!transcriptEl) {
+            transcriptEl = document.createElement('div');
+            transcriptEl.id = 'hud-voice-transcript';
+            document.getElementById('hud').appendChild(transcriptEl);
+          }
+          return transcriptEl;
+        }
+
+        function _showTranscript(text) {
+          const el = _getOrCreateTranscript();
+          el.textContent = '🎙 "' + text + '"';
+          el.classList.add('show');
+          clearTimeout(_transcriptTimer);
+          _transcriptTimer = setTimeout(() => el.classList.remove('show'), 2500);
+        }
+
+        function _tryClose(transcript) {
+          const t = transcript.toLowerCase().trim();
+          const matched = ALL_CLOSE.some(w => t.includes(w));
+          if (!matched) return false;
+
+          _showTranscript(transcript);
+
+          const hud       = document.getElementById('hud');
+          const agentChat = document.getElementById('agent-chat-modal');
+          const kocraft   = document.getElementById('kocraft-modal');
+
+          if (agentChat && agentChat.style.display !== 'none') {
+            if (typeof window.closeAgentChat === 'function') window.closeAgentChat();
+            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → đóng Thiên Cơ Các', 'info');
+          } else if (kocraft && kocraft.style.display !== 'none') {
+            if (typeof window.closeKOCraftModal === 'function') window.closeKOCraftModal();
+            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → đóng KOCraft AI', 'info');
+          } else if (hud && hud.classList.contains('active')) {
+            if (typeof closeHUD === 'function') closeHUD();
+            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → đóng giao diện', 'info');
+          }
+          return true;
+        }
+
+        function _startListening() {
+          if (_listening) return;
+          try {
+            _rec = new SR();
+            _rec.continuous    = true;
+            _rec.interimResults = true;
+            _rec.lang          = 'vi-VN';
+            _rec.maxAlternatives = 1;
+
+            _rec.onresult = function(e) {
+              for (let i = e.resultIndex; i < e.results.length; i++) {
+                const transcript = e.results[i][0].transcript;
+                if (e.results[i].isFinal) {
+                  _tryClose(transcript);
+                } else {
+                  // Hiện interim transcript nhỏ
+                  const el = _getOrCreateTranscript();
+                  el.textContent = '🎙 ' + transcript;
+                  el.classList.add('show');
+                }
+              }
+            };
+
+            _rec.onerror = function(e) {
+              if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                _stopListening();
+                if (typeof showToast === 'function') showToast('🚫 Cần cho phép microphone để dùng voice', 'warn');
+              } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
+                // Tự khởi động lại nếu lỗi nhỏ
+                setTimeout(() => { if (_listening) _rec.start(); }, 500);
+              }
+            };
+
+            _rec.onend = function() {
+              if (_listening) {
+                // Tự restart để duy trì liên tục
+                try { _rec.start(); } catch(err) {}
+              }
+            };
+
+            _rec.start();
+            _listening = true;
+            if (voiceBtn) voiceBtn.classList.add('listening');
+          } catch(err) {
+            _listening = false;
+          }
+        }
+
+        function _stopListening() {
+          _listening = false;
+          if (_rec) { try { _rec.stop(); } catch(e) {} _rec = null; }
+          if (voiceBtn) voiceBtn.classList.remove('listening');
+          const el = _getOrCreateTranscript();
+          if (el) el.classList.remove('show');
+        }
+
+        // Toggle bằng nút
+        if (voiceBtn) {
+          voiceBtn.addEventListener('click', function() {
+            if (_listening) {
+              _stopListening();
+              if (typeof showToast === 'function') showToast('🔇 Voice command đã tắt', 'info');
+            } else {
+              _startListening();
+              if (typeof showToast === 'function') showToast('🎙️ Voice command bật — nói "đóng" hoặc "close"', 'success');
+            }
+          });
+        }
+
+        // Tự động bật voice khi HUD mở (lần đầu), tắt khi HUD đóng
+        window._voiceStartListening = _startListening;
+        window._voiceStopListening  = _stopListening;
+        window._voiceIsListening    = function() { return _listening; };
+      })();
+      // ──────────────────────────────────────────────────────────────────
+
       function openHUD(pm) {
         selectedPlanet = pm;
         window._openHUDPm = pm;
@@ -7261,6 +7818,12 @@ app.listen(PORT, '0.0.0.0', () => {
 
         document.getElementById('hud').classList.add('active');
         if (typeof window.hideMainUI === 'function') window.hideMainUI();
+        if (typeof window._requestShakePermission === 'function') window._requestShakePermission();
+        if (typeof window._voiceStartListening === 'function') window._voiceStartListening();
+        const _hudTb = document.getElementById('topbar');
+        const _hudSb = document.getElementById('statusbar');
+        if (_hudTb) { _hudTb.style.transition = 'opacity 0.2s'; _hudTb.style.opacity = '0'; setTimeout(() => { _hudTb.style.display = 'none'; }, 200); }
+        if (_hudSb) { _hudSb.style.transition = 'opacity 0.2s'; _hudSb.style.opacity = '0'; setTimeout(() => { _hudSb.style.display = 'none'; }, 200); }
         document.getElementById('hud-agent-emoji').textContent = agent.emoji;
         document.getElementById('hud-agent-xname').textContent = agentName(agent);
         document.getElementById('hud-agent-xnote').textContent = '(' + agentNote(agent) + ')';
@@ -7839,12 +8402,19 @@ app.listen(PORT, '0.0.0.0', () => {
       }
 
       function closeHUD() {
+        closeNodeEdit();
         document.getElementById('hud').classList.remove('active');
+        if (typeof window._voiceStopListening === 'function') window._voiceStopListening();
         if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
+        const _hudTb = document.getElementById('topbar');
+        const _hudSb = document.getElementById('statusbar');
+        if (_hudTb) { _hudTb.style.display = ''; requestAnimationFrame(() => { _hudTb.style.opacity = '1'; }); }
+        if (_hudSb) { _hudSb.style.display = ''; requestAnimationFrame(() => { _hudSb.style.opacity = '1'; }); }
         selectedPlanet = null;
         cameraTargetPos = new THREE.Vector3(0, 30, 120);
         cameraTargetLook = new THREE.Vector3(0, 0, 0);
       }
+      window.closeHUD = closeHUD;
 
       function hudUpdateStep(el) {
         const agentId = parseInt(el.dataset.agentId);
