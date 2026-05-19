@@ -5899,6 +5899,95 @@
       })();
       // ──────────────────────────────────────────────────────────────────
 
+      // ── SHAKE TO CLOSE HUD / MODAL ─────────────────────────────────────
+      (function() {
+        const SHAKE_THRESHOLD  = 22;   // m/s² — cần lắc mạnh, không bị trigger ngẫu nhiên
+        const SHAKE_COOLDOWN   = 1200; // ms — tránh trigger liên tiếp
+        const SHAKE_COUNT_REQ  = 2;    // số lần vượt ngưỡng liên tiếp trong 600ms
+
+        let _lastShakeTs  = 0;
+        let _lastAccel    = { x: 0, y: 0, z: 0 };
+        let _shakeBuffer  = []; // timestamps of spikes
+        let _permAsked    = false;
+
+        // Flash overlay (xanh cyan nhấp một cái khi shake trigger)
+        function _flashClose() {
+          const fl = document.createElement('div');
+          fl.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,255,255,0.12);pointer-events:none;transition:opacity 0.35s;';
+          document.body.appendChild(fl);
+          requestAnimationFrame(() => { fl.style.opacity = '0'; setTimeout(() => fl.remove(), 400); });
+        }
+
+        function _onMotion(e) {
+          const accel = e.accelerationIncludingGravity || e.acceleration;
+          if (!accel) return;
+
+          const now = Date.now();
+          const dx = Math.abs((accel.x || 0) - _lastAccel.x);
+          const dy = Math.abs((accel.y || 0) - _lastAccel.y);
+          const dz = Math.abs((accel.z || 0) - _lastAccel.z);
+          _lastAccel = { x: accel.x || 0, y: accel.y || 0, z: accel.z || 0 };
+
+          const spike = Math.max(dx, dy, dz);
+          if (spike > SHAKE_THRESHOLD) {
+            _shakeBuffer.push(now);
+            // Giữ chỉ các spike trong 700ms gần nhất
+            _shakeBuffer = _shakeBuffer.filter(t => now - t < 700);
+
+            if (_shakeBuffer.length >= SHAKE_COUNT_REQ && now - _lastShakeTs > SHAKE_COOLDOWN) {
+              _lastShakeTs = now;
+              _shakeBuffer = [];
+
+              const hud = document.getElementById('hud');
+              const agentChat = document.getElementById('agent-chat-modal');
+              const kocraft   = document.getElementById('kocraft-modal');
+
+              // Đóng modal đang mở (theo thứ tự ưu tiên: agent chat → kocraft → HUD)
+              if (agentChat && agentChat.style.display !== 'none') {
+                _flashClose();
+                if (typeof window.closeAgentChat === 'function') window.closeAgentChat();
+                else agentChat.style.display = 'none';
+                if (typeof showToast === 'function') showToast('📳 Lắc → đóng Thiên Cơ Các', 'info');
+              } else if (kocraft && kocraft.style.display !== 'none') {
+                _flashClose();
+                if (typeof window.closeKOCraftModal === 'function') window.closeKOCraftModal();
+                else kocraft.style.display = 'none';
+                if (typeof showToast === 'function') showToast('📳 Lắc → đóng KOCraft AI', 'info');
+              } else if (hud && hud.classList.contains('active')) {
+                _flashClose();
+                if (typeof closeHUD === 'function') closeHUD();
+                if (typeof showToast === 'function') showToast('📳 Lắc → đóng giao diện', 'info');
+              }
+            }
+          }
+        }
+
+        // iOS 13+ cần xin quyền DeviceMotion
+        window._requestShakePermission = function() {
+          if (_permAsked) return;
+          _permAsked = true;
+          if (typeof DeviceMotionEvent !== 'undefined' &&
+              typeof DeviceMotionEvent.requestPermission === 'function') {
+            DeviceMotionEvent.requestPermission().then(state => {
+              if (state === 'granted') {
+                window.addEventListener('devicemotion', _onMotion, { passive: true });
+                if (typeof showToast === 'function') showToast('📳 Đã bật lắc để đóng màn hình', 'success');
+              }
+            }).catch(() => {});
+          } else {
+            // Android / non-iOS — không cần xin quyền
+            window.addEventListener('devicemotion', _onMotion, { passive: true });
+          }
+        };
+
+        // Tự động kích hoạt trên Android; trên iOS cần user gesture → gọi trong openHUD
+        if (typeof DeviceMotionEvent === 'undefined' ||
+            typeof DeviceMotionEvent.requestPermission !== 'function') {
+          window.addEventListener('devicemotion', _onMotion, { passive: true });
+        }
+      })();
+      // ──────────────────────────────────────────────────────────────────
+
       function openHUD(pm) {
         selectedPlanet = pm;
         window._openHUDPm = pm;
@@ -5923,6 +6012,7 @@
 
         document.getElementById('hud').classList.add('active');
         if (typeof window.hideMainUI === 'function') window.hideMainUI();
+        if (typeof window._requestShakePermission === 'function') window._requestShakePermission();
         const _hudTb = document.getElementById('topbar');
         const _hudSb = document.getElementById('statusbar');
         if (_hudTb) { _hudTb.style.transition = 'opacity 0.2s'; _hudTb.style.opacity = '0'; setTimeout(() => { _hudTb.style.display = 'none'; }, 200); }
