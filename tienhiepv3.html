@@ -1056,6 +1056,97 @@
     }
 
     /* ── HUD SWIPE HINT (right edge) ── */
+    /* ── VOICE COMMAND BUTTON (bottom-left of HUD) ── */
+    #hud-voice-btn {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      width: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      pointer-events: all;
+      z-index: 1001;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #hud-voice-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(0,10,20,0.85);
+      border: 1.5px solid rgba(0,255,255,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      position: relative;
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    #hud-voice-btn:hover #hud-voice-icon {
+      border-color: rgba(0,255,255,0.6);
+      box-shadow: 0 0 14px rgba(0,255,255,0.3);
+    }
+    #hud-voice-btn.listening #hud-voice-icon {
+      background: rgba(0,255,255,0.12);
+      border-color: #00ffff;
+      box-shadow: 0 0 20px rgba(0,255,255,0.5);
+    }
+    #hud-voice-ring {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid rgba(0,255,255,0.5);
+      pointer-events: none;
+      opacity: 0;
+      animation: none;
+    }
+    #hud-voice-btn.listening #hud-voice-ring {
+      opacity: 1;
+      animation: voiceRingPulse 1.2s ease-out infinite;
+    }
+    @keyframes voiceRingPulse {
+      0%   { transform: scale(1);    opacity: 0.7; }
+      100% { transform: scale(2.2);  opacity: 0; }
+    }
+    #hud-voice-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 7px;
+      letter-spacing: 2px;
+      color: rgba(0,255,255,0.4);
+      transition: color 0.2s;
+    }
+    #hud-voice-btn.listening #hud-voice-label {
+      color: #00ffff;
+    }
+    /* Toast for voice transcript */
+    #hud-voice-transcript {
+      position: absolute;
+      bottom: 76px;
+      left: 14px;
+      max-width: 200px;
+      background: rgba(0,255,255,0.08);
+      border: 1px solid rgba(0,255,255,0.2);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: rgba(0,255,255,0.8);
+      letter-spacing: 1px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 1002;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #hud-voice-transcript.show { opacity: 1; }
+
+    /* ── HUD SWIPE HINT (right edge) ── */
     #hud-swipe-hint {
       position: absolute;
       right: 0;
@@ -4277,6 +4368,11 @@
     <button id="hud-close">✕</button>
     <div id="hud-swipe-hint"></div>
     <div id="hud-swipe-overlay"></div>
+    <div id="hud-voice-btn" title="Voice command (nhấn để bật/tắt)">
+      <div id="hud-voice-icon">🎙️</div>
+      <div id="hud-voice-ring"></div>
+      <div id="hud-voice-label">VOICE</div>
+    </div>
     <svg id="hud-swipe-arc" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
       <circle id="hud-swipe-arc-bg" cx="24" cy="24" r="20" fill="none" stroke="rgba(0,255,255,0.15)" stroke-width="3"/>
       <circle id="hud-swipe-arc-fill" cx="24" cy="24" r="20" fill="none" stroke="#00ffff" stroke-width="3"
@@ -5988,6 +6084,139 @@
       })();
       // ──────────────────────────────────────────────────────────────────
 
+      // ── VOICE COMMAND ENGINE ───────────────────────────────────────────
+      (function() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) return; // browser không hỗ trợ
+
+        const CLOSE_WORDS_VI = ['đóng','thoát','đóng lại','về','trở về','dừng','tắt','tắt đi','lui','back'];
+        const CLOSE_WORDS_EN = ['close','exit','back','stop','dismiss','go back','shut','off'];
+        const ALL_CLOSE = [...CLOSE_WORDS_VI, ...CLOSE_WORDS_EN];
+
+        let _rec = null;
+        let _listening = false;
+        let _transcriptTimer = null;
+
+        const voiceBtn   = document.getElementById('hud-voice-btn');
+        let transcriptEl = null;
+
+        function _getOrCreateTranscript() {
+          if (!transcriptEl) {
+            transcriptEl = document.createElement('div');
+            transcriptEl.id = 'hud-voice-transcript';
+            document.getElementById('hud').appendChild(transcriptEl);
+          }
+          return transcriptEl;
+        }
+
+        function _showTranscript(text) {
+          const el = _getOrCreateTranscript();
+          el.textContent = '🎙 "' + text + '"';
+          el.classList.add('show');
+          clearTimeout(_transcriptTimer);
+          _transcriptTimer = setTimeout(() => el.classList.remove('show'), 2500);
+        }
+
+        function _tryClose(transcript) {
+          const t = transcript.toLowerCase().trim();
+          const matched = ALL_CLOSE.some(w => t.includes(w));
+          if (!matched) return false;
+
+          _showTranscript(transcript);
+
+          const hud       = document.getElementById('hud');
+          const agentChat = document.getElementById('agent-chat-modal');
+          const kocraft   = document.getElementById('kocraft-modal');
+
+          if (agentChat && agentChat.style.display !== 'none') {
+            if (typeof window.closeAgentChat === 'function') window.closeAgentChat();
+            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → đóng Thiên Cơ Các', 'info');
+          } else if (kocraft && kocraft.style.display !== 'none') {
+            if (typeof window.closeKOCraftModal === 'function') window.closeKOCraftModal();
+            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → đóng KOCraft AI', 'info');
+          } else if (hud && hud.classList.contains('active')) {
+            if (typeof closeHUD === 'function') closeHUD();
+            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → đóng giao diện', 'info');
+          }
+          return true;
+        }
+
+        function _startListening() {
+          if (_listening) return;
+          try {
+            _rec = new SR();
+            _rec.continuous    = true;
+            _rec.interimResults = true;
+            _rec.lang          = 'vi-VN';
+            _rec.maxAlternatives = 1;
+
+            _rec.onresult = function(e) {
+              for (let i = e.resultIndex; i < e.results.length; i++) {
+                const transcript = e.results[i][0].transcript;
+                if (e.results[i].isFinal) {
+                  _tryClose(transcript);
+                } else {
+                  // Hiện interim transcript nhỏ
+                  const el = _getOrCreateTranscript();
+                  el.textContent = '🎙 ' + transcript;
+                  el.classList.add('show');
+                }
+              }
+            };
+
+            _rec.onerror = function(e) {
+              if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                _stopListening();
+                if (typeof showToast === 'function') showToast('🚫 Cần cho phép microphone để dùng voice', 'warn');
+              } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
+                // Tự khởi động lại nếu lỗi nhỏ
+                setTimeout(() => { if (_listening) _rec.start(); }, 500);
+              }
+            };
+
+            _rec.onend = function() {
+              if (_listening) {
+                // Tự restart để duy trì liên tục
+                try { _rec.start(); } catch(err) {}
+              }
+            };
+
+            _rec.start();
+            _listening = true;
+            if (voiceBtn) voiceBtn.classList.add('listening');
+          } catch(err) {
+            _listening = false;
+          }
+        }
+
+        function _stopListening() {
+          _listening = false;
+          if (_rec) { try { _rec.stop(); } catch(e) {} _rec = null; }
+          if (voiceBtn) voiceBtn.classList.remove('listening');
+          const el = _getOrCreateTranscript();
+          if (el) el.classList.remove('show');
+        }
+
+        // Toggle bằng nút
+        if (voiceBtn) {
+          voiceBtn.addEventListener('click', function() {
+            if (_listening) {
+              _stopListening();
+              if (typeof showToast === 'function') showToast('🔇 Voice command đã tắt', 'info');
+            } else {
+              _startListening();
+              if (typeof showToast === 'function') showToast('🎙️ Voice command bật — nói "đóng" hoặc "close"', 'success');
+            }
+          });
+        }
+
+        // Tự động bật voice khi HUD mở (lần đầu), tắt khi HUD đóng
+        window._voiceStartListening = _startListening;
+        window._voiceStopListening  = _stopListening;
+        window._voiceIsListening    = function() { return _listening; };
+      })();
+      // ──────────────────────────────────────────────────────────────────
+
       function openHUD(pm) {
         selectedPlanet = pm;
         window._openHUDPm = pm;
@@ -6013,6 +6242,7 @@
         document.getElementById('hud').classList.add('active');
         if (typeof window.hideMainUI === 'function') window.hideMainUI();
         if (typeof window._requestShakePermission === 'function') window._requestShakePermission();
+        if (typeof window._voiceStartListening === 'function') window._voiceStartListening();
         const _hudTb = document.getElementById('topbar');
         const _hudSb = document.getElementById('statusbar');
         if (_hudTb) { _hudTb.style.transition = 'opacity 0.2s'; _hudTb.style.opacity = '0'; setTimeout(() => { _hudTb.style.display = 'none'; }, 200); }
@@ -6597,6 +6827,7 @@
       function closeHUD() {
         closeNodeEdit();
         document.getElementById('hud').classList.remove('active');
+        if (typeof window._voiceStopListening === 'function') window._voiceStopListening();
         if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
         const _hudTb = document.getElementById('topbar');
         const _hudSb = document.getElementById('statusbar');
