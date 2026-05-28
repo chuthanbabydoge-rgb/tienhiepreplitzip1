@@ -79,6 +79,27 @@ async function initDB() {
       created_at        TIMESTAMPTZ DEFAULT NOW(),
       last_login        TIMESTAMPTZ DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS agents (
+      id          INT PRIMARY KEY,
+      name        TEXT NOT NULL,
+      emoji       TEXT NOT NULL DEFAULT '🤖',
+      type        TEXT NOT NULL DEFAULT '',
+      color       TEXT NOT NULL DEFAULT '#00ffff',
+      glow        TEXT NOT NULL DEFAULT '#00ffff',
+      revenue     TEXT NOT NULL DEFAULT '$0',
+      auto        INT  NOT NULL DEFAULT 80,
+      neural      INT  NOT NULL DEFAULT 80,
+      iq          INT  NOT NULL DEFAULT 80,
+      efficiency  INT  NOT NULL DEFAULT 80,
+      apis        JSONB NOT NULL DEFAULT '[]',
+      workflow    JSONB NOT NULL DEFAULT '[]',
+      logs        JSONB NOT NULL DEFAULT '[]',
+      xname       TEXT NOT NULL DEFAULT '',
+      xnote       TEXT NOT NULL DEFAULT '',
+      sort_order  INT  NOT NULL DEFAULT 0,
+      created_at  TIMESTAMPTZ DEFAULT NOW()
+    );
   `);
   console.log('✅ DB tables ready');
 }
@@ -458,6 +479,10 @@ app.get('/admin', requireAdminPassword, (req, res, next) => {
 
 app.get('/admin/users', requireAdminPassword, (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.get('/admin/agents', requireAdminPassword, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin-agents.html'));
 });
 
 app.get('/create-character', (req, res) => {
@@ -845,6 +870,83 @@ app.get('/api/db/admin/users', requireAuthAPI, async (req, res) => {
       )
     ]);
     res.json({ users: usersRes.rows, summary: summaryRes.rows[0] });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── DB: Admin — Agents CRUD ───────────────────────────────────────────────────
+const AGENTS_SEED = require('./agents-seed');
+
+// GET all agents (from DB, fallback to seed if empty)
+app.get('/api/db/admin/agents', requireAdminPassword, async (req, res) => {
+  try {
+    const { rows } = await pgPool.query('SELECT * FROM agents ORDER BY sort_order ASC, id ASC');
+    res.json({ agents: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST seed — populate DB from hardcoded defaults
+app.post('/api/db/admin/agents/seed', requireAdminPassword, async (req, res) => {
+  try {
+    for (const a of AGENTS_SEED) {
+      await pgPool.query(
+        `INSERT INTO agents (id, name, emoji, type, color, glow, revenue, auto, neural, iq, efficiency, apis, workflow, logs, xname, xnote, sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+         ON CONFLICT (id) DO NOTHING`,
+        [a.id, a.name, a.emoji, a.type, a.color, a.glow, a.revenue,
+         a.auto, a.neural, a.iq, a.efficiency,
+         JSON.stringify(a.apis), JSON.stringify(a.workflow), JSON.stringify(a.logs),
+         a.xname, a.xnote, a.id]
+      );
+    }
+    const { rows } = await pgPool.query('SELECT COUNT(*) FROM agents');
+    res.json({ ok: true, count: parseInt(rows[0].count) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST create new agent
+app.post('/api/db/admin/agents', requireAdminPassword, async (req, res) => {
+  try {
+    const { id, name, emoji, type, color, glow, revenue, auto, neural, iq, efficiency, apis, workflow, logs, xname, xnote } = req.body;
+    if (!name) return res.status(400).json({ error: 'Tên agent không được trống' });
+    const agentId = id !== undefined ? parseInt(id) : null;
+    const sortOrder = agentId !== null ? agentId : 9999;
+    await pgPool.query(
+      `INSERT INTO agents (id, name, emoji, type, color, glow, revenue, auto, neural, iq, efficiency, apis, workflow, logs, xname, xnote, sort_order)
+       VALUES (COALESCE($1, (SELECT COALESCE(MAX(id),100)+1 FROM agents)), $2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+      [agentId, name, emoji||'🤖', type||'', color||'#00ffff', glow||color||'#00ffff', revenue||'$0',
+       parseInt(auto)||80, parseInt(neural)||80, parseInt(iq)||80, parseInt(efficiency)||80,
+       JSON.stringify(apis||[]), JSON.stringify(workflow||[]), JSON.stringify(logs||[]),
+       xname||name, xnote||type||'', sortOrder]
+    );
+    const { rows } = await pgPool.query('SELECT * FROM agents ORDER BY sort_order ASC, id ASC');
+    res.json({ ok: true, agents: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT update agent
+app.put('/api/db/admin/agents/:id', requireAdminPassword, async (req, res) => {
+  try {
+    const aid = parseInt(req.params.id);
+    const { name, emoji, type, color, glow, revenue, auto, neural, iq, efficiency, apis, workflow, logs, xname, xnote } = req.body;
+    await pgPool.query(
+      `UPDATE agents SET name=$1, emoji=$2, type=$3, color=$4, glow=$5, revenue=$6,
+       auto=$7, neural=$8, iq=$9, efficiency=$10, apis=$11, workflow=$12, logs=$13,
+       xname=$14, xnote=$15 WHERE id=$16`,
+      [name, emoji||'🤖', type||'', color||'#00ffff', glow||color||'#00ffff', revenue||'$0',
+       parseInt(auto)||80, parseInt(neural)||80, parseInt(iq)||80, parseInt(efficiency)||80,
+       JSON.stringify(apis||[]), JSON.stringify(workflow||[]), JSON.stringify(logs||[]),
+       xname||name, xnote||type||'', aid]
+    );
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE agent
+app.delete('/api/db/admin/agents/:id', requireAdminPassword, async (req, res) => {
+  try {
+    const aid = parseInt(req.params.id);
+    await pgPool.query('DELETE FROM agents WHERE id=$1', [aid]);
+    res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

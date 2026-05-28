@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản Lý Agent — Vương Đế AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{background:#000008;min-height:100vh;font-family:'Rajdhani',sans-serif;color:#e0e0e0;overflow-x:hidden}
+    #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+    .wrap{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;padding:0 20px 80px;max-width:1400px;margin:0 auto}
+
+    .topbar{display:flex;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid rgba(0,255,255,0.12);margin-bottom:28px;flex-wrap:wrap}
+    .topbar-brand{font-family:'Orbitron',sans-serif;font-size:12px;color:#00ffff;letter-spacing:3px;text-shadow:0 0 14px #00ffff;flex:1}
+    .topbar-brand span{color:#ff666688}
+    .topbar-btn{background:rgba(0,40,40,0.7);border:1px solid rgba(0,255,255,0.35);color:#00ffff;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1.5px;padding:7px 14px;border-radius:20px;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+    .topbar-btn:hover{background:rgba(0,255,255,0.15);box-shadow:0 0 14px rgba(0,255,255,.4)}
+    .topbar-btn.green{border-color:rgba(0,255,128,.4);color:#00ff88}
+    .topbar-btn.green:hover{background:rgba(0,255,128,.12)}
+    .topbar-btn.gold{border-color:rgba(255,215,0,.4);color:#ffd700}
+    .topbar-btn.gold:hover{background:rgba(255,215,0,.12)}
+    .topbar-btn.red{border-color:rgba(255,80,80,.4);color:#ff6666}
+    .topbar-btn.red:hover{background:rgba(255,60,60,.15)}
+
+    .stats-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+    .stat-card{background:rgba(0,12,24,.88);border:1px solid rgba(0,255,255,.12);border-radius:10px;padding:14px 20px;display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
+    .stat-val{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:#00ffff;text-shadow:0 0 10px rgba(0,255,255,.5)}
+    .stat-lbl{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:#00ffff44;text-transform:uppercase}
+
+    .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+    .search-box{flex:1;min-width:180px;background:rgba(0,20,40,.8);border:1px solid rgba(0,255,255,.2);border-radius:8px;padding:9px 14px;color:#00ffff;font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;transition:border-color .2s}
+    .search-box::placeholder{color:#00ffff44}
+    .search-box:focus{border-color:rgba(0,255,255,.5)}
+    .count-badge{font-family:'Share Tech Mono',monospace;font-size:10px;color:#00ffff55;letter-spacing:1px;white-space:nowrap}
+
+    .table-wrap{background:rgba(0,12,24,.88);border:1px solid rgba(0,255,255,.12);border-radius:14px;overflow:hidden;backdrop-filter:blur(6px)}
+    table{width:100%;border-collapse:collapse}
+    thead th{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;color:#00ffff55;text-transform:uppercase;padding:12px 10px;border-bottom:1px solid rgba(0,255,255,.1);text-align:left;white-space:nowrap;user-select:none}
+    tbody tr{border-bottom:1px solid rgba(0,255,255,.05);transition:background .18s}
+    tbody tr:hover{background:rgba(0,255,255,.04)}
+    tbody tr:last-child{border-bottom:none}
+    td{padding:10px 10px;font-family:'Share Tech Mono',monospace;font-size:11px;color:#ccc;vertical-align:middle}
+    .color-dot{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid rgba(255,255,255,.2);flex-shrink:0;vertical-align:middle;margin-right:6px}
+    .num{color:#00ffff;font-weight:700;font-size:10px}
+    .act-btn{background:none;border:1px solid rgba(0,255,255,.3);color:#00ffff;border-radius:6px;padding:3px 8px;font-size:9px;cursor:pointer;transition:all .2s;font-family:'Share Tech Mono',monospace;margin-right:4px}
+    .act-btn:hover{background:rgba(0,255,255,.1);border-color:rgba(0,255,255,.6)}
+    .act-btn.del{border-color:rgba(255,80,80,.3);color:#ff6666}
+    .act-btn.del:hover{background:rgba(255,60,60,.12);border-color:rgba(255,80,80,.6)}
+    .empty-row td{text-align:center;padding:60px;color:#00ffff22;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px}
+    .spin{display:inline-block;width:20px;height:20px;border:2px solid transparent;border-top-color:#00ffff;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Modal */
+    .modal-bg{display:none;position:fixed;inset:0;z-index:998;background:rgba(0,0,8,.88);align-items:center;justify-content:center;backdrop-filter:blur(4px);overflow-y:auto;padding:20px}
+    .modal-bg.show{display:flex}
+    .modal-box{background:rgba(0,10,22,.97);border:1px solid rgba(0,255,255,.25);border-radius:16px;padding:32px;max-width:680px;width:100%;box-shadow:0 0 60px rgba(0,255,255,.07)}
+    .modal-title{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;color:#00ffff;margin-bottom:24px;text-shadow:0 0 10px #00ffff55}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media(max-width:560px){.form-grid{grid-template-columns:1fr}}
+    .form-group{display:flex;flex-direction:column;gap:6px}
+    .form-group.full{grid-column:1/-1}
+    label{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#00ffff66;text-transform:uppercase}
+    input,textarea,select{background:rgba(0,20,40,.9);border:1px solid rgba(0,255,255,.2);border-radius:8px;padding:9px 12px;color:#e0e0e0;font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;width:100%}
+    input:focus,textarea:focus,select:focus{border-color:rgba(0,255,255,.5)}
+    textarea{resize:vertical;min-height:70px}
+    input[type="color"]{padding:4px 8px;height:38px;cursor:pointer}
+    .form-hint{font-size:9px;color:#ffffff33;font-family:'Share Tech Mono',monospace}
+    .modal-btns{display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
+    .btn-save{background:rgba(0,255,128,.1);border:1px solid rgba(0,255,128,.4);color:#00ff88;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s}
+    .btn-save:hover{background:rgba(0,255,128,.2)}
+    .btn-save:disabled{opacity:.4;cursor:not-allowed}
+    .btn-cancel{background:rgba(0,255,255,.06);border:1px solid rgba(0,255,255,.2);color:#00ffff88;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s}
+    .btn-cancel:hover{background:rgba(0,255,255,.12)}
+
+    /* Confirm */
+    #confirm-modal{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,8,.88);align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+    #confirm-modal.show{display:flex}
+    .confirm-box{background:rgba(0,12,24,.97);border:1px solid rgba(255,80,80,.4);border-radius:14px;padding:36px;max-width:420px;width:90%;text-align:center}
+    .confirm-title{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;color:#ff6666;margin-bottom:14px}
+    .confirm-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:#ffffff66;margin-bottom:28px;line-height:1.7}
+    .confirm-btns{display:flex;gap:14px;justify-content:center}
+    .confirm-yes{background:rgba(255,60,60,.15);border:1px solid rgba(255,80,80,.5);color:#ff6666;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s}
+    .confirm-yes:hover{background:rgba(255,60,60,.3)}
+    .confirm-no{background:rgba(0,255,255,.06);border:1px solid rgba(0,255,255,.25);color:#00ffff88;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .2s}
+    .confirm-no:hover{background:rgba(0,255,255,.12)}
+
+    /* Toast */
+    #toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(0,255,100,.1);border:1px solid rgba(0,255,100,.4);color:#00ff64;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;padding:10px 28px;border-radius:30px;transition:transform .35s cubic-bezier(.175,.885,.32,1.275);z-index:9999;pointer-events:none;white-space:nowrap}
+    #toast.show{transform:translateX(-50%) translateY(0)}
+    #toast.err{background:rgba(255,80,80,.12);border-color:rgba(255,80,80,.4);color:#ff6666}
+
+    #loading-overlay{position:fixed;inset:0;z-index:997;background:#000008;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+    .loading-ring{width:60px;height:60px;border-radius:50%;border:2px solid transparent;border-top-color:#00ffff;border-right-color:#ffd70055;animation:spin .9s linear infinite}
+    .loading-text{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:#00ffff66}
+  </style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<div id="loading-overlay">
+  <div class="loading-ring"></div>
+  <div class="loading-text">ĐANG TẢI AGENT...</div>
+</div>
+
+<div id="confirm-modal">
+  <div class="confirm-box">
+    <div class="confirm-title">⚠ XÁC NHẬN XÓA</div>
+    <div class="confirm-sub" id="confirm-sub"></div>
+    <div class="confirm-btns">
+      <button class="confirm-yes" id="confirm-yes-btn">XÓA</button>
+      <button class="confirm-no" onclick="closeConfirm()">HỦY</button>
+    </div>
+  </div>
+</div>
+
+<!-- Agent Form Modal -->
+<div class="modal-bg" id="agent-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">➕ THÊM AGENT MỚI</div>
+    <form id="agent-form" onsubmit="submitAgent(event)">
+      <input type="hidden" id="f-edit-id">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>ID Agent</label>
+          <input type="number" id="f-id" placeholder="Tự động nếu để trống" min="0">
+          <div class="form-hint">Để trống = tự tăng. Trùng ID sẽ báo lỗi.</div>
+        </div>
+        <div class="form-group">
+          <label>Emoji</label>
+          <input type="text" id="f-emoji" placeholder="🤖" maxlength="4" required>
+        </div>
+        <div class="form-group full">
+          <label>Tên Agent (tiếng Anh)</label>
+          <input type="text" id="f-name" placeholder="NewsFlash AI" required>
+        </div>
+        <div class="form-group full">
+          <label>Loại / Chuyên ngành</label>
+          <input type="text" id="f-type" placeholder="Content Intelligence">
+        </div>
+        <div class="form-group full">
+          <label>Tên Tiên Hiệp (xname)</label>
+          <input type="text" id="f-xname" placeholder="Thiên Tốc Bảo Giám">
+        </div>
+        <div class="form-group full">
+          <label>Mô tả quyền năng (xnote)</label>
+          <input type="text" id="f-xnote" placeholder="Tổng hợp tin tức toàn cầu tự động">
+        </div>
+        <div class="form-group">
+          <label>Màu hành tinh</label>
+          <input type="color" id="f-color" value="#00ffff">
+        </div>
+        <div class="form-group">
+          <label>Doanh thu/ngày</label>
+          <input type="text" id="f-revenue" placeholder="$2,400">
+        </div>
+        <div class="form-group">
+          <label>Tự động hóa (auto %)</label>
+          <input type="number" id="f-auto" min="0" max="100" value="80">
+        </div>
+        <div class="form-group">
+          <label>Neural (%)</label>
+          <input type="number" id="f-neural" min="0" max="100" value="80">
+        </div>
+        <div class="form-group">
+          <label>IQ (%)</label>
+          <input type="number" id="f-iq" min="0" max="100" value="80">
+        </div>
+        <div class="form-group">
+          <label>Hiệu suất (%)</label>
+          <input type="number" id="f-efficiency" min="0" max="100" value="80">
+        </div>
+        <div class="form-group full">
+          <label>APIs (mỗi dòng 1 API)</label>
+          <textarea id="f-apis" placeholder="GPT-4&#10;Gemini&#10;Stripe"></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Các bước Workflow (mỗi dòng 1 bước)</label>
+          <textarea id="f-workflow" placeholder="Bước 1&#10;Bước 2&#10;Bước 3"></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Log mẫu (mỗi dòng 1 log)</label>
+          <textarea id="f-logs" placeholder="Đang xử lý...&#10;Hoàn thành batch #1"></textarea>
+        </div>
+      </div>
+      <div class="modal-btns">
+        <button type="button" class="btn-cancel" onclick="closeModal()">HỦY</button>
+        <button type="submit" class="btn-save" id="btn-save">LƯU AGENT</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="wrap" id="wrap" style="display:none">
+  <div class="topbar">
+    <div class="topbar-brand">⬡ VƯƠNG ĐẾ AI &nbsp;/&nbsp; <span>QUẢN LÝ AGENT</span></div>
+    <button class="topbar-btn gold" onclick="seedAgents()" id="btn-seed">⬇ NẠP 101 AGENT MẶC ĐỊNH</button>
+    <button class="topbar-btn green" onclick="openAdd()">➕ THÊM AGENT</button>
+    <a href="/admin/users" class="topbar-btn">👥 QUẢN LÝ USER</a>
+    <a href="/admin" class="topbar-btn">⬅ VŨ TRỤ</a>
+    <a href="/api/admin/logout" class="topbar-btn red">⏻ ĐĂNG XUẤT</a>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="s-total">—</div>
+      <div class="stat-lbl">TỔNG AGENT</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="s-db">—</div>
+      <div class="stat-lbl">TRONG DATABASE</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="s-custom">—</div>
+      <div class="stat-lbl">TÙY CHỈNH (ID>100)</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input class="search-box" id="search" placeholder="🔍  Tìm tên, loại, xname..." oninput="renderTable()">
+    <span class="count-badge" id="count-badge"></span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px">ID</th>
+          <th style="width:40px"></th>
+          <th>TÊN AGENT</th>
+          <th>TIÊN HIỆU</th>
+          <th>LOẠI</th>
+          <th style="width:70px">MÀU</th>
+          <th style="width:70px">DOANH THU</th>
+          <th style="width:100px;text-align:right">AUTO/IQ</th>
+          <th style="width:100px"></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Starfield ─────────────────────────────────────────────────────────────────
+(function(){
+  const cv=document.getElementById('bg-canvas'),ctx=cv.getContext('2d');
+  let W,H,stars=[];
+  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+  function mk(){stars=Array.from({length:200},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+.2,a:Math.random(),da:(Math.random()-.5)*.005}))}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    stars.forEach(s=>{s.a=Math.max(.05,Math.min(1,s.a+s.da));if(s.a<=.06||s.a>=.99)s.da*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(0,255,255,${s.a*.25})`;ctx.fill();});
+    requestAnimationFrame(draw);
+  }
+  resize();mk();draw();window.addEventListener('resize',()=>{resize();mk();});
+})();
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let _all = [];
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ── Load ──────────────────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const r = await fetch('/api/db/admin/agents');
+    if (!r.ok) { if(r.status===401||r.status===403){window.location.href='/admin/login';return;} throw new Error(r.status); }
+    const { agents } = await r.json();
+    _all = agents || [];
+    renderStats();
+    renderTable();
+    document.getElementById('loading-overlay').style.display = 'none';
+    document.getElementById('wrap').style.display = 'flex';
+  } catch(e) {
+    showToast('⚠ Lỗi: ' + e.message, true);
+    document.getElementById('loading-overlay').style.display = 'none';
+    document.getElementById('wrap').style.display = 'flex';
+  }
+}
+
+function renderStats() {
+  document.getElementById('s-total').textContent = _all.length;
+  document.getElementById('s-db').textContent = _all.length;
+  document.getElementById('s-custom').textContent = _all.filter(a => a.id > 100).length;
+}
+
+function renderTable() {
+  const q = (document.getElementById('search').value||'').toLowerCase().trim();
+  let rows = _all.filter(a => {
+    if (!q) return true;
+    return [a.name, a.type, a.xname, a.xnote, String(a.id)].join(' ').toLowerCase().includes(q);
+  });
+  document.getElementById('count-badge').textContent = rows.length + ' agent';
+  const tbody = document.getElementById('tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">CHƯA CÓ AGENT — Bấm "NẠP 101 AGENT MẶC ĐỊNH" để bắt đầu</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(a => `
+    <tr>
+      <td><span class="num">${a.id}</span></td>
+      <td style="font-size:18px">${esc(a.emoji)}</td>
+      <td style="color:#fff;font-weight:600">${esc(a.name)}</td>
+      <td style="color:#ffaa00">${esc(a.xname)}</td>
+      <td style="color:#00ffff88;font-size:10px">${esc(a.type)}</td>
+      <td>
+        <span class="color-dot" style="background:${esc(a.color)};box-shadow:0 0 6px ${esc(a.color)}55"></span>
+        <span style="font-size:9px;color:#ffffff44">${esc(a.color)}</span>
+      </td>
+      <td style="color:#00ff88;font-size:10px">${esc(a.revenue)}</td>
+      <td style="text-align:right;color:#00ffff88;font-size:10px">${a.auto}% / ${a.iq}%</td>
+      <td>
+        <button class="act-btn" onclick="openEdit(${a.id})">✏ SỬA</button>
+        <button class="act-btn del" onclick="confirmDelete(${a.id},'${esc(a.name)}')">✕</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── Seed ──────────────────────────────────────────────────────────────────────
+async function seedAgents() {
+  const btn = document.getElementById('btn-seed');
+  btn.disabled = true;
+  btn.textContent = '⏳ ĐANG NẠP...';
+  try {
+    const r = await fetch('/api/db/admin/agents/seed', { method: 'POST' });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    showToast(`✦ ĐÃ NẠP ${d.count} AGENT VÀO DATABASE`);
+    await loadData();
+  } catch(e) { showToast('⚠ Lỗi: ' + e.message, true); }
+  btn.disabled = false;
+  btn.textContent = '⬇ NẠP 101 AGENT MẶC ĐỊNH';
+}
+
+// ── Modal helpers ─────────────────────────────────────────────────────────────
+function openAdd() {
+  document.getElementById('modal-title').textContent = '➕ THÊM AGENT MỚI';
+  document.getElementById('agent-form').reset();
+  document.getElementById('f-edit-id').value = '';
+  document.getElementById('f-id').disabled = false;
+  document.getElementById('f-color').value = '#00ffff';
+  document.getElementById('agent-modal').classList.add('show');
+}
+
+function openEdit(id) {
+  const a = _all.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('modal-title').textContent = `✏ SỬA AGENT #${id}`;
+  document.getElementById('f-edit-id').value = id;
+  document.getElementById('f-id').value = a.id;
+  document.getElementById('f-id').disabled = true;
+  document.getElementById('f-emoji').value = a.emoji || '';
+  document.getElementById('f-name').value = a.name || '';
+  document.getElementById('f-type').value = a.type || '';
+  document.getElementById('f-xname').value = a.xname || '';
+  document.getElementById('f-xnote').value = a.xnote || '';
+  document.getElementById('f-color').value = a.color || '#00ffff';
+  document.getElementById('f-revenue').value = a.revenue || '';
+  document.getElementById('f-auto').value = a.auto ?? 80;
+  document.getElementById('f-neural').value = a.neural ?? 80;
+  document.getElementById('f-iq').value = a.iq ?? 80;
+  document.getElementById('f-efficiency').value = a.efficiency ?? 80;
+  document.getElementById('f-apis').value = (a.apis||[]).join('\n');
+  document.getElementById('f-workflow').value = (a.workflow||[]).join('\n');
+  document.getElementById('f-logs').value = (a.logs||[]).join('\n');
+  document.getElementById('agent-modal').classList.add('show');
+}
+
+function closeModal() { document.getElementById('agent-modal').classList.remove('show'); }
+
+async function submitAgent(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true; btn.textContent = '⏳ ĐANG LƯU...';
+  const editId = document.getElementById('f-edit-id').value;
+  const isEdit = editId !== '';
+  const payload = {
+    id: document.getElementById('f-id').value || undefined,
+    name: document.getElementById('f-name').value.trim(),
+    emoji: document.getElementById('f-emoji').value.trim(),
+    type: document.getElementById('f-type').value.trim(),
+    xname: document.getElementById('f-xname').value.trim(),
+    xnote: document.getElementById('f-xnote').value.trim(),
+    color: document.getElementById('f-color').value,
+    glow: document.getElementById('f-color').value,
+    revenue: document.getElementById('f-revenue').value.trim(),
+    auto: document.getElementById('f-auto').value,
+    neural: document.getElementById('f-neural').value,
+    iq: document.getElementById('f-iq').value,
+    efficiency: document.getElementById('f-efficiency').value,
+    apis: document.getElementById('f-apis').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    workflow: document.getElementById('f-workflow').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    logs: document.getElementById('f-logs').value.split('\n').map(s=>s.trim()).filter(Boolean),
+  };
+  try {
+    const url = isEdit ? `/api/db/admin/agents/${editId}` : '/api/db/admin/agents';
+    const method = isEdit ? 'PUT' : 'POST';
+    const r = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    showToast(isEdit ? `✦ ĐÃ CẬP NHẬT AGENT #${editId}` : '✦ ĐÃ THÊM AGENT MỚI');
+    closeModal();
+    await loadData();
+  } catch(e) { showToast('⚠ Lỗi: ' + e.message, true); }
+  btn.disabled = false; btn.textContent = 'LƯU AGENT';
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+let _pendingDeleteId = null;
+function confirmDelete(id, name) {
+  _pendingDeleteId = id;
+  document.getElementById('confirm-sub').textContent = `Xóa agent #${id} "${name}" khỏi database?`;
+  document.getElementById('confirm-modal').classList.add('show');
+  document.getElementById('confirm-yes-btn').onclick = doDelete;
+}
+function closeConfirm() { document.getElementById('confirm-modal').classList.remove('show'); _pendingDeleteId = null; }
+async function doDelete() {
+  if (_pendingDeleteId === null) return;
+  const id = _pendingDeleteId;
+  closeConfirm();
+  try {
+    const r = await fetch(`/api/db/admin/agents/${id}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error(await r.text());
+    _all = _all.filter(a => a.id !== id);
+    renderStats(); renderTable();
+    showToast(`✦ ĐÃ XÓA AGENT #${id}`);
+  } catch(e) { showToast('⚠ Lỗi: ' + e.message, true); }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = err ? 'err' : '';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+// ── ESC to close ──────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeConfirm(); }
+});
+
+loadData();
+</script>
+</body>
+</html>
