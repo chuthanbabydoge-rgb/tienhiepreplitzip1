@@ -6528,6 +6528,8 @@
         let _rec = null;
         let _listening = false;
         let _transcriptTimer = null;
+        let _interimTimer = null;
+        let _lastInterim = '';
         let _agentIndex = null;
 
         const voiceBtn      = document.getElementById('hud-voice-btn');
@@ -6622,12 +6624,19 @@
             if (typeof showToast === 'function')
               showToast('🎙️ ' + best.emoji + ' ' + displayName + ' — triệu hồi...', 'success');
             setTimeout(() => {
-              if (best.agent && typeof window.openAgentChat === 'function') {
-                console.log('[VOICE] calling openAgentChat for', best.agent.name, 'id=', best.agent.id);
-                window.openAgentChat(best.agent);
-              } else if (window._planetMeshes) {
-                const pm = window._planetMeshes.find(p => p.agent.id === best.id);
-                if (pm && window._openHUD) window._openHUD(pm);
+              try {
+                console.log('[VOICE] calling openAgentChat for', best.name, 'id=', best.id);
+                if (typeof window.openAgentChat === 'function') {
+                  window.openAgentChat(best.agent || AI_AGENTS.find(a => a.id === best.id));
+                } else if (typeof openAgentChat === 'function') {
+                  openAgentChat(best.agent || AI_AGENTS.find(a => a.id === best.id));
+                } else if (window._planetMeshes) {
+                  const pm = window._planetMeshes.find(p => p.agent.id === best.id);
+                  if (pm && window._openHUD) window._openHUD(pm);
+                }
+              } catch(err) {
+                console.error('[VOICE] openAgentChat failed:', err);
+                if (typeof showToast === 'function') showToast('🎙️ Lỗi mở agent: ' + err.message, 'warn');
               }
             }, 300);
             return true;
@@ -6698,12 +6707,28 @@
               for (let i = e.resultIndex; i < e.results.length; i++) {
                 const transcript = e.results[i][0].transcript;
                 if (e.results[i].isFinal) {
-                  // Thử đóng trước, nếu không khớp thì thử điều hướng
+                  clearTimeout(_interimTimer);
+                  _lastInterim = '';
                   if (!_tryClose(transcript)) _tryNavigate(transcript);
                 } else {
-                  const el = _getOrCreateTranscript();
-                  el.textContent = '🎙 ' + transcript;
-                  el.classList.add('show');
+                  // Show interim
+                  try {
+                    const el = _getOrCreateTranscript();
+                    el.textContent = '🎙 ' + transcript;
+                    el.classList.add('show');
+                  } catch(err) {}
+                  // Fallback: nếu sau 1.5s không có isFinal, tự xử lý
+                  // (nhiều trình duyệt / tiếng Việt không gửi isFinal)
+                  _lastInterim = transcript;
+                  clearTimeout(_interimTimer);
+                  _interimTimer = setTimeout(function() {
+                    if (_lastInterim) {
+                      const t = _lastInterim;
+                      _lastInterim = '';
+                      console.log('[VOICE] interim→final fallback:', t);
+                      if (!_tryClose(t)) _tryNavigate(t);
+                    }
+                  }, 1500);
                 }
               }
             };
