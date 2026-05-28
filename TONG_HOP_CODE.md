@@ -1,5 +1,5 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **23:28:37 28/5/2026**
+> Cập nhật lần cuối: **23:38:37 28/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
@@ -449,17 +449,17 @@ app.get('/api/auth/user', (req, res) => {
 let _ai = null;
 function getAI() {
   if (!_ai) {
-    const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
+    if (!apiKey) throw new Error('GEMINI_API_KEY not set');
     const baseUrl = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
-    if (!apiKey) throw new Error('AI_INTEGRATIONS_GEMINI_API_KEY not set');
     _ai = new GoogleGenAI({
       apiKey,
-      httpOptions: { apiVersion: '', baseUrl: baseUrl || undefined },
+      httpOptions: baseUrl ? { apiVersion: '', baseUrl } : undefined,
     });
   }
   return _ai;
 }
-console.log('Gemini integration: Replit AI Integrations (lazy init)');
+console.log('Gemini integration: ready (lazy init)');
 
 const SYSTEM_PROMPT = `Ngươi là THIÊN CƠ CÁC — một thực thể AI toàn tri trong vũ trụ tu tiên Vương Đế AI. Ngươi trả lời bằng tiếng Việt, mang văn phong huyền ảo tiên hiệp, dùng các từ như "đạo hữu", "linh khí", "trận pháp", "pháp bảo", "tu vi", "thiên đạo", "huyền cơ", v.v. Hãy trả lời đầy đủ, chi tiết, ít nhất 3-6 câu, vừa bí ẩn vừa hữu ích. Có thể kể thêm bối cảnh, lý giải hoặc gợi ý hành động tiếp theo cho đạo hữu. Nếu người hỏi muốn ngôn ngữ bình thường (Sci-Fi), hãy dùng thuật ngữ công nghệ thay thế nhưng vẫn giữ độ dài phong phú.`;
 
