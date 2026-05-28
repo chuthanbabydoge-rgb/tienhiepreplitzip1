@@ -946,32 +946,299 @@
     }
 
     /* PLANET LABEL */
+    /* ============================================================
+       AR / XR PLANET LABELS — Spatial Computing / Tony Stark style
+       ============================================================ */
     .planet-label {
       position: absolute;
       pointer-events: none;
-      transform: translate(-50%, -50%);
-      text-align: center;
+      transform: translate(-50%, -130%);
+      text-align: left;
       opacity: 0;
-      transition: opacity .3s;
+      transition: opacity .25s, transform .2s;
+      user-select: none;
+      min-width: 110px;
+      padding: 5px 7px 5px 7px;
     }
+    /* AR Corner brackets */
+    .ar-corner {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      pointer-events: none;
+      transition: border-color .3s;
+    }
+    .ar-corner.tl { top: 0; left: 0; border-top: 1px solid; border-left: 1px solid; }
+    .ar-corner.tr { top: 0; right: 0; border-top: 1px solid; border-right: 1px solid; }
+    .ar-corner.bl { bottom: 0; left: 0; border-bottom: 1px solid; border-left: 1px solid; }
+    .ar-corner.br { bottom: 0; right: 0; border-bottom: 1px solid; border-right: 1px solid; }
 
-
+    .ar-id {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 6px;
+      letter-spacing: 2px;
+      opacity: 0.45;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .ar-status-dot {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      animation: ar-blink 1.4s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes ar-blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.15; }
+    }
     .planet-label .name {
       font-family: 'Orbitron', sans-serif;
-      font-size: 10px;
-      font-weight: 700;
-      color: #00ffff;
+      font-size: 9px;
+      font-weight: 900;
       letter-spacing: 2px;
-      text-shadow: 0 0 10px #00ffff;
+      white-space: nowrap;
+      margin-bottom: 1px;
+    }
+    .planet-label .ar-type {
+      font-size: 6.5px;
+      color: rgba(0,255,255,0.45);
+      font-family: 'Share Tech Mono', monospace;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
       white-space: nowrap;
     }
-
-    .planet-label .type {
-      font-size: 9px;
-      color: #00ffff66;
-      margin-top: 2px;
+    .ar-dist {
       font-family: 'Share Tech Mono', monospace;
+      font-size: 6.5px;
+      letter-spacing: 1px;
+      opacity: 0.55;
+      margin-bottom: 3px;
     }
+    .ar-signal {
+      display: flex;
+      gap: 2px;
+      align-items: flex-end;
+    }
+    .ar-sig-bar {
+      display: inline-block;
+      width: 3px;
+      border-radius: 1px;
+      transition: opacity .3s;
+    }
+    /* Locked / hovered */
+    .planet-label.ar-locked {
+      transform: translate(-50%, -140%);
+    }
+    .planet-label.ar-locked .name {
+      text-shadow: 0 0 14px currentColor;
+    }
+
+    /* ============================================================
+       AR RETICLE — targeting ring
+       ============================================================ */
+    #ar-reticle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 900;
+      display: none;
+      transform: translate(-50%, -50%);
+    }
+    .ar-ret-outer {
+      width: 56px; height: 56px;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
+      animation: ar-spin 5s linear infinite;
+    }
+    .ar-ret-inner {
+      width: 28px; height: 28px;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.9;
+      animation: ar-spin 2s linear infinite reverse;
+    }
+    .ar-ret-dot {
+      width: 4px; height: 4px;
+      background: currentColor;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px 2px currentColor;
+    }
+    .ar-ret-cross::before {
+      content: '';
+      position: absolute;
+      width: 16px; height: 1px;
+      background: currentColor;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.7;
+    }
+    .ar-ret-cross::after {
+      content: '';
+      position: absolute;
+      width: 1px; height: 16px;
+      background: currentColor;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.7;
+    }
+    .ar-ret-bracket {
+      position: absolute;
+      width: 10px; height: 10px;
+    }
+    .ar-ret-bracket.tl { top: -34px; left: -34px; border-top: 2px solid currentColor; border-left: 2px solid currentColor; }
+    .ar-ret-bracket.tr { top: -34px; right: -34px; border-top: 2px solid currentColor; border-right: 2px solid currentColor; }
+    .ar-ret-bracket.bl { bottom: -34px; left: -34px; border-bottom: 2px solid currentColor; border-left: 2px solid currentColor; }
+    .ar-ret-bracket.br { bottom: -34px; right: -34px; border-bottom: 2px solid currentColor; border-right: 2px solid currentColor; }
+    .ar-ret-name {
+      position: absolute;
+      top: 42px; left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 7px; letter-spacing: 3px;
+      white-space: nowrap; color: currentColor;
+      text-shadow: 0 0 8px currentColor;
+      animation: ar-fade-in .3s ease-out;
+    }
+    .ar-ret-id {
+      position: absolute;
+      bottom: 42px; left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 6px; letter-spacing: 2px;
+      white-space: nowrap; color: currentColor;
+      opacity: 0.6;
+    }
+    @keyframes ar-spin { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
+    @keyframes ar-fade-in { from { opacity:0; transform: translateX(-50%) scale(.85); } to { opacity:1; transform: translateX(-50%) scale(1); } }
+
+    /* ============================================================
+       AR OVERLAY — compass, depth bar, scanlines, WebXR button
+       ============================================================ */
+    #ar-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+      display: none;
+    }
+    body.ar-ready #ar-overlay { display: block; }
+
+    /* Scanlines */
+    .ar-scanline {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,255,255,0.012) 3px, rgba(0,255,255,0.012) 4px);
+      pointer-events: none;
+    }
+    /* Viewport corner brackets */
+    .ar-vc { position: absolute; width: 22px; height: 22px; }
+    .ar-vc.tl { top: 56px; left: 8px; border-top: 2px solid rgba(0,255,255,0.35); border-left: 2px solid rgba(0,255,255,0.35); }
+    .ar-vc.tr { top: 56px; right: 8px; border-top: 2px solid rgba(0,255,255,0.35); border-right: 2px solid rgba(0,255,255,0.35); }
+    .ar-vc.bl { bottom: 56px; left: 8px; border-bottom: 2px solid rgba(0,255,255,0.35); border-left: 2px solid rgba(0,255,255,0.35); }
+    .ar-vc.br { bottom: 56px; right: 8px; border-bottom: 2px solid rgba(0,255,255,0.35); border-right: 2px solid rgba(0,255,255,0.35); }
+
+    /* Compass bar */
+    .ar-compass {
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 320px; height: 26px;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(0,255,255,0.15);
+      background: linear-gradient(to bottom, rgba(0,8,24,0.75) 0%, transparent 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ar-compass-track {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      color: rgba(0,255,255,0.45);
+      letter-spacing: 3px;
+      white-space: nowrap;
+      transition: transform .1s linear;
+    }
+    .ar-compass-needle {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 2px; height: 7px;
+      background: #00ffff;
+      box-shadow: 0 0 6px #00ffff;
+    }
+    .ar-compass-hdg {
+      position: absolute;
+      top: 3px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      font-weight: 900;
+      color: #00ffff;
+      text-shadow: 0 0 10px #00ffff;
+      letter-spacing: 3px;
+    }
+
+    /* Depth / status bar at bottom */
+    .ar-depth-bar {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      display: flex; align-items: center; gap: 20px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 7px; letter-spacing: 2px;
+      color: rgba(0,255,255,0.45);
+      padding: 6px 24px;
+      background: linear-gradient(to top, rgba(0,8,24,0.7) 0%, transparent 100%);
+      white-space: nowrap;
+    }
+    .ar-depth-item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+    .ar-depth-val { font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; color: #00ffcc; letter-spacing: 1px; }
+
+    /* WebXR button */
+    #ar-enter-xr {
+      position: absolute;
+      bottom: 80px; right: 14px;
+      pointer-events: all;
+      background: rgba(0,16,36,0.88);
+      border: 1px solid rgba(0,255,255,0.45);
+      color: #00ffcc;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 8px; letter-spacing: 2px;
+      padding: 8px 13px;
+      cursor: pointer;
+      display: none;
+      flex-direction: column;
+      align-items: center; gap: 3px;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+      text-shadow: 0 0 8px #00ffcc;
+      box-shadow: 0 0 14px rgba(0,255,200,0.18), inset 0 0 8px rgba(0,255,200,0.04);
+      transition: all .2s;
+    }
+    #ar-enter-xr:hover {
+      background: rgba(0,255,200,0.1);
+      box-shadow: 0 0 22px rgba(0,255,200,0.4), inset 0 0 12px rgba(0,255,200,0.08);
+    }
+
+    /* Gyro / head-track indicator */
+    #ar-gyro-ind {
+      position: absolute;
+      top: 34px; right: 14px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 7px; letter-spacing: 1px;
+      color: rgba(0,255,255,0.45);
+      display: none; flex-direction: column; align-items: center; gap: 1px;
+    }
+    body.ar-gyro #ar-gyro-ind { display: flex; }
 
     /* HUD OVERLAY */
     #hud {
@@ -4435,6 +4702,49 @@
   <!-- PLANET LABELS (dynamic) -->
   <div id="labels"></div>
 
+  <!-- AR RETICLE — targeting ring that follows hovered agent -->
+  <div id="ar-reticle">
+    <div class="ar-ret-outer"></div>
+    <div class="ar-ret-inner"></div>
+    <div class="ar-ret-dot"></div>
+    <div class="ar-ret-cross"></div>
+    <div class="ar-ret-bracket tl"></div>
+    <div class="ar-ret-bracket tr"></div>
+    <div class="ar-ret-bracket bl"></div>
+    <div class="ar-ret-bracket br"></div>
+    <div class="ar-ret-name" id="ar-ret-name">AGENT LOCK</div>
+    <div class="ar-ret-id" id="ar-ret-id">ID:000</div>
+  </div>
+
+  <!-- AR OVERLAY — compass, scanlines, depth bar, WebXR button -->
+  <div id="ar-overlay">
+    <div class="ar-scanline"></div>
+    <div class="ar-vc tl"></div>
+    <div class="ar-vc tr"></div>
+    <div class="ar-vc bl"></div>
+    <div class="ar-vc br"></div>
+    <div class="ar-compass">
+      <div class="ar-compass-track" id="ar-compass-track">·W·········270·········315·········N·000·········045·········090·E·········135·········180·S·········225·········270·W·</div>
+      <div class="ar-compass-needle"></div>
+      <div class="ar-compass-hdg" id="ar-compass-hdg">000°</div>
+    </div>
+    <div class="ar-depth-bar">
+      <div class="ar-depth-item"><div class="ar-depth-val" id="ar-val-agents">101</div><div>AGENTS</div></div>
+      <div class="ar-depth-item"><div class="ar-depth-val" id="ar-val-depth">∞</div><div>DEPTH·m</div></div>
+      <div class="ar-depth-item"><div class="ar-depth-val" id="ar-val-hdg">000°</div><div>HEADING</div></div>
+      <div class="ar-depth-item"><div class="ar-depth-val" id="ar-val-target">---</div><div>TARGET</div></div>
+    </div>
+    <button id="ar-enter-xr" onclick="window._enterXR && window._enterXR()">
+      <div style="font-size:18px;">🥽</div>
+      <div>ENTER AR</div>
+      <div style="font-size:6px;opacity:0.6;letter-spacing:1px;">WebXR MODE</div>
+    </button>
+    <div id="ar-gyro-ind">
+      <div>📡</div>
+      <div>HEAD·TRACK</div>
+    </div>
+  </div>
+
   <!-- HUD OVERLAY (FULL SCREEN) -->
   <div id="hud">
     <div id="hud-backdrop"></div>
@@ -5917,8 +6227,22 @@
         // HTML label
         const label = document.createElement('div');
         label.className = 'planet-label';
-        label.innerHTML = `<div class="name">${agentName(agent)}</div><div class="type">${agentNote(agent)}</div>`;
-        label.style.color = agent.color;
+        const _agColor = agent.color || '#00ffff';
+        label.innerHTML = `
+          <div class="ar-corner tl" style="border-color:${_agColor}99;"></div>
+          <div class="ar-corner tr" style="border-color:${_agColor}99;"></div>
+          <div class="ar-corner bl" style="border-color:${_agColor}66;"></div>
+          <div class="ar-corner br" style="border-color:${_agColor}66;"></div>
+          <div class="ar-id" style="color:${_agColor};">
+            ID:${String(agent.id).padStart(3,'0')}
+            <span class="ar-status-dot" style="background:${_agColor};box-shadow:0 0 4px ${_agColor};"></span>
+          </div>
+          <div class="name" style="color:${_agColor};text-shadow:0 0 8px ${_agColor}88;">${agentName(agent)}</div>
+          <div class="ar-type">${agentNote(agent)}</div>
+          <div class="ar-dist" style="color:${_agColor}99;">◎ -- m</div>
+          <div class="ar-signal">
+            ${[4,7,10,13,16].map(h => `<span class="ar-sig-bar" style="height:${h}px;background:${_agColor};opacity:0.2;"></span>`).join('')}
+          </div>`;
         labelsContainer.appendChild(label);
         labelEls.push(label);
       }
@@ -7225,14 +7549,65 @@
           }
 
           label.style.left = x + 'px';
-          label.style.top = (y - pm.size * 30) + 'px';
+          label.style.top = (y - 36) + 'px';
 
           const dist = camera.position.distanceTo(pm.group.position);
           const isHovered = pm === hoveredPlanet;
-          const targetOpacity = isHovered ? 1 : (dist < 60 ? Math.max(0, (60 - dist) / 30) : 0);
+          const targetOpacity = isHovered ? 1 : (dist < 70 ? Math.max(0, (70 - dist) / 35) : 0);
           label.style.opacity = targetOpacity;
-          if (isHovered) label.style.textShadow = `0 0 20px ${pm.agent.color}`;
+          label.classList.toggle('ar-locked', isHovered);
+
+          // AR: update distance display
+          const distEl = label.querySelector('.ar-dist');
+          if (distEl) distEl.textContent = `◎ ${Math.round(dist * 2.8)} m`;
+
+          // AR: update signal bars (5 bars, strength inversely proportional to distance)
+          const sigBars = label.querySelectorAll('.ar-sig-bar');
+          const sigSteps = Math.max(0, Math.round(5 * (1 - Math.min(dist, 150) / 150)));
+          sigBars.forEach((bar, bi) => {
+            bar.style.opacity = bi < sigSteps ? '1' : '0.15';
+          });
+
+          // AR: reticle follows hovered planet
+          if (isHovered) {
+            const reticle = document.getElementById('ar-reticle');
+            if (reticle) {
+              reticle.style.display = 'block';
+              reticle.style.left = x + 'px';
+              reticle.style.top = y + 'px';
+              reticle.style.color = pm.agent.color;
+              const retName = document.getElementById('ar-ret-name');
+              if (retName) retName.textContent = (typeof agentName === 'function' ? agentName(pm.agent) : pm.agent.name).toUpperCase();
+              const retId = document.getElementById('ar-ret-id');
+              if (retId) retId.textContent = 'ID:' + String(pm.agent.id).padStart(3,'0');
+            }
+            const depthEl = document.getElementById('ar-val-depth');
+            if (depthEl) depthEl.textContent = Math.round(dist * 2.8);
+            const targetEl = document.getElementById('ar-val-target');
+            if (targetEl) targetEl.textContent = String(pm.agent.id).padStart(3,'0');
+          }
         });
+
+        // Hide reticle when nothing hovered
+        if (!hoveredPlanet) {
+          const reticle = document.getElementById('ar-reticle');
+          if (reticle) reticle.style.display = 'none';
+          const depthEl = document.getElementById('ar-val-depth');
+          if (depthEl) depthEl.textContent = '∞';
+          const targetEl = document.getElementById('ar-val-target');
+          if (targetEl) targetEl.textContent = '---';
+        }
+
+        // AR: update compass heading from camera azimuth
+        const _hdg = Math.round(((Math.atan2(camera.position.x, camera.position.z) * 180 / Math.PI) + 360) % 360);
+        const hdgStr = String(_hdg).padStart(3,'0') + '°';
+        const hdgEl = document.getElementById('ar-compass-hdg');
+        if (hdgEl) hdgEl.textContent = hdgStr;
+        const hdgEl2 = document.getElementById('ar-val-hdg');
+        if (hdgEl2) hdgEl2.textContent = hdgStr;
+        // Scroll compass track to match heading
+        const trackEl = document.getElementById('ar-compass-track');
+        if (trackEl) trackEl.style.transform = `translateX(${-(_hdg / 360) * 420}px)`;
 
         renderer.render(scene, camera);
       }
@@ -7240,6 +7615,9 @@
       window._planetMeshes = planetMeshes;
       window._labelEls = labelEls;
       window._openHUD = openHUD;
+      // Enable WebXR on renderer
+      renderer.xr.enabled = true;
+
       animate();
 
       window.addEventListener('resize', () => {
@@ -7248,6 +7626,76 @@
         camera.updateProjectionMatrix();
         renderer.setSize(W, H);
       });
+
+      // ══════════════════════════════════════════════════════════
+      // AR/XR INITIALISATION
+      // ══════════════════════════════════════════════════════════
+
+      // Activate AR overlay for this route
+      document.body.classList.add('ar-ready');
+      const arAgentsEl = document.getElementById('ar-val-agents');
+      if (arAgentsEl) arAgentsEl.textContent = String(AI_AGENTS.length);
+
+      // ── DeviceOrientation / gyroscope head tracking ──────────
+      // Works on phone & AR glasses (Magic Leap, HoloLens browser, Quest browser)
+      let _gyroActive = false;
+      function _onDeviceOrientation(e) {
+        const gamma = e.gamma || 0; // left-right tilt  (-90 to +90)
+        const beta  = e.beta  || 0; // front-back tilt  (-180 to +180)
+        // Map to parallax values (same vars used by mouse parallax)
+        mouseParallaxX = Math.max(-1, Math.min(1, gamma / 35));
+        mouseParallaxY = Math.max(-1, Math.min(1, (beta - 45) / 40));
+        if (!_gyroActive) {
+          _gyroActive = true;
+          document.body.classList.add('ar-gyro');
+        }
+      }
+      // iOS 13+ requires explicit permission for DeviceOrientation
+      if (typeof DeviceOrientationEvent !== 'undefined') {
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+          // iOS 13+ — add a permission button on first interaction
+          const _reqGyro = () => {
+            DeviceOrientationEvent.requestPermission().then(state => {
+              if (state === 'granted') window.addEventListener('deviceorientation', _onDeviceOrientation);
+            }).catch(() => {});
+            document.removeEventListener('click', _reqGyro);
+          };
+          document.addEventListener('click', _reqGyro, { once: true });
+        } else {
+          // Android / non-restricted browsers
+          window.addEventListener('deviceorientation', _onDeviceOrientation);
+        }
+      }
+
+      // ── WebXR immersive-ar support ───────────────────────────
+      window._enterXR = null;
+      if (navigator.xr) {
+        navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+          if (!supported) return;
+          const xrBtn = document.getElementById('ar-enter-xr');
+          if (xrBtn) xrBtn.style.display = 'flex';
+
+          window._enterXR = async () => {
+            try {
+              const session = await navigator.xr.requestSession('immersive-ar', {
+                requiredFeatures: ['local'],
+                optionalFeatures: ['dom-overlay', 'hit-test'],
+                domOverlay: { root: document.getElementById('labels') || document.body },
+              });
+              renderer.xr.setSession(session);
+              document.body.classList.add('ar-mode');
+              if (xrBtn) { xrBtn.textContent = '✕ EXIT AR'; xrBtn.onclick = () => session.end(); }
+              session.addEventListener('end', () => {
+                document.body.classList.remove('ar-mode');
+                if (xrBtn) { xrBtn.innerHTML = '<div style="font-size:18px;">🥽</div><div>ENTER AR</div>'; xrBtn.onclick = () => window._enterXR && window._enterXR(); }
+              });
+            } catch(err) {
+              console.warn('[WebXR] session failed:', err.message);
+              if (typeof showToast === 'function') showToast('🥽 Thiết bị chưa hỗ trợ AR session: ' + err.message, 'error');
+            }
+          };
+        }).catch(() => {});
+      }
     }
     // ═══════════════════════════════════════════════════════════
     // SEARCH
@@ -11635,7 +12083,10 @@
 
   /* ── PLANET LABELS (3D scene) ─────────────── */
   .planet-label .name { font-size: 8px !important; }
-  .planet-label .type { font-size: 7px !important; }
+  .planet-label .ar-type { font-size: 6px !important; }
+  .ar-depth-bar { gap: 10px !important; padding: 4px 10px !important; }
+  .ar-compass { width: 200px !important; }
+  #ar-enter-xr { bottom: 100px !important; padding: 6px 10px !important; }
 
   /* ── MODALS — tăng padding/font cho mobile ── */
   .modal-close {
