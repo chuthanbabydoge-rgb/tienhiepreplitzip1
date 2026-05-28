@@ -890,6 +890,82 @@ app.get('/api/agents', async (req, res) => {
   }
 });
 
+// GET /api/agents/search — tìm kiếm agent theo tên, loại, hoặc khả năng
+// Query params: q (text), type (content|finance|tech|marketing|top10), limit (số kết quả, default 8)
+app.get('/api/agents/search', async (req, res) => {
+  const q = (req.query.q || '').trim();
+  const type = (req.query.type || 'all').trim();
+  const limit = Math.min(parseInt(req.query.limit) || 8, 50);
+
+  const TYPE_KEYWORDS = {
+    content:   ['content', 'video', 'tiktok', 'youtube', 'podcast', 'news', 'image', 'copy', 'newsletter', 'photo'],
+    finance:   ['trading', 'finance', 'invest', 'crypto', 'tax', 'insurance', 'fintech', 'market'],
+    tech:      ['code', 'software', 'cloud', 'cyber', 'quantum', 'robotic', 'neural', 'bio', 'space'],
+    marketing: ['seo', 'affiliate', 'email', 'social', 'ad', 'influencer', 'pr', 'brand', 'funnel'],
+  };
+
+  try {
+    // Thử tìm trong DB trước
+    let rows;
+    const { rows: countRows } = await pgPool.query('SELECT COUNT(*) FROM agents');
+    const hasDB = parseInt(countRows[0].count) > 0;
+
+    if (hasDB) {
+      let sql = 'SELECT * FROM agents WHERE 1=1';
+      const params = [];
+
+      if (q) {
+        params.push(`%${q}%`);
+        sql += ` AND (name ILIKE $${params.length} OR type ILIKE $${params.length} OR apis::text ILIKE $${params.length})`;
+      }
+
+      if (type !== 'all' && TYPE_KEYWORDS[type]) {
+        const kws = TYPE_KEYWORDS[type];
+        const kwClauses = kws.map((k, i) => {
+          params.push(`%${k}%`);
+          return `(name ILIKE $${params.length} OR type ILIKE $${params.length})`;
+        });
+        sql += ` AND (${kwClauses.join(' OR ')})`;
+      }
+
+      sql += ' ORDER BY sort_order ASC, id ASC';
+      params.push(limit);
+      sql += ` LIMIT $${params.length}`;
+
+      const result = await pgPool.query(sql, params);
+      rows = result.rows;
+    } else {
+      // Fallback: lọc từ seed data
+      let pool = AGENTS_SEED.slice();
+      if (q) {
+        const ql = q.toLowerCase();
+        pool = pool.filter(a =>
+          a.name.toLowerCase().includes(ql) ||
+          a.type.toLowerCase().includes(ql) ||
+          (Array.isArray(a.apis) ? a.apis : []).some(api => api.toLowerCase().includes(ql))
+        );
+      }
+      if (type !== 'all' && TYPE_KEYWORDS[type]) {
+        const kws = TYPE_KEYWORDS[type];
+        pool = pool.filter(a => kws.some(k =>
+          a.type.toLowerCase().includes(k) || a.name.toLowerCase().includes(k)
+        ));
+      }
+      if (type === 'top10') {
+        pool = pool.slice().sort((a, b) =>
+          parseFloat(b.revenue.replace(/[$,∞]/g, '')) - parseFloat(a.revenue.replace(/[$,∞]/g, ''))
+        );
+      }
+      rows = pool.slice(0, limit);
+    }
+
+    res.json({ agents: rows, total: rows.length, q, type });
+  } catch (e) {
+    console.error('Agent search error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET all agents (from DB, fallback to seed if empty)
 app.get('/api/db/admin/agents', requireAdminPassword, async (req, res) => {
   try {

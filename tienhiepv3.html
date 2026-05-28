@@ -7174,21 +7174,46 @@
     // ═══════════════════════════════════════════════════════════
     // SEARCH
     // ═══════════════════════════════════════════════════════════
+    let _searchTimer = null;
     function searchAgents(q) {
       const res = document.getElementById('search-results');
       if (!q.trim()) { res.innerHTML = ''; res.classList.remove('show'); return; }
-      const matches = AI_AGENTS.filter(a =>
-        a.name.toLowerCase().includes(q.toLowerCase()) ||
-        a.type.toLowerCase().includes(q.toLowerCase())
-      ).slice(0, 8);
-      res.innerHTML = matches.map(a =>
-        `<div class="search-item" onclick="searchSelect(${a.id})">
-      <span>${a.emoji}</span>
-      <span style="color:${a.color}">${agentName(a)}</span>
-      <span style="font-size:8px;color:#00ffff44;margin-left:auto">${agentNote(a)}</span>
-    </div>`
-      ).join('');
-      res.classList.toggle('show', matches.length > 0);
+      clearTimeout(_searchTimer);
+      _searchTimer = setTimeout(async () => {
+        try {
+          const resp = await fetch('/api/agents/search?q=' + encodeURIComponent(q) + '&limit=8');
+          if (!resp.ok) throw new Error('search failed');
+          const data = await resp.json();
+          const matches = (data.agents || []).map(a => ({
+            ...a,
+            apis: Array.isArray(a.apis) ? a.apis : JSON.parse(a.apis || '[]'),
+            workflow: Array.isArray(a.workflow) ? a.workflow : JSON.parse(a.workflow || '[]'),
+            logs: Array.isArray(a.logs) ? a.logs : JSON.parse(a.logs || '[]'),
+          }));
+          res.innerHTML = matches.map(a =>
+            `<div class="search-item" onclick="searchSelect(${a.id})">
+          <span>${a.emoji}</span>
+          <span style="color:${a.color}">${agentName(a)}</span>
+          <span style="font-size:8px;color:#00ffff44;margin-left:auto">${agentNote(a)}</span>
+        </div>`
+          ).join('');
+          res.classList.toggle('show', matches.length > 0);
+        } catch(e) {
+          // Fallback: tìm local nếu API lỗi
+          const ql = q.toLowerCase();
+          const matches = AI_AGENTS.filter(a =>
+            a.name.toLowerCase().includes(ql) || a.type.toLowerCase().includes(ql)
+          ).slice(0, 8);
+          res.innerHTML = matches.map(a =>
+            `<div class="search-item" onclick="searchSelect(${a.id})">
+          <span>${a.emoji}</span>
+          <span style="color:${a.color}">${agentName(a)}</span>
+          <span style="font-size:8px;color:#00ffff44;margin-left:auto">${agentNote(a)}</span>
+        </div>`
+          ).join('');
+          res.classList.toggle('show', matches.length > 0);
+        }
+      }, 200);
     }
     function searchSelect(id) {
       const agent = AI_AGENTS[id];
