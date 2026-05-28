@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **01:03:40 29/5/2026**
+> Cập nhật lần cuối: **01:30:04 29/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,650 dòng, 72.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(16,442 dòng, 1.36 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(16,461 dòng, 1.36 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,650 | 72.2 KB |
-| `tienhiepv3.html` | 16,442 | 1.36 MB |
+| `tienhiepv3.html` | 16,461 | 1.36 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **21,813** | **1.59 MB** |
+| **TỔNG** | **21,832** | **1.59 MB** |
 
 ---
 
@@ -1752,7 +1752,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 16,442 dòng · 1.36 MB
+> 16,461 dòng · 1.36 MB
 
 ```html
 <!DOCTYPE html>
@@ -8319,6 +8319,7 @@ app.listen(PORT, '0.0.0.0', () => {
         /* ── Try navigation command ── */
         function _tryNavigate(transcript) {
           const raw = _norm(transcript);
+          console.log('[VOICE] heard:', JSON.stringify(transcript), '→ norm:', raw);
 
           // Strip navigation prefixes
           const PREFIXES = ['mo ','vao ','kich hoat ','chon ','tim ','xem ','open ','go to ',
@@ -8328,6 +8329,7 @@ app.listen(PORT, '0.0.0.0', () => {
             const idx = raw.indexOf(p);
             if (idx !== -1) { target = raw.slice(idx + p.length).trim(); break; }
           }
+          console.log('[VOICE] target after strip:', JSON.stringify(target));
 
           // ── Special shortcuts ──────────────────────────────────────
           if (/leaderboard|bang xep hang|xep hang/.test(target)) {
@@ -8354,7 +8356,10 @@ app.listen(PORT, '0.0.0.0', () => {
 
           // ── Agent name matching ────────────────────────────────────
           if (!_agentIndex) _agentIndex = _buildAgentIndex();
-          if (target.length < 3) return false;
+          if (target.length < 3) {
+            if (typeof showToast === 'function') showToast('🎙️ Nghe: "' + transcript + '" — quá ngắn', 'warn');
+            return false;
+          }
 
           let best = null, bestScore = 0;
           for (const a of _agentIndex) {
@@ -8365,21 +8370,35 @@ app.listen(PORT, '0.0.0.0', () => {
               }
             }
           }
+          console.log('[VOICE] best match:', best ? (best.name + ' (id=' + best.id + ', score=' + bestScore + ')') : 'none');
 
           if (best && bestScore >= 4) {
             _showTranscript(transcript);
+            const displayName = (best.agent && best.agent.xname) || best.name;
             if (typeof showToast === 'function')
-              showToast('🎙️ ' + best.emoji + ' ' + best.name + ' — đang bay tới...', 'success');
+              showToast('🎙️ ' + best.emoji + ' ' + displayName + ' — triệu hồi...', 'success');
             setTimeout(() => {
-              if (window._planetMeshes) {
+              if (best.agent && typeof window.openAgentChat === 'function') {
+                console.log('[VOICE] calling openAgentChat for', best.agent.name, 'id=', best.agent.id);
+                window.openAgentChat(best.agent);
+              } else if (window._planetMeshes) {
                 const pm = window._planetMeshes.find(p => p.agent.id === best.id);
                 if (pm && window._openHUD) window._openHUD(pm);
               }
             }, 300);
             return true;
           }
+
+          // No match — show feedback so user knows what was heard
+          if (typeof showToast === 'function')
+            showToast('🎙️ Nghe: "' + transcript + '" — không nhận ra agent nào', 'warn');
           return false;
         }
+
+        /* ── Expose for console testing: window._voiceTest("mở thiên tốc") ── */
+        window._voiceTest = function(text) { return _tryNavigate(text); };
+        /* ── Reset index (call after agents reload) ── */
+        window._voiceResetIndex = function() { _agentIndex = null; console.log('[VOICE] index reset'); };
 
         function _getOrCreateTranscript() {
           if (!transcriptEl) {

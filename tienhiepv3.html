@@ -5096,6 +5096,7 @@
       }
       if (!AI_AGENTS.length) AI_AGENTS = _AGENTS_STUB.slice();
       _applyXianxiaNames();
+      if (typeof window._voiceResetIndex === 'function') window._voiceResetIndex();
       initAgentCounters();
     }
     // Khởi tạo ngay với stub để initUniverse() có planets khi chạy synchronous
@@ -6562,6 +6563,7 @@
         /* ── Try navigation command ── */
         function _tryNavigate(transcript) {
           const raw = _norm(transcript);
+          console.log('[VOICE] heard:', JSON.stringify(transcript), '→ norm:', raw);
 
           // Strip navigation prefixes
           const PREFIXES = ['mo ','vao ','kich hoat ','chon ','tim ','xem ','open ','go to ',
@@ -6571,6 +6573,7 @@
             const idx = raw.indexOf(p);
             if (idx !== -1) { target = raw.slice(idx + p.length).trim(); break; }
           }
+          console.log('[VOICE] target after strip:', JSON.stringify(target));
 
           // ── Special shortcuts ──────────────────────────────────────
           if (/leaderboard|bang xep hang|xep hang/.test(target)) {
@@ -6597,7 +6600,10 @@
 
           // ── Agent name matching ────────────────────────────────────
           if (!_agentIndex) _agentIndex = _buildAgentIndex();
-          if (target.length < 3) return false;
+          if (target.length < 3) {
+            if (typeof showToast === 'function') showToast('🎙️ Nghe: "' + transcript + '" — quá ngắn', 'warn');
+            return false;
+          }
 
           let best = null, bestScore = 0;
           for (const a of _agentIndex) {
@@ -6608,6 +6614,7 @@
               }
             }
           }
+          console.log('[VOICE] best match:', best ? (best.name + ' (id=' + best.id + ', score=' + bestScore + ')') : 'none');
 
           if (best && bestScore >= 4) {
             _showTranscript(transcript);
@@ -6616,6 +6623,7 @@
               showToast('🎙️ ' + best.emoji + ' ' + displayName + ' — triệu hồi...', 'success');
             setTimeout(() => {
               if (best.agent && typeof window.openAgentChat === 'function') {
+                console.log('[VOICE] calling openAgentChat for', best.agent.name, 'id=', best.agent.id);
                 window.openAgentChat(best.agent);
               } else if (window._planetMeshes) {
                 const pm = window._planetMeshes.find(p => p.agent.id === best.id);
@@ -6624,8 +6632,17 @@
             }, 300);
             return true;
           }
+
+          // No match — show feedback so user knows what was heard
+          if (typeof showToast === 'function')
+            showToast('🎙️ Nghe: "' + transcript + '" — không nhận ra agent nào', 'warn');
           return false;
         }
+
+        /* ── Expose for console testing: window._voiceTest("mở thiên tốc") ── */
+        window._voiceTest = function(text) { return _tryNavigate(text); };
+        /* ── Reset index (call after agents reload) ── */
+        window._voiceResetIndex = function() { _agentIndex = null; console.log('[VOICE] index reset'); };
 
         function _getOrCreateTranscript() {
           if (!transcriptEl) {
