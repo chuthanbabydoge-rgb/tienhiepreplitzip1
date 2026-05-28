@@ -13,7 +13,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@google/genai": "^2.3.0",
+    "@google/genai": "^2.6.0",
     "@imgly/background-removal-node": "^1.4.5",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/express-session": "^1.19.0",
@@ -31,7 +31,7 @@
     "p-retry": "^7.1.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "pg": "^8.20.0",
+    "pg": "^8.21.0",
     "zod": "^4.4.3",
     "zod-validation-error": "^5.0.0"
   }

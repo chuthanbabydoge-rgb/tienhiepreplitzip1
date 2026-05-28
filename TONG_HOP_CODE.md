@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **23:18:15 19/5/2026**
+> Cập nhật lần cuối: **23:28:37 28/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,381 dòng, 61.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,767 dòng, 1.33 MB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,489 dòng, 66.2 KB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,854 dòng, 1.33 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -22,8 +22,8 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 39 | 987 B |
-| `server.js` | 1,381 | 61.2 KB |
-| `tienhiepv3.html` | 15,767 | 1.33 MB |
+| `server.js` | 1,489 | 66.2 KB |
+| `tienhiepv3.html` | 15,854 | 1.33 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **20,869** | **1.55 MB** |
+| **TỔNG** | **21,064** | **1.56 MB** |
 
 ---
 
@@ -59,7 +59,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@google/genai": "^2.3.0",
+    "@google/genai": "^2.6.0",
     "@imgly/background-removal-node": "^1.4.5",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/express-session": "^1.19.0",
@@ -77,7 +77,7 @@
     "p-retry": "^7.1.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "pg": "^8.20.0",
+    "pg": "^8.21.0",
     "zod": "^4.4.3",
     "zod-validation-error": "^5.0.0"
   }
@@ -91,7 +91,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,381 dòng · 61.2 KB
+> 1,489 dòng · 66.2 KB
 
 ```javascript
 const express = require('express');
@@ -174,6 +174,27 @@ async function initDB() {
       login_count       INT NOT NULL DEFAULT 0,
       created_at        TIMESTAMPTZ DEFAULT NOW(),
       last_login        TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS agents (
+      id          INT PRIMARY KEY,
+      name        TEXT NOT NULL,
+      emoji       TEXT NOT NULL DEFAULT '🤖',
+      type        TEXT NOT NULL DEFAULT '',
+      color       TEXT NOT NULL DEFAULT '#00ffff',
+      glow        TEXT NOT NULL DEFAULT '#00ffff',
+      revenue     TEXT NOT NULL DEFAULT '$0',
+      auto        INT  NOT NULL DEFAULT 80,
+      neural      INT  NOT NULL DEFAULT 80,
+      iq          INT  NOT NULL DEFAULT 80,
+      efficiency  INT  NOT NULL DEFAULT 80,
+      apis        JSONB NOT NULL DEFAULT '[]',
+      workflow    JSONB NOT NULL DEFAULT '[]',
+      logs        JSONB NOT NULL DEFAULT '[]',
+      xname       TEXT NOT NULL DEFAULT '',
+      xnote       TEXT NOT NULL DEFAULT '',
+      sort_order  INT  NOT NULL DEFAULT 0,
+      created_at  TIMESTAMPTZ DEFAULT NOW()
     );
   `);
   console.log('✅ DB tables ready');
@@ -518,7 +539,10 @@ function serveMain(req, res) {
   res.sendFile(path.join(__dirname, 'tienhiepv3.html'));
 }
 app.get('/app', serveMain);
-app.get('/user', requireAuth, serveMain);
+app.get('/user', requireAuth, (req, res, next) => {
+  if (!('ar' in req.query)) return res.redirect('/user?ar');
+  next();
+}, serveMain);
 app.get('/', (req, res) => res.redirect('/user'));
 
 // Admin login page
@@ -544,10 +568,17 @@ app.get('/api/admin/logout', (req, res) => {
   req.session.save(() => res.redirect('/admin/login'));
 });
 
-app.get('/admin', requireAdminPassword, serveMain);
+app.get('/admin', requireAdminPassword, (req, res, next) => {
+  if (!('ar' in req.query)) return res.redirect('/admin?ar');
+  next();
+}, serveMain);
 
 app.get('/admin/users', requireAdminPassword, (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.get('/admin/agents', requireAdminPassword, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin-agents.html'));
 });
 
 app.get('/create-character', (req, res) => {
@@ -935,6 +966,83 @@ app.get('/api/db/admin/users', requireAuthAPI, async (req, res) => {
       )
     ]);
     res.json({ users: usersRes.rows, summary: summaryRes.rows[0] });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── DB: Admin — Agents CRUD ───────────────────────────────────────────────────
+const AGENTS_SEED = require('./agents-seed');
+
+// GET all agents (from DB, fallback to seed if empty)
+app.get('/api/db/admin/agents', requireAdminPassword, async (req, res) => {
+  try {
+    const { rows } = await pgPool.query('SELECT * FROM agents ORDER BY sort_order ASC, id ASC');
+    res.json({ agents: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST seed — populate DB from hardcoded defaults
+app.post('/api/db/admin/agents/seed', requireAdminPassword, async (req, res) => {
+  try {
+    for (const a of AGENTS_SEED) {
+      await pgPool.query(
+        `INSERT INTO agents (id, name, emoji, type, color, glow, revenue, auto, neural, iq, efficiency, apis, workflow, logs, xname, xnote, sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+         ON CONFLICT (id) DO NOTHING`,
+        [a.id, a.name, a.emoji, a.type, a.color, a.glow, a.revenue,
+         a.auto, a.neural, a.iq, a.efficiency,
+         JSON.stringify(a.apis), JSON.stringify(a.workflow), JSON.stringify(a.logs),
+         a.xname, a.xnote, a.id]
+      );
+    }
+    const { rows } = await pgPool.query('SELECT COUNT(*) FROM agents');
+    res.json({ ok: true, count: parseInt(rows[0].count) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST create new agent
+app.post('/api/db/admin/agents', requireAdminPassword, async (req, res) => {
+  try {
+    const { id, name, emoji, type, color, glow, revenue, auto, neural, iq, efficiency, apis, workflow, logs, xname, xnote } = req.body;
+    if (!name) return res.status(400).json({ error: 'Tên agent không được trống' });
+    const agentId = id !== undefined ? parseInt(id) : null;
+    const sortOrder = agentId !== null ? agentId : 9999;
+    await pgPool.query(
+      `INSERT INTO agents (id, name, emoji, type, color, glow, revenue, auto, neural, iq, efficiency, apis, workflow, logs, xname, xnote, sort_order)
+       VALUES (COALESCE($1, (SELECT COALESCE(MAX(id),100)+1 FROM agents)), $2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+      [agentId, name, emoji||'🤖', type||'', color||'#00ffff', glow||color||'#00ffff', revenue||'$0',
+       parseInt(auto)||80, parseInt(neural)||80, parseInt(iq)||80, parseInt(efficiency)||80,
+       JSON.stringify(apis||[]), JSON.stringify(workflow||[]), JSON.stringify(logs||[]),
+       xname||name, xnote||type||'', sortOrder]
+    );
+    const { rows } = await pgPool.query('SELECT * FROM agents ORDER BY sort_order ASC, id ASC');
+    res.json({ ok: true, agents: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT update agent
+app.put('/api/db/admin/agents/:id', requireAdminPassword, async (req, res) => {
+  try {
+    const aid = parseInt(req.params.id);
+    const { name, emoji, type, color, glow, revenue, auto, neural, iq, efficiency, apis, workflow, logs, xname, xnote } = req.body;
+    await pgPool.query(
+      `UPDATE agents SET name=$1, emoji=$2, type=$3, color=$4, glow=$5, revenue=$6,
+       auto=$7, neural=$8, iq=$9, efficiency=$10, apis=$11, workflow=$12, logs=$13,
+       xname=$14, xnote=$15 WHERE id=$16`,
+      [name, emoji||'🤖', type||'', color||'#00ffff', glow||color||'#00ffff', revenue||'$0',
+       parseInt(auto)||80, parseInt(neural)||80, parseInt(iq)||80, parseInt(efficiency)||80,
+       JSON.stringify(apis||[]), JSON.stringify(workflow||[]), JSON.stringify(logs||[]),
+       xname||name, xnote||type||'', aid]
+    );
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE agent
+app.delete('/api/db/admin/agents/:id', requireAdminPassword, async (req, res) => {
+  try {
+    const aid = parseInt(req.params.id);
+    await pgPool.query('DELETE FROM agents WHERE id=$1', [aid]);
+    res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1483,7 +1591,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 15,767 dòng · 1.33 MB
+> 15,854 dòng · 1.33 MB
 
 ```html
 <!DOCTYPE html>
@@ -5156,7 +5264,8 @@ app.listen(PORT, '0.0.0.0', () => {
       'sidebar-right','metrics-bar','filter-wrap','search-wrap',
       'universe-chatbox','uc-collapsed-icon','shortcut-hint',
       'dharma-wheel-container','dharma-wheel-ground',
-      'micro-world-container','char-placeholder','character-speech-bubble'
+      'micro-world-container','char-placeholder','character-speech-bubble',
+      'universe-mic-btn'
     ];
     ids.forEach(function(id) {
       var el = document.getElementById(id);
@@ -5171,7 +5280,8 @@ app.listen(PORT, '0.0.0.0', () => {
       'sidebar-right','metrics-bar','filter-wrap','search-wrap',
       'universe-chatbox','uc-collapsed-icon','shortcut-hint',
       'dharma-wheel-container','dharma-wheel-ground',
-      'micro-world-container','char-placeholder','character-speech-bubble'
+      'micro-world-container','char-placeholder','character-speech-bubble',
+      'universe-mic-btn'
     ];
     ids.forEach(function(id) {
       var el = document.getElementById(id);
@@ -5410,8 +5520,72 @@ app.listen(PORT, '0.0.0.0', () => {
     <div id="statusbar">
       <div id="log-track"></div>
     </div>
-    <!-- UNIVERSE CHATBOX -->
+    <!-- UNIVERSE MIC BUTTON + CHATBOX -->
     <style>
+      /* ── UNIVERSE MIC FLOATING BUTTON ── */
+      #universe-mic-btn {
+        position: fixed;
+        bottom: 80px;
+        right: 16px;
+        width: 54px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        cursor: pointer;
+        pointer-events: auto;
+        z-index: 15;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #univ-mic-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: rgba(0,5,18,0.88);
+        border: 1.5px solid rgba(0,255,255,0.3);
+        box-shadow: 0 0 14px rgba(0,255,255,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        position: relative;
+        transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+      }
+      #universe-mic-btn:hover #univ-mic-icon {
+        border-color: rgba(0,255,255,0.7);
+        box-shadow: 0 0 22px rgba(0,255,255,0.4);
+      }
+      #universe-mic-btn.listening #univ-mic-icon {
+        background: rgba(0,255,255,0.14);
+        border-color: #00ffff;
+        box-shadow: 0 0 28px rgba(0,255,255,0.6), 0 0 60px rgba(0,255,255,0.2);
+      }
+      #univ-mic-ring {
+        position: absolute;
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        border: 2px solid rgba(0,255,255,0.55);
+        pointer-events: none;
+        opacity: 0;
+      }
+      #universe-mic-btn.listening #univ-mic-ring {
+        opacity: 1;
+        animation: voiceRingPulse 1.1s ease-out infinite;
+      }
+      #univ-mic-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 7px;
+        letter-spacing: 2px;
+        color: rgba(0,255,255,0.35);
+        transition: color 0.2s;
+      }
+      #universe-mic-btn.listening #univ-mic-label {
+        color: #00ffff;
+        text-shadow: 0 0 8px rgba(0,255,255,0.6);
+      }
+
       #universe-chatbox {
         position: absolute;
         bottom: 80px;
@@ -5640,6 +5814,13 @@ app.listen(PORT, '0.0.0.0', () => {
     </div>
 
     <!-- UNIVERSE CHATBOX COLLAPSED ICON -->
+    <!-- UNIVERSE VOICE MIC BUTTON (floating, always visible) -->
+    <div id="universe-mic-btn" title="Voice command — nói tên agent để bay tới">
+      <div id="univ-mic-icon">🎙️</div>
+      <div id="univ-mic-ring"></div>
+      <div id="univ-mic-label">VOICE</div>
+    </div>
+
     <div id="uc-collapsed-icon"
       onclick="ucToggleCollapse()"
       style="display:none;position:absolute;bottom:80px;left:20px;width:44px;height:44px;background:rgba(0,5,18,0.93);border:2px solid #00ffff;border-radius:50%;box-shadow:0 0 18px rgba(0,255,255,0.4);z-index:11;cursor:pointer;pointer-events:auto;align-items:center;justify-content:center;font-size:20px;transition:box-shadow 0.2s;"
@@ -7731,9 +7912,9 @@ app.listen(PORT, '0.0.0.0', () => {
               for (let i = e.resultIndex; i < e.results.length; i++) {
                 const transcript = e.results[i][0].transcript;
                 if (e.results[i].isFinal) {
-                  _tryClose(transcript);
+                  // Thử đóng trước, nếu không khớp thì thử điều hướng
+                  if (!_tryClose(transcript)) _tryNavigate(transcript);
                 } else {
-                  // Hiện interim transcript nhỏ
                   const el = _getOrCreateTranscript();
                   el.textContent = '🎙 ' + transcript;
                   el.classList.add('show');
@@ -7774,23 +7955,37 @@ app.listen(PORT, '0.0.0.0', () => {
           if (el) el.classList.remove('show');
         }
 
-        // Toggle bằng nút
-        if (voiceBtn) {
-          voiceBtn.addEventListener('click', function() {
-            if (_listening) {
-              _stopListening();
-              if (typeof showToast === 'function') showToast('🔇 Voice command đã tắt', 'info');
-            } else {
-              _startListening();
-              if (typeof showToast === 'function') showToast('🎙️ Voice command bật — nói "đóng" hoặc "close"', 'success');
-            }
-          });
+        /* ── Sync visual state of both mic buttons ── */
+        function _syncMicUI() {
+          if (voiceBtn)   voiceBtn.classList.toggle('listening', _listening);
+          if (univMicBtn) univMicBtn.classList.toggle('listening', _listening);
         }
+
+        /* ── Toggle helper (shared by both buttons) ── */
+        function _toggleVoice() {
+          if (_listening) {
+            _stopListening();
+            if (typeof showToast === 'function') showToast('🔇 Voice command đã tắt', 'info');
+          } else {
+            _startListening();
+            if (typeof showToast === 'function')
+              showToast('🎙️ Đang nghe — nói tên agent, "đóng", "leaderboard"…', 'success');
+          }
+        }
+
+        if (voiceBtn)   voiceBtn.addEventListener('click',   _toggleVoice);
+        if (univMicBtn) univMicBtn.addEventListener('click', _toggleVoice);
+
+        // Hook _syncMicUI into start/stop
+        const _origStart = _startListening, _origStop = _stopListening;
+        _startListening = function() { _origStart(); _syncMicUI(); };
+        _stopListening  = function() { _origStop();  _syncMicUI(); };
 
         // Tự động bật voice khi HUD mở (lần đầu), tắt khi HUD đóng
         window._voiceStartListening = _startListening;
         window._voiceStopListening  = _stopListening;
         window._voiceIsListening    = function() { return _listening; };
+        window._voiceToggle         = _toggleVoice;
       })();
       // ──────────────────────────────────────────────────────────────────
 
