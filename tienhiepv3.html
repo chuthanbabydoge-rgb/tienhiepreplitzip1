@@ -3204,6 +3204,69 @@
       box-shadow: 0 0 8px rgba(100,220,160,0.5);
     }
 
+    /* ── Run Workflow node states ── */
+    .canvas-node.sp-running {
+      border-color: rgba(255,214,10,0.7) !important;
+      box-shadow:
+        0 0 0 3px rgba(255,214,10,0.18),
+        0 6px 28px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.12) !important;
+      animation: sp-node-pulse 0.9s ease-in-out infinite;
+    }
+    .canvas-node.sp-done {
+      border-color: rgba(52,199,89,0.7) !important;
+      box-shadow:
+        0 0 0 3px rgba(52,199,89,0.18),
+        0 6px 28px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.12) !important;
+    }
+    .canvas-node.sp-error {
+      border-color: rgba(255,69,58,0.7) !important;
+      box-shadow:
+        0 0 0 3px rgba(255,69,58,0.18),
+        0 6px 28px rgba(0,0,0,0.5) !important;
+    }
+    @keyframes sp-node-pulse {
+      0%,100% { box-shadow: 0 0 0 3px rgba(255,214,10,0.18), 0 6px 28px rgba(0,0,0,0.5); }
+      50%      { box-shadow: 0 0 0 6px rgba(255,214,10,0.35), 0 6px 28px rgba(0,0,0,0.5); }
+    }
+    /* ── SVG animated line ── */
+    .builder-line.sp-active {
+      stroke: url(#sp-active-grad) !important;
+      stroke-dasharray: 12 6;
+      animation: sp-line-march 0.5s linear infinite;
+      stroke-width: 2.5px !important;
+      filter: drop-shadow(0 0 4px rgba(255,214,10,0.6));
+    }
+    .builder-line.sp-done-line {
+      stroke: url(#sp-done-grad) !important;
+      stroke-width: 2px !important;
+    }
+    @keyframes sp-line-march {
+      to { stroke-dashoffset: -18; }
+    }
+    /* ── Builder log panel ── */
+    #builder-log-panel {
+      position:absolute;bottom:0;left:0;right:0;z-index:30;
+      background:rgba(8,10,22,0.88);
+      border-top:1px solid rgba(255,255,255,0.08);
+      backdrop-filter:blur(16px);
+      max-height:0;overflow:hidden;
+      transition:max-height 0.3s ease;
+    }
+    #builder-log-panel.sp-open { max-height:160px; }
+    #builder-log-inner {
+      padding:10px 14px;
+      font-family:'SF Mono','Fira Mono',monospace;
+      font-size:11px;line-height:1.7;
+      color:rgba(255,255,255,0.7);
+      overflow-y:auto;max-height:140px;
+    }
+    #builder-log-inner .log-run  { color:#ffd60a; }
+    #builder-log-inner .log-ok   { color:#34c759; }
+    #builder-log-inner .log-err  { color:#ff453a; }
+    #builder-log-inner .log-info { color:rgba(255,255,255,0.45); }
+
     .close-btn,
     .modal-close {
       display: inline-flex !important;
@@ -8376,13 +8439,32 @@
             Kéo thả các khối để xây dựng luồng tự động
           </span>
         </div>
+        <!-- Clear button -->
+        <button onclick="clearBuilder()" id="builder-clear-btn" style="
+          display:inline-flex;align-items:center;gap:5px;
+          background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+          color:rgba(255,255,255,0.5);padding:6px 13px;
+          font-family:-apple-system,'Segoe UI',sans-serif;font-size:12px;font-weight:500;
+          border-radius:20px;cursor:pointer;transition:all 0.18s;">
+          ✕ Xóa
+        </button>
+        <!-- Run button -->
+        <button onclick="runWorkflow()" id="builder-run-btn" style="
+          display:inline-flex;align-items:center;gap:6px;
+          background:rgba(52,199,89,0.15);border:1px solid rgba(52,199,89,0.4);
+          color:#34c759;padding:6px 16px;
+          font-family:-apple-system,'Segoe UI',sans-serif;font-size:12px;font-weight:600;
+          border-radius:20px;cursor:pointer;transition:all 0.18s;
+          box-shadow:0 0 14px rgba(52,199,89,0.15),inset 0 1px 0 rgba(255,255,255,0.08);">
+          ▶ Chạy
+        </button>
         <!-- Status pill -->
-        <div style="
+        <div id="builder-status-pill" style="
           display:flex;align-items:center;gap:6px;
           background:rgba(52,199,89,0.12);border:1px solid rgba(52,199,89,0.25);
           border-radius:20px;padding:5px 12px;">
-          <span class="pulse-dot" style="background:#34c759;box-shadow:0 0 6px #34c759;"></span>
-          <span style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:11px;color:#34c759;font-weight:500;">Sẵn sàng</span>
+          <span class="pulse-dot" id="builder-status-dot" style="background:#34c759;box-shadow:0 0 6px #34c759;"></span>
+          <span id="builder-status-text" style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:11px;color:#34c759;font-weight:500;">Sẵn sàng</span>
         </div>
       </div>
 
@@ -8461,8 +8543,21 @@
                 <stop offset="0%" style="stop-color:rgba(100,220,160,0.8)"/>
                 <stop offset="100%" style="stop-color:rgba(94,159,255,0.8)"/>
               </linearGradient>
+              <linearGradient id="sp-active-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:rgba(255,214,10,0.9)"/>
+                <stop offset="100%" style="stop-color:rgba(255,159,10,0.9)"/>
+              </linearGradient>
+              <linearGradient id="sp-done-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:rgba(52,199,89,0.85)"/>
+                <stop offset="100%" style="stop-color:rgba(100,220,160,0.85)"/>
+              </linearGradient>
             </defs>
           </svg>
+
+          <!-- Log panel (slides up from bottom) -->
+          <div id="builder-log-panel">
+            <div id="builder-log-inner"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -9964,12 +10059,127 @@
       svg.innerHTML = _spGradDefs() + paths;
     }
 
+    // ── SET BUILDER STATUS PILL ──
+    function _setBuilderStatus(text, color) {
+      const dot = document.getElementById('builder-status-dot');
+      const txt = document.getElementById('builder-status-text');
+      if (dot) { dot.style.background = color; dot.style.boxShadow = `0 0 6px ${color}`; }
+      if (txt)  { txt.style.color = color; txt.textContent = text; }
+    }
+
+    // ── BUILDER LOG ──
+    function _blogLog(msg, type) {
+      const panel = document.getElementById('builder-log-panel');
+      const inner = document.getElementById('builder-log-inner');
+      if (!panel || !inner) return;
+      panel.classList.add('sp-open');
+      const line = document.createElement('div');
+      line.className = 'log-' + (type || 'info');
+      const ts = new Date().toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      line.textContent = `[${ts}] ${msg}`;
+      inner.appendChild(line);
+      inner.scrollTop = inner.scrollHeight;
+    }
+
+    // ── CLEAR BUILDER ──
+    function clearBuilder() {
+      bNodes.forEach(n => n.remove());
+      bNodes = [];
+      nodeCounter = 0;
+      document.getElementById('builder-svg').innerHTML = _spGradDefs();
+      const el = document.getElementById('builder-empty-label');
+      if (el) el.style.display = '';
+      const panel = document.getElementById('builder-log-panel');
+      if (panel) { panel.classList.remove('sp-open'); document.getElementById('builder-log-inner').innerHTML = ''; }
+      _setBuilderStatus('Sẵn sàng', '#34c759');
+      const runBtn = document.getElementById('builder-run-btn');
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.textContent = '▶ Chạy'; }
+    }
+
+    // ── RUN WORKFLOW ANIMATION ──
+    let _wfRunning = false;
+    async function runWorkflow() {
+      if (_wfRunning) return;
+      if (bNodes.length === 0) { showToast('Chưa có khối nào trên canvas!', 'error'); return; }
+
+      _wfRunning = true;
+      const runBtn = document.getElementById('builder-run-btn');
+      if (runBtn) { runBtn.disabled = true; runBtn.style.opacity = '0.5'; runBtn.textContent = '⏳ Đang chạy…'; }
+
+      // reset states
+      bNodes.forEach(n => { n.classList.remove('sp-running','sp-done','sp-error'); });
+      document.querySelectorAll('.builder-line').forEach(l => l.classList.remove('sp-active','sp-done-line'));
+      const panel = document.getElementById('builder-log-panel');
+      const inner = document.getElementById('builder-log-inner');
+      if (panel && inner) { panel.classList.add('sp-open'); inner.innerHTML = ''; }
+
+      _blogLog('🚀 Khởi động workflow…', 'run');
+      _setBuilderStatus('Đang chạy…', '#ffd60a');
+
+      const lines = document.querySelectorAll('.builder-line');
+      const delay = ms => new Promise(r => setTimeout(r, ms));
+
+      for (let i = 0; i < bNodes.length; i++) {
+        const node = bNodes[i];
+        const label = node.getAttribute('data-raw-type') || node.innerText.split('\n')[0];
+        const dispLabel = label.split(' / ')[0] || label;
+
+        // activate connection line before this node (if exists)
+        if (i > 0 && lines[i-1]) {
+          lines[i-1].classList.add('sp-active');
+        }
+
+        node.classList.add('sp-running');
+        _blogLog(`⚙ Bước ${i+1}/${bNodes.length}: ${dispLabel}`, 'run');
+        await delay(900 + Math.random() * 400);
+
+        // finish line
+        if (i > 0 && lines[i-1]) {
+          lines[i-1].classList.remove('sp-active');
+          lines[i-1].classList.add('sp-done-line');
+        }
+
+        // 5% chance of simulated error
+        const fail = Math.random() < 0.05;
+        node.classList.remove('sp-running');
+        if (fail) {
+          node.classList.add('sp-error');
+          _blogLog(`✗ Lỗi tại bước ${i+1}: ${dispLabel} — retry…`, 'err');
+          await delay(700);
+          node.classList.remove('sp-error');
+          node.classList.add('sp-running');
+          await delay(600);
+          node.classList.remove('sp-running');
+        }
+        node.classList.add('sp-done');
+        _blogLog(`✓ Hoàn thành: ${dispLabel}`, 'ok');
+      }
+
+      // activate last line if any
+      if (lines.length > 0 && bNodes.length > 1) {
+        const last = lines[lines.length - 1];
+        if (last && !last.classList.contains('sp-done-line')) { last.classList.add('sp-done-line'); }
+      }
+
+      _blogLog(`✅ Workflow hoàn tất — ${bNodes.length} bước thành công!`, 'ok');
+      _setBuilderStatus('Hoàn tất ✓', '#34c759');
+      showToast('Workflow chạy xong!', 'success');
+      _wfRunning = false;
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.textContent = '▶ Chạy lại'; }
+    }
+
     function loadPreset(index) {
       bNodes.forEach(n => n.remove());
       bNodes = [];
       nodeCounter = 0;
       document.getElementById('builder-svg').innerHTML = _spGradDefs();
       _hideBuilderEmpty();
+      _wfRunning = false;
+      const runBtn = document.getElementById('builder-run-btn');
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.textContent = '▶ Chạy'; }
+      _setBuilderStatus('Sẵn sàng', '#34c759');
+      const panel = document.getElementById('builder-log-panel');
+      if (panel) { panel.classList.remove('sp-open'); document.getElementById('builder-log-inner').innerHTML = ''; }
 
       const agent = AI_AGENTS[index];
       if (!agent) return;

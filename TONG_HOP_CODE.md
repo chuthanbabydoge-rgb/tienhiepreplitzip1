@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **01:30:04 29/5/2026**
+> Cập nhật lần cuối: **02:22:40 29/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,650 dòng, 72.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(16,461 dòng, 1.36 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(16,793 dòng, 1.37 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,650 | 72.2 KB |
-| `tienhiepv3.html` | 16,461 | 1.36 MB |
+| `tienhiepv3.html` | 16,793 | 1.37 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **21,832** | **1.59 MB** |
+| **TỔNG** | **22,164** | **1.61 MB** |
 
 ---
 
@@ -1752,7 +1752,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 16,461 dòng · 1.36 MB
+> 16,793 dòng · 1.37 MB
 
 ```html
 <!DOCTYPE html>
@@ -3081,6 +3081,122 @@ app.listen(PORT, '0.0.0.0', () => {
 
     /* ── HUD SWIPE HINT (right edge) ── */
     /* ── VOICE COMMAND BUTTON (bottom-left of HUD) ── */
+    /* ── Voice Help Button & Modal ── */
+    .voice-help-btn {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: rgba(0,255,255,0.08);
+      border: 1px solid rgba(0,255,255,0.3);
+      color: rgba(0,255,255,0.7);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: all;
+      transition: all 0.2s;
+      user-select: none;
+      z-index: 1002;
+    }
+    .voice-help-btn:hover {
+      background: rgba(0,255,255,0.2);
+      border-color: #00ffff;
+      color: #00ffff;
+      box-shadow: 0 0 10px rgba(0,255,255,0.4);
+    }
+    #hud-voice-help-btn {
+      position: absolute;
+      left: 48px; bottom: 26px;
+    }
+    #univ-voice-help-btn {
+      position: absolute;
+      right: 4px; bottom: 0px;
+    }
+    #voice-help-modal {
+      display: none;
+      position: fixed; inset: 0; z-index: 100001;
+      background: rgba(0,2,10,0.88);
+      backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+    }
+    #voice-help-modal.open { display: flex; }
+    #voice-help-inner {
+      width: min(92vw, 560px);
+      max-height: 80vh;
+      background: rgba(0,8,20,0.97);
+      border: 1px solid rgba(0,255,255,0.25);
+      border-radius: 12px;
+      box-shadow: 0 0 40px rgba(0,255,255,0.15), 0 0 80px rgba(0,100,180,0.1);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    #voice-help-header {
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid rgba(0,255,255,0.12);
+      display: flex; align-items: center; gap: 10px;
+    }
+    #voice-help-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px; letter-spacing: 2px;
+      color: #00ffff; flex: 1;
+    }
+    #voice-help-close {
+      width: 28px; height: 28px;
+      border-radius: 50%; border: 1px solid rgba(0,255,255,0.25);
+      background: rgba(0,255,255,0.06);
+      color: rgba(0,255,255,0.7); font-size: 14px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    #voice-help-close:hover { background: rgba(0,255,255,0.18); color: #00ffff; }
+    #voice-help-search {
+      margin: 10px 14px 0;
+      background: rgba(0,255,255,0.04);
+      border: 1px solid rgba(0,255,255,0.15);
+      border-radius: 6px;
+      padding: 7px 12px;
+      color: #00ffff; font-family: 'Share Tech Mono', monospace; font-size: 11px;
+      outline: none; width: calc(100% - 28px);
+    }
+    #voice-help-search::placeholder { color: rgba(0,255,255,0.3); }
+    #voice-help-search:focus { border-color: rgba(0,255,255,0.4); }
+    #voice-help-hint {
+      padding: 6px 14px 0;
+      font-family: 'Share Tech Mono', monospace; font-size: 9px;
+      color: rgba(0,255,255,0.35); letter-spacing: 1px;
+    }
+    #voice-help-list {
+      flex: 1; overflow-y: auto; padding: 8px 8px 12px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 4px; align-content: start;
+    }
+    #voice-help-list::-webkit-scrollbar { width: 4px; }
+    #voice-help-list::-webkit-scrollbar-track { background: transparent; }
+    #voice-help-list::-webkit-scrollbar-thumb { background: rgba(0,255,255,0.2); border-radius: 2px; }
+    .vh-item {
+      display: flex; align-items: flex-start; gap: 6px;
+      padding: 7px 8px; border-radius: 6px;
+      background: rgba(0,255,255,0.03);
+      border: 1px solid rgba(0,255,255,0.06);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .vh-item:hover {
+      background: rgba(0,255,255,0.1);
+      border-color: rgba(0,255,255,0.25);
+    }
+    .vh-emoji { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .vh-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .vh-xname {
+      font-family: 'Share Tech Mono', monospace; font-size: 10px;
+      color: #00ffff; letter-spacing: 0.5px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .vh-name {
+      font-family: 'Share Tech Mono', monospace; font-size: 8px;
+      color: rgba(0,255,255,0.4);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .vh-item.vh-highlight .vh-xname { color: #ffd700; }
+    .vh-item.vh-highlight { border-color: rgba(255,215,0,0.2); background: rgba(255,215,0,0.04); }
+
     #hud-voice-btn {
       position: absolute;
       left: 18px;
@@ -4655,14 +4771,16 @@ app.listen(PORT, '0.0.0.0', () => {
       position: relative;
     }
 
+    /* ── Spatial Builder layout ── */
     .builder-modal-content {
-      background: rgba(0, 10, 20, 0.95);
-      border: 2px solid #00ffff;
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
-      border-radius: 15px;
-      width: 95%;
-      max-width: 1400px;
-      height: 90vh;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      border-radius: 0;
+      width: 100vw;
+      max-width: 100vw;
+      height: 100vh;
+      max-height: 100vh;
       display: flex;
       flex-direction: column;
       position: relative;
@@ -4675,203 +4793,266 @@ app.listen(PORT, '0.0.0.0', () => {
     }
 
     #builder-sidebar {
-      width: 250px;
-      background: rgba(0, 15, 30, 0.85);
-      border-right: 1px solid rgba(0, 255, 255, 0.3);
-      padding: 20px;
+      width: 220px;
+      background: rgba(255,255,255,0.03);
+      border-right: 1px solid rgba(255,255,255,0.07);
+      padding: 18px 12px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      box-shadow: inset -10px 0 20px rgba(0, 255, 255, 0.05);
+      gap: 6px;
     }
 
-    /* Hologram Scrollbar */
-    #builder-sidebar::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    #builder-sidebar::-webkit-scrollbar-track {
-      background: rgba(0, 20, 40, 0.5);
-      border-left: 1px solid rgba(0, 255, 255, 0.1);
-    }
-
+    #builder-sidebar::-webkit-scrollbar { width: 4px; }
+    #builder-sidebar::-webkit-scrollbar-track { background: transparent; }
     #builder-sidebar::-webkit-scrollbar-thumb {
-      background: linear-gradient(to bottom, transparent, #00ffff, transparent);
-      border-radius: 3px;
-      box-shadow: 0 0 10px #00ffff;
+      background: rgba(255,255,255,0.12);
+      border-radius: 2px;
     }
 
-    /* Magical Canvas Background */
     #builder-canvas {
       flex: 1;
       position: relative;
       overflow: hidden;
-      background:
-        radial-gradient(circle at center, rgba(0, 255, 255, 0.05) 0%, transparent 60%),
-        repeating-radial-gradient(circle at center, rgba(0, 255, 136, 0.03) 0, rgba(0, 255, 136, 0.03) 2px, transparent 2px, transparent 40px),
-        linear-gradient(rgba(0, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 255, 0.02) 1px, transparent 1px),
-        #000510;
-      background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
-      animation: magicPulse 10s infinite alternate;
-    }
-
-    @keyframes magicPulse {
-      0% {
-        background-position: 0 0, 0 0, 0 0, 0 0;
-      }
-
-      100% {
-        background-position: 0 0, 0 0, 15px 15px, 15px 15px;
-      }
+      background: rgba(8,10,22,0.6);
     }
 
     #builder-svg {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       pointer-events: none;
-      z-index: 1;
+      z-index: 2;
     }
 
+    /* ══════════════════════════════════════════════
+       SPATIAL / visionOS BUILDER — redesign
+       ══════════════════════════════════════════════ */
     .builder-line {
       fill: none;
-      stroke: #00ffff;
-      stroke-width: 2;
-      stroke-dasharray: 5 10;
-      animation: flow 1s linear infinite;
-      filter: drop-shadow(0 0 5px #00ffff);
+      stroke: url(#sp-line-grad);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 4px rgba(130,170,255,0.4));
+      opacity: 0.75;
     }
-
-    @keyframes flow {
-      to {
-        stroke-dashoffset: -15;
-      }
-    }
+    @keyframes flow { to { stroke-dashoffset: -15; } }
 
     .builder-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 16px;
-      color: #00ffff;
-      letter-spacing: 4px;
-      margin-bottom: 20px;
-      text-shadow: 0 0 10px #00ffff;
-    }
-
-    .builder-node-item {
-      background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), transparent);
-      border: 1px solid rgba(0, 255, 255, 0.4);
-      border-left: 3px solid #00ffff;
-      padding: 10px;
-      cursor: grab;
-      color: #00ffff;
+      font-family: -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif;
       font-size: 11px;
-      text-align: left;
-      transition: all .3s;
+      font-weight: 600;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
     }
 
+    /* ── Sidebar component pill items ── */
+    .builder-node-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 9px 12px;
+      cursor: grab;
+      color: rgba(255,255,255,0.85);
+      font-size: 12px;
+      font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
+      font-weight: 500;
+      transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative;
+      overflow: hidden;
+    }
+    .builder-node-item::before {
+      content: attr(data-icon);
+      font-size: 16px;
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+    }
     .builder-node-item:hover {
-      background: rgba(0, 255, 255, 0.25);
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
-      transform: translateX(5px);
+      background: rgba(255,255,255,0.13);
+      border-color: rgba(255,255,255,0.22);
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08);
     }
+    .builder-node-item:active { cursor: grabbing; transform: scale(0.97); }
 
+    /* ── Preset buttons ── */
     .preset-btn {
-      background: linear-gradient(45deg, rgba(255, 170, 0, 0.1), transparent);
-      border: 1px solid rgba(255, 170, 0, 0.4);
-      padding: 8px;
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 10px;
+      padding: 8px 11px;
       cursor: pointer;
-      color: #ffaa00;
-      font-size: 10px;
-      text-align: center;
-      transition: all .2s;
-      font-family: 'Orbitron', sans-serif;
+      color: rgba(255,255,255,0.75);
+      font-size: 11px;
+      font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
+      transition: all 0.18s ease;
+      text-align: left;
     }
-
     .preset-btn:hover {
-      background: rgba(255, 170, 0, 0.3);
-      box-shadow: 0 0 15px rgba(255, 170, 0, 0.6);
-      transform: scale(1.05);
+      background: rgba(255,255,255,0.11);
+      border-color: rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.95);
+      transform: translateX(3px);
     }
 
-    /* Jade Talisman Nodes */
+    /* ── Canvas floating nodes (Spatial cards) ── */
     .canvas-node {
       position: absolute;
       z-index: 10;
-      background: linear-gradient(135deg, rgba(0, 40, 20, 0.95), rgba(0, 10, 30, 0.95));
-      border: 1px solid rgba(0, 255, 136, 0.6);
-      color: #00ff88;
-      padding: 12px 18px;
+      background: rgba(20, 22, 35, 0.75);
+      border: 1px solid rgba(255,255,255,0.13);
+      color: rgba(255,255,255,0.9);
+      padding: 12px 16px 10px;
       cursor: move;
       font-size: 12px;
-      min-width: 140px;
+      font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
+      font-weight: 500;
+      min-width: 150px;
       text-align: center;
-      box-shadow: 0 0 20px rgba(0, 255, 136, 0.3), inset 0 0 15px rgba(0, 255, 136, 0.1);
+      border-radius: 16px;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      box-shadow:
+        0 4px 24px rgba(0,0,0,0.45),
+        0 0 0 1px rgba(255,255,255,0.06),
+        inset 0 1px 0 rgba(255,255,255,0.1);
       user-select: none;
-      border-radius: 8px;
-      backdrop-filter: blur(5px);
-      transition: box-shadow 0.3s, transform 0.1s;
+      transition: box-shadow 0.25s, transform 0.15s;
     }
-
     .canvas-node:hover {
-      box-shadow: 0 0 30px rgba(0, 255, 136, 0.6), inset 0 0 20px rgba(0, 255, 136, 0.2);
+      box-shadow:
+        0 12px 40px rgba(0,0,0,0.6),
+        0 0 0 1px rgba(255,255,255,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.15);
+      transform: translateY(-3px) scale(1.02);
       z-index: 20;
     }
-
+    /* Output port dot */
     .canvas-node::after {
       content: '';
       position: absolute;
-      right: -6px;
-      top: 50%;
+      right: -5px; top: 50%;
       transform: translateY(-50%);
-      width: 12px;
-      height: 12px;
-      background: #00ffff;
+      width: 10px; height: 10px;
+      background: rgba(130,170,255,0.9);
+      border: 2px solid rgba(255,255,255,0.3);
       border-radius: 50%;
-      box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+      box-shadow: 0 0 8px rgba(130,170,255,0.6);
     }
-
+    /* Input port dot */
     .canvas-node::before {
       content: '';
       position: absolute;
-      left: -6px;
-      top: 50%;
+      left: -5px; top: 50%;
       transform: translateY(-50%);
-      width: 12px;
-      height: 12px;
-      background: #00ff88;
+      width: 10px; height: 10px;
+      background: rgba(100,220,160,0.9);
+      border: 2px solid rgba(255,255,255,0.3);
       border-radius: 50%;
-      box-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88;
+      box-shadow: 0 0 8px rgba(100,220,160,0.5);
     }
+
+    /* ── Run Workflow node states ── */
+    .canvas-node.sp-running {
+      border-color: rgba(255,214,10,0.7) !important;
+      box-shadow:
+        0 0 0 3px rgba(255,214,10,0.18),
+        0 6px 28px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.12) !important;
+      animation: sp-node-pulse 0.9s ease-in-out infinite;
+    }
+    .canvas-node.sp-done {
+      border-color: rgba(52,199,89,0.7) !important;
+      box-shadow:
+        0 0 0 3px rgba(52,199,89,0.18),
+        0 6px 28px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.12) !important;
+    }
+    .canvas-node.sp-error {
+      border-color: rgba(255,69,58,0.7) !important;
+      box-shadow:
+        0 0 0 3px rgba(255,69,58,0.18),
+        0 6px 28px rgba(0,0,0,0.5) !important;
+    }
+    @keyframes sp-node-pulse {
+      0%,100% { box-shadow: 0 0 0 3px rgba(255,214,10,0.18), 0 6px 28px rgba(0,0,0,0.5); }
+      50%      { box-shadow: 0 0 0 6px rgba(255,214,10,0.35), 0 6px 28px rgba(0,0,0,0.5); }
+    }
+    /* ── SVG animated line ── */
+    .builder-line.sp-active {
+      stroke: url(#sp-active-grad) !important;
+      stroke-dasharray: 12 6;
+      animation: sp-line-march 0.5s linear infinite;
+      stroke-width: 2.5px !important;
+      filter: drop-shadow(0 0 4px rgba(255,214,10,0.6));
+    }
+    .builder-line.sp-done-line {
+      stroke: url(#sp-done-grad) !important;
+      stroke-width: 2px !important;
+    }
+    @keyframes sp-line-march {
+      to { stroke-dashoffset: -18; }
+    }
+    /* ── Builder log panel ── */
+    #builder-log-panel {
+      position:absolute;bottom:0;left:0;right:0;z-index:30;
+      background:rgba(8,10,22,0.88);
+      border-top:1px solid rgba(255,255,255,0.08);
+      backdrop-filter:blur(16px);
+      max-height:0;overflow:hidden;
+      transition:max-height 0.3s ease;
+    }
+    #builder-log-panel.sp-open { max-height:160px; }
+    #builder-log-inner {
+      padding:10px 14px;
+      font-family:'SF Mono','Fira Mono',monospace;
+      font-size:11px;line-height:1.7;
+      color:rgba(255,255,255,0.7);
+      overflow-y:auto;max-height:140px;
+    }
+    #builder-log-inner .log-run  { color:#ffd60a; }
+    #builder-log-inner .log-ok   { color:#34c759; }
+    #builder-log-inner .log-err  { color:#ff453a; }
+    #builder-log-inner .log-info { color:rgba(255,255,255,0.45); }
 
     .close-btn,
     .modal-close {
-      background: rgba(255, 0, 0, 0.15) !important;
-      border: 1px solid #ff2200 !important;
-      color: #ffaa00 !important;
-      padding: 6px 16px !important;
-      font-family: 'Orbitron', sans-serif !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      background: rgba(255,255,255,0.07) !important;
+      border: 1px solid rgba(255,255,255,0.12) !important;
+      color: rgba(255,255,255,0.8) !important;
+      padding: 7px 16px !important;
+      font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif !important;
       font-size: 12px !important;
-      letter-spacing: 2px !important;
-      border-radius: 4px !important;
+      font-weight: 500 !important;
+      letter-spacing: 0.3px !important;
+      border-radius: 20px !important;
       cursor: pointer !important;
-      transition: all 0.3s !important;
-      box-shadow: 0 0 10px rgba(255, 34, 0, 0.4) !important;
-      text-shadow: 0 0 5px #ffaa00 !important;
+      transition: all 0.18s ease !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1) !important;
+      text-shadow: none !important;
       position: absolute !important;
-      top: 15px !important;
-      right: 15px !important;
+      top: 14px !important;
+      right: 18px !important;
     }
-
     .close-btn:hover,
     .modal-close:hover {
-      background: rgba(255, 34, 0, 0.4) !important;
-      box-shadow: 0 0 20px rgba(255, 34, 0, 0.8), inset 0 0 10px rgba(255, 34, 0, 0.5) !important;
-      transform: scale(1.05) !important;
+      background: rgba(255,255,255,0.14) !important;
+      border-color: rgba(255,255,255,0.22) !important;
       color: #fff !important;
+      transform: none !important;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15) !important;
     }
 
     .dharma-wheel {
@@ -6243,10 +6424,11 @@ app.listen(PORT, '0.0.0.0', () => {
 
     <!-- UNIVERSE CHATBOX COLLAPSED ICON -->
     <!-- UNIVERSE VOICE MIC BUTTON (floating, always visible) -->
-    <div id="universe-mic-btn" title="Voice command — nói tên agent để bay tới">
+    <div id="universe-mic-btn" title="Voice command — nói tên agent để bay tới" style="position:relative;">
       <div id="univ-mic-icon">🎙️</div>
       <div id="univ-mic-ring"></div>
       <div id="univ-mic-label">VOICE</div>
+      <div id="univ-voice-help-btn" class="voice-help-btn" onclick="event.stopPropagation();openVoiceHelp()" title="Danh sách tên có thể nói">?</div>
     </div>
 
     <div id="uc-collapsed-icon"
@@ -6513,6 +6695,7 @@ app.listen(PORT, '0.0.0.0', () => {
       <div id="hud-voice-ring"></div>
       <div id="hud-voice-label">VOICE</div>
     </div>
+    <div id="hud-voice-help-btn" class="voice-help-btn" onclick="openVoiceHelp()" title="Danh sách tên có thể nói">?</div>
     <svg id="hud-swipe-arc" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
       <circle id="hud-swipe-arc-bg" cx="24" cy="24" r="20" fill="none" stroke="rgba(0,255,255,0.15)" stroke-width="3"/>
       <circle id="hud-swipe-arc-fill" cx="24" cy="24" r="20" fill="none" stroke="#00ffff" stroke-width="3"
@@ -6853,6 +7036,7 @@ app.listen(PORT, '0.0.0.0', () => {
       }
       if (!AI_AGENTS.length) AI_AGENTS = _AGENTS_STUB.slice();
       _applyXianxiaNames();
+      if (typeof window._voiceResetIndex === 'function') window._voiceResetIndex();
       initAgentCounters();
     }
     // Khởi tạo ngay với stub để initUniverse() có planets khi chạy synchronous
@@ -8284,6 +8468,8 @@ app.listen(PORT, '0.0.0.0', () => {
         let _rec = null;
         let _listening = false;
         let _transcriptTimer = null;
+        let _interimTimer = null;
+        let _lastInterim = '';
         let _agentIndex = null;
 
         const voiceBtn      = document.getElementById('hud-voice-btn');
@@ -8378,12 +8564,19 @@ app.listen(PORT, '0.0.0.0', () => {
             if (typeof showToast === 'function')
               showToast('🎙️ ' + best.emoji + ' ' + displayName + ' — triệu hồi...', 'success');
             setTimeout(() => {
-              if (best.agent && typeof window.openAgentChat === 'function') {
-                console.log('[VOICE] calling openAgentChat for', best.agent.name, 'id=', best.agent.id);
-                window.openAgentChat(best.agent);
-              } else if (window._planetMeshes) {
-                const pm = window._planetMeshes.find(p => p.agent.id === best.id);
-                if (pm && window._openHUD) window._openHUD(pm);
+              try {
+                console.log('[VOICE] calling openAgentChat for', best.name, 'id=', best.id);
+                if (typeof window.openAgentChat === 'function') {
+                  window.openAgentChat(best.agent || AI_AGENTS.find(a => a.id === best.id));
+                } else if (typeof openAgentChat === 'function') {
+                  openAgentChat(best.agent || AI_AGENTS.find(a => a.id === best.id));
+                } else if (window._planetMeshes) {
+                  const pm = window._planetMeshes.find(p => p.agent.id === best.id);
+                  if (pm && window._openHUD) window._openHUD(pm);
+                }
+              } catch(err) {
+                console.error('[VOICE] openAgentChat failed:', err);
+                if (typeof showToast === 'function') showToast('🎙️ Lỗi mở agent: ' + err.message, 'warn');
               }
             }, 300);
             return true;
@@ -8399,6 +8592,53 @@ app.listen(PORT, '0.0.0.0', () => {
         window._voiceTest = function(text) { return _tryNavigate(text); };
         /* ── Reset index (call after agents reload) ── */
         window._voiceResetIndex = function() { _agentIndex = null; console.log('[VOICE] index reset'); };
+
+        /* ── Voice Help Modal ── */
+        window.openVoiceHelp = function() {
+          const modal = document.getElementById('voice-help-modal');
+          if (!modal) return;
+          modal.classList.add('open');
+          _renderVoiceHelp('');
+          setTimeout(() => {
+            const s = document.getElementById('voice-help-search');
+            if (s) { s.value = ''; s.focus(); }
+          }, 80);
+        };
+        window.closeVoiceHelp = function() {
+          const modal = document.getElementById('voice-help-modal');
+          if (modal) modal.classList.remove('open');
+        };
+        window.filterVoiceHelp = function(q) { _renderVoiceHelp(q); };
+
+        function _renderVoiceHelp(query) {
+          const list = document.getElementById('voice-help-list');
+          if (!list) return;
+          const q = (query || '').toLowerCase().trim();
+          const items = AI_AGENTS.filter(a => {
+            if (!q) return true;
+            const xn = (a.xname || '').toLowerCase();
+            const nm = (a.name || '').toLowerCase();
+            const nt = (a.xnote || '').toLowerCase();
+            return xn.includes(q) || nm.includes(q) || nt.includes(q);
+          });
+          list.innerHTML = items.map(a => {
+            const xname = a.xname || a.name;
+            const name  = a.name;
+            return `<div class="vh-item" onclick="closeVoiceHelp();setTimeout(()=>window.openAgentChat&&window.openAgentChat(AI_AGENTS.find(x=>x.id===${a.id})),100)">
+              <div class="vh-emoji">${a.emoji || '⚡'}</div>
+              <div class="vh-text">
+                <div class="vh-xname" title="${xname}">${xname}</div>
+                <div class="vh-name" title="${name}">${name}</div>
+              </div>
+            </div>`;
+          }).join('');
+          const title = document.getElementById('voice-help-title');
+          if (title) title.textContent = '🎙️ VOICE — ' + items.length + ' AGENT';
+        }
+
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') window.closeVoiceHelp && window.closeVoiceHelp();
+        });
 
         function _getOrCreateTranscript() {
           if (!transcriptEl) {
@@ -8454,12 +8694,28 @@ app.listen(PORT, '0.0.0.0', () => {
               for (let i = e.resultIndex; i < e.results.length; i++) {
                 const transcript = e.results[i][0].transcript;
                 if (e.results[i].isFinal) {
-                  // Thử đóng trước, nếu không khớp thì thử điều hướng
+                  clearTimeout(_interimTimer);
+                  _lastInterim = '';
                   if (!_tryClose(transcript)) _tryNavigate(transcript);
                 } else {
-                  const el = _getOrCreateTranscript();
-                  el.textContent = '🎙 ' + transcript;
-                  el.classList.add('show');
+                  // Show interim
+                  try {
+                    const el = _getOrCreateTranscript();
+                    el.textContent = '🎙 ' + transcript;
+                    el.classList.add('show');
+                  } catch(err) {}
+                  // Fallback: nếu sau 1.5s không có isFinal, tự xử lý
+                  // (nhiều trình duyệt / tiếng Việt không gửi isFinal)
+                  _lastInterim = transcript;
+                  clearTimeout(_interimTimer);
+                  _interimTimer = setTimeout(function() {
+                    if (_lastInterim) {
+                      const t = _lastInterim;
+                      _lastInterim = '';
+                      console.log('[VOICE] interim→final fallback:', t);
+                      if (!_tryClose(t)) _tryNavigate(t);
+                    }
+                  }, 1500);
                 }
               }
             };
@@ -9906,71 +10162,127 @@ app.listen(PORT, '0.0.0.0', () => {
   </div>
 
   <!-- COMPARE MODAL -->
-  <div class="modal-overlay" id="builder-modal">
-    <div class="builder-modal-content">
-      <button class="close-btn" onclick="closeBuilder()">⮐ TRỞ VỀ</button>
-      <div
-        style="padding:15px; border-bottom:1px solid #00ffff44; display:flex; justify-content:space-between; align-items:center;">
-        <div class="builder-title" style="margin:0;">TRẬN PHÁP BUILDER (BETA)</div>
-        <div style="color:#00ff88; font-size:12px;">TRẠNG THÁI: <span class="pulse-dot"></span> SẴN SÀNG</div>
-      </div>
-      <div id="builder-layout">
-        <div id="builder-sidebar">
-          <div class="builder-title" id="t-b-title">KHO TÀNG PHÁP KHÍ</div>
-          <div class="builder-node-item" draggable="true" ondragstart="drag(event)" data-type="Data Source">Data Source
-            / Thu thập</div>
-          <div class="builder-node-item" draggable="true" ondragstart="drag(event)" data-type="LLM Engine">LLM Engine /
-            Thần Thức</div>
-          <div class="builder-node-item" draggable="true" ondragstart="drag(event)" data-type="Vision API">Vision API /
-            Thiên Nhãn</div>
-          <div class="builder-node-item" draggable="true" ondragstart="drag(event)" data-type="Audio Gen">Audio Gen /
-            Truyền Âm</div>
-          <div class="builder-node-item" draggable="true" ondragstart="drag(event)" data-type="Filter Logic">Filter
-            Logic / Luyện Hoá</div>
-          <div class="builder-node-item" draggable="true" ondragstart="drag(event)" data-type="Publish">Publish / Xuất
-            Thế</div>
+  <div class="modal-overlay" id="builder-modal" style="background:rgba(4,6,18,0.92);backdrop-filter:blur(24px);">
+    <div class="builder-modal-content" style="
+      width:100vw;height:100vh;max-width:100vw;max-height:100vh;
+      background:transparent;border-radius:0;border:none;
+      display:flex;flex-direction:column;overflow:hidden;position:relative;">
 
-          <div class="builder-title" style="margin-top:20px; color:#ffaa00;" id="t-p-title">TRẬN PHÁP MẪU</div>
-          <div id="preset-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <!-- ── TOP BAR ── -->
+      <div style="
+        display:flex;align-items:center;gap:12px;
+        padding:14px 20px 14px 20px;
+        background:rgba(255,255,255,0.03);
+        border-bottom:1px solid rgba(255,255,255,0.07);
+        backdrop-filter:blur(20px);flex-shrink:0;">
+        <!-- Back pill -->
+        <button onclick="closeBuilder()" style="
+          display:inline-flex;align-items:center;gap:6px;
+          background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.13);
+          color:rgba(255,255,255,0.85);padding:6px 14px 6px 10px;
+          font-family:-apple-system,'Segoe UI',sans-serif;font-size:12px;font-weight:500;
+          border-radius:20px;cursor:pointer;transition:all 0.18s;
+          box-shadow:0 2px 8px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.1);">
+          ← Trở về
+        </button>
+        <!-- Title -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:2px;">
+          <span id="t-b-title" style="
+            font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;
+            font-size:15px;font-weight:600;color:rgba(255,255,255,0.92);letter-spacing:0.2px;">
+            Quy Trình AI
+          </span>
+          <span style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:11px;color:rgba(255,255,255,0.38);letter-spacing:0.3px;">
+            Kéo thả các khối để xây dựng luồng tự động
+          </span>
         </div>
-        <div id="builder-canvas" ondrop="drop(event)" ondragover="allowDrop(event)">
-          <!-- Xianxia Magic Circle Background (SVG) -->
-          <div
-            style="position:absolute;top:50%;left:50%;width:800px;height:800px;opacity:0.4;pointer-events:none;animation:rotateDharma 120s linear infinite;z-index:0;filter:drop-shadow(0 0 30px #ff2200);">
-            <svg viewBox="0 0 200 200" style="width:100%;height:100%;">
-              <defs>
-                <filter id="glow-builder">
-                  <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-                  <feMerge>
-                    <feMergeNode in="coloredBlur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <path id="rune-path-builder" d="M 100, 10 A 90,90 0 1,1 99.9,10" />
-              </defs>
-              <circle cx="100" cy="100" r="95" fill="none" stroke="#ff2200" stroke-width="2" stroke-dasharray="10 5 2 5"
-                filter="url(#glow-builder)" />
-              <circle cx="100" cy="100" r="75" fill="none" stroke="#ff5500" stroke-width="1.5" stroke-dasharray="2 15"
-                filter="url(#glow-builder)" />
-              <circle cx="100" cy="100" r="70" fill="none" stroke="#ffaa00" stroke-width="0.5" opacity="0.6" />
-              <text fill="#ffaa00" font-size="10" font-family="'Orbitron', sans-serif" letter-spacing="8"
-                filter="url(#glow-builder)" opacity="0.9">
-                <textPath href="#rune-path-builder" startOffset="0%">
-                  ᛈ ᛉ ᛊ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ ᛞ ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ ᚺ ᚾ ᛁ ᛃ ᛇ
-                </textPath>
-              </text>
-              <path d="M 100 20 L 100 180 M 20 100 L 180 100 M 43 43 L 157 157 M 43 157 L 157 43" stroke="#ff2200"
-                stroke-width="1" opacity="0.5" filter="url(#glow-builder)" />
-              <circle cx="100" cy="100" r="40" fill="none" stroke="#ff5500" stroke-width="1" stroke-dasharray="5 5"
-                filter="url(#glow-builder)" />
-              <path d="M 100 60 L 134 120 L 66 120 Z" fill="none" stroke="#ffaa00" stroke-width="1"
-                filter="url(#glow-builder)" />
-              <path d="M 100 140 L 66 80 L 134 80 Z" fill="none" stroke="#ffaa00" stroke-width="1"
-                filter="url(#glow-builder)" />
-            </svg>
+        <!-- Status pill -->
+        <div style="
+          display:flex;align-items:center;gap:6px;
+          background:rgba(52,199,89,0.12);border:1px solid rgba(52,199,89,0.25);
+          border-radius:20px;padding:5px 12px;">
+          <span class="pulse-dot" style="background:#34c759;box-shadow:0 0 6px #34c759;"></span>
+          <span style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:11px;color:#34c759;font-weight:500;">Sẵn sàng</span>
+        </div>
+      </div>
+
+      <!-- ── BODY: sidebar + canvas ── -->
+      <div id="builder-layout" style="flex:1;overflow:hidden;">
+
+        <!-- LEFT SIDEBAR -->
+        <div id="builder-sidebar" style="
+          width:220px;flex-shrink:0;
+          background:rgba(255,255,255,0.03);
+          border-right:1px solid rgba(255,255,255,0.07);
+          padding:18px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+
+          <div class="builder-title" id="t-b-title2">Khối thành phần</div>
+
+          <div class="builder-node-item" draggable="true" ondragstart="drag(event)" data-type="Data Source" data-icon="📥" style="--node-color:#5E9FFF;">
+            Data Source / Thu thập
           </div>
-          <svg id="builder-svg"
-            style="z-index:1;position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></svg>
+          <div class="builder-node-item" draggable="true" ondragstart="drag(event)" data-type="LLM Engine" data-icon="🧠" style="--node-color:#BF5AF2;">
+            LLM Engine / Thần Thức
+          </div>
+          <div class="builder-node-item" draggable="true" ondragstart="drag(event)" data-type="Vision API" data-icon="👁" style="--node-color:#FF9F0A;">
+            Vision API / Thiên Nhãn
+          </div>
+          <div class="builder-node-item" draggable="true" ondragstart="drag(event)" data-type="Audio Gen" data-icon="🎵" style="--node-color:#FF375F;">
+            Audio Gen / Truyền Âm
+          </div>
+          <div class="builder-node-item" draggable="true" ondragstart="drag(event)" data-type="Filter Logic" data-icon="⚡" style="--node-color:#30D158;">
+            Filter Logic / Luyện Hoá
+          </div>
+          <div class="builder-node-item" draggable="true" ondragstart="drag(event)" data-type="Publish" data-icon="🚀" style="--node-color:#FF9F0A;">
+            Publish / Xuất Thế
+          </div>
+
+          <div style="height:1px;background:rgba(255,255,255,0.06);margin:10px 0;"></div>
+          <div class="builder-title" id="t-p-title">Quy trình mẫu</div>
+          <div id="preset-list" style="display:flex;flex-direction:column;gap:5px;"></div>
+        </div>
+
+        <!-- CANVAS AREA -->
+        <div id="builder-canvas" ondrop="drop(event)" ondragover="allowDrop(event)" style="position:relative;overflow:hidden;">
+
+          <!-- Spatial grid background -->
+          <div style="
+            position:absolute;inset:0;pointer-events:none;z-index:0;
+            background-image:
+              linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+            background-size:40px 40px;"></div>
+
+          <!-- Subtle ambient glow -->
+          <div style="
+            position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);
+            width:500px;height:300px;border-radius:50%;
+            background:radial-gradient(ellipse, rgba(94,159,255,0.06) 0%, transparent 70%);
+            pointer-events:none;z-index:0;"></div>
+
+          <!-- Empty-state label -->
+          <div id="builder-empty-label" style="
+            position:absolute;inset:0;display:flex;flex-direction:column;
+            align-items:center;justify-content:center;
+            pointer-events:none;z-index:1;gap:10px;">
+            <div style="font-size:48px;opacity:0.18;">⬡</div>
+            <div style="
+              font-family:-apple-system,'Segoe UI',sans-serif;
+              font-size:13px;color:rgba(255,255,255,0.22);
+              font-weight:400;letter-spacing:0.3px;text-align:center;line-height:1.6;">
+              Kéo thả khối từ bên trái<br>hoặc chọn một quy trình mẫu
+            </div>
+          </div>
+
+          <!-- SVG for connections — with gradient defs -->
+          <svg id="builder-svg" style="z-index:2;position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">
+            <defs>
+              <linearGradient id="sp-line-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:rgba(100,220,160,0.8)"/>
+                <stop offset="100%" style="stop-color:rgba(94,159,255,0.8)"/>
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
       </div>
     </div>
@@ -11406,9 +11718,14 @@ app.listen(PORT, '0.0.0.0', () => {
       ev.dataTransfer.setData("text", draggedType);
     }
     function allowDrop(ev) { ev.preventDefault(); }
+    function _hideBuilderEmpty() {
+      const el = document.getElementById('builder-empty-label');
+      if (el) el.style.display = 'none';
+    }
     function drop(ev) {
       ev.preventDefault();
       if (!draggedType) return;
+      _hideBuilderEmpty();
       const canvas = document.getElementById('builder-canvas');
       const rect = canvas.getBoundingClientRect();
       const x = ev.clientX - rect.left - 60;
@@ -11444,9 +11761,12 @@ app.listen(PORT, '0.0.0.0', () => {
       draggedType = null;
     }
 
+    function _spGradDefs() {
+      return `<defs><linearGradient id="sp-line-grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:rgba(100,220,160,0.8)"/><stop offset="100%" style="stop-color:rgba(94,159,255,0.8)"/></linearGradient></defs>`;
+    }
     function drawLines() {
       const svg = document.getElementById('builder-svg');
-      svg.innerHTML = '';
+      let paths = '';
       for (let i = 0; i < bNodes.length - 1; i++) {
         const n1 = bNodes[i];
         const n2 = bNodes[i + 1];
@@ -11459,18 +11779,17 @@ app.listen(PORT, '0.0.0.0', () => {
         const x2 = r2.left - c1.left;
         const y2 = r2.top - c1.top + r2.height / 2;
 
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', `M${x1},${y1} C${x1 + 50},${y1} ${x2 - 50},${y2} ${x2},${y2}`);
-        path.setAttribute('class', 'builder-line');
-        svg.appendChild(path);
+        paths += `<path d="M${x1},${y1} C${x1+60},${y1} ${x2-60},${y2} ${x2},${y2}" class="builder-line"/>`;
       }
+      svg.innerHTML = _spGradDefs() + paths;
     }
 
     function loadPreset(index) {
       bNodes.forEach(n => n.remove());
       bNodes = [];
       nodeCounter = 0;
-      document.getElementById('builder-svg').innerHTML = '';
+      document.getElementById('builder-svg').innerHTML = _spGradDefs();
+      _hideBuilderEmpty();
 
       const agent = AI_AGENTS[index];
       if (!agent) return;
@@ -13589,6 +13908,19 @@ app.listen(PORT, '0.0.0.0', () => {
         <div id="vd-date" style="font-size:9px;color:#ffffff33;margin-bottom:18px;"></div>
         <div id="vd-content" style="font-size:12px;color:#ccddcc;line-height:1.8;white-space:pre-wrap;background:rgba(255,170,0,0.04);border:1px solid #ffaa0022;border-radius:6px;padding:16px;word-break:break-all;flex:1;overflow-y:auto;"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- VOICE HELP MODAL -->
+  <div id="voice-help-modal" onclick="if(event.target===this)closeVoiceHelp()">
+    <div id="voice-help-inner">
+      <div id="voice-help-header">
+        <span id="voice-help-title">🎙️ VOICE — DANH SÁCH TRIỆU HỒI</span>
+        <div id="voice-help-close" onclick="closeVoiceHelp()">✕</div>
+      </div>
+      <input id="voice-help-search" type="text" placeholder="Tìm tên tiên hiệp hoặc tên AI..." oninput="filterVoiceHelp(this.value)" autocomplete="off"/>
+      <div id="voice-help-hint">Nói: MỞ + tên bên dưới · Nhấn để mở thẳng agent</div>
+      <div id="voice-help-list"></div>
     </div>
   </div>
 
