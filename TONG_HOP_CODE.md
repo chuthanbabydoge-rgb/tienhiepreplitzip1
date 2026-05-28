@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **23:42:57 28/5/2026**
+> Cập nhật lần cuối: **00:59:52 29/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,503 dòng, 66.7 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,855 dòng, 1.33 MB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,650 dòng, 72.2 KB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(16,438 dòng, 1.36 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -22,8 +22,8 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 39 | 987 B |
-| `server.js` | 1,503 | 66.7 KB |
-| `tienhiepv3.html` | 15,855 | 1.33 MB |
+| `server.js` | 1,650 | 72.2 KB |
+| `tienhiepv3.html` | 16,438 | 1.36 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **21,079** | **1.56 MB** |
+| **TỔNG** | **21,809** | **1.59 MB** |
 
 ---
 
@@ -91,7 +91,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,503 dòng · 66.7 KB
+> 1,650 dòng · 72.2 KB
 
 ```javascript
 const express = require('express');
@@ -986,6 +986,153 @@ app.get('/api/agents', async (req, res) => {
   }
 });
 
+// GET /api/agents/search — tìm kiếm agent theo tên, loại, hoặc khả năng
+// Query params: q (text), type (content|finance|tech|marketing|top10), limit (số kết quả, default 8)
+app.get('/api/agents/search', async (req, res) => {
+  const q = (req.query.q || '').trim();
+  const type = (req.query.type || 'all').trim();
+  const limit = Math.min(parseInt(req.query.limit) || 8, 50);
+
+  const TYPE_KEYWORDS = {
+    content:   ['content', 'video', 'tiktok', 'youtube', 'podcast', 'news', 'image', 'copy', 'newsletter', 'photo'],
+    finance:   ['trading', 'finance', 'invest', 'crypto', 'tax', 'insurance', 'fintech', 'market'],
+    tech:      ['code', 'software', 'cloud', 'cyber', 'quantum', 'robotic', 'neural', 'bio', 'space'],
+    marketing: ['seo', 'affiliate', 'email', 'social', 'ad', 'influencer', 'pr', 'brand', 'funnel'],
+  };
+
+  try {
+    // Thử tìm trong DB trước
+    let rows;
+    const { rows: countRows } = await pgPool.query('SELECT COUNT(*) FROM agents');
+    const hasDB = parseInt(countRows[0].count) > 0;
+
+    if (hasDB) {
+      let sql = 'SELECT * FROM agents WHERE 1=1';
+      const params = [];
+
+      if (q) {
+        params.push(`%${q}%`);
+        sql += ` AND (name ILIKE $${params.length} OR type ILIKE $${params.length} OR apis::text ILIKE $${params.length})`;
+      }
+
+      if (type !== 'all' && TYPE_KEYWORDS[type]) {
+        const kws = TYPE_KEYWORDS[type];
+        const kwClauses = kws.map((k, i) => {
+          params.push(`%${k}%`);
+          return `(name ILIKE $${params.length} OR type ILIKE $${params.length})`;
+        });
+        sql += ` AND (${kwClauses.join(' OR ')})`;
+      }
+
+      sql += ' ORDER BY sort_order ASC, id ASC';
+      params.push(limit);
+      sql += ` LIMIT $${params.length}`;
+
+      const result = await pgPool.query(sql, params);
+      rows = result.rows;
+    } else {
+      // Fallback: lọc từ seed data
+      let pool = AGENTS_SEED.slice();
+      if (q) {
+        const ql = q.toLowerCase();
+        pool = pool.filter(a =>
+          a.name.toLowerCase().includes(ql) ||
+          a.type.toLowerCase().includes(ql) ||
+          (Array.isArray(a.apis) ? a.apis : []).some(api => api.toLowerCase().includes(ql))
+        );
+      }
+      if (type !== 'all' && TYPE_KEYWORDS[type]) {
+        const kws = TYPE_KEYWORDS[type];
+        pool = pool.filter(a => kws.some(k =>
+          a.type.toLowerCase().includes(k) || a.name.toLowerCase().includes(k)
+        ));
+      }
+      if (type === 'top10') {
+        pool = pool.slice().sort((a, b) =>
+          parseFloat(b.revenue.replace(/[$,∞]/g, '')) - parseFloat(a.revenue.replace(/[$,∞]/g, ''))
+        );
+      }
+      rows = pool.slice(0, limit);
+    }
+
+    res.json({ agents: rows, total: rows.length, q, type });
+  } catch (e) {
+    console.error('Agent search error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/agents/:id — chi tiết một agent + số liệu hoạt động + dữ liệu cá nhân user
+app.get('/api/agents/:id', async (req, res) => {
+  const aid = parseInt(req.params.id);
+  if (isNaN(aid)) return res.status(400).json({ error: 'ID không hợp lệ' });
+
+  try {
+    // 1. Thông tin agent (DB hoặc seed)
+    const { rows: countRows } = await pgPool.query('SELECT COUNT(*) FROM agents');
+    const hasDB = parseInt(countRows[0].count) > 0;
+
+    let agent = null;
+    if (hasDB) {
+      const { rows } = await pgPool.query('SELECT * FROM agents WHERE id=$1', [aid]);
+      agent = rows[0] || null;
+    }
+    if (!agent) {
+      agent = AGENTS_SEED.find(a => a.id === aid) || null;
+    }
+    if (!agent) return res.status(404).json({ error: 'Không tìm thấy agent' });
+
+    // 2. Số liệu tổng hợp từ toàn bộ user
+    const [chatStats, favStats, topicStats, vaultStats] = await Promise.all([
+      pgPool.query(
+        `SELECT COUNT(*) AS users, COALESCE(SUM(jsonb_array_length(history)),0) AS messages
+         FROM agent_chat_history WHERE agent_id=$1`, [aid]
+      ),
+      pgPool.query('SELECT COUNT(*) AS total FROM favorites WHERE agent_id=$1', [aid]),
+      pgPool.query('SELECT COUNT(*) AS total FROM agent_topics WHERE agent_id=$1 AND topic!=\'\'', [aid]),
+      pgPool.query('SELECT COUNT(*) AS total FROM vault WHERE agent_id=$1', [aid]),
+    ]);
+
+    const stats = {
+      chatUsers:    parseInt(chatStats.rows[0].users)    || 0,
+      totalMessages:parseInt(chatStats.rows[0].messages) || 0,
+      favorites:    parseInt(favStats.rows[0].total)     || 0,
+      topicsSet:    parseInt(topicStats.rows[0].total)   || 0,
+      vaultSaves:   parseInt(vaultStats.rows[0].total)   || 0,
+    };
+
+    // 3. Dữ liệu cá nhân (nếu đã đăng nhập)
+    let userActivity = null;
+    const user = req.user;
+    if (user) {
+      const [chatRow, favRow, topicRow] = await Promise.all([
+        pgPool.query(
+          'SELECT history FROM agent_chat_history WHERE user_id=$1 AND agent_id=$2',
+          [user.id, aid]
+        ),
+        pgPool.query('SELECT 1 FROM favorites WHERE user_id=$1 AND agent_id=$2', [user.id, aid]),
+        pgPool.query(
+          'SELECT topic, topic_history FROM agent_topics WHERE user_id=$1 AND agent_id=$2',
+          [user.id, aid]
+        ),
+      ]);
+
+      const history = chatRow.rows[0]?.history || [];
+      userActivity = {
+        messageCount: Array.isArray(history) ? history.length : 0,
+        isFavorite:   favRow.rows.length > 0,
+        topic:        topicRow.rows[0]?.topic || '',
+        topicHistory: topicRow.rows[0]?.topic_history || [],
+      };
+    }
+
+    res.json({ agent, stats, userActivity });
+  } catch (e) {
+    console.error('Agent detail error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET all agents (from DB, fallback to seed if empty)
 app.get('/api/db/admin/agents', requireAdminPassword, async (req, res) => {
   try {
@@ -1605,7 +1752,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 15,855 dòng · 1.33 MB
+> 16,438 dòng · 1.36 MB
 
 ```html
 <!DOCTYPE html>
@@ -2556,32 +2703,299 @@ app.listen(PORT, '0.0.0.0', () => {
     }
 
     /* PLANET LABEL */
+    /* ============================================================
+       AR / XR PLANET LABELS — Spatial Computing / Tony Stark style
+       ============================================================ */
     .planet-label {
       position: absolute;
       pointer-events: none;
-      transform: translate(-50%, -50%);
-      text-align: center;
+      transform: translate(-50%, -130%);
+      text-align: left;
       opacity: 0;
-      transition: opacity .3s;
+      transition: opacity .25s, transform .2s;
+      user-select: none;
+      min-width: 110px;
+      padding: 5px 7px 5px 7px;
     }
+    /* AR Corner brackets */
+    .ar-corner {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      pointer-events: none;
+      transition: border-color .3s;
+    }
+    .ar-corner.tl { top: 0; left: 0; border-top: 1px solid; border-left: 1px solid; }
+    .ar-corner.tr { top: 0; right: 0; border-top: 1px solid; border-right: 1px solid; }
+    .ar-corner.bl { bottom: 0; left: 0; border-bottom: 1px solid; border-left: 1px solid; }
+    .ar-corner.br { bottom: 0; right: 0; border-bottom: 1px solid; border-right: 1px solid; }
 
-
+    .ar-id {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 6px;
+      letter-spacing: 2px;
+      opacity: 0.45;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .ar-status-dot {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      animation: ar-blink 1.4s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes ar-blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.15; }
+    }
     .planet-label .name {
       font-family: 'Orbitron', sans-serif;
-      font-size: 10px;
-      font-weight: 700;
-      color: #00ffff;
+      font-size: 9px;
+      font-weight: 900;
       letter-spacing: 2px;
-      text-shadow: 0 0 10px #00ffff;
+      white-space: nowrap;
+      margin-bottom: 1px;
+    }
+    .planet-label .ar-type {
+      font-size: 6.5px;
+      color: rgba(0,255,255,0.45);
+      font-family: 'Share Tech Mono', monospace;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
       white-space: nowrap;
     }
-
-    .planet-label .type {
-      font-size: 9px;
-      color: #00ffff66;
-      margin-top: 2px;
+    .ar-dist {
       font-family: 'Share Tech Mono', monospace;
+      font-size: 6.5px;
+      letter-spacing: 1px;
+      opacity: 0.55;
+      margin-bottom: 3px;
     }
+    .ar-signal {
+      display: flex;
+      gap: 2px;
+      align-items: flex-end;
+    }
+    .ar-sig-bar {
+      display: inline-block;
+      width: 3px;
+      border-radius: 1px;
+      transition: opacity .3s;
+    }
+    /* Locked / hovered */
+    .planet-label.ar-locked {
+      transform: translate(-50%, -140%);
+    }
+    .planet-label.ar-locked .name {
+      text-shadow: 0 0 14px currentColor;
+    }
+
+    /* ============================================================
+       AR RETICLE — targeting ring
+       ============================================================ */
+    #ar-reticle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 900;
+      display: none;
+      transform: translate(-50%, -50%);
+    }
+    .ar-ret-outer {
+      width: 56px; height: 56px;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
+      animation: ar-spin 5s linear infinite;
+    }
+    .ar-ret-inner {
+      width: 28px; height: 28px;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.9;
+      animation: ar-spin 2s linear infinite reverse;
+    }
+    .ar-ret-dot {
+      width: 4px; height: 4px;
+      background: currentColor;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px 2px currentColor;
+    }
+    .ar-ret-cross::before {
+      content: '';
+      position: absolute;
+      width: 16px; height: 1px;
+      background: currentColor;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.7;
+    }
+    .ar-ret-cross::after {
+      content: '';
+      position: absolute;
+      width: 1px; height: 16px;
+      background: currentColor;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.7;
+    }
+    .ar-ret-bracket {
+      position: absolute;
+      width: 10px; height: 10px;
+    }
+    .ar-ret-bracket.tl { top: -34px; left: -34px; border-top: 2px solid currentColor; border-left: 2px solid currentColor; }
+    .ar-ret-bracket.tr { top: -34px; right: -34px; border-top: 2px solid currentColor; border-right: 2px solid currentColor; }
+    .ar-ret-bracket.bl { bottom: -34px; left: -34px; border-bottom: 2px solid currentColor; border-left: 2px solid currentColor; }
+    .ar-ret-bracket.br { bottom: -34px; right: -34px; border-bottom: 2px solid currentColor; border-right: 2px solid currentColor; }
+    .ar-ret-name {
+      position: absolute;
+      top: 42px; left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 7px; letter-spacing: 3px;
+      white-space: nowrap; color: currentColor;
+      text-shadow: 0 0 8px currentColor;
+      animation: ar-fade-in .3s ease-out;
+    }
+    .ar-ret-id {
+      position: absolute;
+      bottom: 42px; left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 6px; letter-spacing: 2px;
+      white-space: nowrap; color: currentColor;
+      opacity: 0.6;
+    }
+    @keyframes ar-spin { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
+    @keyframes ar-fade-in { from { opacity:0; transform: translateX(-50%) scale(.85); } to { opacity:1; transform: translateX(-50%) scale(1); } }
+
+    /* ============================================================
+       AR OVERLAY — compass, depth bar, scanlines, WebXR button
+       ============================================================ */
+    #ar-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+      display: none;
+    }
+    body.ar-ready #ar-overlay { display: block; }
+
+    /* Scanlines */
+    .ar-scanline {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,255,255,0.012) 3px, rgba(0,255,255,0.012) 4px);
+      pointer-events: none;
+    }
+    /* Viewport corner brackets */
+    .ar-vc { position: absolute; width: 22px; height: 22px; }
+    .ar-vc.tl { top: 56px; left: 8px; border-top: 2px solid rgba(0,255,255,0.35); border-left: 2px solid rgba(0,255,255,0.35); }
+    .ar-vc.tr { top: 56px; right: 8px; border-top: 2px solid rgba(0,255,255,0.35); border-right: 2px solid rgba(0,255,255,0.35); }
+    .ar-vc.bl { bottom: 56px; left: 8px; border-bottom: 2px solid rgba(0,255,255,0.35); border-left: 2px solid rgba(0,255,255,0.35); }
+    .ar-vc.br { bottom: 56px; right: 8px; border-bottom: 2px solid rgba(0,255,255,0.35); border-right: 2px solid rgba(0,255,255,0.35); }
+
+    /* Compass bar */
+    .ar-compass {
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 320px; height: 26px;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(0,255,255,0.15);
+      background: linear-gradient(to bottom, rgba(0,8,24,0.75) 0%, transparent 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ar-compass-track {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      color: rgba(0,255,255,0.45);
+      letter-spacing: 3px;
+      white-space: nowrap;
+      transition: transform .1s linear;
+    }
+    .ar-compass-needle {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 2px; height: 7px;
+      background: #00ffff;
+      box-shadow: 0 0 6px #00ffff;
+    }
+    .ar-compass-hdg {
+      position: absolute;
+      top: 3px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      font-weight: 900;
+      color: #00ffff;
+      text-shadow: 0 0 10px #00ffff;
+      letter-spacing: 3px;
+    }
+
+    /* Depth / status bar at bottom */
+    .ar-depth-bar {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      display: flex; align-items: center; gap: 20px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 7px; letter-spacing: 2px;
+      color: rgba(0,255,255,0.45);
+      padding: 6px 24px;
+      background: linear-gradient(to top, rgba(0,8,24,0.7) 0%, transparent 100%);
+      white-space: nowrap;
+    }
+    .ar-depth-item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+    .ar-depth-val { font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; color: #00ffcc; letter-spacing: 1px; }
+
+    /* WebXR button */
+    #ar-enter-xr {
+      position: absolute;
+      bottom: 80px; right: 14px;
+      pointer-events: all;
+      background: rgba(0,16,36,0.88);
+      border: 1px solid rgba(0,255,255,0.45);
+      color: #00ffcc;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 8px; letter-spacing: 2px;
+      padding: 8px 13px;
+      cursor: pointer;
+      display: none;
+      flex-direction: column;
+      align-items: center; gap: 3px;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+      text-shadow: 0 0 8px #00ffcc;
+      box-shadow: 0 0 14px rgba(0,255,200,0.18), inset 0 0 8px rgba(0,255,200,0.04);
+      transition: all .2s;
+    }
+    #ar-enter-xr:hover {
+      background: rgba(0,255,200,0.1);
+      box-shadow: 0 0 22px rgba(0,255,200,0.4), inset 0 0 12px rgba(0,255,200,0.08);
+    }
+
+    /* Gyro / head-track indicator */
+    #ar-gyro-ind {
+      position: absolute;
+      top: 34px; right: 14px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 7px; letter-spacing: 1px;
+      color: rgba(0,255,255,0.45);
+      display: none; flex-direction: column; align-items: center; gap: 1px;
+    }
+    body.ar-gyro #ar-gyro-ind { display: flex; }
 
     /* HUD OVERLAY */
     #hud {
@@ -6045,6 +6459,49 @@ app.listen(PORT, '0.0.0.0', () => {
   <!-- PLANET LABELS (dynamic) -->
   <div id="labels"></div>
 
+  <!-- AR RETICLE — targeting ring that follows hovered agent -->
+  <div id="ar-reticle">
+    <div class="ar-ret-outer"></div>
+    <div class="ar-ret-inner"></div>
+    <div class="ar-ret-dot"></div>
+    <div class="ar-ret-cross"></div>
+    <div class="ar-ret-bracket tl"></div>
+    <div class="ar-ret-bracket tr"></div>
+    <div class="ar-ret-bracket bl"></div>
+    <div class="ar-ret-bracket br"></div>
+    <div class="ar-ret-name" id="ar-ret-name">AGENT LOCK</div>
+    <div class="ar-ret-id" id="ar-ret-id">ID:000</div>
+  </div>
+
+  <!-- AR OVERLAY — compass, scanlines, depth bar, WebXR button -->
+  <div id="ar-overlay">
+    <div class="ar-scanline"></div>
+    <div class="ar-vc tl"></div>
+    <div class="ar-vc tr"></div>
+    <div class="ar-vc bl"></div>
+    <div class="ar-vc br"></div>
+    <div class="ar-compass">
+      <div class="ar-compass-track" id="ar-compass-track">·W·········270·········315·········N·000·········045·········090·E·········135·········180·S·········225·········270·W·</div>
+      <div class="ar-compass-needle"></div>
+      <div class="ar-compass-hdg" id="ar-compass-hdg">000°</div>
+    </div>
+    <div class="ar-depth-bar">
+      <div class="ar-depth-item"><div class="ar-depth-val" id="ar-val-agents">101</div><div>AGENTS</div></div>
+      <div class="ar-depth-item"><div class="ar-depth-val" id="ar-val-depth">∞</div><div>DEPTH·m</div></div>
+      <div class="ar-depth-item"><div class="ar-depth-val" id="ar-val-hdg">000°</div><div>HEADING</div></div>
+      <div class="ar-depth-item"><div class="ar-depth-val" id="ar-val-target">---</div><div>TARGET</div></div>
+    </div>
+    <button id="ar-enter-xr" onclick="window._enterXR && window._enterXR()">
+      <div style="font-size:18px;">🥽</div>
+      <div>ENTER AR</div>
+      <div style="font-size:6px;opacity:0.6;letter-spacing:1px;">WebXR MODE</div>
+    </button>
+    <div id="ar-gyro-ind">
+      <div>📡</div>
+      <div>HEAD·TRACK</div>
+    </div>
+  </div>
+
   <!-- HUD OVERLAY (FULL SCREEN) -->
   <div id="hud">
     <div id="hud-backdrop"></div>
@@ -6371,11 +6828,38 @@ app.listen(PORT, '0.0.0.0', () => {
       99: { xname:"Vũ Trụ Ý Thức Thể",      xnote:"AI thực thể vũ trụ, siêu vượt mọi giới hạn" },
       100: { xname:"Trải Nghiệm Chân Kinh",   xnote:"AI tạo nội dung review KOC chân thực, viral đa nền tảng" }
     };
-    AI_AGENTS.forEach(a => {
-      const x = XIANXIA_MAP[a.id];
-      if (x) { a.xname = x.xname; a.xnote = x.xnote; }
-      else { a.xname = a.name; a.xnote = a.type; }
-    });
+    function _applyXianxiaNames() {
+      AI_AGENTS.forEach(a => {
+        const x = XIANXIA_MAP[a.id];
+        if (x) { a.xname = x.xname; a.xnote = x.xnote; }
+        else { a.xname = a.name; a.xnote = a.type; }
+      });
+    }
+
+    async function loadAgents() {
+      try {
+        const resp = await fetch('/api/agents');
+        if (resp.ok) {
+          const data = await resp.json();
+          AI_AGENTS = (data.agents || []).map(a => ({
+            ...a,
+            apis: Array.isArray(a.apis) ? a.apis : JSON.parse(a.apis || '[]'),
+            workflow: Array.isArray(a.workflow) ? a.workflow : JSON.parse(a.workflow || '[]'),
+            logs: Array.isArray(a.logs) ? a.logs : JSON.parse(a.logs || '[]'),
+          }));
+        }
+      } catch(e) {
+        console.warn('[VDAI] Failed to load agents from API, using built-in data:', e);
+      }
+      if (!AI_AGENTS.length) AI_AGENTS = _AGENTS_STUB.slice();
+      _applyXianxiaNames();
+      initAgentCounters();
+    }
+    // Khởi tạo ngay với stub để initUniverse() có planets khi chạy synchronous
+    AI_AGENTS = _AGENTS_STUB.slice();
+    _applyXianxiaNames();
+    // Sau đó fetch từ DB (async) — cập nhật dữ liệu mới nhất cho openHUD
+    loadAgents();
 
     const AGENT_INTRO_MAP = {
       0:  { lam:'Liên tục quét hàng nghìn nguồn tin tức toàn cầu (RSS, API báo chí, mạng xã hội), lọc nội dung, phân tích cảm xúc và tóm tắt thông tin quan trọng nhất mỗi giờ.', tao:'Bản tin tự động, bài tóm tắt tin tức cá nhân hóa, cảnh báo tin nóng theo chủ đề được giao.' },
@@ -7107,40 +7591,46 @@ app.listen(PORT, '0.0.0.0', () => {
     setInterval(updateClock, 1000);
 
     let revenueTarget = 0;
-    AI_AGENTS.forEach(a => {
-      const v = parseFloat(a.revenue.replace(/[$,∞]/g, '')) || 0;
-      revenueTarget += v;
-    });
-    let revenueCurrent = 0;
-    const revEl = document.getElementById('revenue');
-    if (revEl) {
-      const revTimer = setInterval(() => {
-        revenueCurrent = Math.min(revenueTarget, revenueCurrent + revenueTarget / 60);
-        if (revenueCurrent >= revenueTarget) { revEl.textContent = '$' + Math.round(revenueTarget).toLocaleString(); clearInterval(revTimer); }
-        else revEl.textContent = '$' + Math.round(revenueCurrent).toLocaleString();
-      }, 50);
-    }
 
-    let taskVal = 0;
-    const taskEl = document.getElementById('tasks');
-    if (taskEl) {
-      const taskTimer = setInterval(() => {
-        taskVal++;
-        taskEl.textContent = taskVal.toLocaleString();
-        if (taskVal >= 12400) clearInterval(taskTimer);
-      }, 3);
-    }
+    function initAgentCounters() {
+      revenueTarget = 0;
+      AI_AGENTS.forEach(a => {
+        const v = parseFloat(a.revenue.replace(/[$,∞]/g, '')) || 0;
+        revenueTarget += v;
+      });
+      let revenueCurrent = 0;
+      const revEl = document.getElementById('revenue');
+      if (revEl) {
+        const revTimer = setInterval(() => {
+          revenueCurrent = Math.min(revenueTarget, revenueCurrent + revenueTarget / 60);
+          if (revenueCurrent >= revenueTarget) { revEl.textContent = '$' + Math.round(revenueTarget).toLocaleString(); clearInterval(revTimer); }
+          else revEl.textContent = '$' + Math.round(revenueCurrent).toLocaleString();
+        }, 50);
+      }
 
-    // TRẠNG THÁI LOG
-    const logMessages = AI_AGENTS.slice(0, 20).flatMap(a => a.logs.map(l => `[${a.name}] ${l}`));
-    const logTrack = document.getElementById('log-track');
-    const doubled = [...logMessages, ...logMessages];
-    doubled.forEach(m => {
-      const el = document.createElement('div');
-      el.className = 'log-item';
-      el.textContent = '◈ ' + m;
-      logTrack.appendChild(el);
-    });
+      let taskVal = 0;
+      const taskEl = document.getElementById('tasks');
+      if (taskEl) {
+        const taskTimer = setInterval(() => {
+          taskVal++;
+          taskEl.textContent = taskVal.toLocaleString();
+          if (taskVal >= 12400) clearInterval(taskTimer);
+        }, 3);
+      }
+
+      // TRẠNG THÁI LOG
+      const logMessages = AI_AGENTS.slice(0, 20).flatMap(a => a.logs.map(l => `[${a.name}] ${l}`));
+      const logTrack = document.getElementById('log-track');
+      if (logTrack) {
+        const doubled = [...logMessages, ...logMessages];
+        doubled.forEach(m => {
+          const el = document.createElement('div');
+          el.className = 'log-item';
+          el.textContent = '◈ ' + m;
+          logTrack.appendChild(el);
+        });
+      }
+    }
 
     // ============================================================
     // CURSOR (system cursor)
@@ -7494,8 +7984,22 @@ app.listen(PORT, '0.0.0.0', () => {
         // HTML label
         const label = document.createElement('div');
         label.className = 'planet-label';
-        label.innerHTML = `<div class="name">${agentName(agent)}</div><div class="type">${agentNote(agent)}</div>`;
-        label.style.color = agent.color;
+        const _agColor = agent.color || '#00ffff';
+        label.innerHTML = `
+          <div class="ar-corner tl" style="border-color:${_agColor}99;"></div>
+          <div class="ar-corner tr" style="border-color:${_agColor}99;"></div>
+          <div class="ar-corner bl" style="border-color:${_agColor}66;"></div>
+          <div class="ar-corner br" style="border-color:${_agColor}66;"></div>
+          <div class="ar-id" style="color:${_agColor};">
+            ID:${String(agent.id).padStart(3,'0')}
+            <span class="ar-status-dot" style="background:${_agColor};box-shadow:0 0 4px ${_agColor};"></span>
+          </div>
+          <div class="name" style="color:${_agColor};text-shadow:0 0 8px ${_agColor}88;">${agentName(agent)}</div>
+          <div class="ar-type">${agentNote(agent)}</div>
+          <div class="ar-dist" style="color:${_agColor}99;">◎ -- m</div>
+          <div class="ar-signal">
+            ${[4,7,10,13,16].map(h => `<span class="ar-sig-bar" style="height:${h}px;background:${_agColor};opacity:0.2;"></span>`).join('')}
+          </div>`;
         labelsContainer.appendChild(label);
         labelEls.push(label);
       }
@@ -8071,6 +8575,9 @@ app.listen(PORT, '0.0.0.0', () => {
                 <div class="hib-stat-label" style="color:#bb66ff;">${_isEn ? 'EFFICIENCY' : 'HIỆU SUẤT'}</div>
               </div>
             </div>
+            <div class="hib-section-hdr" id="hud-community-hdr" style="display:none;">${_isEn ? 'COMMUNITY' : 'CỘNG ĐỒNG'}</div>
+            <div id="hud-community-stats" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px;"></div>
+            <div id="hud-user-activity" style="display:none;margin-bottom:10px;"></div>
           `;
         }
 
@@ -8112,6 +8619,77 @@ app.listen(PORT, '0.0.0.0', () => {
 
         // Workflow SVG
         buildWorkflowSVG(agent);
+
+        // Fetch live stats (async, không block render)
+        fetchAgentDetail(agent.id);
+      }
+
+      async function fetchAgentDetail(agentId) {
+        try {
+          const res = await fetch(`/api/agents/${agentId}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          const _isEn = currentTheme === 'en';
+
+          // --- Community stats ---
+          const { stats, userActivity } = data;
+          const commHdr = document.getElementById('hud-community-hdr');
+          const commEl  = document.getElementById('hud-community-stats');
+          if (commEl && stats) {
+            const hasAny = stats.chatUsers > 0 || stats.favorites > 0 || stats.vaultSaves > 0;
+            if (hasAny) {
+              if (commHdr) { commHdr.style.display = ''; }
+              commEl.style.display = 'grid';
+              commEl.innerHTML = `
+                <div class="hib-stat-card" style="color:#00ffcc;border-color:rgba(0,255,204,0.18);">
+                  <div class="hib-stat-val" style="color:#00ffcc;font-size:14px;">${stats.chatUsers}</div>
+                  <div class="hib-stat-label" style="color:#00ffcc;">${_isEn ? 'CHATTERS' : 'NGƯỜI CHAT'}</div>
+                </div>
+                <div class="hib-stat-card" style="color:#ff8844;border-color:rgba(255,136,68,0.18);">
+                  <div class="hib-stat-val" style="color:#ff8844;font-size:14px;">${stats.totalMessages}</div>
+                  <div class="hib-stat-label" style="color:#ff8844;">${_isEn ? 'MESSAGES' : 'TIN NHẮN'}</div>
+                </div>
+                <div class="hib-stat-card" style="color:#ff4488;border-color:rgba(255,68,136,0.18);">
+                  <div class="hib-stat-val" style="color:#ff4488;font-size:14px;">${stats.favorites}</div>
+                  <div class="hib-stat-label" style="color:#ff4488;">${_isEn ? 'FAVORITES' : 'YÊU THÍCH'}</div>
+                </div>
+                <div class="hib-stat-card" style="color:#aaffaa;border-color:rgba(170,255,170,0.18);">
+                  <div class="hib-stat-val" style="color:#aaffaa;font-size:14px;">${stats.vaultSaves}</div>
+                  <div class="hib-stat-label" style="color:#aaffaa;">${_isEn ? 'VAULT SAVES' : 'KHO TÀI LIỆU'}</div>
+                </div>
+              `;
+            }
+          }
+
+          // --- User activity (nếu đã đăng nhập) ---
+          const actEl = document.getElementById('hud-user-activity');
+          if (actEl && userActivity) {
+            actEl.style.display = '';
+            const favIcon = userActivity.isFavorite ? '❤️' : '🤍';
+            const topicTxt = userActivity.topic
+              ? `<span style="color:#ffcc44;">${userActivity.topic}</span>`
+              : `<span style="color:rgba(255,255,255,0.25);">${_isEn ? 'not set' : 'chưa đặt'}</span>`;
+            actEl.innerHTML = `
+              <div class="hib-section-hdr">${_isEn ? 'YOUR ACTIVITY' : 'HOẠT ĐỘNG CỦA BẠN'}</div>
+              <div style="display:flex;flex-direction:column;gap:4px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;">
+                <div style="display:flex;justify-content:space-between;color:rgba(0,255,255,0.6);">
+                  <span>${_isEn ? 'MESSAGES' : 'TIN NHẮN'}</span>
+                  <span style="color:#00ffcc;font-weight:700;">${userActivity.messageCount}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;color:rgba(0,255,255,0.6);">
+                  <span>${_isEn ? 'FAVORITE' : 'YÊU THÍCH'}</span>
+                  <span>${favIcon}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;color:rgba(0,255,255,0.6);">
+                  <span>${_isEn ? 'TOPIC' : 'CHỦ ĐỀ'}</span>
+                  <span style="max-width:100px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${topicTxt}</span>
+                </div>
+              </div>
+            `;
+          }
+        } catch (e) {
+          console.warn('[AgentDetail] fetch error:', e.message);
+        }
       }
 
       const WF_PIPE_CFG = {
@@ -8728,14 +9306,65 @@ app.listen(PORT, '0.0.0.0', () => {
           }
 
           label.style.left = x + 'px';
-          label.style.top = (y - pm.size * 30) + 'px';
+          label.style.top = (y - 36) + 'px';
 
           const dist = camera.position.distanceTo(pm.group.position);
           const isHovered = pm === hoveredPlanet;
-          const targetOpacity = isHovered ? 1 : (dist < 60 ? Math.max(0, (60 - dist) / 30) : 0);
+          const targetOpacity = isHovered ? 1 : (dist < 70 ? Math.max(0, (70 - dist) / 35) : 0);
           label.style.opacity = targetOpacity;
-          if (isHovered) label.style.textShadow = `0 0 20px ${pm.agent.color}`;
+          label.classList.toggle('ar-locked', isHovered);
+
+          // AR: update distance display
+          const distEl = label.querySelector('.ar-dist');
+          if (distEl) distEl.textContent = `◎ ${Math.round(dist * 2.8)} m`;
+
+          // AR: update signal bars (5 bars, strength inversely proportional to distance)
+          const sigBars = label.querySelectorAll('.ar-sig-bar');
+          const sigSteps = Math.max(0, Math.round(5 * (1 - Math.min(dist, 150) / 150)));
+          sigBars.forEach((bar, bi) => {
+            bar.style.opacity = bi < sigSteps ? '1' : '0.15';
+          });
+
+          // AR: reticle follows hovered planet
+          if (isHovered) {
+            const reticle = document.getElementById('ar-reticle');
+            if (reticle) {
+              reticle.style.display = 'block';
+              reticle.style.left = x + 'px';
+              reticle.style.top = y + 'px';
+              reticle.style.color = pm.agent.color;
+              const retName = document.getElementById('ar-ret-name');
+              if (retName) retName.textContent = (typeof agentName === 'function' ? agentName(pm.agent) : pm.agent.name).toUpperCase();
+              const retId = document.getElementById('ar-ret-id');
+              if (retId) retId.textContent = 'ID:' + String(pm.agent.id).padStart(3,'0');
+            }
+            const depthEl = document.getElementById('ar-val-depth');
+            if (depthEl) depthEl.textContent = Math.round(dist * 2.8);
+            const targetEl = document.getElementById('ar-val-target');
+            if (targetEl) targetEl.textContent = String(pm.agent.id).padStart(3,'0');
+          }
         });
+
+        // Hide reticle when nothing hovered
+        if (!hoveredPlanet) {
+          const reticle = document.getElementById('ar-reticle');
+          if (reticle) reticle.style.display = 'none';
+          const depthEl = document.getElementById('ar-val-depth');
+          if (depthEl) depthEl.textContent = '∞';
+          const targetEl = document.getElementById('ar-val-target');
+          if (targetEl) targetEl.textContent = '---';
+        }
+
+        // AR: update compass heading from camera azimuth
+        const _hdg = Math.round(((Math.atan2(camera.position.x, camera.position.z) * 180 / Math.PI) + 360) % 360);
+        const hdgStr = String(_hdg).padStart(3,'0') + '°';
+        const hdgEl = document.getElementById('ar-compass-hdg');
+        if (hdgEl) hdgEl.textContent = hdgStr;
+        const hdgEl2 = document.getElementById('ar-val-hdg');
+        if (hdgEl2) hdgEl2.textContent = hdgStr;
+        // Scroll compass track to match heading
+        const trackEl = document.getElementById('ar-compass-track');
+        if (trackEl) trackEl.style.transform = `translateX(${-(_hdg / 360) * 420}px)`;
 
         renderer.render(scene, camera);
       }
@@ -8743,6 +9372,9 @@ app.listen(PORT, '0.0.0.0', () => {
       window._planetMeshes = planetMeshes;
       window._labelEls = labelEls;
       window._openHUD = openHUD;
+      // Enable WebXR on renderer
+      renderer.xr.enabled = true;
+
       animate();
 
       window.addEventListener('resize', () => {
@@ -8751,25 +9383,120 @@ app.listen(PORT, '0.0.0.0', () => {
         camera.updateProjectionMatrix();
         renderer.setSize(W, H);
       });
+
+      // ══════════════════════════════════════════════════════════
+      // AR/XR INITIALISATION
+      // ══════════════════════════════════════════════════════════
+
+      // Activate AR overlay for this route
+      document.body.classList.add('ar-ready');
+      const arAgentsEl = document.getElementById('ar-val-agents');
+      if (arAgentsEl) arAgentsEl.textContent = String(AI_AGENTS.length);
+
+      // ── DeviceOrientation / gyroscope head tracking ──────────
+      // Works on phone & AR glasses (Magic Leap, HoloLens browser, Quest browser)
+      let _gyroActive = false;
+      function _onDeviceOrientation(e) {
+        const gamma = e.gamma || 0; // left-right tilt  (-90 to +90)
+        const beta  = e.beta  || 0; // front-back tilt  (-180 to +180)
+        // Map to parallax values (same vars used by mouse parallax)
+        mouseParallaxX = Math.max(-1, Math.min(1, gamma / 35));
+        mouseParallaxY = Math.max(-1, Math.min(1, (beta - 45) / 40));
+        if (!_gyroActive) {
+          _gyroActive = true;
+          document.body.classList.add('ar-gyro');
+        }
+      }
+      // iOS 13+ requires explicit permission for DeviceOrientation
+      if (typeof DeviceOrientationEvent !== 'undefined') {
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+          // iOS 13+ — add a permission button on first interaction
+          const _reqGyro = () => {
+            DeviceOrientationEvent.requestPermission().then(state => {
+              if (state === 'granted') window.addEventListener('deviceorientation', _onDeviceOrientation);
+            }).catch(() => {});
+            document.removeEventListener('click', _reqGyro);
+          };
+          document.addEventListener('click', _reqGyro, { once: true });
+        } else {
+          // Android / non-restricted browsers
+          window.addEventListener('deviceorientation', _onDeviceOrientation);
+        }
+      }
+
+      // ── WebXR immersive-ar support ───────────────────────────
+      window._enterXR = null;
+      if (navigator.xr) {
+        navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+          if (!supported) return;
+          const xrBtn = document.getElementById('ar-enter-xr');
+          if (xrBtn) xrBtn.style.display = 'flex';
+
+          window._enterXR = async () => {
+            try {
+              const session = await navigator.xr.requestSession('immersive-ar', {
+                requiredFeatures: ['local'],
+                optionalFeatures: ['dom-overlay', 'hit-test'],
+                domOverlay: { root: document.getElementById('labels') || document.body },
+              });
+              renderer.xr.setSession(session);
+              document.body.classList.add('ar-mode');
+              if (xrBtn) { xrBtn.textContent = '✕ EXIT AR'; xrBtn.onclick = () => session.end(); }
+              session.addEventListener('end', () => {
+                document.body.classList.remove('ar-mode');
+                if (xrBtn) { xrBtn.innerHTML = '<div style="font-size:18px;">🥽</div><div>ENTER AR</div>'; xrBtn.onclick = () => window._enterXR && window._enterXR(); }
+              });
+            } catch(err) {
+              console.warn('[WebXR] session failed:', err.message);
+              if (typeof showToast === 'function') showToast('🥽 Thiết bị chưa hỗ trợ AR session: ' + err.message, 'error');
+            }
+          };
+        }).catch(() => {});
+      }
     }
     // ═══════════════════════════════════════════════════════════
     // SEARCH
     // ═══════════════════════════════════════════════════════════
+    let _searchTimer = null;
     function searchAgents(q) {
       const res = document.getElementById('search-results');
       if (!q.trim()) { res.innerHTML = ''; res.classList.remove('show'); return; }
-      const matches = AI_AGENTS.filter(a =>
-        a.name.toLowerCase().includes(q.toLowerCase()) ||
-        a.type.toLowerCase().includes(q.toLowerCase())
-      ).slice(0, 8);
-      res.innerHTML = matches.map(a =>
-        `<div class="search-item" onclick="searchSelect(${a.id})">
-      <span>${a.emoji}</span>
-      <span style="color:${a.color}">${agentName(a)}</span>
-      <span style="font-size:8px;color:#00ffff44;margin-left:auto">${agentNote(a)}</span>
-    </div>`
-      ).join('');
-      res.classList.toggle('show', matches.length > 0);
+      clearTimeout(_searchTimer);
+      _searchTimer = setTimeout(async () => {
+        try {
+          const resp = await fetch('/api/agents/search?q=' + encodeURIComponent(q) + '&limit=8');
+          if (!resp.ok) throw new Error('search failed');
+          const data = await resp.json();
+          const matches = (data.agents || []).map(a => ({
+            ...a,
+            apis: Array.isArray(a.apis) ? a.apis : JSON.parse(a.apis || '[]'),
+            workflow: Array.isArray(a.workflow) ? a.workflow : JSON.parse(a.workflow || '[]'),
+            logs: Array.isArray(a.logs) ? a.logs : JSON.parse(a.logs || '[]'),
+          }));
+          res.innerHTML = matches.map(a =>
+            `<div class="search-item" onclick="searchSelect(${a.id})">
+          <span>${a.emoji}</span>
+          <span style="color:${a.color}">${agentName(a)}</span>
+          <span style="font-size:8px;color:#00ffff44;margin-left:auto">${agentNote(a)}</span>
+        </div>`
+          ).join('');
+          res.classList.toggle('show', matches.length > 0);
+        } catch(e) {
+          // Fallback: tìm local nếu API lỗi
+          const ql = q.toLowerCase();
+          const matches = AI_AGENTS.filter(a =>
+            a.name.toLowerCase().includes(ql) || a.type.toLowerCase().includes(ql)
+          ).slice(0, 8);
+          res.innerHTML = matches.map(a =>
+            `<div class="search-item" onclick="searchSelect(${a.id})">
+          <span>${a.emoji}</span>
+          <span style="color:${a.color}">${agentName(a)}</span>
+          <span style="font-size:8px;color:#00ffff44;margin-left:auto">${agentNote(a)}</span>
+        </div>`
+          ).join('');
+          res.classList.toggle('show', matches.length > 0);
+        }
+      }, 200);
     }
     function searchSelect(id) {
       const agent = AI_AGENTS[id];
@@ -13113,7 +13840,10 @@ app.listen(PORT, '0.0.0.0', () => {
 
   /* ── PLANET LABELS (3D scene) ─────────────── */
   .planet-label .name { font-size: 8px !important; }
-  .planet-label .type { font-size: 7px !important; }
+  .planet-label .ar-type { font-size: 6px !important; }
+  .ar-depth-bar { gap: 10px !important; padding: 4px 10px !important; }
+  .ar-compass { width: 200px !important; }
+  #ar-enter-xr { bottom: 100px !important; padding: 6px 10px !important; }
 
   /* ── MODALS — tăng padding/font cho mobile ── */
   .modal-close {

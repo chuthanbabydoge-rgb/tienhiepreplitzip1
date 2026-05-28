@@ -5,7 +5,7 @@
   "syntax-highlight": false,
   "share-result": false,
   "upload-avatar": false,
-  "search-history": false,
+  "search-history": true,
   "notification-center": false,
   "realtime-sse": false,
   "dark-light-mode": false,
