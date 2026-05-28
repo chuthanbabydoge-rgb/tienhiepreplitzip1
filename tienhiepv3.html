@@ -4788,6 +4788,10 @@
       _applyXianxiaNames();
       initAgentCounters();
     }
+    // Khởi tạo ngay với stub để initUniverse() có planets khi chạy synchronous
+    AI_AGENTS = _AGENTS_STUB.slice();
+    _applyXianxiaNames();
+    // Sau đó fetch từ DB (async) — cập nhật dữ liệu mới nhất cho openHUD
     loadAgents();
 
     const AGENT_INTRO_MAP = {
