@@ -422,7 +422,10 @@ function serveMain(req, res) {
   res.sendFile(path.join(__dirname, 'tienhiepv3.html'));
 }
 app.get('/app', serveMain);
-app.get('/user', requireAuth, serveMain);
+app.get('/user', requireAuth, (req, res, next) => {
+  if (!('ar' in req.query)) return res.redirect('/user?ar');
+  next();
+}, serveMain);
 app.get('/', (req, res) => res.redirect('/user'));
 
 // Admin login page
@@ -448,7 +451,10 @@ app.get('/api/admin/logout', (req, res) => {
   req.session.save(() => res.redirect('/admin/login'));
 });
 
-app.get('/admin', requireAdminPassword, serveMain);
+app.get('/admin', requireAdminPassword, (req, res, next) => {
+  if (!('ar' in req.query)) return res.redirect('/admin?ar');
+  next();
+}, serveMain);
 
 app.get('/admin/users', requireAdminPassword, (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
