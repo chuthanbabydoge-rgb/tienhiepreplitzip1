@@ -6490,6 +6490,9 @@
                 <div class="hib-stat-label" style="color:#bb66ff;">${_isEn ? 'EFFICIENCY' : 'HIỆU SUẤT'}</div>
               </div>
             </div>
+            <div class="hib-section-hdr" id="hud-community-hdr" style="display:none;">${_isEn ? 'COMMUNITY' : 'CỘNG ĐỒNG'}</div>
+            <div id="hud-community-stats" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px;"></div>
+            <div id="hud-user-activity" style="display:none;margin-bottom:10px;"></div>
           `;
         }
 
@@ -6531,6 +6534,77 @@
 
         // Workflow SVG
         buildWorkflowSVG(agent);
+
+        // Fetch live stats (async, không block render)
+        fetchAgentDetail(agent.id);
+      }
+
+      async function fetchAgentDetail(agentId) {
+        try {
+          const res = await fetch(`/api/agents/${agentId}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          const _isEn = currentTheme === 'en';
+
+          // --- Community stats ---
+          const { stats, userActivity } = data;
+          const commHdr = document.getElementById('hud-community-hdr');
+          const commEl  = document.getElementById('hud-community-stats');
+          if (commEl && stats) {
+            const hasAny = stats.chatUsers > 0 || stats.favorites > 0 || stats.vaultSaves > 0;
+            if (hasAny) {
+              if (commHdr) { commHdr.style.display = ''; }
+              commEl.style.display = 'grid';
+              commEl.innerHTML = `
+                <div class="hib-stat-card" style="color:#00ffcc;border-color:rgba(0,255,204,0.18);">
+                  <div class="hib-stat-val" style="color:#00ffcc;font-size:14px;">${stats.chatUsers}</div>
+                  <div class="hib-stat-label" style="color:#00ffcc;">${_isEn ? 'CHATTERS' : 'NGƯỜI CHAT'}</div>
+                </div>
+                <div class="hib-stat-card" style="color:#ff8844;border-color:rgba(255,136,68,0.18);">
+                  <div class="hib-stat-val" style="color:#ff8844;font-size:14px;">${stats.totalMessages}</div>
+                  <div class="hib-stat-label" style="color:#ff8844;">${_isEn ? 'MESSAGES' : 'TIN NHẮN'}</div>
+                </div>
+                <div class="hib-stat-card" style="color:#ff4488;border-color:rgba(255,68,136,0.18);">
+                  <div class="hib-stat-val" style="color:#ff4488;font-size:14px;">${stats.favorites}</div>
+                  <div class="hib-stat-label" style="color:#ff4488;">${_isEn ? 'FAVORITES' : 'YÊU THÍCH'}</div>
+                </div>
+                <div class="hib-stat-card" style="color:#aaffaa;border-color:rgba(170,255,170,0.18);">
+                  <div class="hib-stat-val" style="color:#aaffaa;font-size:14px;">${stats.vaultSaves}</div>
+                  <div class="hib-stat-label" style="color:#aaffaa;">${_isEn ? 'VAULT SAVES' : 'KHO TÀI LIỆU'}</div>
+                </div>
+              `;
+            }
+          }
+
+          // --- User activity (nếu đã đăng nhập) ---
+          const actEl = document.getElementById('hud-user-activity');
+          if (actEl && userActivity) {
+            actEl.style.display = '';
+            const favIcon = userActivity.isFavorite ? '❤️' : '🤍';
+            const topicTxt = userActivity.topic
+              ? `<span style="color:#ffcc44;">${userActivity.topic}</span>`
+              : `<span style="color:rgba(255,255,255,0.25);">${_isEn ? 'not set' : 'chưa đặt'}</span>`;
+            actEl.innerHTML = `
+              <div class="hib-section-hdr">${_isEn ? 'YOUR ACTIVITY' : 'HOẠT ĐỘNG CỦA BẠN'}</div>
+              <div style="display:flex;flex-direction:column;gap:4px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;">
+                <div style="display:flex;justify-content:space-between;color:rgba(0,255,255,0.6);">
+                  <span>${_isEn ? 'MESSAGES' : 'TIN NHẮN'}</span>
+                  <span style="color:#00ffcc;font-weight:700;">${userActivity.messageCount}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;color:rgba(0,255,255,0.6);">
+                  <span>${_isEn ? 'FAVORITE' : 'YÊU THÍCH'}</span>
+                  <span>${favIcon}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;color:rgba(0,255,255,0.6);">
+                  <span>${_isEn ? 'TOPIC' : 'CHỦ ĐỀ'}</span>
+                  <span style="max-width:100px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${topicTxt}</span>
+                </div>
+              </div>
+            `;
+          }
+        } catch (e) {
+          console.warn('[AgentDetail] fetch error:', e.message);
+        }
       }
 
       const WF_PIPE_CFG = {

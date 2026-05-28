@@ -966,6 +966,77 @@ app.get('/api/agents/search', async (req, res) => {
   }
 });
 
+// GET /api/agents/:id — chi tiết một agent + số liệu hoạt động + dữ liệu cá nhân user
+app.get('/api/agents/:id', async (req, res) => {
+  const aid = parseInt(req.params.id);
+  if (isNaN(aid)) return res.status(400).json({ error: 'ID không hợp lệ' });
+
+  try {
+    // 1. Thông tin agent (DB hoặc seed)
+    const { rows: countRows } = await pgPool.query('SELECT COUNT(*) FROM agents');
+    const hasDB = parseInt(countRows[0].count) > 0;
+
+    let agent = null;
+    if (hasDB) {
+      const { rows } = await pgPool.query('SELECT * FROM agents WHERE id=$1', [aid]);
+      agent = rows[0] || null;
+    }
+    if (!agent) {
+      agent = AGENTS_SEED.find(a => a.id === aid) || null;
+    }
+    if (!agent) return res.status(404).json({ error: 'Không tìm thấy agent' });
+
+    // 2. Số liệu tổng hợp từ toàn bộ user
+    const [chatStats, favStats, topicStats, vaultStats] = await Promise.all([
+      pgPool.query(
+        `SELECT COUNT(*) AS users, COALESCE(SUM(jsonb_array_length(history)),0) AS messages
+         FROM agent_chat_history WHERE agent_id=$1`, [aid]
+      ),
+      pgPool.query('SELECT COUNT(*) AS total FROM favorites WHERE agent_id=$1', [aid]),
+      pgPool.query('SELECT COUNT(*) AS total FROM agent_topics WHERE agent_id=$1 AND topic!=\'\'', [aid]),
+      pgPool.query('SELECT COUNT(*) AS total FROM vault WHERE agent_id=$1', [aid]),
+    ]);
+
+    const stats = {
+      chatUsers:    parseInt(chatStats.rows[0].users)    || 0,
+      totalMessages:parseInt(chatStats.rows[0].messages) || 0,
+      favorites:    parseInt(favStats.rows[0].total)     || 0,
+      topicsSet:    parseInt(topicStats.rows[0].total)   || 0,
+      vaultSaves:   parseInt(vaultStats.rows[0].total)   || 0,
+    };
+
+    // 3. Dữ liệu cá nhân (nếu đã đăng nhập)
+    let userActivity = null;
+    const user = req.user;
+    if (user) {
+      const [chatRow, favRow, topicRow] = await Promise.all([
+        pgPool.query(
+          'SELECT history FROM agent_chat_history WHERE user_id=$1 AND agent_id=$2',
+          [user.id, aid]
+        ),
+        pgPool.query('SELECT 1 FROM favorites WHERE user_id=$1 AND agent_id=$2', [user.id, aid]),
+        pgPool.query(
+          'SELECT topic, topic_history FROM agent_topics WHERE user_id=$1 AND agent_id=$2',
+          [user.id, aid]
+        ),
+      ]);
+
+      const history = chatRow.rows[0]?.history || [];
+      userActivity = {
+        messageCount: Array.isArray(history) ? history.length : 0,
+        isFavorite:   favRow.rows.length > 0,
+        topic:        topicRow.rows[0]?.topic || '',
+        topicHistory: topicRow.rows[0]?.topic_history || [],
+      };
+    }
+
+    res.json({ agent, stats, userActivity });
+  } catch (e) {
+    console.error('Agent detail error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET all agents (from DB, fallback to seed if empty)
 app.get('/api/db/admin/agents', requireAdminPassword, async (req, res) => {
   try {
