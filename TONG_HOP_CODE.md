@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **23:38:37 28/5/2026**
+> Cập nhật lần cuối: **23:42:57 28/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,489 dòng, 66.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,854 dòng, 1.33 MB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,503 dòng, 66.7 KB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(15,855 dòng, 1.33 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -22,8 +22,8 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 39 | 987 B |
-| `server.js` | 1,489 | 66.2 KB |
-| `tienhiepv3.html` | 15,854 | 1.33 MB |
+| `server.js` | 1,503 | 66.7 KB |
+| `tienhiepv3.html` | 15,855 | 1.33 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **21,064** | **1.56 MB** |
+| **TỔNG** | **21,079** | **1.56 MB** |
 
 ---
 
@@ -91,7 +91,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,489 dòng · 66.2 KB
+> 1,503 dòng · 66.7 KB
 
 ```javascript
 const express = require('express');
@@ -972,6 +972,20 @@ app.get('/api/db/admin/users', requireAuthAPI, async (req, res) => {
 // ── DB: Admin — Agents CRUD ───────────────────────────────────────────────────
 const AGENTS_SEED = require('./agents-seed');
 
+// GET public agents list — reads from DB, falls back to seed data if DB is empty
+app.get('/api/agents', async (req, res) => {
+  try {
+    const { rows } = await pgPool.query('SELECT * FROM agents ORDER BY sort_order ASC, id ASC');
+    if (rows.length > 0) {
+      res.json({ agents: rows });
+    } else {
+      res.json({ agents: AGENTS_SEED });
+    }
+  } catch (e) {
+    res.json({ agents: AGENTS_SEED });
+  }
+});
+
 // GET all agents (from DB, fallback to seed if empty)
 app.get('/api/db/admin/agents', requireAdminPassword, async (req, res) => {
   try {
@@ -1591,7 +1605,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 15,854 dòng · 1.33 MB
+> 15,855 dòng · 1.33 MB
 
 ```html
 <!DOCTYPE html>
@@ -6144,9 +6158,10 @@ app.listen(PORT, '0.0.0.0', () => {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
     // ============================================================
-    // DATA: 100 AI AGENTS
+    // DATA: 100 AI AGENTS — loaded dynamically from /api/agents
     // ============================================================
-    const AI_AGENTS = [
+    let AI_AGENTS = [];
+    const _AGENTS_STUB = [
       { id: 0, name: "NewsFlash AI", emoji: "📰", type: "Content Intelligence", color: "#00ffff", glow: "#00ffff", revenue: "$2,400", auto: 92, neural: 88, iq: 95, efficiency: 87, apis: ["NewsAPI", "Reuters", "OpenAI", "Twitter"], workflow: ["RSS Collector", "Content Filter", "Summary AI", "Sentiment AI", "Publisher", "Distributor"], logs: ["Fetching latest news feeds", "Analyzing 2,847 articles", "Publishing summary batch #412"] },
       { id: 1, name: "TubeGenius AI", emoji: "🎬", type: "YouTube Automation", color: "#ff0044", glow: "#ff0044", revenue: "$8,200", auto: 95, neural: 92, iq: 97, efficiency: 91, apis: ["YouTube API", "GPT-4", "ElevenLabs", "Canva"], workflow: ["Topic Research", "Script Writer", "Voice Generator", "Video Editor", "Thumbnail AI", "Upload Bot", "Analytics AI"], logs: ["Generating script for crypto video", "Rendering 4K thumbnail", "Uploading to 3 channels"] },
       { id: 2, name: "TikFlow AI", emoji: "📱", type: "Short Video Empire", color: "#ff00aa", glow: "#ff00aa", revenue: "$5,600", auto: 90, neural: 85, iq: 93, efficiency: 88, apis: ["TikTok API", "CapCut", "Sora", "Runway"], workflow: ["Trend Scanner", "Hook Writer", "Video AI", "Caption AI", "Music Sync", "Post Scheduler"], logs: ["Detected viral trend #cryptolife", "Generated 8 short clips", "Scheduling 3x daily posts"] },

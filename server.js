@@ -876,6 +876,20 @@ app.get('/api/db/admin/users', requireAuthAPI, async (req, res) => {
 // ── DB: Admin — Agents CRUD ───────────────────────────────────────────────────
 const AGENTS_SEED = require('./agents-seed');
 
+// GET public agents list — reads from DB, falls back to seed data if DB is empty
+app.get('/api/agents', async (req, res) => {
+  try {
+    const { rows } = await pgPool.query('SELECT * FROM agents ORDER BY sort_order ASC, id ASC');
+    if (rows.length > 0) {
+      res.json({ agents: rows });
+    } else {
+      res.json({ agents: AGENTS_SEED });
+    }
+  } catch (e) {
+    res.json({ agents: AGENTS_SEED });
+  }
+});
+
 // GET all agents (from DB, fallback to seed if empty)
 app.get('/api/db/admin/agents', requireAdminPassword, async (req, res) => {
   try {
