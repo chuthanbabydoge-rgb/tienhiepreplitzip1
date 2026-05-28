@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **00:59:52 29/5/2026**
+> Cập nhật lần cuối: **01:03:40 29/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,650 dòng, 72.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(16,438 dòng, 1.36 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(16,442 dòng, 1.36 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,650 | 72.2 KB |
-| `tienhiepv3.html` | 16,438 | 1.36 MB |
+| `tienhiepv3.html` | 16,442 | 1.36 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **21,809** | **1.59 MB** |
+| **TỔNG** | **21,813** | **1.59 MB** |
 
 ---
 
@@ -1752,7 +1752,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 16,438 dòng · 1.36 MB
+> 16,442 dòng · 1.36 MB
 
 ```html
 <!DOCTYPE html>
@@ -8304,9 +8304,13 @@ app.listen(PORT, '0.0.0.0', () => {
             const nn = _norm(a.name);
             const noAI = nn.replace(/\s*ai\s*$/,'');
             const words = nn.split(/\s+/).filter(w => w.length > 2);
+            const xn = _norm(a.xname || '');
+            const xnWords = xn.split(/\s+/).filter(w => w.length > 2);
+            const xnt = _norm(a.xnote || '');
+            const xntWords = xnt.split(/\s+/).filter(w => w.length > 2);
             return {
-              id: a.id, emoji: a.emoji, name: a.name,
-              keys: [...new Set([nn, noAI, ...words, _norm(a.type)])]
+              id: a.id, emoji: a.emoji, name: a.name, agent: a,
+              keys: [...new Set([nn, noAI, ...words, _norm(a.type), xn, ...xnWords, xnt, ...xntWords])]
                     .filter(k => k.length >= 3)
             };
           });

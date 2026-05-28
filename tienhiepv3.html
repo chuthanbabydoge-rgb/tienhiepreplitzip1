@@ -6547,9 +6547,13 @@
             const nn = _norm(a.name);
             const noAI = nn.replace(/\s*ai\s*$/,'');
             const words = nn.split(/\s+/).filter(w => w.length > 2);
+            const xn = _norm(a.xname || '');
+            const xnWords = xn.split(/\s+/).filter(w => w.length > 2);
+            const xnt = _norm(a.xnote || '');
+            const xntWords = xnt.split(/\s+/).filter(w => w.length > 2);
             return {
-              id: a.id, emoji: a.emoji, name: a.name,
-              keys: [...new Set([nn, noAI, ...words, _norm(a.type)])]
+              id: a.id, emoji: a.emoji, name: a.name, agent: a,
+              keys: [...new Set([nn, noAI, ...words, _norm(a.type), xn, ...xnWords, xnt, ...xntWords])]
                     .filter(k => k.length >= 3)
             };
           });
@@ -6607,10 +6611,13 @@
 
           if (best && bestScore >= 4) {
             _showTranscript(transcript);
+            const displayName = (best.agent && best.agent.xname) || best.name;
             if (typeof showToast === 'function')
-              showToast('🎙️ ' + best.emoji + ' ' + best.name + ' — đang bay tới...', 'success');
+              showToast('🎙️ ' + best.emoji + ' ' + displayName + ' — triệu hồi...', 'success');
             setTimeout(() => {
-              if (window._planetMeshes) {
+              if (best.agent && typeof window.openAgentChat === 'function') {
+                window.openAgentChat(best.agent);
+              } else if (window._planetMeshes) {
                 const pm = window._planetMeshes.find(p => p.agent.id === best.id);
                 if (pm && window._openHUD) window._openHUD(pm);
               }
