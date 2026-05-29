@@ -5,6 +5,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vương Đế AI</title>
+  <!-- Markdown + Syntax Highlighting -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
 
@@ -4948,6 +4953,43 @@
       }
       .uc-msg.system .sender { color: #ff880055; }
 
+      /* ── Markdown styling trong chat ── */
+      .uc-msg.system span p, .ac-md p { margin: 0 0 6px 0; }
+      .uc-msg.system span p:last-child, .ac-md p:last-child { margin-bottom: 0; }
+      .uc-msg.system span ul, .uc-msg.system span ol,
+      .ac-md ul, .ac-md ol { padding-left: 16px; margin: 4px 0; }
+      .uc-msg.system span li, .ac-md li { margin-bottom: 2px; }
+      .uc-msg.system span strong, .ac-md strong { color: #ffe066; font-weight: 700; }
+      .uc-msg.system span em, .ac-md em { color: #88ddff; font-style: italic; }
+      .uc-msg.system span h1, .uc-msg.system span h2, .uc-msg.system span h3,
+      .ac-md h1, .ac-md h2, .ac-md h3 {
+        color: #00ffff; font-family: 'Orbitron', sans-serif;
+        font-size: 12px; margin: 8px 0 4px; letter-spacing: 1px;
+      }
+      .uc-msg.system span code, .ac-md code {
+        background: rgba(0,255,255,0.1); border: 1px solid rgba(0,255,255,0.25);
+        padding: 1px 5px; border-radius: 3px;
+        font-family: 'Share Tech Mono', monospace; font-size: 10px;
+      }
+      .uc-msg.system span pre, .ac-md pre {
+        background: rgba(0,0,0,0.6); border: 1px solid rgba(0,255,255,0.2);
+        border-radius: 6px; padding: 10px 12px; overflow-x: auto;
+        margin: 6px 0; position: relative;
+      }
+      .uc-msg.system span pre code, .ac-md pre code {
+        background: none; border: none; padding: 0; font-size: 11px;
+      }
+      .uc-msg.system span blockquote, .ac-md blockquote {
+        border-left: 3px solid #ffaa0066; margin: 4px 0;
+        padding: 4px 10px; color: #ffaa0099;
+      }
+      .uc-msg.system span hr, .ac-md hr {
+        border: none; border-top: 1px solid #00ffff22; margin: 8px 0;
+      }
+      .uc-msg.system span a, .ac-md a { color: #00ffff; text-decoration: underline; }
+      .uc-cursor { animation: ucBlink 0.6s step-end infinite; color: #00ffff; }
+      @keyframes ucBlink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+
       #uc-input-area {
         height: 38px;
         border-top: 1px solid #00ffff22;
@@ -9647,6 +9689,20 @@
       setTimeout(() => t.remove(), 3200);
     }
 
+    // ── Markdown + Syntax Highlighting ──────────────────────────
+    function parseMarkdown(text) {
+      if (!text) return '';
+      if (typeof marked === 'undefined') return text.replace(/\n/g, '<br>');
+      try {
+        marked.use({ breaks: true, gfm: true });
+        return marked.parse(text);
+      } catch(e) { return text.replace(/\n/g, '<br>'); }
+    }
+    function applyHighlight(el) {
+      if (typeof hljs === 'undefined') return;
+      el.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+    }
+
     // ═══════════════════════════════════════════════════════════
     // LEADERBOARD
     // ═══════════════════════════════════════════════════════════
@@ -11458,18 +11514,29 @@
 
       if (isTyping && !isUser) {
         let i = 0;
+        let accumulated = '';
         const speed = 25;
         function typeWriter() {
           if (i < text.length) {
-            contentSpan.innerHTML += text.charAt(i);
+            accumulated += text.charAt(i);
+            contentSpan.innerHTML = accumulated + '<span class="uc-cursor">▌</span>';
             i++;
             container.scrollTop = container.scrollHeight;
             setTimeout(typeWriter, speed);
+          } else {
+            contentSpan.innerHTML = parseMarkdown(accumulated);
+            applyHighlight(contentSpan);
+            container.scrollTop = container.scrollHeight;
           }
         }
         typeWriter();
       } else {
-        contentSpan.innerHTML = text;
+        if (!isUser) {
+          contentSpan.innerHTML = parseMarkdown(text);
+          applyHighlight(contentSpan);
+        } else {
+          contentSpan.innerHTML = text;
+        }
       }
     }
 
@@ -11528,7 +11595,13 @@
         senderDiv.className = 'sender';
         senderDiv.innerText = '[' + item.sender + ']';
         const contentSpan = document.createElement('span');
-        contentSpan.innerHTML = item.text;
+        const isAI = item.sender !== 'ĐẠO HỮU';
+        if (isAI) {
+          contentSpan.innerHTML = parseMarkdown(item.text);
+          setTimeout(() => applyHighlight(contentSpan), 0);
+        } else {
+          contentSpan.innerHTML = item.text;
+        }
         msgDiv.appendChild(senderDiv);
         msgDiv.appendChild(contentSpan);
         container.appendChild(msgDiv);
@@ -14247,7 +14320,12 @@
         div.innerHTML = '<span style="font-size:9px;color:#00ffff66;display:block;margin-bottom:3px;">[' + (currentTheme === 'en' ? 'YOU' : 'ĐẠO HỮU') + ']</span>' + text;
       } else {
         div.style.cssText += 'background:rgba(255,170,0,0.08);border:1px solid ' + color + '44;color:' + color + ';';
-        div.innerHTML = '<span style="font-size:9px;color:' + color + '88;display:block;margin-bottom:3px;">[' + ((agent_ && agent_.xname) || (currentTheme === 'en' ? 'AGENT' : 'TÁC NHÂN')) + ']</span>' + text;
+        const mdContent = document.createElement('div');
+        mdContent.className = 'ac-md';
+        mdContent.innerHTML = parseMarkdown(text);
+        div.innerHTML = '<span style="font-size:9px;color:' + color + '88;display:block;margin-bottom:3px;">[' + ((agent_ && agent_.xname) || (currentTheme === 'en' ? 'AGENT' : 'TÁC NHÂN')) + ']</span>';
+        div.appendChild(mdContent);
+        setTimeout(() => applyHighlight(mdContent), 0);
       }
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;

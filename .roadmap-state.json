@@ -2,7 +2,7 @@
   "export-vault": true,
   "markdown-chat": false,
   "copy-clipboard": true,
-  "syntax-highlight": false,
+  "syntax-highlight": true,
   "share-result": false,
   "upload-avatar": false,
   "search-history": true,
