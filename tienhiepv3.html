@@ -1440,6 +1440,51 @@
     .vh-item.vh-highlight .vh-xname { color: #ffd700; }
     .vh-item.vh-highlight { border-color: rgba(255,215,0,0.2); background: rgba(255,215,0,0.04); }
 
+    /* ── Voice Command Hint Ticker ── */
+    #voice-cmd-hints {
+      position: fixed;
+      bottom: 70px;
+      right: 22px;
+      z-index: 9099;
+      width: 220px;
+      background: rgba(0,5,18,0.88);
+      border: 1px solid rgba(0,255,200,0.18);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: none;
+      flex-direction: column;
+      gap: 3px;
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+      box-shadow: 0 0 20px rgba(0,255,180,0.08);
+    }
+    #voice-cmd-hints.visible { display: flex; }
+    .vch-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(0,255,200,0.05);
+    }
+    .vch-row:last-child { border-bottom: none; }
+    .vch-say { color: #00ffb4; opacity: 0.9; }
+    .vch-do  { color: rgba(255,255,255,0.35); text-align: right; }
+    #vch-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 7px;
+      letter-spacing: 2px;
+      color: rgba(0,255,180,0.4);
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    .vh-tab-btn.active {
+      background: rgba(0,255,255,0.15) !important;
+      border-color: rgba(0,255,255,0.5) !important;
+    }
+
     /* ── Wake Word Indicator ── */
     #wake-word-indicator {
       position: fixed;
@@ -4743,6 +4788,19 @@
       <div id="univ-voice-help-btn" class="voice-help-btn" onclick="event.stopPropagation();openVoiceHelp()" title="Danh sách tên có thể nói">?</div>
     </div>
 
+    <!-- VOICE COMMAND HINT PANEL -->
+    <div id="voice-cmd-hints">
+      <div id="vch-title">🎙 LỆNH CÓ THỂ NÓI</div>
+      <div class="vch-row"><span class="vch-say">"Mở [Tên Agent]"</span><span class="vch-do">Triệu hồi agent</span></div>
+      <div class="vch-row"><span class="vch-say">"Leaderboard"</span><span class="vch-do">Bảng xếp hạng</span></div>
+      <div class="vch-row"><span class="vch-say">"Kho Tàng"</span><span class="vch-do">Mở vault</span></div>
+      <div class="vch-row"><span class="vch-say">"So Sánh"</span><span class="vch-do">So sánh agent</span></div>
+      <div class="vch-row"><span class="vch-say">"Thống Kê"</span><span class="vch-do">Analytics</span></div>
+      <div class="vch-row"><span class="vch-say">"AR Mode"</span><span class="vch-do">Bật AR hologram</span></div>
+      <div class="vch-row"><span class="vch-say">"Hỏi [câu hỏi]"</span><span class="vch-do">Chat AI</span></div>
+      <div class="vch-row"><span class="vch-say">"Danh sách lệnh"</span><span class="vch-do">Xem tất cả</span></div>
+    </div>
+
     <!-- WAKE WORD INDICATOR -->
     <div id="wake-word-indicator" title="Nói 'Mở Truyền Âm' để kích hoạt giọng nói · Nhấn để bật/tắt" onclick="window._wwToggle && window._wwToggle()">
       <span id="ww-mic-icon">🎤</span>
@@ -6836,28 +6894,198 @@
           }
           console.log('[VOICE] target after strip:', JSON.stringify(target));
 
+          // ── Helper: toast shortcut ─────────────────────────────────────
+          const _vt = (msg) => { if (typeof showToast === 'function') showToast('🎙️ ' + msg, 'info'); };
+          const _fn = (name) => typeof window[name] === 'function' ? window[name] : (typeof eval(name) === 'function' ? eval(name) : null);
+
           // ── Special shortcuts ──────────────────────────────────────
           if (/leaderboard|bang xep hang|xep hang/.test(target)) {
             if (typeof openLeaderboard === 'function') openLeaderboard();
-            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → Bảng xếp hạng', 'info');
+            _vt('"' + transcript + '" → Bảng xếp hạng');
             return true;
           }
           if (/kocraft|ko craft|koc kol/.test(target)) {
             if (typeof window.openKOCraftModal === 'function') window.openKOCraftModal();
-            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → KOCraft AI', 'info');
+            _vt('"' + transcript + '" → KOCraft AI');
             return true;
           }
-          if (/thien co cac|agent chat|truyen am/.test(target)) {
+          if (/thien co cac|truyen am/.test(target) && !/tac nhan|agent chat specific/.test(target)) {
             const firstAgent = AI_AGENTS[0];
             if (firstAgent && typeof window.openAgentChat === 'function') window.openAgentChat(firstAgent);
-            if (typeof showToast === 'function') showToast('🎙️ Mở Thiên Cơ Các', 'info');
+            _vt('Mở Thiên Cơ Các');
             return true;
           }
           if (/chin coi|nine realm|cuu gioi/.test(target)) {
             if (typeof window.openNineRealms === 'function') window.openNineRealms();
-            if (typeof showToast === 'function') showToast('🎙️ Mở Chín Cõi', 'info');
+            _vt('Mở Chín Cõi');
             return true;
           }
+
+          // ── MODALS & SECTIONS ──────────────────────────────────────
+          if (/so sanh|compare|doi chieu/.test(target)) {
+            if (typeof openCompare === 'function') openCompare();
+            _vt('So sánh Agent'); return true;
+          }
+          if (/huong dan|guide|bi kip|huong dan tan thu/.test(target)) {
+            if (typeof openGuide === 'function') openGuide();
+            _vt('Bí Kíp Vũ Trụ'); return true;
+          }
+          if (/^(?:wfm|workflow manager|quan ly workflow)/.test(target) || /wfm modal/.test(target)) {
+            if (typeof openWFM === 'function') openWFM();
+            _vt('Workflow Manager'); return true;
+          }
+          if (/builder|xay dung workflow|tao workflow/.test(target)) {
+            if (typeof openBuilder === 'function') openBuilder();
+            _vt('Workflow Builder'); return true;
+          }
+          if (/than kinh|neural|mang than kinh/.test(target)) {
+            if (typeof openNeural === 'function') openNeural();
+            _vt('Bản đồ Thần Kinh'); return true;
+          }
+          if (/nhiem vu|mission|bang nhiem vu|quest/.test(target)) {
+            if (typeof openMission === 'function') openMission();
+            _vt('Nhiệm Vụ'); return true;
+          }
+          if (/thong ke|analytics|phan tich|bieu do/.test(target)) {
+            if (typeof openAnalytics === 'function') openAnalytics();
+            _vt('Thống Kê & Analytics'); return true;
+          }
+          if (/yeu thich|favorite|fav/.test(target)) {
+            if (typeof openFavorites === 'function') openFavorites();
+            _vt('Yêu Thích'); return true;
+          }
+          if (/lich su|history|nhat ky/.test(target)) {
+            if (typeof openHistory === 'function') openHistory();
+            _vt('Lịch Sử'); return true;
+          }
+          if (/co van|advisor|tu van|chien luoc/.test(target)) {
+            if (typeof openAdvisor === 'function') openAdvisor();
+            _vt('Cố Vấn Chiến Lược'); return true;
+          }
+          if (/game|mini game|choi game|luyen tap/.test(target)) {
+            if (typeof openMiniGame === 'function') openMiniGame();
+            _vt('Mini Game'); return true;
+          }
+          if (/canh bao|alert|thong bao he thong/.test(target)) {
+            if (typeof openAlerts === 'function') openAlerts();
+            _vt('Cảnh Báo'); return true;
+          }
+          if (/kho tang|vault|bao tang|tu do|kho bau/.test(target)) {
+            if (typeof openVault === 'function') openVault();
+            _vt('Kho Tàng'); return true;
+          }
+          if (/tong hop|app summary|bao cao tong hop|tom tat app/.test(target)) {
+            if (typeof window.openAppSummary === 'function') window.openAppSummary();
+            _vt('Tổng Hợp App'); return true;
+          }
+          if (/che do tac nhan|agent mode|bat tac nhan/.test(target)) {
+            if (typeof openAgentMode === 'function') openAgentMode();
+            _vt('Chế Độ Tác Nhân'); return true;
+          }
+          if (/giup do|danh sach lenh|voice help|lenh voice|list lenh/.test(target)) {
+            if (typeof window.openVoiceHelp === 'function') window.openVoiceHelp();
+            _vt('Danh sách lệnh voice'); return true;
+          }
+
+          // ── AR MODE ────────────────────────────────────────────────
+          if (/ar mode|che do ar|thuc te ao|hologram|bat ar|tat ar/.test(target)) {
+            document.body.classList.toggle('ar-mode');
+            _vt(document.body.classList.contains('ar-mode') ? 'Đã bật AR Mode 👓' : 'Đã tắt AR Mode');
+            return true;
+          }
+
+          // ── THEME ──────────────────────────────────────────────────
+          if (/chu de|theme|doi mau|giao dien|doi giao dien/.test(target)) {
+            if (typeof toggleThemeMenu === 'function') toggleThemeMenu();
+            _vt('Menu Chủ Đề'); return true;
+          }
+          if (/cyberpunk|cyber punk|khoa hoc vien tuong/.test(target)) {
+            if (typeof toggleTheme === 'function') toggleTheme('en');
+            _vt('Giao diện Sci-Fi'); return true;
+          }
+          if (/tien hiep|xianxia|co phong|co dai/.test(target)) {
+            if (typeof toggleTheme === 'function') toggleTheme('xx');
+            _vt('Giao diện Tiên Hiệp'); return true;
+          }
+
+          // ── SEARCH AGENTS ──────────────────────────────────────────
+          {
+            const _sm = raw.match(/^(?:tim kiem|tim|search for|search|kiem tra) +(.{2,})$/);
+            if (_sm) {
+              const q = _sm[1].trim();
+              const si = document.getElementById('search-input');
+              if (si) { si.value = q; si.dispatchEvent(new Event('input')); }
+              if (typeof searchAgents === 'function') searchAgents(q);
+              _vt('Tìm: "' + q + '"'); return true;
+            }
+          }
+
+          // ── AGENT CHAT ACTIONS (when chat modal open) ──────────────
+          {
+            const _acModal = document.getElementById('agent-chat-modal');
+            const _acOpen  = _acModal && _acModal.style.display !== 'none';
+            const _acInput = document.getElementById('ac-input');
+            if (_acOpen && _acInput) {
+              // "gửi [tin nhắn]" / "nói [tin nhắn]"
+              const _cm = raw.match(/^(?:gui|send|noi tin nhan|viet|say) +(.{2,})$/);
+              if (_cm) {
+                _acInput.value = transcript.slice(transcript.search(/\s/) + 1).trim();
+                _acInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+                _vt('Đã gửi tin nhắn'); return true;
+              }
+              // "lưu" → save last AI reply to vault
+              if (/luu|save|luu vao kho/.test(target)) {
+                const lastAI = [...document.querySelectorAll('.ac-msg.ai .ac-msg-text')].pop();
+                if (lastAI) {
+                  if (typeof window.addVaultItem === 'function') {
+                    window.addVaultItem({ title: 'Voice Save', content: lastAI.innerText });
+                    _vt('Đã lưu vào Kho Tàng ✅');
+                  } else {
+                    _vt('Không tìm thấy nội dung để lưu');
+                  }
+                }
+                return true;
+              }
+              // "xóa" → clear input
+              if (/xoa|clear|xoa tin|xoa chat/.test(target)) {
+                _acInput.value = '';
+                _vt('Đã xóa'); return true;
+              }
+            }
+          }
+
+          // ── UNIVERSE CHAT: "hỏi [câu hỏi]" / "chat [tin nhắn]" ───
+          {
+            const _ucMatch = raw.match(/^(?:hoi|ask|chat voi thien co|noi chuyen|gui tin) +(.{3,})$/);
+            if (_ucMatch) {
+              const msg = transcript.slice(transcript.search(/\s/) + 1).trim();
+              const ucInput = document.getElementById('uc-input');
+              if (ucInput) {
+                ucInput.value = msg;
+                if (typeof sendUniverseChat === 'function') sendUniverseChat();
+              }
+              _vt('Chat: "' + msg + '"'); return true;
+            }
+          }
+
+          // ── HUD ACTIONS (when HUD active) ──────────────────────────
+          {
+            const _hudEl = document.getElementById('hud');
+            const _hudActive = _hudEl && _hudEl.classList.contains('active');
+            if (_hudActive) {
+              if (/kich hoat|activate|chat tac nhan|noi chuyen voi/.test(target)) {
+                const btn = document.getElementById('hud-activate-btn');
+                if (btn) { btn.click(); _vt('Kích hoạt Tác Nhân'); return true; }
+              }
+              if (/dong hud|thoat hud|ve lai|back home/.test(target)) {
+                if (typeof closeHUD === 'function') { closeHUD(); _vt('Đóng HUD'); return true; }
+              }
+            }
+          }
+
+          // ── SCROLL ─────────────────────────────────────────────────
+          if (/cuon len|scroll up|len tren/.test(target)) { window.scrollBy(0,-300); return false; }
+          if (/cuon xuong|scroll down|xuong duoi/.test(target)) { window.scrollBy(0,300); return false; }
 
           // ── Agent name matching ────────────────────────────────────
           if (!_agentIndex) _agentIndex = _buildAgentIndex();
@@ -6929,30 +7157,103 @@
         };
         window.filterVoiceHelp = function(q) { _renderVoiceHelp(q); };
 
+        // ── System voice commands catalog ──
+        const SYS_CMDS = [
+          { cat:'🗺️ Điều hướng', cmds:[
+            { say:'Mở [Tên Agent]',  do:'Triệu hồi bất kỳ agent' },
+            { say:'Leaderboard',     do:'Bảng xếp hạng' },
+            { say:'So sánh',         do:'So sánh Agent' },
+            { say:'Kho Tàng',        do:'Mở Vault' },
+            { say:'Chín Cõi',        do:'Nine Realms view' },
+            { say:'KOCraft',         do:'KOCraft AI' },
+          ]},
+          { cat:'📊 Tính năng', cmds:[
+            { say:'Thống kê',        do:'Analytics' },
+            { say:'Nhiệm vụ',        do:'Mission board' },
+            { say:'Yêu thích',       do:'Danh sách yêu thích' },
+            { say:'Lịch sử',         do:'Lịch sử chat' },
+            { say:'Cố vấn',          do:'AI Advisor' },
+            { say:'Thần kinh',       do:'Neural map' },
+            { say:'Cảnh báo',        do:'Alerts' },
+            { say:'Mini Game',       do:'Chơi game' },
+          ]},
+          { cat:'🔧 Công cụ', cmds:[
+            { say:'Builder',         do:'Workflow Builder' },
+            { say:'WFM',             do:'Workflow Manager' },
+            { say:'Tổng hợp',        do:'App Summary' },
+            { say:'Hướng dẫn',       do:'Bí kíp tân thủ' },
+            { say:'Tìm [từ khoá]',   do:'Tìm kiếm agent' },
+          ]},
+          { cat:'🎨 Giao diện', cmds:[
+            { say:'AR Mode',         do:'Bật/tắt AR hologram' },
+            { say:'Chủ đề',          do:'Menu chủ đề' },
+            { say:'Tiên hiệp',       do:'Giao diện cổ phong' },
+            { say:'Cyberpunk',       do:'Giao diện Sci-Fi' },
+          ]},
+          { cat:'💬 Chat', cmds:[
+            { say:'Hỏi [câu hỏi]',  do:'Chat với Thiên Cơ Các' },
+            { say:'Gửi [tin nhắn]',  do:'Gửi tin trong agent chat' },
+            { say:'Lưu',             do:'Lưu nội dung vào Kho Tàng' },
+            { say:'Kích hoạt',       do:'Mở chat với agent hiện tại' },
+          ]},
+          { cat:'🔇 Điều khiển', cmds:[
+            { say:'Đóng / Thoát',    do:'Đóng panel đang mở' },
+            { say:'Tắt Truyền Âm',   do:'Tắt voice engine' },
+            { say:'Mở Truyền Âm',    do:'Bật voice engine' },
+            { say:'Danh sách lệnh',  do:'Mở panel này' },
+          ]},
+        ];
+
+        let _vhTab = 'cmds'; // 'cmds' | 'agents'
+        window._vhSetTab = function(t) {
+          _vhTab = t;
+          document.querySelectorAll('.vh-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+          _renderVoiceHelp(document.getElementById('voice-help-search')?.value || '');
+        };
+
         function _renderVoiceHelp(query) {
           const list = document.getElementById('voice-help-list');
           if (!list) return;
           const q = (query || '').toLowerCase().trim();
-          const items = AI_AGENTS.filter(a => {
-            if (!q) return true;
-            const xn = (a.xname || '').toLowerCase();
-            const nm = (a.name || '').toLowerCase();
-            const nt = (a.xnote || '').toLowerCase();
-            return xn.includes(q) || nm.includes(q) || nt.includes(q);
-          });
-          list.innerHTML = items.map(a => {
-            const xname = a.xname || a.name;
-            const name  = a.name;
-            return `<div class="vh-item" onclick="closeVoiceHelp();setTimeout(()=>window.openAgentChat&&window.openAgentChat(AI_AGENTS.find(x=>x.id===${a.id})),100)">
-              <div class="vh-emoji">${a.emoji || '⚡'}</div>
-              <div class="vh-text">
-                <div class="vh-xname" title="${xname}">${xname}</div>
-                <div class="vh-name" title="${name}">${name}</div>
-              </div>
-            </div>`;
-          }).join('');
-          const title = document.getElementById('voice-help-title');
-          if (title) title.textContent = '🎙️ VOICE — ' + items.length + ' AGENT';
+
+          if (_vhTab === 'cmds') {
+            // Show system commands grouped by category
+            const filtered = SYS_CMDS.map(g => ({
+              ...g,
+              cmds: g.cmds.filter(c => !q || c.say.toLowerCase().includes(q) || c.do.toLowerCase().includes(q))
+            })).filter(g => g.cmds.length > 0);
+
+            list.innerHTML = filtered.map(g => `
+              <div style="margin-bottom:10px;">
+                <div style="font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;color:#00ffff55;margin-bottom:5px;padding-left:4px;">${g.cat}</div>
+                ${g.cmds.map(c => `
+                  <div class="vh-item" style="flex-direction:row;align-items:center;gap:8px;justify-content:space-between;padding:6px 10px;" onclick="closeVoiceHelp()">
+                    <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#00ffff;background:rgba(0,255,255,0.07);padding:2px 8px;border-radius:10px;border:1px solid rgba(0,255,255,0.2);white-space:nowrap;">"${c.say}"</span>
+                    <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,170,0,0.7);text-align:right;">${c.do}</span>
+                  </div>`).join('')}
+              </div>`).join('');
+
+            const title = document.getElementById('voice-help-title');
+            if (title) title.textContent = '🎙️ VOICE — LỆNH HỆ THỐNG';
+          } else {
+            // Show agents list
+            const items = AI_AGENTS.filter(a => {
+              if (!q) return true;
+              return (a.xname||'').toLowerCase().includes(q) || (a.name||'').toLowerCase().includes(q) || (a.xnote||'').toLowerCase().includes(q);
+            });
+            list.innerHTML = items.map(a => {
+              const xname = a.xname || a.name;
+              return `<div class="vh-item" onclick="closeVoiceHelp();setTimeout(()=>window.openAgentChat&&window.openAgentChat(AI_AGENTS.find(x=>x.id===${a.id})),100)">
+                <div class="vh-emoji">${a.emoji || '⚡'}</div>
+                <div class="vh-text">
+                  <div class="vh-xname" title="${xname}">${xname}</div>
+                  <div class="vh-name" title="${a.name}">${a.name}</div>
+                </div>
+              </div>`;
+            }).join('');
+            const title = document.getElementById('voice-help-title');
+            if (title) title.textContent = '🎙️ VOICE — ' + items.length + ' AGENT';
+          }
         }
 
         document.addEventListener('keydown', function(e) {
@@ -7097,7 +7398,7 @@
           if (el) el.classList.remove('show');
         }
 
-        /* ── Sync visual state of all mic buttons + badge ── */
+        /* ── Sync visual state of all mic buttons + badge + hint panel ── */
         function _syncMicUI() {
           if (voiceBtn)   voiceBtn.classList.toggle('listening', _listening);
           if (univMicBtn) univMicBtn.classList.toggle('listening', _listening);
@@ -7109,6 +7410,9 @@
             _bInd.classList.remove('ww-heard');
           }
           if (_bLbl) _bLbl.textContent = _listening ? 'ĐANG NGHE…' : 'MỞ TRUYỀN ÂM';
+          // Show/hide command hint panel
+          const _hints = document.getElementById('voice-cmd-hints');
+          if (_hints) _hints.classList.toggle('visible', _listening);
         }
 
         /* ── Toggle helper (shared by both buttons) ── */
@@ -7119,7 +7423,7 @@
           } else {
             _startListening();
             if (typeof showToast === 'function')
-              showToast('🎙️ Đang nghe — nói tên agent, "đóng", "leaderboard"…', 'success');
+              showToast('🎙️ Đang nghe — nói tên agent hoặc lệnh. Nói "Danh sách lệnh" để xem tất cả', 'success');
           }
         }
 
@@ -12446,9 +12750,15 @@
         <span id="voice-help-title">🎙️ VOICE — DANH SÁCH TRIỆU HỒI</span>
         <div id="voice-help-close" onclick="closeVoiceHelp()">✕</div>
       </div>
-      <input id="voice-help-search" type="text" placeholder="Tìm tên tiên hiệp hoặc tên AI..." oninput="filterVoiceHelp(this.value)" autocomplete="off"/>
-      <div id="voice-help-hint">Nói: MỞ + tên bên dưới · Nhấn để mở thẳng agent</div>
-      <div id="voice-help-list"></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button class="vh-tab-btn active" data-tab="cmds" onclick="window._vhSetTab('cmds')"
+          style="flex:1;padding:6px;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;background:rgba(0,255,255,0.08);border:1px solid rgba(0,255,255,0.3);color:#00ffff;border-radius:6px;cursor:pointer;">⚡ LỆNH HỆ THỐNG</button>
+        <button class="vh-tab-btn" data-tab="agents" onclick="window._vhSetTab('agents')"
+          style="flex:1;padding:6px;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;background:rgba(255,170,0,0.05);border:1px solid rgba(255,170,0,0.2);color:#ffaa00;border-radius:6px;cursor:pointer;">🌟 AGENTS</button>
+      </div>
+      <input id="voice-help-search" type="text" placeholder="Tìm lệnh hoặc tên agent..." oninput="filterVoiceHelp(this.value)" autocomplete="off"/>
+      <div id="voice-help-hint">Nói lệnh để điều khiển · Nhấn ⚡ để xem tất cả lệnh</div>
+      <div id="voice-help-list" style="padding-top:4px;"></div>
     </div>
   </div>
 
