@@ -7678,7 +7678,6 @@
             _rec.onerror = function(e) {
               if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
                 _stopListening();
-                if (typeof showToast === 'function') showToast('🚫 Cần cho phép microphone để dùng voice', 'warn');
               } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
                 // Tự khởi động lại nếu lỗi nhỏ
                 setTimeout(() => { if (_listening) _rec.start(); }, 500);
@@ -7774,14 +7773,11 @@
             _jarvisSay('Đã ngắt kết nối. Hẹn gặp lại, thưa đạo hữu.');
             setTimeout(() => {
               _stopListening();
-              if (typeof showToast === 'function') showToast('🔇 Thiên Nhĩ — Offline', 'info');
             }, 100);
           } else {
             _startListening();
             setTimeout(() => {
               _jarvisSay('Thiên Nhĩ đã khởi động. Thưa đạo hữu, thần đang lắng nghe.');
-              if (typeof showToast === 'function')
-                showToast('⚡ Thiên Nhĩ — Online. Nói "Thiên Nhĩ" bất cứ lúc nào.', 'success');
             }, 200);
           }
         }
