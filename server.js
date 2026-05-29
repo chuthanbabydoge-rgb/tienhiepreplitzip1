@@ -168,9 +168,10 @@ async function getOidcConfig() {
   return oidcConfig;
 }
 
-// Always use the actual request hostname so the OIDC callback URL matches
-// the domain the user is on (works for both dev preview and production)
+// Use REPLIT_DEV_DOMAIN (stable) → REPLIT_DOMAINS → req.hostname fallback
 function getExternalDomain(reqHostname) {
+  if (process.env.REPLIT_DEV_DOMAIN) return process.env.REPLIT_DEV_DOMAIN;
+  if (process.env.REPLIT_DOMAINS) return process.env.REPLIT_DOMAINS.split(',')[0].trim();
   return reqHostname;
 }
 
@@ -282,7 +283,9 @@ app.get('/api/auth/google/callback', (req, res, next) => {
 app.get('/api/login', async (req, res, next) => {
   try {
     const domain = getExternalDomain(req.hostname);
-    console.log('LOGIN: domain =', domain);
+    console.log('LOGIN: reqHostname=', req.hostname, '| resolved domain=', domain,
+      '| REPLIT_DEV_DOMAIN=', process.env.REPLIT_DEV_DOMAIN || '(unset)',
+      '| REPLIT_DOMAINS=', process.env.REPLIT_DOMAINS || '(unset)');
     const name = await ensureStrategy(req.hostname);
     passport.authenticate(name, {
       prompt: 'login consent',
@@ -446,7 +449,10 @@ app.get('/user', requireAuth, (req, res, next) => {
   if (!('ar' in req.query)) return res.redirect('/user?ar');
   next();
 }, serveMain);
-app.get('/', (req, res) => res.redirect('/user'));
+app.get('/', (req, res) => {
+  if (req.query.auth_error) console.log('AUTH_ERROR on /:', req.query.auth_error, '| session:', req.sessionID?.substring(0,8));
+  res.redirect('/user');
+});
 
 // Admin login page
 app.get('/admin/login', (req, res) => {
