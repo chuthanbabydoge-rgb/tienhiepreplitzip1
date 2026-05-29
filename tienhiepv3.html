@@ -7248,12 +7248,73 @@
             const _hudEl = document.getElementById('hud');
             const _hudActive = _hudEl && _hudEl.classList.contains('active');
             if (_hudActive) {
-              if (/kich hoat|activate|chat tac nhan|noi chuyen voi/.test(target)) {
+              // ── Đóng HUD / Về bản đồ 3D ──
+              if (/^(?:dong|thoat|ve|quay ve|tro ve|back|lui|xong|huy|dong lai|ve ban do|tro ve ban do|quay lai ban do|dong giao dien|thoat giao dien|ve vu tru|tro ve vu tru|ve chinh|back home|dong hud|thoat hud|ve lai|exit)$/.test(target) ||
+                  /tro ve ban do|quay ve ban do|ve ban do 3d|close hud|back to map/.test(target)) {
+                _stopListening();
+                const _hudAgent = window.currentAgent;
+                const _hudCloseName = _hudAgent ? (_hudAgent.xname || _hudAgent.name) : 'giao diện';
+                setTimeout(function() {
+                  if (typeof _jarvisSay === 'function') _jarvisSay('Đóng ' + _hudCloseName + '. Trở về bản đồ thiên hà.');
+                }, 80);
+                setTimeout(function() {
+                  if (typeof closeHUD === 'function') closeHUD();
+                }, 300);
+                _showTranscript('🌌 Về bản đồ 3D');
+                if (typeof showToast === 'function') showToast('🌌 Trở về bản đồ thiên hà', 'info');
+                return true;
+              }
+
+              // ── Chạy quy trình ngay (không cần tên agent) ──
+              if (/^(?:chay|chay quy trinh|bat dau|bat quy trinh|run|chay ngay|khoi chay|thuc thi|start|chay di|chay thoi)$/.test(target) ||
+                  /^(?:chay|bat dau|run) quy trinh/.test(target)) {
+                const _curAg = window.currentAgent;
+                if (_curAg) {
+                  _stopListening();
+                  setTimeout(_stopListening, 120);
+                  const _curName = _curAg.xname || _curAg.name;
+                  _showTranscript('⚡ Chạy: ' + _curName);
+                  if (typeof showToast === 'function') showToast('⚡ ' + _curAg.emoji + ' Khởi chạy ' + _curName + '...', 'success');
+                  setTimeout(function() {
+                    if (typeof _jarvisSay === 'function') _jarvisSay('Nhận lệnh. Đang khởi động quy trình ' + (_curAg.name || _curName) + '.');
+                  }, 100);
+                  setTimeout(function() {
+                    if (typeof window.hudRunWorkflow === 'function') window.hudRunWorkflow(_curAg.id);
+                  }, 600);
+                  return true;
+                }
+              }
+
+              // ── Dừng quy trình đang chạy ──
+              if (/^(?:dung|dung lai|huy quy trinh|dung quy trinh|stop|huy bo|reset|dat lai)$/.test(target)) {
+                window._hudWfAbort = true;
+                const _wfContainer = document.getElementById('workflow-container');
+                if (_wfContainer) {
+                  _wfContainer.classList.remove('pipeline-running');
+                  const _sl = _wfContainer.querySelector('.hud-pipeline-scanline');
+                  if (_sl) _sl.classList.remove('active');
+                  _wfContainer.querySelectorAll('.wf-running').forEach(c => {
+                    c.classList.remove('wf-running');
+                    const f = c.querySelector('.wf-pipe-status-txt');
+                    if (f) f.innerHTML = '<span class="hsn-dot"></span>⏸ DỪNG';
+                  });
+                }
+                const _curAg2 = window.currentAgent;
+                if (_curAg2) {
+                  const _rb = document.getElementById('wf-run-btn-' + _curAg2.id);
+                  if (_rb) { _rb.disabled = false; _rb.textContent = '▶ CHẠY QUY TRÌNH'; }
+                  const _rs = document.getElementById('wf-run-status-' + _curAg2.id);
+                  if (_rs) { _rs.textContent = '⏸ Đã dừng'; _rs.className = 'wf-run-status'; }
+                }
+                setTimeout(function() { window._hudWfAbort = false; }, 500);
+                _vt('Dừng quy trình');
+                return true;
+              }
+
+              // ── Mở chat / Truyền Âm Tác Nhân ──
+              if (/kich hoat|activate|chat tac nhan|noi chuyen voi|truyen am tac nhan|mo chat|chat voi/.test(target)) {
                 const btn = document.getElementById('hud-activate-btn');
                 if (btn) { btn.click(); _vt('Kích hoạt Tác Nhân'); return true; }
-              }
-              if (/dong hud|thoat hud|ve lai|back home/.test(target)) {
-                if (typeof closeHUD === 'function') { closeHUD(); _vt('Đóng HUD'); return true; }
               }
             }
           }
@@ -8846,8 +8907,18 @@
         if (btn) btn.textContent = '⟳ ĐANG CHẠY...';
         if (statusEl) { statusEl.textContent = `⟳ Khởi động quy trình...`; statusEl.className = 'wf-run-status running'; }
 
+        window._hudWfAbort = false;
         let step = 0;
         function runStep() {
+          // ── Abort check (voice "Dừng" command) ──
+          if (window._hudWfAbort) {
+            scanLine.classList.remove('active');
+            container.classList.remove('pipeline-running');
+            if (btn) { btn.disabled = false; btn.textContent = '▶ CHẠY QUY TRÌNH'; }
+            if (statusEl) { statusEl.textContent = '⏸ Đã dừng'; statusEl.className = 'wf-run-status'; }
+            window._hudWfAbort = false;
+            return;
+          }
           if (step > 0 && cards[step - 1]) {
             const prevCard = cards[step - 1];
             prevCard.classList.remove('wf-running');

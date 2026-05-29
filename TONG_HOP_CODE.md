@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **02:57:55 30/5/2026**
+> Cập nhật lần cuối: **03:45:53 30/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,742 dòng, 77.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(18,813 dòng, 1.47 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(18,913 dòng, 1.48 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,742 | 77.2 KB |
-| `tienhiepv3.html` | 18,813 | 1.47 MB |
+| `tienhiepv3.html` | 18,913 | 1.48 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **24,276** | **1.71 MB** |
+| **TỔNG** | **24,376** | **1.72 MB** |
 
 ---
 
@@ -1844,7 +1844,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 18,813 dòng · 1.47 MB
+> 18,913 dòng · 1.48 MB
 
 ```html
 <!DOCTYPE html>
@@ -9097,12 +9097,73 @@ app.listen(PORT, '0.0.0.0', () => {
             const _hudEl = document.getElementById('hud');
             const _hudActive = _hudEl && _hudEl.classList.contains('active');
             if (_hudActive) {
-              if (/kich hoat|activate|chat tac nhan|noi chuyen voi/.test(target)) {
+              // ── Đóng HUD / Về bản đồ 3D ──
+              if (/^(?:dong|thoat|ve|quay ve|tro ve|back|lui|xong|huy|dong lai|ve ban do|tro ve ban do|quay lai ban do|dong giao dien|thoat giao dien|ve vu tru|tro ve vu tru|ve chinh|back home|dong hud|thoat hud|ve lai|exit)$/.test(target) ||
+                  /tro ve ban do|quay ve ban do|ve ban do 3d|close hud|back to map/.test(target)) {
+                _stopListening();
+                const _hudAgent = window.currentAgent;
+                const _hudCloseName = _hudAgent ? (_hudAgent.xname || _hudAgent.name) : 'giao diện';
+                setTimeout(function() {
+                  if (typeof _jarvisSay === 'function') _jarvisSay('Đóng ' + _hudCloseName + '. Trở về bản đồ thiên hà.');
+                }, 80);
+                setTimeout(function() {
+                  if (typeof closeHUD === 'function') closeHUD();
+                }, 300);
+                _showTranscript('🌌 Về bản đồ 3D');
+                if (typeof showToast === 'function') showToast('🌌 Trở về bản đồ thiên hà', 'info');
+                return true;
+              }
+
+              // ── Chạy quy trình ngay (không cần tên agent) ──
+              if (/^(?:chay|chay quy trinh|bat dau|bat quy trinh|run|chay ngay|khoi chay|thuc thi|start|chay di|chay thoi)$/.test(target) ||
+                  /^(?:chay|bat dau|run) quy trinh/.test(target)) {
+                const _curAg = window.currentAgent;
+                if (_curAg) {
+                  _stopListening();
+                  setTimeout(_stopListening, 120);
+                  const _curName = _curAg.xname || _curAg.name;
+                  _showTranscript('⚡ Chạy: ' + _curName);
+                  if (typeof showToast === 'function') showToast('⚡ ' + _curAg.emoji + ' Khởi chạy ' + _curName + '...', 'success');
+                  setTimeout(function() {
+                    if (typeof _jarvisSay === 'function') _jarvisSay('Nhận lệnh. Đang khởi động quy trình ' + (_curAg.name || _curName) + '.');
+                  }, 100);
+                  setTimeout(function() {
+                    if (typeof window.hudRunWorkflow === 'function') window.hudRunWorkflow(_curAg.id);
+                  }, 600);
+                  return true;
+                }
+              }
+
+              // ── Dừng quy trình đang chạy ──
+              if (/^(?:dung|dung lai|huy quy trinh|dung quy trinh|stop|huy bo|reset|dat lai)$/.test(target)) {
+                window._hudWfAbort = true;
+                const _wfContainer = document.getElementById('workflow-container');
+                if (_wfContainer) {
+                  _wfContainer.classList.remove('pipeline-running');
+                  const _sl = _wfContainer.querySelector('.hud-pipeline-scanline');
+                  if (_sl) _sl.classList.remove('active');
+                  _wfContainer.querySelectorAll('.wf-running').forEach(c => {
+                    c.classList.remove('wf-running');
+                    const f = c.querySelector('.wf-pipe-status-txt');
+                    if (f) f.innerHTML = '<span class="hsn-dot"></span>⏸ DỪNG';
+                  });
+                }
+                const _curAg2 = window.currentAgent;
+                if (_curAg2) {
+                  const _rb = document.getElementById('wf-run-btn-' + _curAg2.id);
+                  if (_rb) { _rb.disabled = false; _rb.textContent = '▶ CHẠY QUY TRÌNH'; }
+                  const _rs = document.getElementById('wf-run-status-' + _curAg2.id);
+                  if (_rs) { _rs.textContent = '⏸ Đã dừng'; _rs.className = 'wf-run-status'; }
+                }
+                setTimeout(function() { window._hudWfAbort = false; }, 500);
+                _vt('Dừng quy trình');
+                return true;
+              }
+
+              // ── Mở chat / Truyền Âm Tác Nhân ──
+              if (/kich hoat|activate|chat tac nhan|noi chuyen voi|truyen am tac nhan|mo chat|chat voi/.test(target)) {
                 const btn = document.getElementById('hud-activate-btn');
                 if (btn) { btn.click(); _vt('Kích hoạt Tác Nhân'); return true; }
-              }
-              if (/dong hud|thoat hud|ve lai|back home/.test(target)) {
-                if (typeof closeHUD === 'function') { closeHUD(); _vt('Đóng HUD'); return true; }
               }
             }
           }
@@ -9258,14 +9319,35 @@ app.listen(PORT, '0.0.0.0', () => {
                 const _rAg = AI_AGENTS.find(a => a.id === _rBest.id);
                 if (_rAg) {
                   const _rName = _rAg.xname || _rAg.name;
+                  const _rModName = _rAg.name || _rName;
                   _showTranscript('⚡ Chạy: ' + _rName);
                   if (typeof showToast === 'function') showToast('⚡ ' + _rAg.emoji + ' Kích hoạt ' + _rName + '...', 'success');
-                  setTimeout(() => { if (typeof _jarvisConfirm === 'function') _jarvisConfirm(); }, 150);
+
+                  // ── Tắt mic ngay lập tức để TTS không bị mic nghe lại ──
+                  _stopListening();
+
+                  // TTS xác nhận kích hoạt — nói tên agent rõ ràng
+                  const _rPhrases = [
+                    'Đang kích hoạt ' + _rModName + '. Xin chờ một chút, thưa đạo hữu.',
+                    _rModName + ' đang khởi động quy trình. Thần sẽ báo cáo khi hoàn thành.',
+                    'Nhận lệnh. ' + _rModName + ' bắt đầu thực thi ngay.',
+                    'Tuân lệnh. Đang triển khai ' + _rModName + ' theo chỉ thị.',
+                  ];
+                  const _rPhrase = _rPhrases[Math.floor(Math.random() * _rPhrases.length)];
+                  setTimeout(function() {
+                    if (typeof _jarvisSay === 'function') _jarvisSay(_rPhrase);
+                  }, 150);
+
+                  // Ước tính thời gian chạy: mỗi bước ~1200ms
+                  const _rStepCount = (_rAg.workflow && _rAg.workflow.length) || 4;
+                  const _rEstMs = 1800 + (_rStepCount * 1300); // mở HUD + thực thi
 
                   const _rPm = window._planetMeshes && window._planetMeshes.find(p => p.agent && p.agent.id === _rAg.id);
                   if (_rPm && typeof window._openHUD === 'function') {
                     window._openHUD(_rPm);
-                    setTimeout(() => {
+                    // openHUD gọi _voiceStartListening bên trong — tắt mic lại ngay sau đó
+                    setTimeout(_stopListening, 120);
+                    setTimeout(function() {
                       try {
                         window.hudRunWorkflow(_rAg.id);
                       } catch(e) {
@@ -9273,7 +9355,7 @@ app.listen(PORT, '0.0.0.0', () => {
                       }
                     }, 1800);
                   } else {
-                    setTimeout(() => {
+                    setTimeout(function() {
                       try {
                         window.hudRunWorkflow(_rAg.id);
                       } catch(e) {
@@ -9281,6 +9363,24 @@ app.listen(PORT, '0.0.0.0', () => {
                       }
                     }, 400);
                   }
+
+                  // TTS hoàn thành — báo cáo sau khi workflow dự kiến xong
+                  const _rDonePhrases = [
+                    _rModName + ' đã hoàn thành toàn bộ quy trình. Kính báo đạo hữu.',
+                    'Quy trình ' + _rModName + ' thực thi thành công. Linh khí vận hành ổn định.',
+                    _rModName + ' đã xử lý xong. Thiên đạo vận hành như ý.',
+                    'Hoàn thành! ' + _rModName + ' báo cáo: mọi bước đã thông suốt.',
+                  ];
+                  setTimeout(function() {
+                    const _rDone = _rDonePhrases[Math.floor(Math.random() * _rDonePhrases.length)];
+                    if (typeof _jarvisSay === 'function') _jarvisSay(_rDone);
+                    if (typeof showToast === 'function') showToast('✅ ' + _rAg.emoji + ' ' + _rName + ' — quy trình hoàn thành', 'success');
+                    // Bật lại mic sau khi TTS hoàn thành xong (~3s để TTS phát xong)
+                    setTimeout(function() {
+                      if (typeof window._voiceStartListening === 'function') window._voiceStartListening();
+                    }, 3000);
+                  }, _rEstMs);
+
                   return true;
                 }
               }
