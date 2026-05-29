@@ -1,6 +1,6 @@
 # 🏯 TỔNG HỢP APP — VƯƠNG ĐẾ AI
 > ⚡ Tự động cập nhật khi code thay đổi — build xong feature → file này tự tick ✅
-> 🕐 Cập nhật lần cuối: **05:22:06 30/5/2026**
+> 🕐 Cập nhật lần cuối: **06:03:04 30/5/2026**
 
 ---
 
@@ -182,12 +182,12 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 - [x] Resize chatbox bằng kéo góc (desktop & mobile)
 
 ## 6. THỐNG KÊ FILE
-> **14 file** | **26,130 dòng** | **1.82 MB**
+> **14 file** | **26,513 dòng** | **1.84 MB**
 
 | File | Dòng | Kích thước | Vai trò |
 |------|------|------------|---------|
 | `server.js` | 1,742 | 77.2 KB | Backend — Express + Auth + Gemini AI + DB |
-| `tienhiepv3.html` | 19,530 | 1.51 MB | Frontend chính — UI + Three.js 3D |
+| `tienhiepv3.html` | 19,913 | 1.53 MB | Frontend chính — UI + Three.js 3D |
 | `create-character.html` | 2,194 | 99.3 KB | Trang tạo nhân vật AI |
 | `profile.html` | 582 | 25.5 KB | Trang hồ sơ người dùng |
 | `admin.html` | 443 | 23.0 KB | Admin Dashboard |
@@ -200,7 +200,7 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 | `inject4.js` | 51 | 3.1 KB | Script inject 4 |
 | `inject5.js` | 92 | 5.0 KB | Script inject 5 |
 | `inject6.js` | 35 | 2.4 KB | Script inject 6 |
-| **TỔNG** | **26,130** | **1.82 MB** | — |
+| **TỔNG** | **26,513** | **1.84 MB** | — |
 
 ## 7. TRANG (PAGES)
 
@@ -226,11 +226,12 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 
 ## 9. 🗺 ROADMAP — CẦN BUILD (tự tick ✅ khi code xong)
 
-> **Đã xong: 8/30** — Còn lại: 🔴 3 cao · 🟡 7 trung · 🟢 12 thấp
+> **Đã xong: 9/30** — Còn lại: 🔴 2 cao · 🟡 7 trung · 🟢 12 thấp
 
 ### ✅ Đã hoàn thành trong Roadmap
 
 - [x] 🔴 **Export Kho Tàng ra file (Markdown / CSV / JSON)**
+- [x] 🔴 **Markdown rendering trong chat (bold, code block, danh sách)**
 - [x] 🔴 **Copy to clipboard — nút sao chép cho mỗi tin nhắn agent**
 - [x] 🔴 **Code syntax highlighting trong chat (highlight.js hoặc Prism.js)**
 - [x] 🟡 **Tìm kiếm toàn văn trong lịch sử chat (server-side ILIKE)**
@@ -241,8 +242,6 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 
 ### 🔴 Ưu tiên cao — build ngay
 
-- [ ] **Markdown rendering trong chat (bold, code block, danh sách)**
-  > 💡 *Dùng thư viện marked.js — npm install marked, thêm parseMarkdown() vào chat render*
 - [ ] **Chia sẻ kết quả agent qua link công khai**
   > 💡 *API POST /api/share → tạo share token → GET /s/:token render nội dung*
 - [ ] **Upload avatar người dùng tùy chỉnh (lưu vào DB)**
@@ -296,7 +295,7 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 
 > Phát hiện **1 feature mới** được hoàn thành kể từ lần cập nhật trước:
 
-- ✅ 🔴 **Code syntax highlighting trong chat (highlight.js hoặc Prism.js)**
+- ✅ 🔴 **Markdown rendering trong chat (bold, code block, danh sách)**
 
 ---
-*Auto-generated bởi `generate-app-summary.js` lúc 05:22:06 30/5/2026 — Build xong feature → file tự cập nhật ✅*
+*Auto-generated bởi `generate-app-summary.js` lúc 06:03:04 30/5/2026 — Build xong feature → file tự cập nhật ✅*

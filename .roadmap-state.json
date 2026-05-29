@@ -1,6 +1,6 @@
 {
   "export-vault": true,
-  "markdown-chat": false,
+  "markdown-chat": true,
   "copy-clipboard": true,
   "syntax-highlight": true,
   "share-result": false,

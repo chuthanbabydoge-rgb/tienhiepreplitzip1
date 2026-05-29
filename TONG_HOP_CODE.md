@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **05:22:06 30/5/2026**
+> Cập nhật lần cuối: **06:03:04 30/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,742 dòng, 77.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(19,530 dòng, 1.51 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(19,913 dòng, 1.53 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,742 | 77.2 KB |
-| `tienhiepv3.html` | 19,530 | 1.51 MB |
+| `tienhiepv3.html` | 19,913 | 1.53 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **24,993** | **1.75 MB** |
+| **TỔNG** | **25,376** | **1.77 MB** |
 
 ---
 
@@ -1844,7 +1844,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 19,530 dòng · 1.51 MB
+> 19,913 dòng · 1.53 MB
 
 ```html
 <!DOCTYPE html>
@@ -5309,124 +5309,277 @@ app.listen(PORT, '0.0.0.0', () => {
     }
 
     /* ── Canvas floating nodes (Spatial cards) ── */
+    /* ════════════════════════════════════════════════
+       ĐẤU LA ĐẠI LỤC — Xianxia Pháp Khí Node Design
+       ════════════════════════════════════════════════ */
     .canvas-node {
       position: absolute;
       z-index: 10;
-      background: rgba(20, 22, 35, 0.75);
-      border: 1px solid rgba(255,255,255,0.13);
-      color: rgba(255,255,255,0.9);
-      padding: 12px 16px 10px;
       cursor: move;
-      font-size: 12px;
-      font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
-      font-weight: 500;
-      min-width: 150px;
-      text-align: center;
-      border-radius: 16px;
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      box-shadow:
-        0 4px 24px rgba(0,0,0,0.45),
-        0 0 0 1px rgba(255,255,255,0.06),
-        inset 0 1px 0 rgba(255,255,255,0.1);
       user-select: none;
-      transition: box-shadow 0.25s, transform 0.15s;
+      transition: transform 0.2s cubic-bezier(0.34,1.4,0.64,1), filter 0.2s;
     }
     .canvas-node:hover {
-      box-shadow:
-        0 12px 40px rgba(0,0,0,0.6),
-        0 0 0 1px rgba(255,255,255,0.15),
-        inset 0 1px 0 rgba(255,255,255,0.15);
-      transform: translateY(-3px) scale(1.02);
+      transform: translateY(-5px) scale(1.07);
       z-index: 20;
+      filter: brightness(1.18) saturate(1.2);
     }
-    /* Output port dot */
+    /* Output port — element color */
     .canvas-node::after {
       content: '';
       position: absolute;
-      right: -5px; top: 50%;
+      right: -7px; top: 50%;
       transform: translateY(-50%);
-      width: 10px; height: 10px;
-      background: rgba(130,170,255,0.9);
-      border: 2px solid rgba(255,255,255,0.3);
+      width: 13px; height: 13px;
+      background: var(--nc, #8866ff);
+      border: 2px solid rgba(255,255,255,0.55);
       border-radius: 50%;
-      box-shadow: 0 0 8px rgba(130,170,255,0.6);
+      box-shadow: 0 0 12px var(--nc, #8866ff), 0 0 5px rgba(255,255,255,0.3);
+      z-index: 5;
     }
-    /* Input port dot */
+    /* Input port — element color, dimmer */
     .canvas-node::before {
       content: '';
       position: absolute;
-      left: -5px; top: 50%;
+      left: -7px; top: 50%;
       transform: translateY(-50%);
-      width: 10px; height: 10px;
-      background: rgba(100,220,160,0.9);
-      border: 2px solid rgba(255,255,255,0.3);
+      width: 13px; height: 13px;
+      background: var(--nc, #8866ff);
+      border: 2px solid rgba(255,255,255,0.55);
       border-radius: 50%;
-      box-shadow: 0 0 8px rgba(100,220,160,0.5);
+      box-shadow: 0 0 12px var(--nc, #8866ff), 0 0 5px rgba(255,255,255,0.3);
+      z-index: 5;
+      opacity: 0.5;
+    }
+    /* ── Pháp Khí Card — Bát Giác hình thức ── */
+    .node-card {
+      position: relative;
+      overflow: hidden;
+      min-width: 130px;
+      padding: 14px 20px 12px;
+      text-align: center;
+      background: var(--nc-bg, rgba(8,4,28,0.96));
+      border: 1.5px solid var(--nc, #8866ff);
+      clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0% calc(100% - 14px), 0% 14px);
+      box-shadow:
+        0 0 24px var(--nc-glow, rgba(136,102,255,0.45)),
+        0 0 8px var(--nc-glow, rgba(136,102,255,0.3)),
+        inset 0 0 32px rgba(0,0,0,0.7),
+        inset 0 0 20px var(--nc-ring, rgba(136,102,255,0.12));
+      transition: box-shadow 0.25s;
+    }
+    /* Ambient radial inner glow */
+    .node-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 18%, var(--nc-ring, rgba(136,102,255,0.25)) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    /* Inner octagon border (decorative double-frame) */
+    .node-card::after {
+      content: '';
+      position: absolute;
+      top: 4px; left: 4px; right: 4px; bottom: 4px;
+      border: 1px solid var(--nc, #8866ff);
+      clip-path: polygon(10px 0%, calc(100% - 10px) 0%, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0% calc(100% - 10px), 0% 10px);
+      opacity: 0.2;
+      pointer-events: none;
+    }
+    /* Soul rings (vòng linh hồn) */
+    /* ════════════════════════════════════════════════
+       ĐẤU LA ĐẠI LỤC — Vòng Hồn Hoàn Động
+       Rings orbit OUTSIDE the card using 3D perspective
+       ════════════════════════════════════════════════ */
+    .soul-orbit {
+      position: absolute;
+      border-radius: 50%;
+      left: 50%; top: 50%;
+      pointer-events: none;
+      border: 2px solid var(--nc, #8866ff);
+      box-shadow:
+        0 0 12px var(--nc, #8866ff),
+        0 0 28px var(--nc, #8866ff),
+        inset 0 0 8px rgba(0,0,0,0.5);
+    }
+    /* Ring 1 — closest, brightest, fastest */
+    .soul-orbit-1 {
+      width: 108px; height: 108px;
+      margin: -54px 0 0 -54px;
+      opacity: 0.75;
+      border-width: 2.5px;
+      animation: xx-hoan-orbit 3s linear infinite, xx-hoan-glow 2s ease-in-out infinite alternate;
+    }
+    /* Ring 2 — medium, medium speed, reverse */
+    .soul-orbit-2 {
+      width: 145px; height: 145px;
+      margin: -72.5px 0 0 -72.5px;
+      opacity: 0.5;
+      border-width: 2px;
+      animation: xx-hoan-orbit 5s linear infinite reverse, xx-hoan-glow 2.5s ease-in-out infinite alternate;
+      animation-delay: 0.4s, 0.4s;
+    }
+    /* Ring 3 — outermost, faintest, slowest, dashed */
+    .soul-orbit-3 {
+      width: 183px; height: 183px;
+      margin: -91.5px 0 0 -91.5px;
+      opacity: 0.3;
+      border-width: 1.5px;
+      border-style: dashed;
+      animation: xx-hoan-orbit 8s linear infinite, xx-hoan-glow 3.5s ease-in-out infinite alternate;
+      animation-delay: 0.8s, 0.8s;
+    }
+    /* 3D flat-horizontal orbit — rotateX tilts ring to horizontal plane */
+    @keyframes xx-hoan-orbit {
+      from { transform: perspective(220px) rotateX(72deg) rotateZ(0deg);   }
+      to   { transform: perspective(220px) rotateX(72deg) rotateZ(360deg); }
+    }
+    /* Breathing glow pulse */
+    @keyframes xx-hoan-glow {
+      from { box-shadow: 0 0 8px var(--nc),  0 0 18px var(--nc); opacity: var(--so, 0.5); }
+      to   { box-shadow: 0 0 18px var(--nc), 0 0 40px var(--nc), 0 0 60px var(--nc); opacity: calc(var(--so, 0.5) * 0.6); }
+    }
+    /* Element badge (top-right) */
+    .node-element-badge {
+      position: absolute; top:5px; right:8px;
+      font-size: 7px;
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--nc, #8866ff);
+      opacity: 0.5; letter-spacing: 1.5px;
+      pointer-events: none;
+    }
+    /* Large icon */
+    .node-icon-wrap {
+      font-size: 24px; line-height: 1;
+      margin-bottom: 7px;
+      position: relative; z-index: 2;
+      filter: drop-shadow(0 0 10px var(--nc, #8866ff));
+    }
+    /* Xianxia name */
+    .node-name-xx {
+      font-family: 'Share Tech Mono', 'Orbitron', monospace;
+      font-size: 11px; font-weight: 700;
+      color: var(--nc, #8866ff);
+      text-shadow: 0 0 10px var(--nc-glow, rgba(136,102,255,0.8));
+      letter-spacing: 1.5px; line-height: 1.3;
+      position: relative; z-index: 2;
+      margin-bottom: 3px;
+    }
+    /* English sub-type */
+    .node-type-sub {
+      font-family: -apple-system,'Segoe UI',sans-serif;
+      font-size: 8.5px; color: rgba(255,255,255,0.28);
+      letter-spacing: 1.2px; text-transform: uppercase;
+      position: relative; z-index: 2;
     }
 
     /* ── Run Workflow node states ── */
-    .canvas-node.sp-running {
-      border-color: rgba(255,214,10,0.7) !important;
+    /* ══════════════════════════════════════════════
+       XIANXIA FORMATION RUN STATES — Tiên Hiệp Trận Pháp
+       ══════════════════════════════════════════════ */
+    /* ── Xianxia Run States — targets .node-card child ── */
+    .canvas-node.sp-running { animation: xx-node-pulse 0.75s ease-in-out infinite; z-index: 20; }
+    .canvas-node.sp-running .node-card {
+      border-color: #ffaa00 !important;
       box-shadow:
-        0 0 0 3px rgba(255,214,10,0.18),
-        0 6px 28px rgba(0,0,0,0.5),
-        inset 0 1px 0 rgba(255,255,255,0.12) !important;
-      animation: sp-node-pulse 0.9s ease-in-out infinite;
+        0 0 0 2px rgba(255,170,0,0.5),
+        0 0 24px rgba(255,140,0,0.85),
+        0 0 55px rgba(255,80,0,0.4),
+        inset 0 0 18px rgba(255,160,0,0.15) !important;
     }
-    .canvas-node.sp-done {
-      border-color: rgba(52,199,89,0.7) !important;
+    .canvas-node.sp-running .node-name-xx { color:#ffe080 !important; text-shadow:0 0 14px rgba(255,180,0,1) !important; }
+    .canvas-node.sp-running .node-icon-wrap { filter: drop-shadow(0 0 16px #ffaa00) !important; }
+    .canvas-node.sp-running .soul-orbit { border-color: #ffaa00 !important; box-shadow: 0 0 20px #ffaa00, 0 0 45px #ffaa00 !important; opacity: 0.8 !important; animation-duration: 1.2s, 0.6s !important; }
+    @keyframes xx-node-pulse {
+      0%,100% { transform: scale(1);    filter: brightness(1); }
+      50%      { transform: scale(1.07); filter: brightness(1.35) saturate(1.5); }
+    }
+    .canvas-node.sp-done { animation: xx-done-seal 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+    .canvas-node.sp-done .node-card {
+      border-color: #00ffaa !important;
       box-shadow:
-        0 0 0 3px rgba(52,199,89,0.18),
-        0 6px 28px rgba(0,0,0,0.5),
-        inset 0 1px 0 rgba(255,255,255,0.12) !important;
+        0 0 0 2px rgba(0,255,150,0.4),
+        0 0 22px rgba(0,255,136,0.7),
+        inset 0 0 14px rgba(0,255,136,0.1) !important;
     }
-    .canvas-node.sp-error {
-      border-color: rgba(255,69,58,0.7) !important;
-      box-shadow:
-        0 0 0 3px rgba(255,69,58,0.18),
-        0 6px 28px rgba(0,0,0,0.5) !important;
+    .canvas-node.sp-done .node-name-xx { color:#00ffaa !important; text-shadow:0 0 12px rgba(0,255,160,1) !important; }
+    .canvas-node.sp-done .soul-orbit { border-color:#00ffaa !important; box-shadow: 0 0 16px #00ffaa, 0 0 32px #00ffaa !important; opacity: 0.6 !important; }
+    @keyframes xx-done-seal {
+      0%  { transform: scale(1.18); filter: brightness(3); }
+      100%{ transform: scale(1);    filter: brightness(1); }
     }
-    @keyframes sp-node-pulse {
-      0%,100% { box-shadow: 0 0 0 3px rgba(255,214,10,0.18), 0 6px 28px rgba(0,0,0,0.5); }
-      50%      { box-shadow: 0 0 0 6px rgba(255,214,10,0.35), 0 6px 28px rgba(0,0,0,0.5); }
+    .canvas-node.sp-error { animation: xx-error-shake 0.45s ease-in-out; }
+    .canvas-node.sp-error .node-card {
+      border-color: #ff3333 !important;
+      box-shadow: 0 0 0 3px rgba(255,50,50,0.45), 0 0 30px rgba(255,40,40,0.7) !important;
     }
-    /* ── SVG animated line ── */
+    .canvas-node.sp-error .node-name-xx { color:#ff6666 !important; }
+    @keyframes xx-error-shake {
+      0%,100% { transform: translateX(0) rotate(0deg); }
+      20%,60%  { transform: translateX(-5px) rotate(-1.5deg); }
+      40%,80%  { transform: translateX(5px) rotate(1.5deg); }
+    }
+    /* ── SVG: linh khí energy beam ── */
     .builder-line.sp-active {
-      stroke: url(#sp-active-grad) !important;
-      stroke-dasharray: 12 6;
-      animation: sp-line-march 0.5s linear infinite;
-      stroke-width: 2.5px !important;
-      filter: drop-shadow(0 0 4px rgba(255,214,10,0.6));
+      stroke: #ffcc00 !important;
+      stroke-dasharray: 10 5;
+      animation: xx-linh-khi 0.32s linear infinite;
+      stroke-width: 4px !important;
+      filter: drop-shadow(0 0 6px rgba(255,200,0,1)) drop-shadow(0 0 16px rgba(255,120,0,0.8));
+      opacity: 1 !important;
     }
     .builder-line.sp-done-line {
-      stroke: url(#sp-done-grad) !important;
-      stroke-width: 2px !important;
+      stroke: #00ffaa !important;
+      stroke-width: 2.5px !important;
+      stroke-dasharray: none !important;
+      animation: none !important;
+      filter: drop-shadow(0 0 5px rgba(0,255,160,0.8));
+      opacity: 1 !important;
     }
-    @keyframes sp-line-march {
-      to { stroke-dashoffset: -18; }
+    @keyframes xx-linh-khi {
+      to { stroke-dashoffset: -15; }
     }
-    /* ── Builder log panel ── */
+    /* ── Bát Quái Formation overlay ── */
+    #builder-formation-overlay {
+      position: absolute; inset: 0; z-index: 4;
+      pointer-events: none;
+      opacity: 0; transition: opacity 0.8s ease;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    #builder-formation-overlay.active { opacity: 1; }
+    .xx-ring-cw {
+      position: absolute; border-radius: 50%;
+      top: 50%; left: 50%;
+      animation: xx-ring-spin-cw linear infinite;
+    }
+    .xx-ring-ccw {
+      position: absolute; border-radius: 50%;
+      top: 50%; left: 50%;
+      animation: xx-ring-spin-ccw linear infinite;
+    }
+    @keyframes xx-ring-spin-cw  { from { transform: translate(-50%,-50%) rotate(0deg);   } to { transform: translate(-50%,-50%) rotate(360deg);  } }
+    @keyframes xx-ring-spin-ccw { from { transform: translate(-50%,-50%) rotate(0deg);   } to { transform: translate(-50%,-50%) rotate(-360deg); } }
+    /* ── Builder log panel: cổ thư cuộn ── */
     #builder-log-panel {
       position:absolute;bottom:0;left:0;right:0;z-index:30;
-      background:rgba(8,10,22,0.88);
-      border-top:1px solid rgba(255,255,255,0.08);
-      backdrop-filter:blur(16px);
+      background:linear-gradient(to top,rgba(22,7,0,0.97),rgba(14,4,0,0.94));
+      border-top:1px solid rgba(255,150,0,0.28);
+      box-shadow:0 -4px 24px rgba(255,90,0,0.15);
       max-height:0;overflow:hidden;
-      transition:max-height 0.3s ease;
+      transition:max-height 0.4s ease;
     }
-    #builder-log-panel.sp-open { max-height:160px; }
+    #builder-log-panel.sp-open { max-height:180px; }
     #builder-log-inner {
-      padding:10px 14px;
-      font-family:'SF Mono','Fira Mono',monospace;
-      font-size:11px;line-height:1.7;
-      color:rgba(255,255,255,0.7);
-      overflow-y:auto;max-height:140px;
+      padding:10px 16px;
+      font-family:'Share Tech Mono','Fira Mono',monospace;
+      font-size:11px;line-height:1.85;
+      color:rgba(255,190,80,0.55);
+      overflow-y:auto;max-height:160px;
     }
-    #builder-log-inner .log-run  { color:#ffd60a; }
-    #builder-log-inner .log-ok   { color:#34c759; }
-    #builder-log-inner .log-err  { color:#ff453a; }
-    #builder-log-inner .log-info { color:rgba(255,255,255,0.45); }
+    #builder-log-inner .log-run  { color:#ffaa00; text-shadow:0 0 8px rgba(255,170,0,0.6); }
+    #builder-log-inner .log-ok   { color:#00ffaa; text-shadow:0 0 8px rgba(0,255,160,0.5); }
+    #builder-log-inner .log-err  { color:#ff4444; text-shadow:0 0 8px rgba(255,60,60,0.5); }
+    #builder-log-inner .log-info { color:rgba(255,190,80,0.35); }
 
     .close-btn,
     .modal-close {
@@ -6801,6 +6954,43 @@ app.listen(PORT, '0.0.0.0', () => {
         background: rgba(255,140,0,0.05);
       }
       .uc-msg.system .sender { color: #ff880055; }
+
+      /* ── Markdown styling trong chat ── */
+      .uc-msg.system span p, .ac-md p { margin: 0 0 6px 0; }
+      .uc-msg.system span p:last-child, .ac-md p:last-child { margin-bottom: 0; }
+      .uc-msg.system span ul, .uc-msg.system span ol,
+      .ac-md ul, .ac-md ol { padding-left: 16px; margin: 4px 0; }
+      .uc-msg.system span li, .ac-md li { margin-bottom: 2px; }
+      .uc-msg.system span strong, .ac-md strong { color: #ffe066; font-weight: 700; }
+      .uc-msg.system span em, .ac-md em { color: #88ddff; font-style: italic; }
+      .uc-msg.system span h1, .uc-msg.system span h2, .uc-msg.system span h3,
+      .ac-md h1, .ac-md h2, .ac-md h3 {
+        color: #00ffff; font-family: 'Orbitron', sans-serif;
+        font-size: 12px; margin: 8px 0 4px; letter-spacing: 1px;
+      }
+      .uc-msg.system span code, .ac-md code {
+        background: rgba(0,255,255,0.1); border: 1px solid rgba(0,255,255,0.25);
+        padding: 1px 5px; border-radius: 3px;
+        font-family: 'Share Tech Mono', monospace; font-size: 10px;
+      }
+      .uc-msg.system span pre, .ac-md pre {
+        background: rgba(0,0,0,0.6); border: 1px solid rgba(0,255,255,0.2);
+        border-radius: 6px; padding: 10px 12px; overflow-x: auto;
+        margin: 6px 0; position: relative;
+      }
+      .uc-msg.system span pre code, .ac-md pre code {
+        background: none; border: none; padding: 0; font-size: 11px;
+      }
+      .uc-msg.system span blockquote, .ac-md blockquote {
+        border-left: 3px solid #ffaa0066; margin: 4px 0;
+        padding: 4px 10px; color: #ffaa0099;
+      }
+      .uc-msg.system span hr, .ac-md hr {
+        border: none; border-top: 1px solid #00ffff22; margin: 8px 0;
+      }
+      .uc-msg.system span a, .ac-md a { color: #00ffff; text-decoration: underline; }
+      .uc-cursor { animation: ucBlink 0.6s step-end infinite; color: #00ffff; }
+      @keyframes ucBlink { 0%,100% { opacity:1; } 50% { opacity:0; } }
 
       #uc-input-area {
         height: 38px;
@@ -11501,6 +11691,20 @@ app.listen(PORT, '0.0.0.0', () => {
       setTimeout(() => t.remove(), 3200);
     }
 
+    // ── Markdown + Syntax Highlighting ──────────────────────────
+    function parseMarkdown(text) {
+      if (!text) return '';
+      if (typeof marked === 'undefined') return text.replace(/\n/g, '<br>');
+      try {
+        marked.use({ breaks: true, gfm: true });
+        return marked.parse(text);
+      } catch(e) { return text.replace(/\n/g, '<br>'); }
+    }
+    function applyHighlight(el) {
+      if (typeof hljs === 'undefined') return;
+      el.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+    }
+
     // ═══════════════════════════════════════════════════════════
     // LEADERBOARD
     // ═══════════════════════════════════════════════════════════
@@ -11854,23 +12058,25 @@ app.listen(PORT, '0.0.0.0', () => {
           border-radius:20px;cursor:pointer;transition:all 0.18s;">
           ✕ Xóa
         </button>
-        <!-- Run button -->
+        <!-- Run button: Vận Trận -->
         <button onclick="runWorkflow()" id="builder-run-btn" style="
-          display:inline-flex;align-items:center;gap:6px;
-          background:rgba(52,199,89,0.15);border:1px solid rgba(52,199,89,0.4);
-          color:#34c759;padding:6px 16px;
-          font-family:-apple-system,'Segoe UI',sans-serif;font-size:12px;font-weight:600;
-          border-radius:20px;cursor:pointer;transition:all 0.18s;
-          box-shadow:0 0 14px rgba(52,199,89,0.15),inset 0 1px 0 rgba(255,255,255,0.08);">
-          ▶ Chạy
+          display:inline-flex;align-items:center;gap:8px;
+          background:linear-gradient(135deg,rgba(255,160,0,0.22),rgba(255,70,0,0.14));
+          border:1px solid rgba(255,160,0,0.6);
+          color:#ffcc00;padding:7px 20px;
+          font-family:'Orbitron','Share Tech Mono',sans-serif;font-size:11px;font-weight:700;letter-spacing:2.5px;
+          border-radius:8px;cursor:pointer;transition:all 0.2s;
+          box-shadow:0 0 18px rgba(255,140,0,0.3),0 0 4px rgba(255,200,0,0.2),inset 0 1px 0 rgba(255,220,100,0.12);
+          text-shadow:0 0 12px rgba(255,180,0,0.8);">
+          ⚡ VẬN TRẬN
         </button>
         <!-- Status pill -->
         <div id="builder-status-pill" style="
           display:flex;align-items:center;gap:6px;
-          background:rgba(52,199,89,0.12);border:1px solid rgba(52,199,89,0.25);
-          border-radius:20px;padding:5px 12px;">
-          <span class="pulse-dot" id="builder-status-dot" style="background:#34c759;box-shadow:0 0 6px #34c759;"></span>
-          <span id="builder-status-text" style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:11px;color:#34c759;font-weight:500;">Sẵn sàng</span>
+          background:rgba(255,160,0,0.08);border:1px solid rgba(255,150,0,0.22);
+          border-radius:8px;padding:5px 13px;">
+          <span class="pulse-dot" id="builder-status-dot" style="background:#ffaa00;box-shadow:0 0 6px #ffaa00;"></span>
+          <span id="builder-status-text" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#ffaa00;font-weight:500;letter-spacing:1px;">LINH KHÍ SẴN SÀNG</span>
         </div>
       </div>
 
@@ -11959,6 +12165,52 @@ app.listen(PORT, '0.0.0.0', () => {
               </linearGradient>
             </defs>
           </svg>
+
+          <!-- ══ BÁT QUÁI FORMATION OVERLAY ══ -->
+          <div id="builder-formation-overlay">
+            <!-- Static SVG formation base -->
+            <svg viewBox="0 0 600 600" style="position:absolute;width:min(560px,88%);height:min(560px,88%);top:50%;left:50%;transform:translate(-50%,-50%);">
+              <defs>
+                <radialGradient id="fo-glow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%"   stop-color="rgba(255,180,0,0.15)"/>
+                  <stop offset="100%" stop-color="rgba(255,80,0,0)"/>
+                </radialGradient>
+              </defs>
+              <!-- Center ambient glow -->
+              <circle cx="300" cy="300" r="260" fill="url(#fo-glow)"/>
+              <!-- Outer ring -->
+              <circle cx="300" cy="300" r="248" fill="none" stroke="#ffaa00" stroke-width="1.2" stroke-dasharray="6 8" opacity="0.35"/>
+              <!-- Mid ring -->
+              <circle cx="300" cy="300" r="190" fill="none" stroke="#ff8800" stroke-width="0.9" stroke-dasharray="3 9" opacity="0.28"/>
+              <!-- Inner ring -->
+              <circle cx="300" cy="300" r="130" fill="none" stroke="#ffcc44" stroke-width="1" stroke-dasharray="2 6" opacity="0.32"/>
+              <!-- Core -->
+              <circle cx="300" cy="300" r="70" fill="none" stroke="#ffdd00" stroke-width="1.5" stroke-dasharray="2 4" opacity="0.45"/>
+              <!-- Cross axes -->
+              <line x1="52" y1="300" x2="548" y2="300" stroke="#ffaa00" stroke-width="0.6" opacity="0.25"/>
+              <line x1="300" y1="52" x2="300" y2="548" stroke="#ffaa00" stroke-width="0.6" opacity="0.25"/>
+              <line x1="122" y1="122" x2="478" y2="478" stroke="#ff9900" stroke-width="0.5" opacity="0.2"/>
+              <line x1="478" y1="122" x2="122" y2="478" stroke="#ff9900" stroke-width="0.5" opacity="0.2"/>
+              <!-- 8 trigram position markers -->
+              <circle cx="300" cy="52"  r="5" fill="#ffaa00" opacity="0.6"/>
+              <circle cx="300" cy="548" r="5" fill="#ffaa00" opacity="0.6"/>
+              <circle cx="52"  cy="300" r="5" fill="#ffaa00" opacity="0.6"/>
+              <circle cx="548" cy="300" r="5" fill="#ffaa00" opacity="0.6"/>
+              <circle cx="122" cy="122" r="4" fill="#ff8800" opacity="0.5"/>
+              <circle cx="478" cy="122" r="4" fill="#ff8800" opacity="0.5"/>
+              <circle cx="122" cy="478" r="4" fill="#ff8800" opacity="0.5"/>
+              <circle cx="478" cy="478" r="4" fill="#ff8800" opacity="0.5"/>
+              <!-- Yin-yang center -->
+              <circle cx="300" cy="300" r="32" fill="none" stroke="#ffdd00" stroke-width="2" opacity="0.75"/>
+              <text x="300" y="312" text-anchor="middle" font-size="32" fill="#ffcc00" opacity="0.7" font-family="serif">☯</text>
+            </svg>
+            <!-- Rotating outer ring (clockwise, slow) -->
+            <div class="xx-ring-cw" style="width:500px;height:500px;border:1px dashed rgba(255,150,0,0.2);animation-duration:12s;"></div>
+            <!-- Counter-rotating middle ring -->
+            <div class="xx-ring-ccw" style="width:380px;height:380px;border:1px solid rgba(255,120,0,0.15);animation-duration:7s;"></div>
+            <!-- Fast inner ring -->
+            <div class="xx-ring-cw" style="width:260px;height:260px;border:1px dotted rgba(255,200,0,0.2);animation-duration:4s;"></div>
+          </div>
 
           <!-- Log panel (slides up from bottom) -->
           <div id="builder-log-panel">
@@ -13099,8 +13351,8 @@ app.listen(PORT, '0.0.0.0', () => {
         const type = n.getAttribute('data-raw-type');
         if (type) {
           const dispName = lang === 'xx' ? (type.split(' / ')[1] || type) : type.split(' / ')[0];
-          const btnText = lang === 'xx' ? '⚙️ Luyện Hoá' : '⚙️ Config';
-          n.innerHTML = `<div style="margin-bottom:5px;">${dispName}</div><div style="font-size:10px;cursor:pointer;color:#00ffff;text-shadow:0 0 5px #00ffff;background:rgba(0,255,255,0.1);padding:2px 5px;border-radius:4px;border:1px solid rgba(0,255,255,0.3);" onclick="event.stopPropagation();showToast('${lang === 'xx' ? 'Đang luyện hoá' : 'Configuring'} ' + this.parentElement.innerText.split('\\n')[0], 'info')">${btnText}</div>`;
+          _setNodeVars(n, type);
+          n.innerHTML = _mkNodeHtml(type, dispName);
         }
       });
 
@@ -13312,18 +13564,29 @@ app.listen(PORT, '0.0.0.0', () => {
 
       if (isTyping && !isUser) {
         let i = 0;
+        let accumulated = '';
         const speed = 25;
         function typeWriter() {
           if (i < text.length) {
-            contentSpan.innerHTML += text.charAt(i);
+            accumulated += text.charAt(i);
+            contentSpan.innerHTML = accumulated + '<span class="uc-cursor">▌</span>';
             i++;
             container.scrollTop = container.scrollHeight;
             setTimeout(typeWriter, speed);
+          } else {
+            contentSpan.innerHTML = parseMarkdown(accumulated);
+            applyHighlight(contentSpan);
+            container.scrollTop = container.scrollHeight;
           }
         }
         typeWriter();
       } else {
-        contentSpan.innerHTML = text;
+        if (!isUser) {
+          contentSpan.innerHTML = parseMarkdown(text);
+          applyHighlight(contentSpan);
+        } else {
+          contentSpan.innerHTML = text;
+        }
       }
     }
 
@@ -13382,7 +13645,13 @@ app.listen(PORT, '0.0.0.0', () => {
         senderDiv.className = 'sender';
         senderDiv.innerText = '[' + item.sender + ']';
         const contentSpan = document.createElement('span');
-        contentSpan.innerHTML = item.text;
+        const isAI = item.sender !== 'ĐẠO HỮU';
+        if (isAI) {
+          contentSpan.innerHTML = parseMarkdown(item.text);
+          setTimeout(() => applyHighlight(contentSpan), 0);
+        } else {
+          contentSpan.innerHTML = item.text;
+        }
         msgDiv.appendChild(senderDiv);
         msgDiv.appendChild(contentSpan);
         container.appendChild(msgDiv);
@@ -13933,6 +14202,36 @@ app.listen(PORT, '0.0.0.0', () => {
       ev.dataTransfer.setData("text", draggedType);
     }
     function allowDrop(ev) { ev.preventDefault(); }
+    // ══ ĐẤUU LA ĐẠI LỤC: Node Element Data ══
+    const _nodeData = {
+      'Data Source': { icon:'📥', color:'#4488ff', bg:'rgba(0,8,38,0.96)',  glow:'rgba(60,130,255,0.5)',  ring:'rgba(80,150,255,0.16)', badge:'水·WATER',   xxName:'Thủy Nguyên Khí'  },
+      'LLM Engine':  { icon:'🧠', color:'#cc55ff', bg:'rgba(15,0,38,0.96)', glow:'rgba(200,80,255,0.5)', ring:'rgba(180,80,255,0.16)', badge:'魂·SOUL',    xxName:'Thần Hồn Lực'     },
+      'Vision API':  { icon:'👁', color:'#ffcc00', bg:'rgba(26,18,0,0.96)', glow:'rgba(255,200,0,0.5)',  ring:'rgba(255,200,0,0.16)',  badge:'光·LIGHT',   xxName:'Thiên Nhãn Thức'  },
+      'Audio Gen':   { icon:'🎵', color:'#ff5533', bg:'rgba(32,5,0,0.96)',  glow:'rgba(255,80,40,0.5)',  ring:'rgba(255,80,40,0.16)',  badge:'火·FIRE',    xxName:'Hỏa Âm Pháp'     },
+      'Filter Logic':{ icon:'⚡', color:'#bb44ff', bg:'rgba(18,0,38,0.96)', glow:'rgba(180,60,255,0.5)', ring:'rgba(180,60,255,0.16)', badge:'雷·THUNDER', xxName:'Lôi Pháp Ấn'     },
+      'Publish':     { icon:'🚀', color:'#00ff88', bg:'rgba(0,24,12,0.96)', glow:'rgba(0,255,130,0.5)',  ring:'rgba(0,255,120,0.16)',  badge:'木·WOOD',    xxName:'Mộc Xuất Thế'    },
+    };
+    const _ndList = Object.values(_nodeData);
+    function _nodeHash(s) { let h=0; for(let i=0;i<s.length;i++) h=(h<<5)-h+s.charCodeAt(i)|0; return Math.abs(h); }
+    function _mkNodeHtml(rawType, dispName) {
+      const typeKey = (rawType||'').split(' / ')[0].trim();
+      const d = _nodeData[typeKey] || _ndList[_nodeHash(typeKey) % _ndList.length];
+      return `<div class="soul-orbit soul-orbit-1"></div>
+      <div class="soul-orbit soul-orbit-2"></div>
+      <div class="soul-orbit soul-orbit-3"></div>
+      <div class="node-card" style="--nc:${d.color};--nc-bg:${d.bg};--nc-glow:${d.glow};--nc-ring:${d.ring};">
+        <div class="node-element-badge">${d.badge}</div>
+        <div class="node-icon-wrap">${d.icon}</div>
+        <div class="node-name-xx">${dispName}</div>
+        <div class="node-type-sub">${typeKey.split(' ')[0]}</div>
+      </div>`;
+    }
+    function _setNodeVars(node, rawType) {
+      const typeKey = (rawType||'').split(' / ')[0].trim();
+      const d = _nodeData[typeKey] || _ndList[_nodeHash(typeKey) % _ndList.length];
+      node.style.setProperty('--nc', d.color);
+    }
+
     function _hideBuilderEmpty() {
       const el = document.getElementById('builder-empty-label');
       if (el) el.style.display = 'none';
@@ -13951,7 +14250,9 @@ app.listen(PORT, '0.0.0.0', () => {
       node.style.left = x + 'px';
       node.style.top = y + 'px';
       node.setAttribute('data-raw-type', draggedType);
-      node.innerText = currentTheme === 'xx' ? (draggedType.split(' / ')[1] || draggedType) : draggedType.split(' / ')[0];
+      _setNodeVars(node, draggedType);
+      const _ddisp = currentTheme === 'xx' ? (draggedType.split(' / ')[1] || draggedType) : draggedType.split(' / ')[0];
+      node.innerHTML = _mkNodeHtml(draggedType, _ddisp);
       node.id = 'bnode-' + nodeCounter++;
 
       node.onmousedown = function (e) {
@@ -13977,7 +14278,20 @@ app.listen(PORT, '0.0.0.0', () => {
     }
 
     function _spGradDefs() {
-      return `<defs><linearGradient id="sp-line-grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:rgba(100,220,160,0.8)"/><stop offset="100%" style="stop-color:rgba(94,159,255,0.8)"/></linearGradient></defs>`;
+      return `<defs>
+        <linearGradient id="sp-line-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:rgba(100,220,160,0.8)"/>
+          <stop offset="100%" style="stop-color:rgba(94,159,255,0.8)"/>
+        </linearGradient>
+        <filter id="particle-glow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="particle-glow-sm" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>`;
     }
     function drawLines() {
       const svg = document.getElementById('builder-svg');
@@ -13994,9 +14308,54 @@ app.listen(PORT, '0.0.0.0', () => {
         const x2 = r2.left - c1.left;
         const y2 = r2.top - c1.top + r2.height / 2;
 
-        paths += `<path d="M${x1},${y1} C${x1+60},${y1} ${x2-60},${y2} ${x2},${y2}" class="builder-line"/>`;
+        paths += `<path id="sp-line-${i}" d="M${x1},${y1} C${x1+60},${y1} ${x2-60},${y2} ${x2},${y2}" class="builder-line"/>`;
       }
       svg.innerHTML = _spGradDefs() + paths;
+    }
+
+    // ── LINH THẠCH PARTICLES ──
+    function _spawnParticles(lineIdx) {
+      const svg = document.getElementById('builder-svg');
+      if (!svg) return;
+      const pathId = 'sp-line-' + lineIdx;
+      const path = document.getElementById(pathId);
+      if (!path) return;
+      const NS = 'http://www.w3.org/2000/svg';
+      const XNS = 'http://www.w3.org/1999/xlink';
+      // 4 particles: large glow orb, bright core, small trailing, tiny sparkle
+      const specs = [
+        { r: 4.5, fill: '#ffee44', opacity: 1,    filter: 'particle-glow',    dur: '0.62s', begin: '0s'    },
+        { r: 2.5, fill: '#ffffff', opacity: 0.95,  filter: 'particle-glow-sm', dur: '0.62s', begin: '0.21s' },
+        { r: 3.5, fill: '#ffcc00', opacity: 0.85,  filter: 'particle-glow',    dur: '0.62s', begin: '0.41s' },
+        { r: 1.8, fill: '#ffe8a0', opacity: 0.7,   filter: 'particle-glow-sm', dur: '0.62s', begin: '0.52s' },
+      ];
+      specs.forEach(sp => {
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('r', sp.r);
+        c.setAttribute('fill', sp.fill);
+        c.setAttribute('opacity', sp.opacity);
+        c.setAttribute('filter', `url(#${sp.filter})`);
+        c.setAttribute('class', 'sp-particle');
+        c.setAttribute('data-line', lineIdx);
+        const am = document.createElementNS(NS, 'animateMotion');
+        am.setAttribute('dur', sp.dur);
+        am.setAttribute('repeatCount', 'indefinite');
+        am.setAttribute('begin', sp.begin);
+        am.setAttribute('calcMode', 'spline');
+        am.setAttribute('keyTimes', '0;1');
+        am.setAttribute('keySplines', '0.4 0 0.6 1');
+        const mp = document.createElementNS(NS, 'mpath');
+        mp.setAttributeNS(XNS, 'xlink:href', '#' + pathId);
+        am.appendChild(mp);
+        c.appendChild(am);
+        svg.appendChild(c);
+      });
+    }
+    function _removeParticles(lineIdx) {
+      document.querySelectorAll(`.sp-particle[data-line="${lineIdx}"]`).forEach(p => p.remove());
+    }
+    function _removeAllParticles() {
+      document.querySelectorAll('.sp-particle').forEach(p => p.remove());
     }
 
     // ── SET BUILDER STATUS PILL ──
@@ -14005,6 +14364,16 @@ app.listen(PORT, '0.0.0.0', () => {
       const txt = document.getElementById('builder-status-text');
       if (dot) { dot.style.background = color; dot.style.boxShadow = `0 0 6px ${color}`; }
       if (txt)  { txt.style.color = color; txt.textContent = text; }
+    }
+
+    // ── BÁT QUÁI FORMATION OVERLAY ──
+    function _showFormationOverlay() {
+      const ov = document.getElementById('builder-formation-overlay');
+      if (ov) ov.classList.add('active');
+    }
+    function _hideFormationOverlay() {
+      const ov = document.getElementById('builder-formation-overlay');
+      if (ov) ov.classList.remove('active');
     }
 
     // ── BUILDER LOG ──
@@ -14031,9 +14400,10 @@ app.listen(PORT, '0.0.0.0', () => {
       if (el) el.style.display = '';
       const panel = document.getElementById('builder-log-panel');
       if (panel) { panel.classList.remove('sp-open'); document.getElementById('builder-log-inner').innerHTML = ''; }
-      _setBuilderStatus('Sẵn sàng', '#34c759');
+      _setBuilderStatus('LINH KHÍ SẴN SÀNG', '#ffaa00');
+      _hideFormationOverlay();
       const runBtn = document.getElementById('builder-run-btn');
-      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.textContent = '▶ Chạy'; }
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '⚡ VẬN TRẬN'; }
     }
 
     // ── RUN WORKFLOW ANIMATION ──
@@ -14044,17 +14414,19 @@ app.listen(PORT, '0.0.0.0', () => {
 
       _wfRunning = true;
       const runBtn = document.getElementById('builder-run-btn');
-      if (runBtn) { runBtn.disabled = true; runBtn.style.opacity = '0.5'; runBtn.textContent = '⏳ Đang chạy…'; }
+      if (runBtn) { runBtn.disabled = true; runBtn.style.opacity = '0.55'; runBtn.innerHTML = '☯ ĐANG VẬN...'; }
 
       // reset states
       bNodes.forEach(n => { n.classList.remove('sp-running','sp-done','sp-error'); });
       document.querySelectorAll('.builder-line').forEach(l => l.classList.remove('sp-active','sp-done-line'));
+      _removeAllParticles();
       const panel = document.getElementById('builder-log-panel');
       const inner = document.getElementById('builder-log-inner');
       if (panel && inner) { panel.classList.add('sp-open'); inner.innerHTML = ''; }
 
-      _blogLog('🚀 Khởi động workflow…', 'run');
-      _setBuilderStatus('Đang chạy…', '#ffd60a');
+      _showFormationOverlay();
+      _blogLog('⚡ Thiên Địa Chi Lực Vận Động — Bát Quái Trận Pháp Khai Thiên...', 'run');
+      _setBuilderStatus('⚡ TRẬN PHÁP VẬN HÀNH', '#ffaa00');
 
       const lines = document.querySelectorAll('.builder-line');
       const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -14067,14 +14439,16 @@ app.listen(PORT, '0.0.0.0', () => {
         // activate connection line before this node (if exists)
         if (i > 0 && lines[i-1]) {
           lines[i-1].classList.add('sp-active');
+          _spawnParticles(i - 1);
         }
 
         node.classList.add('sp-running');
-        _blogLog(`⚙ Bước ${i+1}/${bNodes.length}: ${dispLabel}`, 'run');
+        _blogLog(`◈ Luyện Hoá ${i+1}/${bNodes.length} — ${dispLabel} thu nạp linh khí...`, 'run');
         await delay(900 + Math.random() * 400);
 
         // finish line
         if (i > 0 && lines[i-1]) {
+          _removeParticles(i - 1);
           lines[i-1].classList.remove('sp-active');
           lines[i-1].classList.add('sp-done-line');
         }
@@ -14084,7 +14458,7 @@ app.listen(PORT, '0.0.0.0', () => {
         node.classList.remove('sp-running');
         if (fail) {
           node.classList.add('sp-error');
-          _blogLog(`✗ Lỗi tại bước ${i+1}: ${dispLabel} — retry…`, 'err');
+          _blogLog(`⚠ Linh Khí Hỗn Loạn tại tầng ${i+1} — ${dispLabel} đang tái kết cấu...`, 'err');
           await delay(700);
           node.classList.remove('sp-error');
           node.classList.add('sp-running');
@@ -14092,7 +14466,7 @@ app.listen(PORT, '0.0.0.0', () => {
           node.classList.remove('sp-running');
         }
         node.classList.add('sp-done');
-        _blogLog(`✓ Hoàn thành: ${dispLabel}`, 'ok');
+        _blogLog(`✦ Pháp Khí Tựu Thành — ${dispLabel} viên mãn!`, 'ok');
       }
 
       // activate last line if any
@@ -14101,11 +14475,14 @@ app.listen(PORT, '0.0.0.0', () => {
         if (last && !last.classList.contains('sp-done-line')) { last.classList.add('sp-done-line'); }
       }
 
-      _blogLog(`✅ Workflow hoàn tất — ${bNodes.length} bước thành công!`, 'ok');
-      _setBuilderStatus('Hoàn tất ✓', '#34c759');
-      showToast('Workflow chạy xong!', 'success');
+      await new Promise(r => setTimeout(r, 400));
+      _removeAllParticles();
+      _blogLog(`🌟 Trận Pháp Đại Thành — ${bNodes.length} Pháp Khí Vận Hành Viên Mãn!`, 'ok');
+      _setBuilderStatus('✦ VIÊN MÃN', '#00ffaa');
+      showToast('⚡ Trận Pháp hoàn tất!', 'success');
       _wfRunning = false;
-      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.textContent = '▶ Chạy lại'; }
+      _hideFormationOverlay();
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '⚡ VẬN TRẬN LẠI'; }
     }
 
     function loadPreset(index) {
@@ -14115,9 +14492,10 @@ app.listen(PORT, '0.0.0.0', () => {
       document.getElementById('builder-svg').innerHTML = _spGradDefs();
       _hideBuilderEmpty();
       _wfRunning = false;
+      _hideFormationOverlay();
       const runBtn = document.getElementById('builder-run-btn');
-      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.textContent = '▶ Chạy'; }
-      _setBuilderStatus('Sẵn sàng', '#34c759');
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '⚡ VẬN TRẬN'; }
+      _setBuilderStatus('LINH KHÍ SẴN SÀNG', '#ffaa00');
       const panel = document.getElementById('builder-log-panel');
       if (panel) { panel.classList.remove('sp-open'); document.getElementById('builder-log-inner').innerHTML = ''; }
 
@@ -14146,8 +14524,8 @@ app.listen(PORT, '0.0.0.0', () => {
         const rawName = name + " / " + name_xx;
         node.setAttribute('data-raw-type', rawName);
         const dispName = currentTheme === 'xx' ? name_xx : name;
-        const btnText = currentTheme === 'xx' ? '⚙️ Luyện Hoá' : '⚙️ Config';
-        node.innerHTML = `<div style="margin-bottom:5px;">${dispName}</div><div style="font-size:10px;cursor:pointer;color:#00ffff;text-shadow:0 0 5px #00ffff;background:rgba(0,255,255,0.1);padding:2px 5px;border-radius:4px;border:1px solid rgba(0,255,255,0.3);" onclick="event.stopPropagation();showToast('${currentTheme === 'xx' ? 'Đang luyện hoá' : 'Configuring'} ' + this.parentElement.innerText.split('\\n')[0], 'info')">${btnText}</div>`;
+        _setNodeVars(node, rawName);
+        node.innerHTML = _mkNodeHtml(rawName, dispName);
         node.id = 'bnode-' + nodeCounter++;
 
         node.onmousedown = function (e) {
@@ -16101,7 +16479,12 @@ app.listen(PORT, '0.0.0.0', () => {
         div.innerHTML = '<span style="font-size:9px;color:#00ffff66;display:block;margin-bottom:3px;">[' + (currentTheme === 'en' ? 'YOU' : 'ĐẠO HỮU') + ']</span>' + text;
       } else {
         div.style.cssText += 'background:rgba(255,170,0,0.08);border:1px solid ' + color + '44;color:' + color + ';';
-        div.innerHTML = '<span style="font-size:9px;color:' + color + '88;display:block;margin-bottom:3px;">[' + ((agent_ && agent_.xname) || (currentTheme === 'en' ? 'AGENT' : 'TÁC NHÂN')) + ']</span>' + text;
+        const mdContent = document.createElement('div');
+        mdContent.className = 'ac-md';
+        mdContent.innerHTML = parseMarkdown(text);
+        div.innerHTML = '<span style="font-size:9px;color:' + color + '88;display:block;margin-bottom:3px;">[' + ((agent_ && agent_.xname) || (currentTheme === 'en' ? 'AGENT' : 'TÁC NHÂN')) + ']</span>';
+        div.appendChild(mdContent);
+        setTimeout(() => applyHighlight(mdContent), 0);
       }
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
