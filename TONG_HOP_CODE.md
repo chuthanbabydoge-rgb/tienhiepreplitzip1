@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **01:51:06 30/5/2026**
+> Cập nhật lần cuối: **01:54:46 30/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,742 dòng, 77.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(18,717 dòng, 1.46 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(18,767 dòng, 1.47 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,742 | 77.2 KB |
-| `tienhiepv3.html` | 18,717 | 1.46 MB |
+| `tienhiepv3.html` | 18,767 | 1.47 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **24,180** | **1.70 MB** |
+| **TỔNG** | **24,230** | **1.71 MB** |
 
 ---
 
@@ -1844,7 +1844,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 18,717 dòng · 1.46 MB
+> 18,767 dòng · 1.47 MB
 
 ```html
 <!DOCTYPE html>
@@ -9207,6 +9207,56 @@ app.listen(PORT, '0.0.0.0', () => {
           if (/phim tat|keyboard shortcut|ban phim/.test(target)) {
             if (typeof showToast === 'function') showToast('⌨️ [2] Analytics · [4] Yêu thích · [8] Lịch sử · [Alt+V] Voice', 'info');
             return false;
+          }
+
+          // ── RUN WORKFLOW BY VOICE ──────────────────────────────────
+          {
+            const _rm = raw.match(/^(?:chay|chay quy trinh|khoi chay|run|run workflow|bat quy trinh|chay agent|kich hoat quy trinh|thuc thi) +(.{2,})$/);
+            if (_rm) {
+              const _rTarget = _rm[1].trim();
+              if (!_agentIndex) _agentIndex = _buildAgentIndex();
+              let _rBest = null, _rBestScore = 0;
+              for (const _a of _agentIndex) {
+                for (const _k of _a.keys) {
+                  if (_rTarget.includes(_k) || _k.includes(_rTarget)) {
+                    const _s = Math.min(_k.length, _rTarget.length);
+                    if (_s > _rBestScore) { _rBestScore = _s; _rBest = _a; }
+                  }
+                }
+              }
+              if (_rBest && _rBestScore >= 3) {
+                const _rAg = AI_AGENTS.find(a => a.id === _rBest.id);
+                if (_rAg) {
+                  const _rName = _rAg.xname || _rAg.name;
+                  _showTranscript('⚡ Chạy: ' + _rName);
+                  if (typeof showToast === 'function') showToast('⚡ ' + _rAg.emoji + ' Kích hoạt ' + _rName + '...', 'success');
+                  setTimeout(() => { if (typeof _jarvisConfirm === 'function') _jarvisConfirm(); }, 150);
+
+                  const _rPm = window._planetMeshes && window._planetMeshes.find(p => p.agent && p.agent.id === _rAg.id);
+                  if (_rPm && typeof window._openHUD === 'function') {
+                    window._openHUD(_rPm);
+                    setTimeout(() => {
+                      try {
+                        window.hudRunWorkflow(_rAg.id);
+                      } catch(e) {
+                        if (typeof showToast === 'function') showToast('⚡ Không thể chạy quy trình: ' + e.message, 'warn');
+                      }
+                    }, 1800);
+                  } else {
+                    setTimeout(() => {
+                      try {
+                        window.hudRunWorkflow(_rAg.id);
+                      } catch(e) {
+                        if (typeof showToast === 'function') showToast('🎙️ Mở HUD agent trước khi chạy', 'warn');
+                      }
+                    }, 400);
+                  }
+                  return true;
+                }
+              }
+              _vt('Không nhận ra agent: "' + _rTarget + '"');
+              return true;
+            }
           }
 
           // ── Agent name matching ────────────────────────────────────

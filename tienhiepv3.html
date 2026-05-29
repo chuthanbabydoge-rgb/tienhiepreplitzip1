@@ -4553,6 +4553,30 @@
         </div>
       </div>
       <button id="btn-back-home" onclick="window.location.href='/api/logout'" title="Đăng xuất">⬅ THOÁT</button>
+      <button id="btn-voice-run" title='Nói "Chạy [Tên Agent]" để chạy quy trình bằng giọng nói'
+        onclick="(function(){
+          if (typeof window._voiceStartListening === 'function') window._voiceStartListening();
+          if(typeof showToast==='function') showToast('🎙️ Hãy nói: "Chạy [Tên Agent]" — VD: Chạy TikFlow', 'info');
+          const btn = document.getElementById('btn-voice-run');
+          btn.classList.add('vrun-listening');
+          setTimeout(()=>btn.classList.remove('vrun-listening'), 3500);
+        })()"
+        style="display:flex;align-items:center;gap:5px;padding:5px 13px;background:rgba(255,100,0,0.08);border:1px solid rgba(255,140,0,0.45);color:#ffaa00;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all .25s;margin-left:6px;border-radius:4px;"
+        onmouseover="this.style.background='rgba(255,140,0,0.22)';this.style.boxShadow='0 0 14px rgba(255,140,0,0.5)'"
+        onmouseout="this.style.background='rgba(255,100,0,0.08)';this.style.boxShadow='none'">
+        <span id="vrun-mic-icon" style="font-size:13px;transition:all .3s;">🎙️</span> CHẠY
+      </button>
+      <style>
+        #btn-voice-run.vrun-listening {
+          background: rgba(255,140,0,0.28) !important;
+          border-color: #ffaa00 !important;
+          box-shadow: 0 0 18px rgba(255,140,0,0.7), 0 0 6px rgba(255,140,0,0.4) !important;
+          animation: vrun-pulse 0.7s infinite alternate;
+        }
+        #btn-voice-run.vrun-listening #vrun-mic-icon { animation: vrun-mic-bounce 0.5s infinite alternate; }
+        @keyframes vrun-pulse { from { box-shadow: 0 0 10px rgba(255,140,0,0.5); } to { box-shadow: 0 0 24px rgba(255,140,0,0.9); } }
+        @keyframes vrun-mic-bounce { from { transform: scale(1); } to { transform: scale(1.3); } }
+      </style>
       <button id="btn-ar-mode" onclick="window.location.href='/app?ar=1'" title="Chế độ AR 3D"
         style="display:none;align-items:center;gap:6px;padding:5px 13px;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.4);color:#00ff88;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all .25s;margin-left:8px;"
         onmouseover="this.style.background='rgba(0,255,136,.22)';this.style.boxShadow='0 0 14px rgba(0,255,136,.5)'"
@@ -7360,6 +7384,56 @@
             return false;
           }
 
+          // ── RUN WORKFLOW BY VOICE ──────────────────────────────────
+          {
+            const _rm = raw.match(/^(?:chay|chay quy trinh|khoi chay|run|run workflow|bat quy trinh|chay agent|kich hoat quy trinh|thuc thi) +(.{2,})$/);
+            if (_rm) {
+              const _rTarget = _rm[1].trim();
+              if (!_agentIndex) _agentIndex = _buildAgentIndex();
+              let _rBest = null, _rBestScore = 0;
+              for (const _a of _agentIndex) {
+                for (const _k of _a.keys) {
+                  if (_rTarget.includes(_k) || _k.includes(_rTarget)) {
+                    const _s = Math.min(_k.length, _rTarget.length);
+                    if (_s > _rBestScore) { _rBestScore = _s; _rBest = _a; }
+                  }
+                }
+              }
+              if (_rBest && _rBestScore >= 3) {
+                const _rAg = AI_AGENTS.find(a => a.id === _rBest.id);
+                if (_rAg) {
+                  const _rName = _rAg.xname || _rAg.name;
+                  _showTranscript('⚡ Chạy: ' + _rName);
+                  if (typeof showToast === 'function') showToast('⚡ ' + _rAg.emoji + ' Kích hoạt ' + _rName + '...', 'success');
+                  setTimeout(() => { if (typeof _jarvisConfirm === 'function') _jarvisConfirm(); }, 150);
+
+                  const _rPm = window._planetMeshes && window._planetMeshes.find(p => p.agent && p.agent.id === _rAg.id);
+                  if (_rPm && typeof window._openHUD === 'function') {
+                    window._openHUD(_rPm);
+                    setTimeout(() => {
+                      try {
+                        window.hudRunWorkflow(_rAg.id);
+                      } catch(e) {
+                        if (typeof showToast === 'function') showToast('⚡ Không thể chạy quy trình: ' + e.message, 'warn');
+                      }
+                    }, 1800);
+                  } else {
+                    setTimeout(() => {
+                      try {
+                        window.hudRunWorkflow(_rAg.id);
+                      } catch(e) {
+                        if (typeof showToast === 'function') showToast('🎙️ Mở HUD agent trước khi chạy', 'warn');
+                      }
+                    }, 400);
+                  }
+                  return true;
+                }
+              }
+              _vt('Không nhận ra agent: "' + _rTarget + '"');
+              return true;
+            }
+          }
+
           // ── Agent name matching ────────────────────────────────────
           if (!_agentIndex) _agentIndex = _buildAgentIndex();
           if (target.length < 3) {
@@ -7449,6 +7523,13 @@
             { say:'Thần kinh',       do:'Neural map' },
             { say:'Cảnh báo',        do:'Alerts' },
             { say:'Mini Game',       do:'Chơi game' },
+          ]},
+          { cat:'⚡ Chạy Quy Trình', cmds:[
+            { say:'Chạy [Tên Agent]',         do:'Mở HUD + chạy workflow ngay' },
+            { say:'Chạy TikFlow',             do:'Chạy quy trình TikFlow AI' },
+            { say:'Chạy CodeForge',           do:'Chạy quy trình CodeForge AI' },
+            { say:'Khởi chạy [Tên Agent]',    do:'Alias: chạy quy trình' },
+            { say:'Run [Agent name]',         do:'Tiếng Anh: chạy workflow' },
           ]},
           { cat:'🔧 Công cụ', cmds:[
             { say:'Builder',         do:'Workflow Builder' },
