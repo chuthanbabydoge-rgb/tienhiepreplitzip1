@@ -1508,7 +1508,7 @@
       border-color: rgba(0,255,255,0.5) !important;
     }
 
-    /* ── JARVIS VOICE ORB ── */
+    /* ── THIÊN NHĨ VOICE ORB ── */
     #jarvis-orb {
       position: fixed;
       bottom: 22px;
@@ -4900,46 +4900,46 @@
 
     <!-- UNIVERSE CHATBOX COLLAPSED ICON -->
     <!-- UNIVERSE VOICE MIC BUTTON (floating, always visible) -->
-    <div id="universe-mic-btn" title="JARVIS — Nhấn để bật/tắt giọng nói [Alt+V]" data-voice="Hey Jarvis" style="position:relative;">
+    <div id="universe-mic-btn" title="THIÊN NHĨ — Nhấn để bật/tắt giọng nói [Alt+V]" data-voice="Thiên Nhĩ" style="position:relative;">
       <div id="univ-mic-icon">⚡</div>
       <div id="univ-mic-ring"></div>
-      <div id="univ-mic-label">JARVIS</div>
-      <div id="univ-voice-help-btn" class="voice-help-btn" onclick="event.stopPropagation();openVoiceHelp()" title="Danh sách lệnh JARVIS">?</div>
+      <div id="univ-mic-label">THIÊN NHĨ</div>
+      <div id="univ-voice-help-btn" class="voice-help-btn" onclick="event.stopPropagation();openVoiceHelp()" title="Danh sách lệnh Thiên Nhĩ">?</div>
     </div>
 
-    <!-- JARVIS COMMAND HINT PANEL -->
+    <!-- THIÊN NHĨ COMMAND HINT PANEL -->
     <div id="voice-cmd-hints">
-      <div id="vch-title">⚡ J.A.R.V.I.S — LỆNH</div>
-      <div class="vch-row"><span class="vch-say">"Hey Jarvis"</span><span class="vch-do">Kích hoạt</span></div>
+      <div id="vch-title">⚡ THIÊN NHĨ — LỆNH</div>
+      <div class="vch-row"><span class="vch-say">"Thiên Nhĩ"</span><span class="vch-do">Kích hoạt</span></div>
       <div class="vch-row"><span class="vch-say">"[Tên Agent]"</span><span class="vch-do">Mở agent</span></div>
       <div class="vch-row"><span class="vch-say">"Agent 3"</span><span class="vch-do">Agent theo số</span></div>
       <div class="vch-row"><span class="vch-say">"Kho Tàng"</span><span class="vch-do">Vault</span></div>
       <div class="vch-row"><span class="vch-say">"Thống Kê"</span><span class="vch-do">Analytics</span></div>
       <div class="vch-row"><span class="vch-say">"Đặt chủ đề [X]"</span><span class="vch-do">Set topic</span></div>
       <div class="vch-row"><span class="vch-say">"Câu hỏi 1"</span><span class="vch-do">Quick Q</span></div>
-      <div class="vch-row"><span class="vch-say">"Tắt Jarvis"</span><span class="vch-do">Offline</span></div>
+      <div class="vch-row"><span class="vch-say">"Tắt Thiên Nhĩ"</span><span class="vch-do">Offline</span></div>
     </div>
 
-    <!-- JARVIS VOICE ORB -->
-    <div id="jarvis-orb" onclick="window._wwToggle&&window._wwToggle()" title="J.A.R.V.I.S — Nhấn hoặc nói 'Hey Jarvis' [Alt+V]">
+    <!-- THIÊN NHĨ VOICE ORB -->
+    <div id="jarvis-orb" onclick="window._wwToggle&&window._wwToggle()" title="THIÊN NHĨ — Nhấn hoặc nói 'Hey Jarvis' [Alt+V]">
       <div id="jarvis-sphere">
         <div class="jarvis-ring jarvis-ring-1"></div>
         <div class="jarvis-ring jarvis-ring-2"></div>
         <div class="jarvis-ring jarvis-ring-3"></div>
         <div id="jarvis-core">
-          <div id="jarvis-letter">J</div>
+          <div id="jarvis-letter">天</div>
         </div>
         <div id="jarvis-bars">
           <div class="jb"></div><div class="jb"></div><div class="jb"></div><div class="jb"></div>
           <div class="jb"></div><div class="jb"></div><div class="jb"></div><div class="jb"></div>
         </div>
       </div>
-      <div id="jarvis-label">J·A·R·V·I·S</div>
-      <div id="jarvis-status">STANDBY</div>
+      <div id="jarvis-label">THIÊN NHĨ</div>
+      <div id="jarvis-status">TĨNH TÂM</div>
     </div>
-    <!-- JARVIS SPEECH BUBBLE -->
+    <!-- THIÊN NHĨ SPEECH BUBBLE -->
     <div id="jarvis-bubble">
-      <div id="jarvis-bubble-label">JARVIS HEARD</div>
+      <div id="jarvis-bubble-label">THIÊN NHĨ NGHE</div>
       <div id="jarvis-bubble-text"></div>
       <div id="jarvis-bubble-reply"></div>
     </div>
@@ -7032,7 +7032,7 @@
 
           // ── Helper: toast shortcut ─────────────────────────────────────
           const _vt = (msg) => {
-            if (typeof showToast === 'function') showToast('⚡ JARVIS: ' + msg, 'info');
+            if (typeof showToast === 'function') showToast('⚡ Thiên Nhĩ: ' + msg, 'info');
             _showTranscript(msg);
             // Jarvis confirms with TTS after slight delay (avoids cutting off speech)
             setTimeout(() => { if (typeof _jarvisConfirm === 'function') _jarvisConfirm(); }, 150);
@@ -7527,22 +7527,22 @@
 
         document.addEventListener('keydown', function(e) {
           if (e.key === 'Escape') window.closeVoiceHelp && window.closeVoiceHelp();
-          // Alt+V → toggle JARVIS
+          // Alt+V → toggle THIÊN NHĨ
           if (e.altKey && (e.key === 'v' || e.key === 'V')) {
             e.preventDefault();
             if (typeof _toggleVoice === 'function') _toggleVoice();
             else if (typeof window._voiceToggle === 'function') window._voiceToggle();
           }
-          // Alt+H → open JARVIS command list
+          // Alt+H → open THIÊN NHĨ command list
           if (e.altKey && (e.key === 'h' || e.key === 'H')) {
             e.preventDefault();
             if (typeof window.openVoiceHelp === 'function') window.openVoiceHelp();
           }
-          // Alt+J → quick JARVIS status check
+          // Alt+J → quick THIÊN NHĨ status check
           if (e.altKey && (e.key === 'j' || e.key === 'J')) {
             e.preventDefault();
             const on = typeof window._voiceIsListening === 'function' && window._voiceIsListening();
-            if (typeof showToast === 'function') showToast('⚡ JARVIS: ' + (on ? 'ONLINE — đang nghe' : 'OFFLINE — nhấn Alt+V để bật'), on ? 'success' : 'warn');
+            if (typeof showToast === 'function') showToast('⚡ Thiên Nhĩ: ' + (on ? 'ONLINE — đang nghe' : 'OFFLINE — nhấn Alt+V để bật'), on ? 'success' : 'warn');
           }
         });
 
@@ -7561,7 +7561,7 @@
           const _bText = document.getElementById('jarvis-bubble-text');
           const _bLbl  = document.getElementById('jarvis-bubble-label');
           if (_bub && _bText) {
-            if (_bLbl) _bLbl.textContent = 'JARVIS HEARD';
+            if (_bLbl) _bLbl.textContent = 'THIÊN NHĨ NGHE';
             _bText.textContent = text;
             _bub.classList.add('show');
             clearTimeout(_transcriptTimer);
@@ -7620,21 +7620,21 @@
                   const _ww = (transcript||'').normalize('NFD')
                     .replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/gi,d=>d==='đ'?'d':'D')
                     .toLowerCase().trim();
-                  const _WAKE = ['hey jarvis','jarvis','oi jarvis','jarvis oi',
+                  const _WAKE = ['thien nhi','oi thien nhi','thien nhi oi','hey thien nhi',
                     'mo truyen am','bat truyen am','bat voice','mo voice',
                     'oi thien co','thien co oi','bat mic','hey thien co','open voice',
-                    'chao jarvis','xin chao jarvis','bat jarvis'];
-                  const _STOP = ['tat jarvis','jarvis off','stop jarvis','jarvis stop',
-                    'tat truyen am','tat voice','dong truyen am','stop voice','tat mic','off voice','thoat jarvis'];
+                    'chao thien nhi','xin chao thien nhi','bat thien nhi'];
+                  const _STOP = ['tat thien nhi','thien nhi off','stop thien nhi','thien nhi stop',
+                    'tat truyen am','tat voice','dong truyen am','stop voice','tat mic','off voice','thoat thien nhi'];
                   if (_STOP.some(w => _ww.includes(w))) {
                     _showTranscript(transcript);
                     _stopListening();
-                    _jarvisSay('Đã offline. Hẹn gặp lại, thưa chủ nhân.');
-                    if (typeof showToast === 'function') showToast('🔇 JARVIS đã offline', 'info');
+                    _jarvisSay('Đã ngắt kết nối. Hẹn gặp lại, thưa đạo hữu.');
+                    if (typeof showToast === 'function') showToast('🔇 Thiên Nhĩ đã offline', 'info');
                   } else if (_WAKE.some(w => _ww.includes(w))) {
                     _showTranscript('✅ ' + transcript);
-                    _jarvisSay('Dạ, thưa chủ nhân. JARVIS đang lắng nghe.');
-                    if (typeof showToast === 'function') showToast('⚡ JARVIS — Đang lắng nghe…', 'success');
+                    _jarvisSay('Dạ, thưa đạo hữu. Thiên Nhĩ đang lắng nghe.');
+                    if (typeof showToast === 'function') showToast('⚡ Thiên Nhĩ — Đang lắng nghe…', 'success');
                   } else if (!_tryClose(transcript)) { _tryNavigate(transcript); }
                 } else {
                   // Show interim
@@ -7655,19 +7655,19 @@
                       const _ww2 = (t||'').normalize('NFD')
                         .replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/gi,d=>d==='đ'?'d':'D')
                         .toLowerCase().trim();
-                      const _WAKE2 = ['hey jarvis','jarvis','oi jarvis','jarvis oi',
+                      const _WAKE2 = ['thien nhi','oi thien nhi','thien nhi oi','hey thien nhi',
                         'mo truyen am','bat truyen am','bat voice','mo voice',
                         'oi thien co','thien co oi','bat mic','hey thien co','open voice',
-                        'chao jarvis','bat jarvis'];
-                      const _STOP2 = ['tat jarvis','jarvis off','stop jarvis','jarvis stop',
+                        'chao thien nhi','bat thien nhi'];
+                      const _STOP2 = ['tat thien nhi','thien nhi off','stop thien nhi','thien nhi stop',
                         'tat truyen am','tat voice','dong truyen am','stop voice','tat mic'];
                       if (_STOP2.some(w => _ww2.includes(w))) {
                         _stopListening();
-                        _jarvisSay('Đã offline. Hẹn gặp lại.');
-                        if (typeof showToast === 'function') showToast('🔇 JARVIS đã offline', 'info');
+                        _jarvisSay('Đã ngắt kết nối. Hẹn gặp lại.');
+                        if (typeof showToast === 'function') showToast('🔇 Thiên Nhĩ đã offline', 'info');
                       } else if (_WAKE2.some(w => _ww2.includes(w))) {
-                        _jarvisSay('Dạ, thưa chủ nhân. Đang lắng nghe.');
-                        if (typeof showToast === 'function') showToast('⚡ JARVIS — Đang lắng nghe…', 'success');
+                        _jarvisSay('Dạ, thưa đạo hữu. Đang lắng nghe.');
+                        if (typeof showToast === 'function') showToast('⚡ Thiên Nhĩ — Đang lắng nghe…', 'success');
                       } else if (!_tryClose(t)) { _tryNavigate(t); }
                     }
                   }, 1500);
@@ -7724,8 +7724,8 @@
               _orb.classList.remove('listening','speaking');
             }
           }
-          if (_status) _status.textContent = _listening ? 'LISTENING' : 'STANDBY';
-          if (_letter) _letter.textContent = _listening ? '◉' : 'J';
+          if (_status) _status.textContent = _listening ? 'ĐANG NGHE' : 'TĨNH TÂM';
+          if (_letter) _letter.textContent = _listening ? '◉' : '天';
           // Show/hide command hint panel
           const _hints = document.getElementById('voice-cmd-hints');
           if (_hints) _hints.classList.toggle('visible', _listening);
@@ -7741,7 +7741,7 @@
           const _status = document.getElementById('jarvis-status');
           if (_orb) { _orb.classList.add('speaking'); }
           if (_bText) { _bText.textContent = text; _bText.classList.add('show'); }
-          if (_status) _status.textContent = 'SPEAKING';
+          if (_status) _status.textContent = 'ĐANG NÓI';
           // Cancel previous speech
           window.speechSynthesis.cancel();
           const utt = new SpeechSynthesisUtterance(text);
@@ -7753,35 +7753,35 @@
           utt.onend = function() {
             if (_orb) { _orb.classList.remove('speaking'); if (_listening) _orb.classList.add('listening'); }
             if (_bText) { setTimeout(() => _bText.classList.remove('show'), 800); }
-            if (_status) _status.textContent = _listening ? 'LISTENING' : 'STANDBY';
+            if (_status) _status.textContent = _listening ? 'ĐANG NGHE' : 'TĨNH TÂM';
           };
           window.speechSynthesis.speak(utt);
         }
 
         /* ── Jarvis confirm phrases ── */
-        const _JARVIS_CONFIRMS = [
-          'Thực hiện ngay, thưa chủ nhân.', 'Vâng ạ.', 'Đang xử lý.',
+        const _THIENNI_CONFIRMS = [
+          'Thực hiện ngay, thưa đạo hữu.', 'Vâng ạ.', 'Đang xử lý.',
           'Hoàn thành.', 'Ngay ạ.', 'Như lệnh.'
         ];
         function _jarvisConfirm() {
-          const p = _JARVIS_CONFIRMS[Math.floor(Math.random() * _JARVIS_CONFIRMS.length)];
+          const p = _THIENNI_CONFIRMS[Math.floor(Math.random() * _THIENNI_CONFIRMS.length)];
           _jarvisSay(p);
         }
 
         /* ── Toggle helper (shared by both buttons) ── */
         function _toggleVoice() {
           if (_listening) {
-            _jarvisSay('Đã offline. Hẹn gặp lại, thưa chủ nhân.');
+            _jarvisSay('Đã ngắt kết nối. Hẹn gặp lại, thưa đạo hữu.');
             setTimeout(() => {
               _stopListening();
-              if (typeof showToast === 'function') showToast('🔇 JARVIS — Offline', 'info');
+              if (typeof showToast === 'function') showToast('🔇 Thiên Nhĩ — Offline', 'info');
             }, 100);
           } else {
             _startListening();
             setTimeout(() => {
-              _jarvisSay('JARVIS đã khởi động. Thưa chủ nhân, tôi đang lắng nghe.');
+              _jarvisSay('Thiên Nhĩ đã khởi động. Thưa đạo hữu, thần đang lắng nghe.');
               if (typeof showToast === 'function')
-                showToast('⚡ JARVIS — Online. Nói "Hey Jarvis" bất cứ lúc nào.', 'success');
+                showToast('⚡ Thiên Nhĩ — Online. Nói "Thiên Nhĩ" bất cứ lúc nào.', 'success');
             }, 200);
           }
         }
@@ -7802,7 +7802,7 @@
       })();
       // ──────────────────────────────────────────────────────────────────
 
-      // ══ JARVIS ORB — bridge to Voice Command Engine ════
+      // ══ THIÊN NHĨ ORB — bridge to Voice Command Engine ════
       // (Chrome chỉ cho 1 SpeechRecognition cùng lúc → dùng chung _rec)
       window._wwToggle = function() {
         if (typeof window._voiceToggle === 'function') window._voiceToggle();
