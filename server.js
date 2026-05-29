@@ -168,10 +168,9 @@ async function getOidcConfig() {
   return oidcConfig;
 }
 
-// Use REPLIT_DOMAINS for the real external domain; fall back to hostname
+// Always use the actual request hostname so the OIDC callback URL matches
+// the domain the user is on (works for both dev preview and production)
 function getExternalDomain(reqHostname) {
-  const domains = process.env.REPLIT_DOMAINS;
-  if (domains) return domains.split(',')[0].trim();
   return reqHostname;
 }
 
