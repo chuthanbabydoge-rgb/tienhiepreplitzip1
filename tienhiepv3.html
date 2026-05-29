@@ -8908,6 +8908,9 @@
         const trackEl = document.getElementById('ar-compass-track');
         if (trackEl) trackEl.style.transform = `translateX(${-(_hdg / 360) * 420}px)`;
 
+        // AR marker float animation hook
+        if (window._arAnimateHook) window._arAnimateHook(time);
+
         renderer.render(scene, camera);
       }
 
@@ -8927,47 +8930,160 @@
       });
 
       // ══════════════════════════════════════════════════════════
-      // AR/XR INITIALISATION
+      // AR/XR INITIALISATION — Full Implementation
       // ══════════════════════════════════════════════════════════
 
-      // Activate AR overlay for this route
+      // Activate AR overlay
       document.body.classList.add('ar-ready');
       const arAgentsEl = document.getElementById('ar-val-agents');
       if (arAgentsEl) arAgentsEl.textContent = String(AI_AGENTS.length);
 
-      // ── DeviceOrientation / gyroscope head tracking ──────────
-      // Works on phone & AR glasses (Magic Leap, HoloLens browser, Quest browser)
+      // ── 1. CAMERA PASSTHROUGH ─────────────────────────────────
+      const _arVid = document.getElementById('ar-camera');
+      let _arCameraStream = null;
+
+      async function _startCameraPassthrough() {
+        if (_arCameraStream || !navigator.mediaDevices) return;
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+            audio: false
+          });
+          _arVid.srcObject = stream;
+          _arVid.style.display = 'block';
+          _arCameraStream = stream;
+          if (typeof showToast === 'function') showToast('📷 Camera passthrough đã bật', 'success');
+        } catch(e) {
+          console.warn('[AR Camera]', e.message);
+          if (typeof showToast === 'function') showToast('📷 Camera: ' + e.message, 'error');
+        }
+      }
+
+      function _stopCameraPassthrough() {
+        if (!_arCameraStream) return;
+        _arCameraStream.getTracks().forEach(t => t.stop());
+        _arCameraStream = null;
+        if (_arVid) { _arVid.srcObject = null; _arVid.style.display = 'none'; }
+      }
+
+      // Auto-start camera if page loaded with ?ar param
+      if (new URLSearchParams(location.search).has('ar')) {
+        document.body.classList.add('ar-mode');
+        _startCameraPassthrough();
+      }
+
+      // ── 2. DEVICE ORIENTATION — gyroscope + real compass ──────
       let _gyroActive = false;
+
       function _onDeviceOrientation(e) {
-        const gamma = e.gamma || 0; // left-right tilt  (-90 to +90)
-        const beta  = e.beta  || 0; // front-back tilt  (-180 to +180)
-        // Map to parallax values (same vars used by mouse parallax)
+        const gamma = e.gamma || 0;   // left-right tilt
+        const beta  = e.beta  || 0;   // front-back tilt
+        const alpha = e.alpha || 0;   // compass heading 0=N, 90=E
+
+        // 3D tilt parallax (existing behaviour)
         mouseParallaxX = Math.max(-1, Math.min(1, gamma / 35));
         mouseParallaxY = Math.max(-1, Math.min(1, (beta - 45) / 40));
         if (!_gyroActive) {
           _gyroActive = true;
           document.body.classList.add('ar-gyro');
         }
+
+        // Real compass heading from magnetometer
+        const hdg = Math.round(alpha);
+        const hdgStr = String(hdg).padStart(3, '0');
+        const hdgEl  = document.getElementById('ar-compass-hdg');
+        const hdgVal = document.getElementById('ar-val-hdg');
+        if (hdgEl)  hdgEl.textContent  = hdgStr + '°';
+        if (hdgVal) hdgVal.textContent = hdgStr + '°';
+        const track = document.getElementById('ar-compass-track');
+        if (track) track.style.transform = `translateX(${-(alpha / 360) * 960}px)`;
       }
-      // iOS 13+ requires explicit permission for DeviceOrientation
+
       if (typeof DeviceOrientationEvent !== 'undefined') {
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-          // iOS 13+ — add a permission button on first interaction
-          const _reqGyro = () => {
+          document.addEventListener('click', function _reqGyro() {
             DeviceOrientationEvent.requestPermission().then(state => {
-              if (state === 'granted') window.addEventListener('deviceorientation', _onDeviceOrientation);
+              if (state === 'granted') window.addEventListener('deviceorientation', _onDeviceOrientation, { passive: true });
             }).catch(() => {});
             document.removeEventListener('click', _reqGyro);
-          };
-          document.addEventListener('click', _reqGyro, { once: true });
+          }, { once: true });
         } else {
-          // Android / non-restricted browsers
-          window.addEventListener('deviceorientation', _onDeviceOrientation);
+          window.addEventListener('deviceorientation', _onDeviceOrientation, { passive: true });
         }
       }
 
-      // ── WebXR immersive-ar support ───────────────────────────
+      // ── 3. XR RETICLE — 3D ring shown on detected surfaces ───
+      const _reticleGeo = new THREE.RingGeometry(0.12, 0.18, 32);
+      _reticleGeo.rotateX(-Math.PI / 2);
+      const _reticle = new THREE.Mesh(
+        _reticleGeo,
+        new THREE.MeshBasicMaterial({ color: 0x00ffcc, opacity: 0.9, transparent: true, side: THREE.DoubleSide })
+      );
+      _reticle.matrixAutoUpdate = false;
+      _reticle.visible = false;
+      scene.add(_reticle);
+
+      // Outer pulse ring
+      const _reticleOuterGeo = new THREE.RingGeometry(0.21, 0.24, 32);
+      _reticleOuterGeo.rotateX(-Math.PI / 2);
+      const _reticleOuterMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, opacity: 0.4, transparent: true, side: THREE.DoubleSide });
+      const _reticleOuter = new THREE.Mesh(_reticleOuterGeo, _reticleOuterMat);
+      _reticleOuter.matrixAutoUpdate = false;
+      _reticleOuter.visible = false;
+      scene.add(_reticleOuter);
+
+      // ── 4. AR AGENT MARKERS — place agents in real world ─────
+      const _arMarkers = [];
+
+      function _placeAgentMarker(hitPose) {
+        const agent = AI_AGENTS[Math.floor(Math.random() * AI_AGENTS.length)];
+        const col = parseInt((agent.color || '#00ffff').replace('#', ''), 16);
+
+        const group = new THREE.Group();
+        group.matrixAutoUpdate = false;
+        group.matrix.fromArray(hitPose.transform.matrix);
+        group.matrixWorldNeedsUpdate = true;
+
+        // Floating sphere body
+        const sphere = new THREE.Mesh(
+          new THREE.SphereGeometry(0.055, 16, 16),
+          new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.7, roughness: 0.3, metalness: 0.5 })
+        );
+        sphere.userData.floatPhase = Math.random() * Math.PI * 2;
+        group.add(sphere);
+
+        // Ground ring
+        const rg = new THREE.RingGeometry(0.07, 0.09, 32);
+        rg.rotateX(-Math.PI / 2);
+        group.add(new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ color: col, opacity: 0.55, transparent: true })));
+
+        // Point light
+        const light = new THREE.PointLight(col, 0.8, 0.6);
+        group.add(light);
+
+        scene.add(group);
+        _arMarkers.push({ group, sphere, agent });
+
+        const targetEl = document.getElementById('ar-val-target');
+        if (targetEl) targetEl.textContent = agent.emoji;
+        if (typeof showToast === 'function') showToast(`📍 ${agent.emoji} ${agent.xname || agent.name} đặt vào không gian thật`, 'success');
+      }
+
+      // Float animation for placed markers (called from animate hook)
+      window._arAnimateHook = function(t) {
+        _arMarkers.forEach(({ sphere }) => {
+          sphere.position.y = Math.sin(t * 1.4 + (sphere.userData.floatPhase || 0)) * 0.035;
+          sphere.rotation.y += 0.018;
+        });
+        if (_reticleOuter.visible) {
+          _reticleOuterMat.opacity = 0.25 + Math.sin(t * 5) * 0.2;
+        }
+      };
+
+      // ── 5. WEBXR IMMERSIVE-AR WITH HIT-TEST ──────────────────
       window._enterXR = null;
+      window._xrSession = null;
+
       if (navigator.xr) {
         navigator.xr.isSessionSupported('immersive-ar').then(supported => {
           if (!supported) return;
@@ -8976,21 +9092,111 @@
 
           window._enterXR = async () => {
             try {
+              // WebXR provides its own camera — stop manual passthrough
+              _stopCameraPassthrough();
+
               const session = await navigator.xr.requestSession('immersive-ar', {
                 requiredFeatures: ['local'],
                 optionalFeatures: ['dom-overlay', 'hit-test'],
-                domOverlay: { root: document.getElementById('labels') || document.body },
+                domOverlay: { root: document.body },
               });
+              window._xrSession = session;
+
+              let _hitTestSource = null;
+              let _hitTestReady  = false;
+              let _refSpace      = null;
+              let _lastHitPose   = null;
+
               renderer.xr.setSession(session);
               document.body.classList.add('ar-mode');
-              if (xrBtn) { xrBtn.textContent = '✕ EXIT AR'; xrBtn.onclick = () => session.end(); }
-              session.addEventListener('end', () => {
-                document.body.classList.remove('ar-mode');
-                if (xrBtn) { xrBtn.innerHTML = '<div style="font-size:18px;">🥽</div><div>ENTER AR</div>'; xrBtn.onclick = () => window._enterXR && window._enterXR(); }
+              if (xrBtn) {
+                xrBtn.innerHTML = '<div style="font-size:12px;letter-spacing:1px;">✕ EXIT AR</div>';
+                xrBtn.onclick = () => session.end();
+              }
+
+              // Switch to XR animation loop
+              renderer.setAnimationLoop(async (t, frame) => {
+                if (!frame) { renderer.render(scene, camera); return; }
+
+                // Grab reference space once
+                if (!_refSpace) {
+                  try { _refSpace = renderer.xr.getReferenceSpace(); } catch(e) {}
+                }
+
+                // Init hit-test source once
+                if (!_hitTestReady && _refSpace) {
+                  _hitTestReady = true;
+                  try {
+                    const viewerSpace = await session.requestReferenceSpace('viewer');
+                    _hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+                  } catch(e) { console.warn('[XR hit-test init]', e.message); }
+                }
+
+                // Process hit results each frame
+                if (_hitTestSource && _refSpace) {
+                  const hits = frame.getHitTestResults(_hitTestSource);
+                  if (hits.length > 0) {
+                    const pose = hits[0].getPose(_refSpace);
+                    if (pose) {
+                      _lastHitPose = pose;
+                      _reticle.visible = true;
+                      _reticle.matrix.fromArray(pose.transform.matrix);
+                      _reticleOuter.visible = true;
+                      _reticleOuter.matrix.fromArray(pose.transform.matrix);
+                      // Update depth bar
+                      const p = pose.transform.position;
+                      const cam = renderer.xr.getCamera(camera).position;
+                      const dist = Math.sqrt((p.x-cam.x)**2 + (p.y-cam.y)**2 + (p.z-cam.z)**2);
+                      const depthEl = document.getElementById('ar-val-depth');
+                      if (depthEl) depthEl.textContent = dist.toFixed(1);
+                    }
+                  } else {
+                    _reticle.visible = false;
+                    _reticleOuter.visible = false;
+                    _lastHitPose = null;
+                    const depthEl = document.getElementById('ar-val-depth');
+                    if (depthEl) depthEl.textContent = '∞';
+                  }
+                }
+
+                // Run marker float animation
+                if (window._arAnimateHook) window._arAnimateHook(t * 0.001);
+
+                renderer.render(scene, camera);
               });
+
+              // Tap → place agent marker at reticle position
+              session.addEventListener('select', () => {
+                if (_lastHitPose) _placeAgentMarker(_lastHitPose);
+              });
+
+              session.addEventListener('end', () => {
+                _hitTestSource = null;
+                _hitTestReady  = false;
+                _refSpace      = null;
+                _lastHitPose   = null;
+                _reticle.visible = false;
+                _reticleOuter.visible = false;
+                window._xrSession = null;
+                renderer.setAnimationLoop(null);
+                document.body.classList.remove('ar-mode');
+                // Resume camera passthrough + normal render loop
+                _startCameraPassthrough();
+                requestAnimationFrame(animate);
+                if (xrBtn) {
+                  xrBtn.innerHTML = '<div style="font-size:18px;">🥽</div><div>ENTER AR</div><div style="font-size:6px;opacity:0.6;letter-spacing:1px;">WebXR MODE</div>';
+                  xrBtn.onclick = () => window._enterXR && window._enterXR();
+                }
+                if (typeof showToast === 'function') showToast('🥽 Đã thoát WebXR AR', 'info');
+              });
+
+              if (typeof showToast === 'function') showToast('🥽 WebXR AR đã bật — chạm để đặt AI Agent', 'success');
+
             } catch(err) {
-              console.warn('[WebXR] session failed:', err.message);
-              if (typeof showToast === 'function') showToast('🥽 Thiết bị chưa hỗ trợ AR session: ' + err.message, 'error');
+              console.warn('[WebXR]', err.message);
+              if (typeof showToast === 'function') showToast('🥽 Không hỗ trợ WebXR: ' + err.message + ' — đang dùng camera mode', 'error');
+              // Fallback: camera passthrough only
+              _startCameraPassthrough();
             }
           };
         }).catch(() => {});

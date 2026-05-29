@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **23:26:21 29/5/2026**
+> Cập nhật lần cuối: **00:25:20 30/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,736 dòng, 76.8 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(17,995 dòng, 1.44 MB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,742 dòng, 77.2 KB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(17,998 dòng, 1.44 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -22,8 +22,8 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 39 | 987 B |
-| `server.js` | 1,736 | 76.8 KB |
-| `tienhiepv3.html` | 17,995 | 1.44 MB |
+| `server.js` | 1,742 | 77.2 KB |
+| `tienhiepv3.html` | 17,998 | 1.44 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **23,452** | **1.68 MB** |
+| **TỔNG** | **23,461** | **1.68 MB** |
 
 ---
 
@@ -91,7 +91,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,736 dòng · 76.8 KB
+> 1,742 dòng · 77.2 KB
 
 ```javascript
 const express = require('express');
@@ -264,9 +264,10 @@ async function getOidcConfig() {
   return oidcConfig;
 }
 
-// Always use the actual request hostname so the OIDC callback URL matches
-// the domain the user is on (works for both dev preview and production)
+// Use REPLIT_DEV_DOMAIN (stable) → REPLIT_DOMAINS → req.hostname fallback
 function getExternalDomain(reqHostname) {
+  if (process.env.REPLIT_DEV_DOMAIN) return process.env.REPLIT_DEV_DOMAIN;
+  if (process.env.REPLIT_DOMAINS) return process.env.REPLIT_DOMAINS.split(',')[0].trim();
   return reqHostname;
 }
 
@@ -378,7 +379,9 @@ app.get('/api/auth/google/callback', (req, res, next) => {
 app.get('/api/login', async (req, res, next) => {
   try {
     const domain = getExternalDomain(req.hostname);
-    console.log('LOGIN: domain =', domain);
+    console.log('LOGIN: reqHostname=', req.hostname, '| resolved domain=', domain,
+      '| REPLIT_DEV_DOMAIN=', process.env.REPLIT_DEV_DOMAIN || '(unset)',
+      '| REPLIT_DOMAINS=', process.env.REPLIT_DOMAINS || '(unset)');
     const name = await ensureStrategy(req.hostname);
     passport.authenticate(name, {
       prompt: 'login consent',
@@ -542,7 +545,10 @@ app.get('/user', requireAuth, (req, res, next) => {
   if (!('ar' in req.query)) return res.redirect('/user?ar');
   next();
 }, serveMain);
-app.get('/', (req, res) => res.redirect('/user'));
+app.get('/', (req, res) => {
+  if (req.query.auth_error) console.log('AUTH_ERROR on /:', req.query.auth_error, '| session:', req.sessionID?.substring(0,8));
+  res.redirect('/user');
+});
 
 // Admin login page
 app.get('/admin/login', (req, res) => {
@@ -1838,7 +1844,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 17,995 dòng · 1.44 MB
+> 17,998 dòng · 1.44 MB
 
 ```html
 <!DOCTYPE html>
@@ -10750,6 +10756,9 @@ app.listen(PORT, '0.0.0.0', () => {
         // Scroll compass track to match heading
         const trackEl = document.getElementById('ar-compass-track');
         if (trackEl) trackEl.style.transform = `translateX(${-(_hdg / 360) * 420}px)`;
+
+        // AR marker float animation hook
+        if (window._arAnimateHook) window._arAnimateHook(time);
 
         renderer.render(scene, camera);
       }
