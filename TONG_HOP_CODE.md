@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **02:40:20 30/5/2026**
+> Cập nhật lần cuối: **02:57:55 30/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,742 dòng, 77.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(18,804 dòng, 1.47 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(18,813 dòng, 1.47 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,742 | 77.2 KB |
-| `tienhiepv3.html` | 18,804 | 1.47 MB |
+| `tienhiepv3.html` | 18,813 | 1.47 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **24,267** | **1.71 MB** |
+| **TỔNG** | **24,276** | **1.71 MB** |
 
 ---
 
@@ -1844,7 +1844,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 18,804 dòng · 1.47 MB
+> 18,813 dòng · 1.47 MB
 
 ```html
 <!DOCTYPE html>
@@ -9724,6 +9724,13 @@ app.listen(PORT, '0.0.0.0', () => {
 
         if (voiceBtn)   voiceBtn.addEventListener('click',   _toggleVoice);
         if (univMicBtn) univMicBtn.addEventListener('click', _toggleVoice);
+        const _vrunBtn = document.getElementById('btn-voice-run');
+        if (_vrunBtn) _vrunBtn.addEventListener('click', function() {
+          _startListening();
+          if (typeof showToast === 'function') showToast('🎙️ Hãy nói: "Chạy [Tên Agent]" — VD: Chạy TikFlow', 'info');
+          _vrunBtn.classList.add('vrun-listening');
+          setTimeout(function() { _vrunBtn.classList.remove('vrun-listening'); }, 3500);
+        });
 
         // Hook _syncMicUI into start/stop
         const _origStart = _startListening, _origStop = _stopListening;
@@ -9735,6 +9742,8 @@ app.listen(PORT, '0.0.0.0', () => {
         window._voiceStopListening  = _stopListening;
         window._voiceIsListening    = function() { return _listening; };
         window._voiceToggle         = _toggleVoice;
+        window._jarvisSay           = _jarvisSay;
+        window._jarvisConfirm       = _jarvisConfirm;
       })();
       // ──────────────────────────────────────────────────────────────────
 
