@@ -3209,6 +3209,91 @@
       box-shadow: 0 0 10px rgba(0,200,255,.35);
     }
 
+    /* ── NHẬT KÝ VƯƠNG ĐẾ ─────────────────────────── */
+    #diary-modal {
+      position: fixed; inset: 0; z-index: 600;
+      display: none; align-items: center; justify-content: center;
+    }
+    #diary-box {
+      width: min(780px,97vw); max-height: 90vh;
+      background: rgba(6,3,0,.97);
+      border: 1px solid #ffc85033;
+      border-top: 2px solid #ffc850;
+      display: flex; flex-direction: column;
+      font-family: 'Share Tech Mono', monospace;
+      position: relative; overflow: hidden;
+    }
+    #diary-box::before {
+      content:'';
+      position:absolute; inset:0;
+      background: repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,200,80,.025) 28px,rgba(255,200,80,.025) 29px);
+      pointer-events:none;
+    }
+    .diary-header {
+      padding: 18px 24px 12px;
+      border-bottom: 1px solid #ffc85022;
+      display: flex; align-items: center; gap: 14px;
+      flex-shrink: 0;
+    }
+    .diary-tabs {
+      display: flex; gap: 6px;
+      padding: 10px 24px 0;
+      flex-shrink: 0;
+    }
+    .diary-tab {
+      background: transparent;
+      border: 1px solid #ffc85033;
+      color: #ffc85066;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 8px; letter-spacing: 1.5px;
+      padding: 5px 14px; cursor: pointer;
+      transition: all .18s;
+    }
+    .diary-tab.active, .diary-tab:hover {
+      background: rgba(255,200,80,.1);
+      border-color: #ffc850;
+      color: #ffc850;
+    }
+    .diary-body { padding: 16px 24px 20px; overflow-y: auto; flex: 1; }
+    /* Notes */
+    .diary-note-card {
+      background: rgba(255,200,80,.04);
+      border: 1px solid #ffc85022;
+      border-left: 3px solid #ffc850;
+      padding: 10px 14px; margin-bottom: 8px;
+      cursor: pointer; transition: all .18s; position: relative;
+    }
+    .diary-note-card:hover { background: rgba(255,200,80,.08); border-color: #ffc85066; }
+    .diary-note-title { font-size: 10px; color: #ffc850; letter-spacing: 1px; font-family:'Orbitron',sans-serif; margin-bottom: 4px; }
+    .diary-note-body  { font-size: 9px; color: #ffc85099; line-height: 1.6; white-space: pre-wrap; }
+    .diary-note-meta  { font-size: 7px; color: #ffc85044; margin-top: 6px; }
+    /* Todos */
+    .diary-todo-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-bottom: 1px solid #ffc85011;
+      transition: background .15s;
+    }
+    .diary-todo-row:hover { background: rgba(255,200,80,.04); }
+    .diary-todo-check {
+      width: 16px; height: 16px; border: 1px solid #ffc85055;
+      background: transparent; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; transition: all .15s;
+    }
+    .diary-todo-check.done { background: rgba(255,200,80,.15); border-color: #ffc850; color: #ffc850; }
+    .diary-todo-text { flex: 1; font-size: 10px; color: #ffc850cc; }
+    .diary-todo-text.done { text-decoration: line-through; color: #ffc85044; }
+    .diary-todo-del { color: #ff444455; cursor: pointer; font-size: 13px; opacity: 0; transition: opacity .15s; }
+    .diary-todo-row:hover .diary-todo-del { opacity: 1; }
+    /* Tags */
+    .diary-tag {
+      display: inline-block; padding: 2px 8px;
+      border: 1px solid currentColor; border-radius: 2px;
+      font-size: 8px; opacity: .7; cursor: pointer; margin: 2px;
+      transition: opacity .15s;
+    }
+    .diary-tag:hover { opacity: 1; }
+
     .dharma-wheel {
       position: absolute;
       top: 50%;
@@ -5150,6 +5235,13 @@
         <div>
           <div class="pbtn-label" style="color:#ff50c8;text-shadow:0 0 12px rgba(255,80,200,0.8);">AI AGENT MODE</div>
           <div class="pbtn-sub" style="color:rgba(255,80,200,0.6);">CONTENT PLAN 30 NGÀY</div>
+        </div>
+      </div>
+      <div class="panel-btn" onclick="openDiary()" data-voice="Nhật ký" style="border-color:rgba(255,200,80,0.6);box-shadow:0 0 20px rgba(255,200,80,0.25),0 0 30px rgba(255,150,0,0.15),inset 0 0 10px rgba(255,200,80,0.08);">
+        <span class="pbtn-icon">📜</span>
+        <div>
+          <div class="pbtn-label" style="color:#ffc850;">NHẬT KÝ</div>
+          <div class="pbtn-sub">VƯƠNG ĐẾ</div>
         </div>
       </div>
       <div class="panel-btn" onclick="openAppSummary()" data-voice="Tổng hợp" id="app-summary-btn" style="display:none;border-color:rgba(0,255,128,0.5);box-shadow:0 0 18px rgba(0,255,128,0.2),inset 0 0 8px rgba(0,255,128,0.08);">
@@ -10373,6 +10465,70 @@
     </div>
   </div>
 
+  <!-- ═══════════ NHẬT KÝ VƯƠNG ĐẾ MODAL ═══════════ -->
+  <div id="diary-modal">
+    <div id="diary-box">
+      <div class="diary-header">
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:16px;color:#ffc850;letter-spacing:4px;">📜 NHẬT KÝ VƯƠNG ĐẾ</div>
+          <div style="font-size:8px;color:#ffc85055;letter-spacing:2px;margin-top:3px;">GHI CHÉP · KẾ HOẠCH · SỨ MỆNH</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+          <div id="diary-stats" style="font-size:8px;color:#ffc85044;text-align:right;"></div>
+          <button onclick="closeDiary()" style="background:rgba(255,50,50,.08);border:1px solid #ff333333;color:#ff6666;width:30px;height:30px;cursor:pointer;font-size:15px;font-family:'Share Tech Mono',monospace;">✕</button>
+        </div>
+      </div>
+      <div class="diary-tabs">
+        <button class="diary-tab active" onclick="diaryTab('notes',this)">📝 GHI CHÚ</button>
+        <button class="diary-tab" onclick="diaryTab('todo',this)">☑️ NHIỆM VỤ</button>
+        <button class="diary-tab" onclick="diaryTab('plan',this)">⚔️ KẾ HOẠCH</button>
+      </div>
+
+      <!-- NOTES TAB -->
+      <div id="diary-notes-tab" class="diary-body">
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <input id="diary-note-title-inp" placeholder="Tiêu đề..." style="flex:1;min-width:120px;background:rgba(255,200,80,.04);border:1px solid #ffc85033;color:#ffc850;padding:7px 10px;font-family:'Share Tech Mono',monospace;font-size:9px;outline:none;">
+          <select id="diary-note-tag" style="background:rgba(255,200,80,.04);border:1px solid #ffc85033;color:#ffc85099;font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 8px;">
+            <option value="🌌">🌌 Vũ Trụ</option>
+            <option value="💡">💡 Ý Tưởng</option>
+            <option value="⚔️">⚔️ Chiến Lược</option>
+            <option value="💰">💰 Tài Chính</option>
+            <option value="🔥">🔥 Khẩn Cấp</option>
+          </select>
+          <button onclick="diaryAddNote()" style="background:rgba(255,200,80,.1);border:1px solid #ffc85066;color:#ffc850;font-family:'Orbitron',monospace;font-size:8px;padding:7px 14px;cursor:pointer;letter-spacing:1px;">+ THÊM</button>
+        </div>
+        <textarea id="diary-note-body-inp" placeholder="Nội dung ghi chú..." rows="3" style="width:100%;box-sizing:border-box;background:rgba(255,200,80,.03);border:1px solid #ffc85022;color:#ffc850aa;padding:9px;font-family:'Share Tech Mono',monospace;font-size:9px;resize:vertical;outline:none;line-height:1.7;margin-bottom:14px;"></textarea>
+        <div id="diary-notes-list"></div>
+      </div>
+
+      <!-- TODO TAB -->
+      <div id="diary-todo-tab" class="diary-body" style="display:none;">
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <input id="diary-todo-inp" placeholder="Thêm nhiệm vụ mới..." style="flex:1;background:rgba(255,200,80,.04);border:1px solid #ffc85033;color:#ffc850;padding:7px 10px;font-family:'Share Tech Mono',monospace;font-size:9px;outline:none;" onkeydown="if(event.key==='Enter')diaryAddTodo()">
+          <select id="diary-todo-pri" style="background:rgba(255,200,80,.04);border:1px solid #ffc85033;color:#ffc85099;font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 8px;">
+            <option value="🔴">🔴 Khẩn</option>
+            <option value="🟡" selected>🟡 Bình</option>
+            <option value="🟢">🟢 Nhẹ</option>
+          </select>
+          <button onclick="diaryAddTodo()" style="background:rgba(255,200,80,.1);border:1px solid #ffc85066;color:#ffc850;font-family:'Orbitron',monospace;font-size:8px;padding:7px 14px;cursor:pointer;letter-spacing:1px;">+ THÊM</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <button onclick="diaryTodoFilter('all',this)" class="cm-filter-btn active" style="font-size:8px;padding:4px 10px;">TẤT CẢ</button>
+          <button onclick="diaryTodoFilter('active',this)" class="cm-filter-btn" style="font-size:8px;padding:4px 10px;">ĐANG LÀM</button>
+          <button onclick="diaryTodoFilter('done',this)" class="cm-filter-btn" style="font-size:8px;padding:4px 10px;">HOÀN THÀNH</button>
+        </div>
+        <div id="diary-todo-list"></div>
+      </div>
+
+      <!-- PLAN TAB -->
+      <div id="diary-plan-tab" class="diary-body" style="display:none;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:9px;color:#ffc85066;letter-spacing:2px;margin-bottom:14px;">◈ KẾ HOẠCH XÂY DỰNG ĐẾ QUỐC AI</div>
+        <div id="diary-plan-list"></div>
+        <button onclick="diaryAddPlan()" style="width:100%;margin-top:10px;background:rgba(255,200,80,.05);border:1px dashed #ffc85033;color:#ffc85066;font-family:'Share Tech Mono',monospace;font-size:9px;padding:10px;cursor:pointer;letter-spacing:1px;transition:all .2s;" onmouseover="this.style.borderColor='#ffc85066';this.style.color='#ffc850'" onmouseout="this.style.borderColor='#ffc85033';this.style.color='#ffc85066'">+ THÊM MỤC TIÊU MỚI</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══════════ CLUSTER MAP MODAL ═══════════ -->
   <div id="cluster-map-modal" style="position:fixed;inset:0;z-index:600;display:none;flex-direction:column;">
     <canvas id="cluster-canvas"></canvas>
@@ -11512,6 +11668,159 @@
       window._panelClose();
       document.getElementById('cluster-map-modal').style.display = 'none';
       if (_cmRAF) { cancelAnimationFrame(_cmRAF); _cmRAF = null; }
+    }
+
+    // ══════════════════════════════════════════════════════
+    // NHẬT KÝ VƯƠNG ĐẾ
+    // ══════════════════════════════════════════════════════
+    let _diaryData = JSON.parse(localStorage.getItem('vdai_diary') || '{"notes":[],"todos":[],"plans":[]}');
+    let _diaryActiveTab = 'notes', _diaryTodoFilter = 'all';
+
+    function _diarySave() { localStorage.setItem('vdai_diary', JSON.stringify(_diaryData)); _diaryUpdateStats(); }
+
+    function _diaryUpdateStats() {
+      const done = _diaryData.todos.filter(t=>t.done).length;
+      const tot  = _diaryData.todos.length;
+      document.getElementById('diary-stats').innerHTML =
+        `📝 ${_diaryData.notes.length} ghi chú &nbsp;·&nbsp; ☑️ ${done}/${tot} nhiệm vụ`;
+    }
+
+    function openDiary() {
+      window._panelOpen();
+      document.getElementById('diary-modal').style.display = 'flex';
+      _diaryActiveTab = 'notes';
+      document.querySelectorAll('.diary-tab').forEach((b,i) => b.classList.toggle('active', i===0));
+      ['notes','todo','plan'].forEach(t => {
+        document.getElementById('diary-' + t + '-tab').style.display = t === 'notes' ? '' : 'none';
+      });
+      _diaryRenderNotes(); _diaryRenderTodos(); _diaryRenderPlans(); _diaryUpdateStats();
+    }
+    function closeDiary() {
+      window._panelClose();
+      document.getElementById('diary-modal').style.display = 'none';
+    }
+    function diaryTab(tab, btn) {
+      _diaryActiveTab = tab;
+      document.querySelectorAll('.diary-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['notes','todo','plan'].forEach(t => {
+        document.getElementById('diary-' + t + '-tab').style.display = t === tab ? '' : 'none';
+      });
+    }
+
+    /* ── NOTES ── */
+    function diaryAddNote() {
+      const title = document.getElementById('diary-note-title-inp').value.trim();
+      const body  = document.getElementById('diary-note-body-inp').value.trim();
+      const tag   = document.getElementById('diary-note-tag').value;
+      if (!title && !body) { showToast('Nhập tiêu đề hoặc nội dung!','warn'); return; }
+      _diaryData.notes.unshift({ id: Date.now(), title: title || '(Không tiêu đề)', body, tag, ts: new Date().toISOString() });
+      _diarySave(); _diaryRenderNotes();
+      document.getElementById('diary-note-title-inp').value = '';
+      document.getElementById('diary-note-body-inp').value = '';
+      showToast('📝 Đã lưu ghi chú!', 'success');
+    }
+    function diaryDeleteNote(id) {
+      _diaryData.notes = _diaryData.notes.filter(n => n.id !== id);
+      _diarySave(); _diaryRenderNotes();
+    }
+    function _diaryRenderNotes() {
+      const el = document.getElementById('diary-notes-list');
+      if (!_diaryData.notes.length) {
+        el.innerHTML = '<div style="text-align:center;padding:28px;color:#ffc85033;font-size:10px;">Chưa có ghi chú nào.<br>Bắt đầu ghi lại kế hoạch của Vương Đế!</div>';
+        return;
+      }
+      el.innerHTML = _diaryData.notes.map(n => {
+        const d = new Date(n.ts);
+        const ds = d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN',{hour12:false,hour:'2-digit',minute:'2-digit'});
+        return `<div class="diary-note-card">
+          <button onclick="diaryDeleteNote(${n.id})" style="position:absolute;top:8px;right:8px;background:none;border:none;color:#ff444455;cursor:pointer;font-size:12px;" onmouseover="this.style.color='#ff6666'" onmouseout="this.style.color='#ff444455'">✕</button>
+          <div class="diary-note-title">${n.tag} ${n.title}</div>
+          <div class="diary-note-body">${n.body || '<span style="opacity:.35;font-style:italic">Không có nội dung</span>'}</div>
+          <div class="diary-note-meta">🕐 ${ds}</div>
+        </div>`;
+      }).join('');
+    }
+
+    /* ── TODOS ── */
+    function diaryAddTodo() {
+      const text = document.getElementById('diary-todo-inp').value.trim();
+      const pri  = document.getElementById('diary-todo-pri').value;
+      if (!text) { showToast('Nhập nội dung nhiệm vụ!','warn'); return; }
+      _diaryData.todos.unshift({ id: Date.now(), text, pri, done: false, ts: new Date().toISOString() });
+      _diarySave(); _diaryRenderTodos();
+      document.getElementById('diary-todo-inp').value = '';
+      showToast('☑️ Đã thêm nhiệm vụ!', 'success');
+    }
+    function diaryToggleTodo(id) {
+      const t = _diaryData.todos.find(x => x.id === id);
+      if (t) { t.done = !t.done; _diarySave(); _diaryRenderTodos(); }
+    }
+    function diaryDeleteTodo(id) {
+      _diaryData.todos = _diaryData.todos.filter(t => t.id !== id);
+      _diarySave(); _diaryRenderTodos();
+    }
+    function diaryTodoFilter(f, btn) {
+      _diaryTodoFilter = f;
+      document.querySelectorAll('#diary-todo-tab .cm-filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      _diaryRenderTodos();
+    }
+    function _diaryRenderTodos() {
+      const el = document.getElementById('diary-todo-list');
+      let list = _diaryData.todos;
+      if (_diaryTodoFilter === 'active') list = list.filter(t => !t.done);
+      if (_diaryTodoFilter === 'done')   list = list.filter(t => t.done);
+      if (!list.length) {
+        el.innerHTML = '<div style="text-align:center;padding:28px;color:#ffc85033;font-size:10px;">Không có nhiệm vụ nào.</div>';
+        return;
+      }
+      el.innerHTML = list.map(t => `
+        <div class="diary-todo-row">
+          <div class="diary-todo-check ${t.done?'done':''}" onclick="diaryToggleTodo(${t.id})">${t.done?'✔':''}</div>
+          <span style="font-size:13px;flex-shrink:0;">${t.pri}</span>
+          <span class="diary-todo-text ${t.done?'done':''}">${t.text}</span>
+          <span class="diary-todo-del" onclick="diaryDeleteTodo(${t.id})">✕</span>
+        </div>`).join('');
+    }
+
+    /* ── PLANS ── */
+    const _PLAN_TEMPLATES = [
+      { title: 'Chinh Phục Nội Dung', desc: 'Kích hoạt 10 agent content mỗi ngày, tăng 30% doanh thu/tháng', progress: 40, color: '#00ffff' },
+      { title: 'Máy In Tiền Tự Động',  desc: 'Thiết lập pipeline tài chính — 5 agent chạy 24/7',             progress: 65, color: '#00ff88' },
+      { title: 'Thống Trị Marketing',  desc: 'Tự động hóa toàn bộ kênh quảng cáo với AI agent',               progress: 20, color: '#ff4488' },
+    ];
+    function diaryAddPlan() {
+      const t = prompt('Tên kế hoạch:'); if (!t) return;
+      const d = prompt('Mô tả ngắn:') || '';
+      _diaryData.plans.push({ id: Date.now(), title: t, desc: d, progress: 0, color: '#ffc850' });
+      _diarySave(); _diaryRenderPlans();
+      showToast('⚔️ Đã thêm kế hoạch!','success');
+    }
+    function diarySetProgress(id, val) {
+      const p = _diaryData.plans.find(x => x.id === id);
+      if (p) { p.progress = parseInt(val); _diarySave(); }
+    }
+    function diaryDeletePlan(id) {
+      _diaryData.plans = _diaryData.plans.filter(p => p.id !== id);
+      _diarySave(); _diaryRenderPlans();
+    }
+    function _diaryRenderPlans() {
+      const el = document.getElementById('diary-plan-list');
+      const list = _diaryData.plans.length ? _diaryData.plans : _PLAN_TEMPLATES.map((p,i) => ({...p, id: -(i+1)}));
+      el.innerHTML = list.map(p => `
+        <div style="background:rgba(255,200,80,.04);border:1px solid ${p.color}22;border-left:3px solid ${p.color};padding:12px 14px;margin-bottom:10px;position:relative;">
+          ${p.id > 0 ? `<button onclick="diaryDeletePlan(${p.id})" style="position:absolute;top:8px;right:8px;background:none;border:none;color:#ff444455;cursor:pointer;font-size:12px;" onmouseover="this.style.color='#ff6666'" onmouseout="this.style.color='#ff444455'">✕</button>` : ''}
+          <div style="font-family:'Orbitron',sans-serif;font-size:10px;color:${p.color};letter-spacing:1px;margin-bottom:4px;">${p.title}</div>
+          <div style="font-size:8px;color:${p.color}88;margin-bottom:10px;">${p.desc}</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="flex:1;height:5px;background:#ffc85011;border-radius:2px;">
+              <div style="height:100%;width:${p.progress}%;background:linear-gradient(90deg,${p.color}88,${p.color});border-radius:2px;transition:width .3s;"></div>
+            </div>
+            <span style="font-size:9px;color:${p.color};width:32px;text-align:right;">${p.progress}%</span>
+            ${p.id > 0 ? `<input type="range" min="0" max="100" value="${p.progress}" oninput="diarySetProgress(${p.id},this.value);this.previousElementSibling.textContent=this.value+'%';this.previousElementSibling.previousElementSibling.firstElementChild.style.width=this.value+'%'" style="width:70px;accent-color:${p.color};">` : ''}
+          </div>
+        </div>`).join('');
     }
     function cmSetFilter(key, btn) {
       _cmFilter = key;
