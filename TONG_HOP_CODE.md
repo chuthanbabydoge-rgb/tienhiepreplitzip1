@@ -1,5 +1,5 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **18:16:26 29/5/2026**
+> Cập nhật lần cuối: **19:02:41 29/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
@@ -11673,7 +11673,7 @@ app.listen(PORT, '0.0.0.0', () => {
       if (btn) { btn.textContent = '⏳'; btn.style.pointerEvents = 'none'; }
 
       try {
-        const history = JSON.parse(localStorage.getItem('vdai_uc_history') || '[]');
+        const history = JSON.parse(localStorage.getItem('uc_chat_history') || '[]');
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

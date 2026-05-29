@@ -9916,7 +9916,7 @@
       if (btn) { btn.textContent = '⏳'; btn.style.pointerEvents = 'none'; }
 
       try {
-        const history = JSON.parse(localStorage.getItem('vdai_uc_history') || '[]');
+        const history = JSON.parse(localStorage.getItem('uc_chat_history') || '[]');
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -9932,14 +9932,28 @@
         // Speak the AI reply aloud with mystical voice
         if ('speechSynthesis' in window) {
           window.speechSynthesis.cancel();
-          const voices = window.speechSynthesis.getVoices();
+          // Load voices async (browsers load voices asynchronously)
+          const _loadVoices = () => new Promise(resolve => {
+            const v = window.speechSynthesis.getVoices();
+            if (v.length) { resolve(v); return; }
+            const handler = () => { resolve(window.speechSynthesis.getVoices()); };
+            window.speechSynthesis.addEventListener('voiceschanged', handler, { once: true });
+            setTimeout(() => resolve(window.speechSynthesis.getVoices()), 1500);
+          });
+          const voices = await _loadVoices();
           const viVoice = voices.find(v => v.lang && v.lang.startsWith('vi')) || null;
 
           // Split into sentences for natural pacing
           const sentences = reply.match(/[^.!?。]+[.!?。]?/g) || [reply];
           let i = 0;
+          // Chrome fix: resume speechSynthesis if it pauses unexpectedly
+          const _ttsResumeInterval = setInterval(() => {
+            if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+          }, 10000);
+
           const speakNext = () => {
             if (i >= sentences.length) {
+              clearInterval(_ttsResumeInterval);
               // After AI finishes speaking → prompt mic again
               if (btn) { btn.textContent = '🎤'; btn.style.pointerEvents = ''; }
               setTimeout(() => startVoiceChat(), 600);
