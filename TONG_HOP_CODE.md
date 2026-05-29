@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **01:54:46 30/5/2026**
+> Cập nhật lần cuối: **02:40:20 30/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,742 dòng, 77.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(18,767 dòng, 1.47 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(18,804 dòng, 1.47 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,742 | 77.2 KB |
-| `tienhiepv3.html` | 18,767 | 1.47 MB |
+| `tienhiepv3.html` | 18,804 | 1.47 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **24,230** | **1.71 MB** |
+| **TỔNG** | **24,267** | **1.71 MB** |
 
 ---
 
@@ -1844,7 +1844,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 18,767 dòng · 1.47 MB
+> 18,804 dòng · 1.47 MB
 
 ```html
 <!DOCTYPE html>
@@ -6402,6 +6402,36 @@ app.listen(PORT, '0.0.0.0', () => {
         </div>
       </div>
       <button id="btn-back-home" onclick="window.location.href='/api/logout'" title="Đăng xuất">⬅ THOÁT</button>
+      <button id="btn-voice-run" title="Noi: Chay [Ten Agent] de chay quy trinh bang giong noi">
+        <span id="vrun-mic-icon">🎙️</span> CHẠY
+      </button>
+      <style>
+        #btn-voice-run {
+          display: flex; align-items: center; gap: 5px;
+          padding: 5px 13px;
+          background: rgba(255,100,0,0.08);
+          border: 1px solid rgba(255,140,0,0.45);
+          color: #ffaa00;
+          font-family: 'Orbitron', sans-serif;
+          font-size: 9px; letter-spacing: 2px;
+          cursor: pointer; border-radius: 4px;
+          transition: all .25s; margin-left: 6px;
+        }
+        #btn-voice-run:hover {
+          background: rgba(255,140,0,0.22);
+          box-shadow: 0 0 14px rgba(255,140,0,0.5);
+        }
+        #btn-voice-run.vrun-listening {
+          background: rgba(255,140,0,0.28) !important;
+          border-color: #ffaa00 !important;
+          box-shadow: 0 0 18px rgba(255,140,0,0.7), 0 0 6px rgba(255,140,0,0.4) !important;
+          animation: vrun-pulse 0.7s infinite alternate;
+        }
+        #btn-voice-run.vrun-listening #vrun-mic-icon { animation: vrun-mic-bounce 0.5s infinite alternate; }
+        #vrun-mic-icon { font-size: 13px; transition: all .3s; }
+        @keyframes vrun-pulse { from { box-shadow: 0 0 10px rgba(255,140,0,0.5); } to { box-shadow: 0 0 24px rgba(255,140,0,0.9); } }
+        @keyframes vrun-mic-bounce { from { transform: scale(1); } to { transform: scale(1.3); } }
+      </style>
       <button id="btn-ar-mode" onclick="window.location.href='/app?ar=1'" title="Chế độ AR 3D"
         style="display:none;align-items:center;gap:6px;padding:5px 13px;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.4);color:#00ff88;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all .25s;margin-left:8px;"
         onmouseover="this.style.background='rgba(0,255,136,.22)';this.style.boxShadow='0 0 14px rgba(0,255,136,.5)'"
@@ -9348,6 +9378,13 @@ app.listen(PORT, '0.0.0.0', () => {
             { say:'Thần kinh',       do:'Neural map' },
             { say:'Cảnh báo',        do:'Alerts' },
             { say:'Mini Game',       do:'Chơi game' },
+          ]},
+          { cat:'⚡ Chạy Quy Trình', cmds:[
+            { say:'Chạy [Tên Agent]',         do:'Mở HUD + chạy workflow ngay' },
+            { say:'Chạy TikFlow',             do:'Chạy quy trình TikFlow AI' },
+            { say:'Chạy CodeForge',           do:'Chạy quy trình CodeForge AI' },
+            { say:'Khởi chạy [Tên Agent]',    do:'Alias: chạy quy trình' },
+            { say:'Run [Agent name]',         do:'Tiếng Anh: chạy workflow' },
           ]},
           { cat:'🔧 Công cụ', cmds:[
             { say:'Builder',         do:'Workflow Builder' },
