@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **22:04:32 29/5/2026**
+> Cập nhật lần cuối: **22:46:25 29/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,650 dòng, 72.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(17,746 dòng, 1.42 MB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,737 dòng, 76.9 KB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(17,743 dòng, 1.42 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -22,8 +22,8 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 39 | 987 B |
-| `server.js` | 1,650 | 72.2 KB |
-| `tienhiepv3.html` | 17,746 | 1.42 MB |
+| `server.js` | 1,737 | 76.9 KB |
+| `tienhiepv3.html` | 17,743 | 1.42 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **23,117** | **1.65 MB** |
+| **TỔNG** | **23,201** | **1.66 MB** |
 
 ---
 
@@ -91,7 +91,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,650 dòng · 72.2 KB
+> 1,737 dòng · 76.9 KB
 
 ```javascript
 const express = require('express');
@@ -1737,6 +1737,93 @@ Tạo đủ 30 ngày (day 1 đến day 30), mỗi ngày phải khác nhau, đa d
   }
 });
 
+// ── LIVE AGENT DATA (Free APIs) ──────────────────────────────────────────────
+
+// NewsFlash AI (id: 0) — RSS feeds, no key needed
+app.get('/api/live/news', async (req, res) => {
+  const FEEDS = [
+    { url: 'https://feeds.bbci.co.uk/news/world/rss.xml',    source: 'BBC World' },
+    { url: 'https://vnexpress.net/rss/tin-moi-nhat.rss',     source: 'VnExpress' },
+    { url: 'https://techcrunch.com/feed/',                    source: 'TechCrunch' },
+  ];
+  try {
+    const results = [];
+    for (const feed of FEEDS) {
+      try {
+        const resp = await fetch(feed.url, {
+          headers: { 'User-Agent': 'Mozilla/5.0 VuongDeAI/1.0' },
+          signal: AbortSignal.timeout(6000),
+        });
+        const xml = await resp.text();
+        const items = xml.match(/<item[\s>][\s\S]*?<\/item>/g) || [];
+        for (const item of items.slice(0, 4)) {
+          const title   = (item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]>/) || item.match(/<title>([\s\S]*?)<\/title>/))?.[1] || '';
+          const link    = (item.match(/<link>([\s\S]*?)<\/link>/))?.[1]?.trim() || '';
+          const pubDate = (item.match(/<pubDate>([\s\S]*?)<\/pubDate>/))?.[1]?.trim() || '';
+          const desc    = (item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]>/) || item.match(/<description>([\s\S]*?)<\/description>/))?.[1] || '';
+          const cleanDesc = desc.replace(/<[^>]+>/g, '').slice(0, 120);
+          if (title) results.push({ title: title.replace(/<[^>]+>/g, '').trim(), link, pubDate, desc: cleanDesc, source: feed.source });
+        }
+      } catch (_) { /* skip failed feed */ }
+    }
+    res.json({ articles: results.slice(0, 10), ts: Date.now() });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// CryptoWhale AI (id: 21) — CoinGecko public API, no key needed
+app.get('/api/live/crypto', async (req, res) => {
+  try {
+    const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd' +
+      '&ids=bitcoin,ethereum,solana,bnb,xrp,cardano,avalanche-2,chainlink,polkadot,dogecoin' +
+      '&order=market_cap_desc&per_page=10&sparkline=false&price_change_percentage=24h';
+    const resp = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!resp.ok) throw new Error('CoinGecko ' + resp.status);
+    const coins = await resp.json();
+    res.json({ coins, ts: Date.now() });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// CopyKing AI (id: 15) — Gemini-powered real copy generator
+app.post('/api/live/copy', async (req, res) => {
+  const { type = 'headline', topic, tone = 'persuasive', lang = 'vi' } = req.body;
+  if (!topic) return res.status(400).json({ error: 'Thiếu chủ đề' });
+  const isVi = lang !== 'en';
+  const PROMPTS = {
+    headline: isVi
+      ? `Tạo 5 headline bán hàng mạnh mẽ cho: "${topic}". Tone: ${tone}. JSON: {"headlines":["...","...","...","...","..."]}`
+      : `Create 5 powerful sales headlines for: "${topic}". Tone: ${tone}. JSON: {"headlines":["...","...","...","...","..."]}`,
+    email: isVi
+      ? `Viết email marketing hoàn chỉnh cho: "${topic}". Tone: ${tone}. JSON: {"subject":"...","preview":"...","body":"...","cta":"..."}`
+      : `Write a complete marketing email for: "${topic}". Tone: ${tone}. JSON: {"subject":"...","preview":"...","body":"...","cta":"..."}`,
+    ad: isVi
+      ? `Viết quảng cáo Facebook/Google cho: "${topic}". Tone: ${tone}. JSON: {"headline":"...","description":"...","cta":"...","hook":"..."}`
+      : `Write a Facebook/Google ad for: "${topic}". Tone: ${tone}. JSON: {"headline":"...","description":"...","cta":"...","hook":"..."}`,
+    social: isVi
+      ? `Viết 3 caption mạng xã hội viral cho: "${topic}". Tone: ${tone}. JSON: {"captions":["...","...","..."],"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5"]}`
+      : `Write 3 viral social media captions for: "${topic}". Tone: ${tone}. JSON: {"captions":["...","...","..."],"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5"]}`,
+  };
+  try {
+    const response = await getAI().models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ role: 'user', parts: [{ text: PROMPTS[type] || PROMPTS.headline }] }],
+      config: { maxOutputTokens: 2048 },
+    });
+    let text = (response.text || '').replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const f = text.indexOf('{'), l = text.lastIndexOf('}');
+    if (f !== -1 && l !== -1) text = text.slice(f, l + 1);
+    res.json({ result: JSON.parse(text), type, ts: Date.now() });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${PORT}`);
@@ -1752,7 +1839,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 17,746 dòng · 1.42 MB
+> 17,743 dòng · 1.42 MB
 
 ```html
 <!DOCTYPE html>
@@ -9435,7 +9522,6 @@ app.listen(PORT, '0.0.0.0', () => {
             _rec.onerror = function(e) {
               if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
                 _stopListening();
-                if (typeof showToast === 'function') showToast('🚫 Cần cho phép microphone để dùng voice', 'warn');
               } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
                 // Tự khởi động lại nếu lỗi nhỏ
                 setTimeout(() => { if (_listening) _rec.start(); }, 500);
@@ -9536,8 +9622,6 @@ app.listen(PORT, '0.0.0.0', () => {
             _startListening();
             setTimeout(() => {
               _jarvisSay('Thiên Nhĩ đã khởi động. Thưa đạo hữu, thần đang lắng nghe.');
-              if (typeof showToast === 'function')
-                showToast('⚡ Thiên Nhĩ — Online. Nói "Thiên Nhĩ" bất cứ lúc nào.', 'success');
             }, 200);
           }
         }

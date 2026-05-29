@@ -1641,6 +1641,93 @@ Tạo đủ 30 ngày (day 1 đến day 30), mỗi ngày phải khác nhau, đa d
   }
 });
 
+// ── LIVE AGENT DATA (Free APIs) ──────────────────────────────────────────────
+
+// NewsFlash AI (id: 0) — RSS feeds, no key needed
+app.get('/api/live/news', async (req, res) => {
+  const FEEDS = [
+    { url: 'https://feeds.bbci.co.uk/news/world/rss.xml',    source: 'BBC World' },
+    { url: 'https://vnexpress.net/rss/tin-moi-nhat.rss',     source: 'VnExpress' },
+    { url: 'https://techcrunch.com/feed/',                    source: 'TechCrunch' },
+  ];
+  try {
+    const results = [];
+    for (const feed of FEEDS) {
+      try {
+        const resp = await fetch(feed.url, {
+          headers: { 'User-Agent': 'Mozilla/5.0 VuongDeAI/1.0' },
+          signal: AbortSignal.timeout(6000),
+        });
+        const xml = await resp.text();
+        const items = xml.match(/<item[\s>][\s\S]*?<\/item>/g) || [];
+        for (const item of items.slice(0, 4)) {
+          const title   = (item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]>/) || item.match(/<title>([\s\S]*?)<\/title>/))?.[1] || '';
+          const link    = (item.match(/<link>([\s\S]*?)<\/link>/))?.[1]?.trim() || '';
+          const pubDate = (item.match(/<pubDate>([\s\S]*?)<\/pubDate>/))?.[1]?.trim() || '';
+          const desc    = (item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]>/) || item.match(/<description>([\s\S]*?)<\/description>/))?.[1] || '';
+          const cleanDesc = desc.replace(/<[^>]+>/g, '').slice(0, 120);
+          if (title) results.push({ title: title.replace(/<[^>]+>/g, '').trim(), link, pubDate, desc: cleanDesc, source: feed.source });
+        }
+      } catch (_) { /* skip failed feed */ }
+    }
+    res.json({ articles: results.slice(0, 10), ts: Date.now() });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// CryptoWhale AI (id: 21) — CoinGecko public API, no key needed
+app.get('/api/live/crypto', async (req, res) => {
+  try {
+    const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd' +
+      '&ids=bitcoin,ethereum,solana,bnb,xrp,cardano,avalanche-2,chainlink,polkadot,dogecoin' +
+      '&order=market_cap_desc&per_page=10&sparkline=false&price_change_percentage=24h';
+    const resp = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!resp.ok) throw new Error('CoinGecko ' + resp.status);
+    const coins = await resp.json();
+    res.json({ coins, ts: Date.now() });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// CopyKing AI (id: 15) — Gemini-powered real copy generator
+app.post('/api/live/copy', async (req, res) => {
+  const { type = 'headline', topic, tone = 'persuasive', lang = 'vi' } = req.body;
+  if (!topic) return res.status(400).json({ error: 'Thiếu chủ đề' });
+  const isVi = lang !== 'en';
+  const PROMPTS = {
+    headline: isVi
+      ? `Tạo 5 headline bán hàng mạnh mẽ cho: "${topic}". Tone: ${tone}. JSON: {"headlines":["...","...","...","...","..."]}`
+      : `Create 5 powerful sales headlines for: "${topic}". Tone: ${tone}. JSON: {"headlines":["...","...","...","...","..."]}`,
+    email: isVi
+      ? `Viết email marketing hoàn chỉnh cho: "${topic}". Tone: ${tone}. JSON: {"subject":"...","preview":"...","body":"...","cta":"..."}`
+      : `Write a complete marketing email for: "${topic}". Tone: ${tone}. JSON: {"subject":"...","preview":"...","body":"...","cta":"..."}`,
+    ad: isVi
+      ? `Viết quảng cáo Facebook/Google cho: "${topic}". Tone: ${tone}. JSON: {"headline":"...","description":"...","cta":"...","hook":"..."}`
+      : `Write a Facebook/Google ad for: "${topic}". Tone: ${tone}. JSON: {"headline":"...","description":"...","cta":"...","hook":"..."}`,
+    social: isVi
+      ? `Viết 3 caption mạng xã hội viral cho: "${topic}". Tone: ${tone}. JSON: {"captions":["...","...","..."],"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5"]}`
+      : `Write 3 viral social media captions for: "${topic}". Tone: ${tone}. JSON: {"captions":["...","...","..."],"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5"]}`,
+  };
+  try {
+    const response = await getAI().models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ role: 'user', parts: [{ text: PROMPTS[type] || PROMPTS.headline }] }],
+      config: { maxOutputTokens: 2048 },
+    });
+    let text = (response.text || '').replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const f = text.indexOf('{'), l = text.lastIndexOf('}');
+    if (f !== -1 && l !== -1) text = text.slice(f, l + 1);
+    res.json({ result: JSON.parse(text), type, ts: Date.now() });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${PORT}`);
