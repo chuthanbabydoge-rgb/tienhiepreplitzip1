@@ -12296,7 +12296,20 @@
     }
 
     function _spGradDefs() {
-      return `<defs><linearGradient id="sp-line-grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:rgba(100,220,160,0.8)"/><stop offset="100%" style="stop-color:rgba(94,159,255,0.8)"/></linearGradient></defs>`;
+      return `<defs>
+        <linearGradient id="sp-line-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:rgba(100,220,160,0.8)"/>
+          <stop offset="100%" style="stop-color:rgba(94,159,255,0.8)"/>
+        </linearGradient>
+        <filter id="particle-glow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="particle-glow-sm" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>`;
     }
     function drawLines() {
       const svg = document.getElementById('builder-svg');
@@ -12313,9 +12326,54 @@
         const x2 = r2.left - c1.left;
         const y2 = r2.top - c1.top + r2.height / 2;
 
-        paths += `<path d="M${x1},${y1} C${x1+60},${y1} ${x2-60},${y2} ${x2},${y2}" class="builder-line"/>`;
+        paths += `<path id="sp-line-${i}" d="M${x1},${y1} C${x1+60},${y1} ${x2-60},${y2} ${x2},${y2}" class="builder-line"/>`;
       }
       svg.innerHTML = _spGradDefs() + paths;
+    }
+
+    // ── LINH THẠCH PARTICLES ──
+    function _spawnParticles(lineIdx) {
+      const svg = document.getElementById('builder-svg');
+      if (!svg) return;
+      const pathId = 'sp-line-' + lineIdx;
+      const path = document.getElementById(pathId);
+      if (!path) return;
+      const NS = 'http://www.w3.org/2000/svg';
+      const XNS = 'http://www.w3.org/1999/xlink';
+      // 4 particles: large glow orb, bright core, small trailing, tiny sparkle
+      const specs = [
+        { r: 4.5, fill: '#ffee44', opacity: 1,    filter: 'particle-glow',    dur: '0.62s', begin: '0s'    },
+        { r: 2.5, fill: '#ffffff', opacity: 0.95,  filter: 'particle-glow-sm', dur: '0.62s', begin: '0.21s' },
+        { r: 3.5, fill: '#ffcc00', opacity: 0.85,  filter: 'particle-glow',    dur: '0.62s', begin: '0.41s' },
+        { r: 1.8, fill: '#ffe8a0', opacity: 0.7,   filter: 'particle-glow-sm', dur: '0.62s', begin: '0.52s' },
+      ];
+      specs.forEach(sp => {
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('r', sp.r);
+        c.setAttribute('fill', sp.fill);
+        c.setAttribute('opacity', sp.opacity);
+        c.setAttribute('filter', `url(#${sp.filter})`);
+        c.setAttribute('class', 'sp-particle');
+        c.setAttribute('data-line', lineIdx);
+        const am = document.createElementNS(NS, 'animateMotion');
+        am.setAttribute('dur', sp.dur);
+        am.setAttribute('repeatCount', 'indefinite');
+        am.setAttribute('begin', sp.begin);
+        am.setAttribute('calcMode', 'spline');
+        am.setAttribute('keyTimes', '0;1');
+        am.setAttribute('keySplines', '0.4 0 0.6 1');
+        const mp = document.createElementNS(NS, 'mpath');
+        mp.setAttributeNS(XNS, 'xlink:href', '#' + pathId);
+        am.appendChild(mp);
+        c.appendChild(am);
+        svg.appendChild(c);
+      });
+    }
+    function _removeParticles(lineIdx) {
+      document.querySelectorAll(`.sp-particle[data-line="${lineIdx}"]`).forEach(p => p.remove());
+    }
+    function _removeAllParticles() {
+      document.querySelectorAll('.sp-particle').forEach(p => p.remove());
     }
 
     // ── SET BUILDER STATUS PILL ──
@@ -12379,6 +12437,7 @@
       // reset states
       bNodes.forEach(n => { n.classList.remove('sp-running','sp-done','sp-error'); });
       document.querySelectorAll('.builder-line').forEach(l => l.classList.remove('sp-active','sp-done-line'));
+      _removeAllParticles();
       const panel = document.getElementById('builder-log-panel');
       const inner = document.getElementById('builder-log-inner');
       if (panel && inner) { panel.classList.add('sp-open'); inner.innerHTML = ''; }
@@ -12398,6 +12457,7 @@
         // activate connection line before this node (if exists)
         if (i > 0 && lines[i-1]) {
           lines[i-1].classList.add('sp-active');
+          _spawnParticles(i - 1);
         }
 
         node.classList.add('sp-running');
@@ -12406,6 +12466,7 @@
 
         // finish line
         if (i > 0 && lines[i-1]) {
+          _removeParticles(i - 1);
           lines[i-1].classList.remove('sp-active');
           lines[i-1].classList.add('sp-done-line');
         }
@@ -12433,6 +12494,7 @@
       }
 
       await new Promise(r => setTimeout(r, 400));
+      _removeAllParticles();
       _blogLog(`🌟 Trận Pháp Đại Thành — ${bNodes.length} Pháp Khí Vận Hành Viên Mãn!`, 'ok');
       _setBuilderStatus('✦ VIÊN MÃN', '#00ffaa');
       showToast('⚡ Trận Pháp hoàn tất!', 'success');
