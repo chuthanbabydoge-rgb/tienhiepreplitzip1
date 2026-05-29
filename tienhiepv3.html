@@ -7015,7 +7015,21 @@
                 if (e.results[i].isFinal) {
                   clearTimeout(_interimTimer);
                   _lastInterim = '';
-                  if (!_tryClose(transcript)) _tryNavigate(transcript);
+                  // Wake word → acknowledge but keep listening
+                  const _ww = (transcript||'').normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/gi,d=>d==='đ'?'d':'D')
+                    .toLowerCase().trim();
+                  const _WAKE = ['mo truyen am','bat truyen am','bat voice','mo voice',
+                    'oi thien co','thien co oi','bat mic','kich hoat truyen am','hey thien co','open voice'];
+                  const _STOP = ['tat truyen am','tat voice','dong truyen am','stop voice','tat mic','off voice'];
+                  if (_STOP.some(w => _ww.includes(w))) {
+                    _showTranscript(transcript);
+                    _stopListening();
+                    if (typeof showToast === 'function') showToast('🔇 Truyền âm đã tắt', 'info');
+                  } else if (_WAKE.some(w => _ww.includes(w))) {
+                    _showTranscript('✅ ' + transcript);
+                    if (typeof showToast === 'function') showToast('🎙️ Đang nghe — nói tên agent hoặc lệnh…', 'success');
+                  } else if (!_tryClose(transcript)) { _tryNavigate(transcript); }
                 } else {
                   // Show interim
                   try {
@@ -7032,7 +7046,18 @@
                       const t = _lastInterim;
                       _lastInterim = '';
                       console.log('[VOICE] interim→final fallback:', t);
-                      if (!_tryClose(t)) _tryNavigate(t);
+                      const _ww2 = (t||'').normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/gi,d=>d==='đ'?'d':'D')
+                        .toLowerCase().trim();
+                      const _WAKE2 = ['mo truyen am','bat truyen am','bat voice','mo voice',
+                        'oi thien co','thien co oi','bat mic','hey thien co','open voice'];
+                      const _STOP2 = ['tat truyen am','tat voice','dong truyen am','stop voice','tat mic'];
+                      if (_STOP2.some(w => _ww2.includes(w))) {
+                        _stopListening();
+                        if (typeof showToast === 'function') showToast('🔇 Truyền âm đã tắt', 'info');
+                      } else if (_WAKE2.some(w => _ww2.includes(w))) {
+                        if (typeof showToast === 'function') showToast('🎙️ Đang nghe — nói tên agent hoặc lệnh…', 'success');
+                      } else if (!_tryClose(t)) { _tryNavigate(t); }
                     }
                   }, 1500);
                 }
@@ -7072,10 +7097,18 @@
           if (el) el.classList.remove('show');
         }
 
-        /* ── Sync visual state of both mic buttons ── */
+        /* ── Sync visual state of all mic buttons + badge ── */
         function _syncMicUI() {
           if (voiceBtn)   voiceBtn.classList.toggle('listening', _listening);
           if (univMicBtn) univMicBtn.classList.toggle('listening', _listening);
+          // Sync badge indicator
+          const _bInd = document.getElementById('wake-word-indicator');
+          const _bLbl = document.getElementById('ww-label');
+          if (_bInd) {
+            _bInd.classList.toggle('ww-active', _listening);
+            _bInd.classList.remove('ww-heard');
+          }
+          if (_bLbl) _bLbl.textContent = _listening ? 'ĐANG NGHE…' : 'MỞ TRUYỀN ÂM';
         }
 
         /* ── Toggle helper (shared by both buttons) ── */
@@ -7106,145 +7139,19 @@
       })();
       // ──────────────────────────────────────────────────────────────────
 
-      // ══ WAKE WORD ENGINE — "Mở Truyền Âm" ═══════════════════════════
-      (function() {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) return;
-
-        // Normalise Vietnamese → ASCII lowercase for matching
-        function _n(s) {
-          return (s||'').normalize('NFD')
-            .replace(/[\u0300-\u036f]/g,'')
-            .replace(/[đĐ]/gi, d => d==='đ'?'d':'D')
-            .toLowerCase().trim();
-        }
-
-        // Wake word variants (normalised)
-        const WAKE_WORDS = [
-          'mo truyen am','bat truyen am','bat voice','mo voice',
-          'oi thien co','thien co oi','oi thien co cac',
-          'bat mic','bat microphone','start voice','open voice',
-          'mo mic','kich hoat truyen am','hey thien co'
-        ];
-
-        // "Stop" words
-        const STOP_WORDS = [
-          'tat truyen am','tat voice','dong truyen am','stop voice',
-          'tat mic','off voice','dung truyen am'
-        ];
-
-        let _wwRec  = null;
-        let _wwOn   = false;
-        let _restartTimer = null;
-
-        const _ind = () => document.getElementById('wake-word-indicator');
-        const _lbl = () => document.getElementById('ww-label');
-
-        function _setUI(state) {
-          const el = _ind();
-          if (!el) return;
-          el.classList.remove('ww-active','ww-heard');
-          if (state === 'active')  el.classList.add('ww-active');
-          if (state === 'heard')   el.classList.add('ww-heard');
-          const lbl = _lbl();
-          if (lbl) {
-            if (state === 'active') lbl.textContent = 'ĐANG NGHE…';
-            if (state === 'heard')  lbl.textContent = 'ĐÃ NHẬN!';
-            if (state === 'idle')   lbl.textContent = 'MỞ TRUYỀN ÂM';
+      // ══ BADGE "MỞ TRUYỀN ÂM" — chỉ bridge vào Voice Command Engine ════
+      // (Chrome chỉ cho 1 SpeechRecognition cùng lúc → dùng chung _rec)
+      window._wwToggle = function() {
+        if (typeof window._voiceToggle === 'function') window._voiceToggle();
+      };
+      // Auto-start voice engine sau khi load (cần user-gesture lần đầu)
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          if (typeof window._voiceStartListening === 'function') {
+            window._voiceStartListening();
           }
-        }
-
-        function _startWW() {
-          if (_wwOn) return;
-          try {
-            _wwRec = new SR();
-            _wwRec.continuous     = true;
-            _wwRec.interimResults = false;
-            _wwRec.lang           = 'vi-VN';
-
-            _wwRec.onresult = function(e) {
-              for (let i = e.resultIndex; i < e.results.length; i++) {
-                if (!e.results[i].isFinal) continue;
-                const raw = e.results[i][0].transcript;
-                const t   = _n(raw);
-                console.log('[WW] heard:', JSON.stringify(raw), '→', t);
-
-                // Stop command
-                if (STOP_WORDS.some(w => t.includes(w))) {
-                  _setUI('heard');
-                  setTimeout(() => _setUI('active'), 800);
-                  if (typeof window._voiceStopListening === 'function') window._voiceStopListening();
-                  if (typeof showToast === 'function') showToast('🔇 Truyền âm đã tắt', 'info');
-                  return;
-                }
-
-                // Wake word
-                if (WAKE_WORDS.some(w => t.includes(w))) {
-                  _setUI('heard');
-                  setTimeout(() => _setUI('active'), 1200);
-                  if (typeof showToast === 'function')
-                    showToast('🎙️ Truyền âm kích hoạt! Hãy nói yêu cầu…', 'success');
-                  // If HUD is open → toggle HUD voice; else → startVoiceChat
-                  const hud = document.getElementById('hud');
-                  if (hud && hud.classList.contains('active')) {
-                    if (typeof window._voiceToggle === 'function') window._voiceToggle();
-                  } else {
-                    if (typeof startVoiceChat === 'function') startVoiceChat();
-                  }
-                }
-              }
-            };
-
-            _wwRec.onerror = function(e) {
-              if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-                _wwOn = false;
-                _setUI('idle');
-                if (typeof showToast === 'function')
-                  showToast('🚫 Cần quyền microphone để dùng Wake Word', 'warn');
-              } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
-                clearTimeout(_restartTimer);
-                _restartTimer = setTimeout(() => { if (_wwOn) try { _wwRec.start(); } catch(ex){} }, 600);
-              }
-            };
-
-            _wwRec.onend = function() {
-              if (_wwOn) {
-                clearTimeout(_restartTimer);
-                _restartTimer = setTimeout(() => { try { _wwRec.start(); } catch(ex){} }, 400);
-              }
-            };
-
-            _wwRec.start();
-            _wwOn = true;
-            _setUI('active');
-          } catch(err) {
-            _wwOn = false;
-            _setUI('idle');
-          }
-        }
-
-        function _stopWW() {
-          _wwOn = false;
-          clearTimeout(_restartTimer);
-          if (_wwRec) { try { _wwRec.stop(); } catch(e) {} _wwRec = null; }
-          _setUI('idle');
-        }
-
-        window._wwToggle = function() {
-          if (_wwOn) {
-            _stopWW();
-            if (typeof showToast === 'function') showToast('🔇 Wake Word đã tắt', 'info');
-          } else {
-            _startWW();
-            if (typeof showToast === 'function') showToast('🎙️ Wake Word sẵn sàng — nói "Mở Truyền Âm"', 'success');
-          }
-        };
-
-        // Auto-start after page fully loads (first user interaction may be needed for mic)
-        window.addEventListener('load', () => {
-          setTimeout(_startWW, 2000);
-        });
-      })();
+        }, 1800);
+      });
       // ──────────────────────────────────────────────────────────────────
 
       function openHUD(pm) {
