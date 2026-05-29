@@ -1466,8 +1466,8 @@
     /* ── Voice Command Hint Ticker ── */
     #voice-cmd-hints {
       position: fixed;
-      bottom: 70px;
-      right: 22px;
+      bottom: 130px;
+      right: 16px;
       z-index: 9099;
       width: 220px;
       background: rgba(0,5,18,0.88);
@@ -1508,73 +1508,169 @@
       border-color: rgba(0,255,255,0.5) !important;
     }
 
-    /* ── Wake Word Indicator ── */
-    #wake-word-indicator {
+    /* ── JARVIS VOICE ORB ── */
+    #jarvis-orb {
       position: fixed;
       bottom: 22px;
       right: 22px;
       z-index: 9100;
+      width: 80px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 7px;
-      background: rgba(0,5,18,0.82);
-      border: 1px solid rgba(0,255,200,0.25);
-      border-radius: 20px;
-      padding: 5px 12px 5px 8px;
+      gap: 4px;
       cursor: pointer;
       pointer-events: auto;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 0 14px rgba(0,255,200,0.08);
-      transition: border-color 0.3s, box-shadow 0.3s;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
-    #wake-word-indicator:hover {
-      border-color: rgba(0,255,200,0.5);
-      box-shadow: 0 0 20px rgba(0,255,200,0.2);
+    #jarvis-sphere {
+      position: relative;
+      width: 68px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    #wake-word-indicator.ww-active {
-      border-color: rgba(0,255,180,0.5);
-      box-shadow: 0 0 18px rgba(0,255,180,0.25);
-    }
-    #ww-dot {
-      width: 8px; height: 8px;
+    .jarvis-ring {
+      position: absolute;
       border-radius: 50%;
-      background: rgba(0,255,180,0.25);
-      border: 1.5px solid rgba(0,255,180,0.4);
-      transition: background 0.3s;
-      flex-shrink: 0;
+      border: 1.5px solid rgba(0,180,255,0.3);
+      transition: border-color 0.4s;
+      animation: jarvisIdle 3s ease-in-out infinite;
+      pointer-events: none;
     }
-    #wake-word-indicator.ww-active #ww-dot {
-      background: #00ffb4;
-      box-shadow: 0 0 8px #00ffb4, 0 0 16px #00ffb4;
-      animation: wwPulse 1.8s ease-in-out infinite;
+    .jarvis-ring-1 { width: 68px; height: 68px; animation-delay: 0s; }
+    .jarvis-ring-2 { width: 56px; height: 56px; animation-delay: 0.35s; border-color: rgba(0,200,255,0.22); }
+    .jarvis-ring-3 { width: 44px; height: 44px; animation-delay: 0.7s; border-color: rgba(0,220,255,0.18); }
+    @keyframes jarvisIdle {
+      0%,100% { transform: scale(1);    opacity: 0.45; }
+      50%      { transform: scale(1.04); opacity: 0.8;  }
     }
-    #wake-word-indicator.ww-heard #ww-dot {
-      background: #ffd700;
-      box-shadow: 0 0 12px #ffd700;
+    #jarvis-orb.listening .jarvis-ring {
+      animation: jarvisListen 1.1s ease-out infinite !important;
+      border-color: rgba(0,255,180,0.9) !important;
     }
-    @keyframes wwPulse {
-      0%,100% { transform: scale(1); opacity: 1; }
-      50%      { transform: scale(1.35); opacity: 0.6; }
+    #jarvis-orb.listening .jarvis-ring-1 { animation-delay: 0s !important; }
+    #jarvis-orb.listening .jarvis-ring-2 { animation-delay: 0.22s !important; }
+    #jarvis-orb.listening .jarvis-ring-3 { animation-delay: 0.44s !important; }
+    @keyframes jarvisListen {
+      0%   { transform: scale(1);   opacity: 1; }
+      100% { transform: scale(1.7); opacity: 0; }
     }
-    #ww-label {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 9px;
-      color: rgba(0,255,180,0.55);
-      letter-spacing: 0.06em;
-      white-space: nowrap;
-      transition: color 0.3s;
+    #jarvis-orb.speaking .jarvis-ring {
+      animation: jarvisSpeak 0.55s ease-out infinite !important;
+      border-color: rgba(180,100,255,0.9) !important;
     }
-    #wake-word-indicator.ww-active #ww-label { color: #00ffb4; }
-    #wake-word-indicator.ww-heard #ww-label  { color: #ffd700; }
-
-    #ww-mic-icon {
-      font-size: 13px;
-      opacity: 0.45;
+    @keyframes jarvisSpeak {
+      0%   { transform: scale(1);   opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    #jarvis-core {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 32%, rgba(0,200,255,0.28), rgba(0,15,50,0.97));
+      border: 2px solid rgba(0,180,255,0.55);
+      box-shadow: 0 0 18px rgba(0,160,255,0.35), inset 0 0 10px rgba(0,180,255,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+      z-index: 2;
+    }
+    #jarvis-orb:hover #jarvis-core {
+      border-color: rgba(0,220,255,0.85);
+      box-shadow: 0 0 28px rgba(0,200,255,0.55), inset 0 0 14px rgba(0,200,255,0.15);
+    }
+    #jarvis-orb.listening #jarvis-core {
+      border-color: rgba(0,255,180,0.95);
+      box-shadow: 0 0 32px rgba(0,255,180,0.65), 0 0 70px rgba(0,255,180,0.18), inset 0 0 16px rgba(0,255,180,0.2);
+      background: radial-gradient(circle at 35% 32%, rgba(0,255,180,0.22), rgba(0,15,40,0.97));
+    }
+    #jarvis-orb.speaking #jarvis-core {
+      border-color: rgba(180,100,255,0.95);
+      box-shadow: 0 0 28px rgba(180,100,255,0.5), inset 0 0 14px rgba(180,100,255,0.2);
+      background: radial-gradient(circle at 35% 32%, rgba(180,100,255,0.2), rgba(10,0,30,0.97));
+    }
+    #jarvis-letter {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 17px;
+      font-weight: 900;
+      color: #00c8ff;
+      text-shadow: 0 0 12px rgba(0,200,255,0.9);
+      transition: color 0.3s, text-shadow 0.3s;
+      line-height: 1;
+    }
+    #jarvis-orb.listening #jarvis-letter { color: #00ffb4; text-shadow: 0 0 16px rgba(0,255,180,0.95); }
+    #jarvis-orb.speaking  #jarvis-letter { color: #c87aff; text-shadow: 0 0 16px rgba(200,122,255,0.95); }
+    /* Sound bars */
+    #jarvis-bars {
+      display: flex; align-items: flex-end; justify-content: center;
+      gap: 2px; height: 14px; opacity: 0;
       transition: opacity 0.3s;
+      position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
     }
-    #wake-word-indicator.ww-active #ww-mic-icon { opacity: 0.9; }
-    #wake-word-indicator.ww-heard  #ww-mic-icon { opacity: 1; }
+    #jarvis-orb.listening #jarvis-bars { opacity: 1; }
+    #jarvis-orb.speaking  #jarvis-bars { opacity: 1; }
+    .jb {
+      width: 3px; background: #00ffb4; border-radius: 3px;
+      height: 3px; transition: background 0.3s;
+    }
+    #jarvis-orb.listening .jb { animation: jbWave 0.65s ease-in-out infinite; background: #00ffb4; }
+    #jarvis-orb.speaking  .jb { animation: jbWave 0.38s ease-in-out infinite; background: #c87aff; }
+    .jb:nth-child(1){animation-delay:0s}   .jb:nth-child(2){animation-delay:0.08s}
+    .jb:nth-child(3){animation-delay:0.16s} .jb:nth-child(4){animation-delay:0.24s}
+    .jb:nth-child(5){animation-delay:0.32s} .jb:nth-child(6){animation-delay:0.24s}
+    .jb:nth-child(7){animation-delay:0.16s} .jb:nth-child(8){animation-delay:0.08s}
+    @keyframes jbWave {
+      0%,100% { height: 3px; }
+      50%      { height: 13px; }
+    }
+    #jarvis-label {
+      font-family: 'Orbitron', sans-serif; font-size: 7px; letter-spacing: 3px;
+      color: rgba(0,180,255,0.45); transition: color 0.3s; margin-top: 3px;
+    }
+    #jarvis-orb.listening #jarvis-label { color: rgba(0,255,180,0.75); text-shadow: 0 0 6px rgba(0,255,180,0.35); }
+    #jarvis-orb.speaking  #jarvis-label { color: rgba(200,122,255,0.75); }
+    #jarvis-status {
+      font-family: 'Share Tech Mono', monospace; font-size: 6px; letter-spacing: 1.5px;
+      color: rgba(0,160,255,0.3); transition: color 0.3s;
+    }
+    #jarvis-orb.listening #jarvis-status { color: rgba(0,255,180,0.55); }
+    #jarvis-orb.speaking  #jarvis-status { color: rgba(200,122,255,0.55); }
+    /* Jarvis speech bubble */
+    #jarvis-bubble {
+      position: fixed; bottom: 115px; right: 16px;
+      max-width: 250px; min-width: 140px;
+      background: rgba(0,8,28,0.94);
+      border: 1px solid rgba(0,180,255,0.35);
+      border-radius: 12px 12px 4px 12px;
+      padding: 8px 12px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; color: #00ccff;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 24px rgba(0,140,255,0.18);
+      opacity: 0; transform: translateY(8px);
+      transition: opacity 0.22s, transform 0.22s;
+      pointer-events: none; z-index: 9099;
+      word-break: break-word; text-align: right;
+    }
+    #jarvis-bubble.show { opacity: 1; transform: translateY(0); }
+    #jarvis-bubble-label {
+      font-family: 'Orbitron', sans-serif; font-size: 6px; letter-spacing: 2px;
+      color: rgba(0,180,255,0.4); margin-bottom: 4px; text-align: right;
+    }
+    #jarvis-bubble-reply {
+      margin-top: 5px;
+      padding-top: 5px;
+      border-top: 1px solid rgba(0,180,255,0.15);
+      color: rgba(200,122,255,0.75);
+      font-size: 9px;
+      display: none;
+    }
+    #jarvis-bubble-reply.show { display: block; }
 
     /* ── */
     #hud-voice-btn {
@@ -4804,31 +4900,48 @@
 
     <!-- UNIVERSE CHATBOX COLLAPSED ICON -->
     <!-- UNIVERSE VOICE MIC BUTTON (floating, always visible) -->
-    <div id="universe-mic-btn" title="Voice command — nói tên agent để bay tới [Alt+V]" data-voice="Mở Truyền Âm" style="position:relative;">
-      <div id="univ-mic-icon">🎙️</div>
+    <div id="universe-mic-btn" title="JARVIS — Nhấn để bật/tắt giọng nói [Alt+V]" data-voice="Hey Jarvis" style="position:relative;">
+      <div id="univ-mic-icon">⚡</div>
       <div id="univ-mic-ring"></div>
-      <div id="univ-mic-label">VOICE</div>
-      <div id="univ-voice-help-btn" class="voice-help-btn" onclick="event.stopPropagation();openVoiceHelp()" title="Danh sách tên có thể nói">?</div>
+      <div id="univ-mic-label">JARVIS</div>
+      <div id="univ-voice-help-btn" class="voice-help-btn" onclick="event.stopPropagation();openVoiceHelp()" title="Danh sách lệnh JARVIS">?</div>
     </div>
 
-    <!-- VOICE COMMAND HINT PANEL -->
+    <!-- JARVIS COMMAND HINT PANEL -->
     <div id="voice-cmd-hints">
-      <div id="vch-title">🎙 LỆNH CÓ THỂ NÓI</div>
-      <div class="vch-row"><span class="vch-say">"Mở [Tên Agent]"</span><span class="vch-do">Triệu hồi agent</span></div>
-      <div class="vch-row"><span class="vch-say">"Leaderboard"</span><span class="vch-do">Bảng xếp hạng</span></div>
-      <div class="vch-row"><span class="vch-say">"Kho Tàng"</span><span class="vch-do">Mở vault</span></div>
-      <div class="vch-row"><span class="vch-say">"So Sánh"</span><span class="vch-do">So sánh agent</span></div>
+      <div id="vch-title">⚡ J.A.R.V.I.S — LỆNH</div>
+      <div class="vch-row"><span class="vch-say">"Hey Jarvis"</span><span class="vch-do">Kích hoạt</span></div>
+      <div class="vch-row"><span class="vch-say">"[Tên Agent]"</span><span class="vch-do">Mở agent</span></div>
+      <div class="vch-row"><span class="vch-say">"Agent 3"</span><span class="vch-do">Agent theo số</span></div>
+      <div class="vch-row"><span class="vch-say">"Kho Tàng"</span><span class="vch-do">Vault</span></div>
       <div class="vch-row"><span class="vch-say">"Thống Kê"</span><span class="vch-do">Analytics</span></div>
-      <div class="vch-row"><span class="vch-say">"AR Mode"</span><span class="vch-do">Bật AR hologram</span></div>
-      <div class="vch-row"><span class="vch-say">"Hỏi [câu hỏi]"</span><span class="vch-do">Chat AI</span></div>
-      <div class="vch-row"><span class="vch-say">"Danh sách lệnh"</span><span class="vch-do">Xem tất cả</span></div>
+      <div class="vch-row"><span class="vch-say">"Đặt chủ đề [X]"</span><span class="vch-do">Set topic</span></div>
+      <div class="vch-row"><span class="vch-say">"Câu hỏi 1"</span><span class="vch-do">Quick Q</span></div>
+      <div class="vch-row"><span class="vch-say">"Tắt Jarvis"</span><span class="vch-do">Offline</span></div>
     </div>
 
-    <!-- WAKE WORD INDICATOR -->
-    <div id="wake-word-indicator" title="Nói 'Mở Truyền Âm' · Nhấn để bật/tắt · Phím tắt: Alt+V" onclick="window._wwToggle && window._wwToggle()">
-      <span id="ww-mic-icon">🎤</span>
-      <div id="ww-dot"></div>
-      <span id="ww-label">MỞ TRUYỀN ÂM</span>
+    <!-- JARVIS VOICE ORB -->
+    <div id="jarvis-orb" onclick="window._wwToggle&&window._wwToggle()" title="J.A.R.V.I.S — Nhấn hoặc nói 'Hey Jarvis' [Alt+V]">
+      <div id="jarvis-sphere">
+        <div class="jarvis-ring jarvis-ring-1"></div>
+        <div class="jarvis-ring jarvis-ring-2"></div>
+        <div class="jarvis-ring jarvis-ring-3"></div>
+        <div id="jarvis-core">
+          <div id="jarvis-letter">J</div>
+        </div>
+        <div id="jarvis-bars">
+          <div class="jb"></div><div class="jb"></div><div class="jb"></div><div class="jb"></div>
+          <div class="jb"></div><div class="jb"></div><div class="jb"></div><div class="jb"></div>
+        </div>
+      </div>
+      <div id="jarvis-label">J·A·R·V·I·S</div>
+      <div id="jarvis-status">STANDBY</div>
+    </div>
+    <!-- JARVIS SPEECH BUBBLE -->
+    <div id="jarvis-bubble">
+      <div id="jarvis-bubble-label">JARVIS HEARD</div>
+      <div id="jarvis-bubble-text"></div>
+      <div id="jarvis-bubble-reply"></div>
     </div>
 
     <div id="uc-collapsed-icon"
@@ -6918,7 +7031,12 @@
           console.log('[VOICE] target after strip:', JSON.stringify(target));
 
           // ── Helper: toast shortcut ─────────────────────────────────────
-          const _vt = (msg) => { if (typeof showToast === 'function') showToast('🎙️ ' + msg, 'info'); };
+          const _vt = (msg) => {
+            if (typeof showToast === 'function') showToast('⚡ JARVIS: ' + msg, 'info');
+            _showTranscript(msg);
+            // Jarvis confirms with TTS after slight delay (avoids cutting off speech)
+            setTimeout(() => { if (typeof _jarvisConfirm === 'function') _jarvisConfirm(); }, 150);
+          };
           const _fn = (name) => typeof window[name] === 'function' ? window[name] : (typeof eval(name) === 'function' ? eval(name) : null);
 
           // ── Special shortcuts ──────────────────────────────────────
@@ -7409,15 +7527,22 @@
 
         document.addEventListener('keydown', function(e) {
           if (e.key === 'Escape') window.closeVoiceHelp && window.closeVoiceHelp();
-          // Alt+V → toggle voice engine
+          // Alt+V → toggle JARVIS
           if (e.altKey && (e.key === 'v' || e.key === 'V')) {
             e.preventDefault();
             if (typeof _toggleVoice === 'function') _toggleVoice();
+            else if (typeof window._voiceToggle === 'function') window._voiceToggle();
           }
-          // Alt+H → open voice help
+          // Alt+H → open JARVIS command list
           if (e.altKey && (e.key === 'h' || e.key === 'H')) {
             e.preventDefault();
             if (typeof window.openVoiceHelp === 'function') window.openVoiceHelp();
+          }
+          // Alt+J → quick JARVIS status check
+          if (e.altKey && (e.key === 'j' || e.key === 'J')) {
+            e.preventDefault();
+            const on = typeof window._voiceIsListening === 'function' && window._voiceIsListening();
+            if (typeof showToast === 'function') showToast('⚡ JARVIS: ' + (on ? 'ONLINE — đang nghe' : 'OFFLINE — nhấn Alt+V để bật'), on ? 'success' : 'warn');
           }
         });
 
@@ -7431,11 +7556,25 @@
         }
 
         function _showTranscript(text) {
+          // Also update Jarvis bubble
+          const _bub   = document.getElementById('jarvis-bubble');
+          const _bText = document.getElementById('jarvis-bubble-text');
+          const _bLbl  = document.getElementById('jarvis-bubble-label');
+          if (_bub && _bText) {
+            if (_bLbl) _bLbl.textContent = 'JARVIS HEARD';
+            _bText.textContent = text;
+            _bub.classList.add('show');
+            clearTimeout(_transcriptTimer);
+            _transcriptTimer = setTimeout(() => _bub.classList.remove('show'), 3000);
+          }
+          // Also update HUD transcript if present
           const el = _getOrCreateTranscript();
-          el.textContent = '🎙 "' + text + '"';
-          el.classList.add('show');
-          clearTimeout(_transcriptTimer);
-          _transcriptTimer = setTimeout(() => el.classList.remove('show'), 2500);
+          if (el) {
+            el.textContent = '◉ "' + text + '"';
+            el.classList.add('show');
+            clearTimeout(_transcriptTimer);
+            _transcriptTimer = setTimeout(() => { el.classList.remove('show'); if(_bub) _bub.classList.remove('show'); }, 3000);
+          }
         }
 
         function _tryClose(transcript) {
@@ -7481,16 +7620,21 @@
                   const _ww = (transcript||'').normalize('NFD')
                     .replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/gi,d=>d==='đ'?'d':'D')
                     .toLowerCase().trim();
-                  const _WAKE = ['mo truyen am','bat truyen am','bat voice','mo voice',
-                    'oi thien co','thien co oi','bat mic','kich hoat truyen am','hey thien co','open voice'];
-                  const _STOP = ['tat truyen am','tat voice','dong truyen am','stop voice','tat mic','off voice'];
+                  const _WAKE = ['hey jarvis','jarvis','oi jarvis','jarvis oi',
+                    'mo truyen am','bat truyen am','bat voice','mo voice',
+                    'oi thien co','thien co oi','bat mic','hey thien co','open voice',
+                    'chao jarvis','xin chao jarvis','bat jarvis'];
+                  const _STOP = ['tat jarvis','jarvis off','stop jarvis','jarvis stop',
+                    'tat truyen am','tat voice','dong truyen am','stop voice','tat mic','off voice','thoat jarvis'];
                   if (_STOP.some(w => _ww.includes(w))) {
                     _showTranscript(transcript);
                     _stopListening();
-                    if (typeof showToast === 'function') showToast('🔇 Truyền âm đã tắt', 'info');
+                    _jarvisSay('Đã offline. Hẹn gặp lại, thưa chủ nhân.');
+                    if (typeof showToast === 'function') showToast('🔇 JARVIS đã offline', 'info');
                   } else if (_WAKE.some(w => _ww.includes(w))) {
                     _showTranscript('✅ ' + transcript);
-                    if (typeof showToast === 'function') showToast('🎙️ Đang nghe — nói tên agent hoặc lệnh…', 'success');
+                    _jarvisSay('Dạ, thưa chủ nhân. JARVIS đang lắng nghe.');
+                    if (typeof showToast === 'function') showToast('⚡ JARVIS — Đang lắng nghe…', 'success');
                   } else if (!_tryClose(transcript)) { _tryNavigate(transcript); }
                 } else {
                   // Show interim
@@ -7511,14 +7655,19 @@
                       const _ww2 = (t||'').normalize('NFD')
                         .replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/gi,d=>d==='đ'?'d':'D')
                         .toLowerCase().trim();
-                      const _WAKE2 = ['mo truyen am','bat truyen am','bat voice','mo voice',
-                        'oi thien co','thien co oi','bat mic','hey thien co','open voice'];
-                      const _STOP2 = ['tat truyen am','tat voice','dong truyen am','stop voice','tat mic'];
+                      const _WAKE2 = ['hey jarvis','jarvis','oi jarvis','jarvis oi',
+                        'mo truyen am','bat truyen am','bat voice','mo voice',
+                        'oi thien co','thien co oi','bat mic','hey thien co','open voice',
+                        'chao jarvis','bat jarvis'];
+                      const _STOP2 = ['tat jarvis','jarvis off','stop jarvis','jarvis stop',
+                        'tat truyen am','tat voice','dong truyen am','stop voice','tat mic'];
                       if (_STOP2.some(w => _ww2.includes(w))) {
                         _stopListening();
-                        if (typeof showToast === 'function') showToast('🔇 Truyền âm đã tắt', 'info');
+                        _jarvisSay('Đã offline. Hẹn gặp lại.');
+                        if (typeof showToast === 'function') showToast('🔇 JARVIS đã offline', 'info');
                       } else if (_WAKE2.some(w => _ww2.includes(w))) {
-                        if (typeof showToast === 'function') showToast('🎙️ Đang nghe — nói tên agent hoặc lệnh…', 'success');
+                        _jarvisSay('Dạ, thưa chủ nhân. Đang lắng nghe.');
+                        if (typeof showToast === 'function') showToast('⚡ JARVIS — Đang lắng nghe…', 'success');
                       } else if (!_tryClose(t)) { _tryNavigate(t); }
                     }
                   }, 1500);
@@ -7559,32 +7708,81 @@
           if (el) el.classList.remove('show');
         }
 
-        /* ── Sync visual state of all mic buttons + badge + hint panel ── */
+        /* ── Sync visual state: Jarvis Orb + all mic buttons + hint panel ── */
         function _syncMicUI() {
           if (voiceBtn)   voiceBtn.classList.toggle('listening', _listening);
           if (univMicBtn) univMicBtn.classList.toggle('listening', _listening);
-          // Sync badge indicator
-          const _bInd = document.getElementById('wake-word-indicator');
-          const _bLbl = document.getElementById('ww-label');
-          if (_bInd) {
-            _bInd.classList.toggle('ww-active', _listening);
-            _bInd.classList.remove('ww-heard');
+          // Sync Jarvis Orb
+          const _orb    = document.getElementById('jarvis-orb');
+          const _status = document.getElementById('jarvis-status');
+          const _letter = document.getElementById('jarvis-letter');
+          if (_orb) {
+            if (_listening) {
+              _orb.classList.add('listening');
+              _orb.classList.remove('speaking');
+            } else {
+              _orb.classList.remove('listening','speaking');
+            }
           }
-          if (_bLbl) _bLbl.textContent = _listening ? 'ĐANG NGHE…' : 'MỞ TRUYỀN ÂM';
+          if (_status) _status.textContent = _listening ? 'LISTENING' : 'STANDBY';
+          if (_letter) _letter.textContent = _listening ? '◉' : 'J';
           // Show/hide command hint panel
           const _hints = document.getElementById('voice-cmd-hints');
           if (_hints) _hints.classList.toggle('visible', _listening);
         }
 
+        /* ── Jarvis TTS response ── */
+        function _jarvisSay(text) {
+          if (!window.speechSynthesis) return;
+          // Show in bubble + orb speaking state
+          const _orb    = document.getElementById('jarvis-orb');
+          const _bText  = document.getElementById('jarvis-bubble-reply');
+          const _bub    = document.getElementById('jarvis-bubble');
+          const _status = document.getElementById('jarvis-status');
+          if (_orb) { _orb.classList.add('speaking'); }
+          if (_bText) { _bText.textContent = text; _bText.classList.add('show'); }
+          if (_status) _status.textContent = 'SPEAKING';
+          // Cancel previous speech
+          window.speechSynthesis.cancel();
+          const utt = new SpeechSynthesisUtterance(text);
+          utt.lang = 'vi-VN'; utt.rate = 1.05; utt.pitch = 0.88; utt.volume = 0.92;
+          // prefer a male/robotic voice if available
+          const voices = window.speechSynthesis.getVoices();
+          const vietVoice = voices.find(v => v.lang.startsWith('vi'));
+          if (vietVoice) utt.voice = vietVoice;
+          utt.onend = function() {
+            if (_orb) { _orb.classList.remove('speaking'); if (_listening) _orb.classList.add('listening'); }
+            if (_bText) { setTimeout(() => _bText.classList.remove('show'), 800); }
+            if (_status) _status.textContent = _listening ? 'LISTENING' : 'STANDBY';
+          };
+          window.speechSynthesis.speak(utt);
+        }
+
+        /* ── Jarvis confirm phrases ── */
+        const _JARVIS_CONFIRMS = [
+          'Thực hiện ngay, thưa chủ nhân.', 'Vâng ạ.', 'Đang xử lý.',
+          'Hoàn thành.', 'Ngay ạ.', 'Như lệnh.'
+        ];
+        function _jarvisConfirm() {
+          const p = _JARVIS_CONFIRMS[Math.floor(Math.random() * _JARVIS_CONFIRMS.length)];
+          _jarvisSay(p);
+        }
+
         /* ── Toggle helper (shared by both buttons) ── */
         function _toggleVoice() {
           if (_listening) {
-            _stopListening();
-            if (typeof showToast === 'function') showToast('🔇 Voice command đã tắt', 'info');
+            _jarvisSay('Đã offline. Hẹn gặp lại, thưa chủ nhân.');
+            setTimeout(() => {
+              _stopListening();
+              if (typeof showToast === 'function') showToast('🔇 JARVIS — Offline', 'info');
+            }, 100);
           } else {
             _startListening();
-            if (typeof showToast === 'function')
-              showToast('🎙️ Đang nghe — nói tên agent hoặc lệnh. Nói "Danh sách lệnh" để xem tất cả', 'success');
+            setTimeout(() => {
+              _jarvisSay('JARVIS đã khởi động. Thưa chủ nhân, tôi đang lắng nghe.');
+              if (typeof showToast === 'function')
+                showToast('⚡ JARVIS — Online. Nói "Hey Jarvis" bất cứ lúc nào.', 'success');
+            }, 200);
           }
         }
 
@@ -7604,7 +7802,7 @@
       })();
       // ──────────────────────────────────────────────────────────────────
 
-      // ══ BADGE "MỞ TRUYỀN ÂM" — chỉ bridge vào Voice Command Engine ════
+      // ══ JARVIS ORB — bridge to Voice Command Engine ════
       // (Chrome chỉ cho 1 SpeechRecognition cùng lúc → dùng chung _rec)
       window._wwToggle = function() {
         if (typeof window._voiceToggle === 'function') window._voiceToggle();
