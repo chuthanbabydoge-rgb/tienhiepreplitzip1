@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **22:46:25 29/5/2026**
+> Cập nhật lần cuối: **23:05:34 29/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,737 dòng, 76.9 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(17,743 dòng, 1.42 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(17,995 dòng, 1.44 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,737 | 76.9 KB |
-| `tienhiepv3.html` | 17,743 | 1.42 MB |
+| `tienhiepv3.html` | 17,995 | 1.44 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **23,201** | **1.66 MB** |
+| **TỔNG** | **23,453** | **1.68 MB** |
 
 ---
 
@@ -1839,7 +1839,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 17,743 dòng · 1.42 MB
+> 17,995 dòng · 1.44 MB
 
 ```html
 <!DOCTYPE html>
@@ -9771,7 +9771,244 @@ app.listen(PORT, '0.0.0.0', () => {
 
         // Fetch live stats (async, không block render)
         fetchAgentDetail(agent.id);
+
+        // Inject LIVE button for supported agents
+        const LIVE_AGENTS = { 0: { icon:'📰', label:'LIVE NEWS' }, 21: { icon:'🐋', label:'LIVE CRYPTO' }, 15: { icon:'✍️', label:'LIVE COPY' } };
+        const _runBar = document.getElementById('hud-run-bar-wrap');
+        if (_runBar) {
+          const _old = _runBar.querySelector('.live-btn-wrap');
+          if (_old) _old.remove();
+          if (LIVE_AGENTS[agent.id]) {
+            const la = LIVE_AGENTS[agent.id];
+            const wrap = document.createElement('div');
+            wrap.className = 'has-btn live-btn-wrap';
+            wrap.innerHTML = `<button onclick="openLivePanel(${agent.id})" style="background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(0,255,136,.05));border-color:#00ff8844;color:#00ff88;">${la.icon} ${la.label}</button>`;
+            _runBar.prepend(wrap);
+          }
+        }
       }
+
+      // ═══════════════════════════════════════════════════════
+      // LIVE AGENT PANEL
+      // ═══════════════════════════════════════════════════════
+      const _LIVE_CFG = {
+        0:  { name:'NEWSFLASH AI', emoji:'📰', color:'#ffaa44' },
+        15: { name:'COPYKING AI',  emoji:'✍️',  color:'#ff66cc' },
+        21: { name:'CRYPTOWHALE AI', emoji:'🐋', color:'#00aaff' },
+      };
+
+      function openLivePanel(agentId) {
+        const cfg = _LIVE_CFG[agentId];
+        if (!cfg) return;
+        const panel = document.getElementById('live-agent-panel');
+        document.getElementById('lap-emoji').textContent  = cfg.emoji;
+        document.getElementById('lap-title').textContent  = cfg.name;
+        document.getElementById('lap-title').style.color  = cfg.color;
+        document.getElementById('lap-body').innerHTML     = _lapLoader();
+        panel.style.display = 'flex';
+        if (agentId === 0)  _loadLiveNews();
+        if (agentId === 21) _loadLiveCrypto();
+        if (agentId === 15) _renderCopyUI();
+      }
+
+      function closeLivePanel() {
+        document.getElementById('live-agent-panel').style.display = 'none';
+      }
+
+      function _lapLoader() {
+        return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:14px;">
+          <div style="width:36px;height:36px;border:2px solid #00ffff33;border-top-color:#00ffff;border-radius:50%;animation:spin 1s linear infinite;"></div>
+          <div style="font-size:9px;color:#00ffff55;letter-spacing:3px;">ĐANG TẢI DỮ LIỆU...</div>
+        </div>`;
+      }
+
+      function _lapErr(msg) {
+        return `<div style="text-align:center;padding:40px;color:#ff6666;font-size:11px;">${msg}</div>`;
+      }
+
+      // ── NewsFlash AI ────────────────────────────────────────
+      async function _loadLiveNews() {
+        const body = document.getElementById('lap-body');
+        try {
+          const r = await fetch('/api/live/news');
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const { articles, ts } = await r.json();
+          const now = new Date(ts).toLocaleTimeString('vi-VN', { hour12: false });
+          if (!articles.length) { body.innerHTML = _lapErr('Không lấy được tin tức. Thử lại sau.'); return; }
+          const srcColors = { 'BBC World': '#ff6644', 'VnExpress': '#ff2255', 'TechCrunch': '#22cc88' };
+          body.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div style="font-family:'Orbitron',sans-serif;font-size:10px;color:#ffaa44;letter-spacing:3px;">◈ TIN TỨC TOÀN CẦU ◈</div>
+              <div style="font-size:8px;color:#ffffff33;">Cập nhật: ${now}</div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+              ${['BBC World','VnExpress','TechCrunch'].map(s => `<div style="font-size:8px;padding:3px 9px;border-radius:12px;background:${srcColors[s]}22;color:${srcColors[s]};border:1px solid ${srcColors[s]}44;">${s}</div>`).join('')}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              ${articles.map((a, i) => `
+                <div style="background:rgba(255,170,68,.04);border:1px solid rgba(255,170,68,.14);border-left:3px solid ${srcColors[a.source]||'#ffaa44'};padding:12px;cursor:pointer;transition:background .2s;"
+                     onclick="window.open('${a.link.replace(/'/g,"\\'")}','_blank')"
+                     onmouseenter="this.style.background='rgba(255,170,68,.1)'" onmouseleave="this.style.background='rgba(255,170,68,.04)'">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px;">
+                    <div style="font-size:11px;color:#ffe088;line-height:1.4;">${a.title}</div>
+                    <div style="font-size:8px;padding:2px 6px;background:${srcColors[a.source]||'#ffaa44'}22;color:${srcColors[a.source]||'#ffaa44'};border-radius:8px;white-space:nowrap;flex-shrink:0;">${a.source}</div>
+                  </div>
+                  ${a.desc ? `<div style="font-size:9px;color:#ffffff55;line-height:1.4;">${a.desc}</div>` : ''}
+                  ${a.pubDate ? `<div style="font-size:8px;color:#ffffff33;margin-top:5px;">${new Date(a.pubDate).toLocaleString('vi-VN') || a.pubDate}</div>` : ''}
+                </div>`).join('')}
+            </div>
+            <div style="text-align:center;margin-top:16px;">
+              <button onclick="_loadLiveNews()" style="background:rgba(255,170,68,.12);border:1px solid #ffaa4444;color:#ffaa44;padding:8px 20px;border-radius:20px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;">↻ LÀM MỚI</button>
+            </div>`;
+        } catch (e) {
+          body.innerHTML = _lapErr('Lỗi: ' + e.message);
+        }
+      }
+
+      // ── CryptoWhale AI ──────────────────────────────────────
+      async function _loadLiveCrypto() {
+        const body = document.getElementById('lap-body');
+        try {
+          const r = await fetch('/api/live/crypto');
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const { coins, ts } = await r.json();
+          if (!coins || !coins.length) { body.innerHTML = _lapErr('Không lấy được dữ liệu crypto. Thử lại sau.'); return; }
+          const now = new Date(ts).toLocaleTimeString('vi-VN', { hour12: false });
+          const fmt = (n) => n >= 1e9 ? (n/1e9).toFixed(2)+'B' : n >= 1e6 ? (n/1e6).toFixed(2)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : n?.toFixed(2);
+          const pFmt = (n) => {
+            if (n == null) return '–';
+            const v = parseFloat(n).toFixed(2);
+            const c = n >= 0 ? '#00ff88' : '#ff4466';
+            return `<span style="color:${c};">${n >= 0 ? '+' : ''}${v}%</span>`;
+          };
+          body.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div style="font-family:'Orbitron',sans-serif;font-size:10px;color:#00aaff;letter-spacing:3px;">◈ CRYPTO MARKET LIVE ◈</div>
+              <div style="font-size:8px;color:#ffffff33;">Cập nhật: ${now}</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;">
+              ${coins.map(c => `
+                <div style="background:rgba(0,170,255,.04);border:1px solid rgba(0,170,255,.15);padding:12px;border-radius:4px;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <img src="${c.image}" style="width:24px;height:24px;border-radius:50%;" onerror="this.style.display='none'">
+                    <div>
+                      <div style="font-size:11px;color:#fff;">${c.name}</div>
+                      <div style="font-size:8px;color:#ffffff55;letter-spacing:1px;">${c.symbol?.toUpperCase()}</div>
+                    </div>
+                  </div>
+                  <div style="font-size:16px;color:#00aaff;font-weight:bold;margin-bottom:4px;">$${fmt(c.current_price)}</div>
+                  <div style="font-size:10px;margin-bottom:6px;">${pFmt(c.price_change_percentage_24h)} 24h</div>
+                  <div style="display:flex;justify-content:space-between;font-size:8px;color:#ffffff44;">
+                    <span>MCap</span><span style="color:#ffffff88;">$${fmt(c.market_cap)}</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;font-size:8px;color:#ffffff44;">
+                    <span>Vol 24h</span><span style="color:#ffffff66;">$${fmt(c.total_volume)}</span>
+                  </div>
+                </div>`).join('')}
+            </div>
+            <div style="text-align:center;margin-top:16px;">
+              <button onclick="_loadLiveCrypto()" style="background:rgba(0,170,255,.12);border:1px solid #00aaff44;color:#00aaff;padding:8px 20px;border-radius:20px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;">↻ LÀM MỚI</button>
+            </div>`;
+        } catch (e) {
+          body.innerHTML = _lapErr('Lỗi: ' + e.message);
+        }
+      }
+
+      // ── CopyKing AI ─────────────────────────────────────────
+      function _renderCopyUI() {
+        const body = document.getElementById('lap-body');
+        const isVi = currentTheme !== 'en';
+        body.innerHTML = `
+          <div style="font-family:'Orbitron',sans-serif;font-size:10px;color:#ff66cc;letter-spacing:3px;margin-bottom:16px;">◈ COPY GENERATOR AI ◈</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+            <div>
+              <div style="font-size:9px;color:#ffffff55;letter-spacing:2px;margin-bottom:6px;">${isVi?'SẢN PHẨM / CHỦ ĐỀ':'PRODUCT / TOPIC'}</div>
+              <input id="copy-topic" type="text" placeholder="${isVi?'vd: Khóa học AI, kem dưỡng da...':'e.g. AI course, skincare cream...'}"
+                style="width:100%;background:rgba(255,102,204,.06);border:1px solid rgba(255,102,204,.25);color:#fff;padding:9px 12px;font-family:'Share Tech Mono',monospace;font-size:11px;box-sizing:border-box;outline:none;" />
+            </div>
+            <div>
+              <div style="font-size:9px;color:#ffffff55;letter-spacing:2px;margin-bottom:6px;">TONE</div>
+              <select id="copy-tone" style="width:100%;background:rgba(20,0,30,.9);border:1px solid rgba(255,102,204,.25);color:#fff;padding:9px 12px;font-family:'Share Tech Mono',monospace;font-size:11px;outline:none;">
+                <option value="persuasive">${isVi?'Thuyết phục':'Persuasive'}</option>
+                <option value="urgent">${isVi?'Gấp gáp':'Urgent'}</option>
+                <option value="friendly">${isVi?'Thân thiện':'Friendly'}</option>
+                <option value="professional">${isVi?'Chuyên nghiệp':'Professional'}</option>
+                <option value="funny">${isVi?'Hài hước':'Funny'}</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;" id="copy-type-btns">
+            ${[['headline','🎯 Headlines'],['social','📱 Social Caption'],['email','📧 Email'],['ad','📣 Ads']].map(([v,l]) =>
+              `<button onclick="_copySelectType('${v}',this)" data-ctype="${v}"
+                style="background:${v==='headline'?'rgba(255,102,204,.2)':'rgba(255,102,204,.06)'};border:1px solid ${v==='headline'?'#ff66cc88':'rgba(255,102,204,.2)'};color:${v==='headline'?'#ff66cc':'#ffffff88'};padding:6px 14px;border-radius:20px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:10px;transition:all .2s;">${l}</button>`).join('')}
+          </div>
+          <div style="text-align:center;margin-bottom:16px;">
+            <button onclick="_runCopyGen()" style="background:linear-gradient(135deg,rgba(255,102,204,.25),rgba(255,102,204,.08));border:1px solid #ff66cc55;color:#ff66cc;padding:10px 30px;border-radius:24px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;">⚡ TẠO COPY</button>
+          </div>
+          <div id="copy-result"></div>`;
+        window._copyType = 'headline';
+      }
+
+      function _copySelectType(v, btn) {
+        window._copyType = v;
+        document.querySelectorAll('[data-ctype]').forEach(b => {
+          b.style.background = 'rgba(255,102,204,.06)';
+          b.style.borderColor = 'rgba(255,102,204,.2)';
+          b.style.color = '#ffffff88';
+        });
+        btn.style.background = 'rgba(255,102,204,.2)';
+        btn.style.borderColor = '#ff66cc88';
+        btn.style.color = '#ff66cc';
+      }
+
+      async function _runCopyGen() {
+        const topic = document.getElementById('copy-topic')?.value?.trim();
+        if (!topic) { document.getElementById('copy-result').innerHTML = '<div style="color:#ff6666;font-size:10px;text-align:center;padding:8px;">Vui lòng nhập chủ đề!</div>'; return; }
+        const tone  = document.getElementById('copy-tone')?.value || 'persuasive';
+        const type  = window._copyType || 'headline';
+        const res   = document.getElementById('copy-result');
+        res.innerHTML = _lapLoader();
+        try {
+          const r = await fetch('/api/live/copy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type, topic, tone, lang: currentTheme === 'en' ? 'en' : 'vi' }),
+          });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const { result } = await r.json();
+          res.innerHTML = _renderCopyResult(type, result, topic);
+        } catch (e) {
+          res.innerHTML = _lapErr('Lỗi tạo copy: ' + e.message);
+        }
+      }
+
+      function _renderCopyResult(type, d, topic) {
+        const copyBox = (text) => `
+          <div style="background:rgba(255,102,204,.05);border:1px solid rgba(255,102,204,.15);padding:10px 14px;border-radius:4px;margin-bottom:6px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div style="font-size:11px;color:#ffe0f8;line-height:1.5;flex:1;">${text}</div>
+            <button onclick="navigator.clipboard.writeText('${text.replace(/'/g,"\\'")}').then(()=>{this.textContent='✓';setTimeout(()=>this.textContent='📋',1500)})"
+              style="background:transparent;border:1px solid rgba(255,102,204,.25);color:#ff66cc88;width:26px;height:26px;border-radius:4px;cursor:pointer;flex-shrink:0;font-size:11px;padding:0;">📋</button>
+          </div>`;
+        let html = `<div style="font-size:9px;color:#ff66cc88;letter-spacing:2px;margin-bottom:10px;">◈ KẾT QUẢ · ${topic.toUpperCase()} ◈</div>`;
+        if (type === 'headline' && d.headlines) {
+          html += d.headlines.map(h => copyBox(h)).join('');
+        } else if (type === 'social' && d.captions) {
+          html += d.captions.map(c => copyBox(c)).join('');
+          if (d.hashtags) html += `<div style="padding:8px 0;color:#ff66cc66;font-size:10px;">${d.hashtags.join(' ')}</div>`;
+        } else if (type === 'email') {
+          if (d.subject) html += `<div style="font-size:9px;color:#ffffff55;letter-spacing:2px;margin-bottom:4px;">SUBJECT</div>${copyBox(d.subject)}`;
+          if (d.preview) html += `<div style="font-size:9px;color:#ffffff55;letter-spacing:2px;margin:8px 0 4px;">PREVIEW TEXT</div>${copyBox(d.preview)}`;
+          if (d.body) html += `<div style="font-size:9px;color:#ffffff55;letter-spacing:2px;margin:8px 0 4px;">BODY</div><div style="background:rgba(255,102,204,.05);border:1px solid rgba(255,102,204,.15);padding:12px;font-size:11px;color:#ffe0f8;line-height:1.6;white-space:pre-wrap;">${d.body}</div>`;
+          if (d.cta) html += `<div style="font-size:9px;color:#ffffff55;letter-spacing:2px;margin:8px 0 4px;">CTA</div>${copyBox(d.cta)}`;
+        } else if (type === 'ad') {
+          if (d.hook) html += `<div style="font-size:9px;color:#ffffff55;letter-spacing:2px;margin-bottom:4px;">HOOK</div>${copyBox(d.hook)}`;
+          if (d.headline) html += `<div style="font-size:9px;color:#ffffff55;letter-spacing:2px;margin:8px 0 4px;">HEADLINE</div>${copyBox(d.headline)}`;
+          if (d.description) html += `<div style="font-size:9px;color:#ffffff55;letter-spacing:2px;margin:8px 0 4px;">DESCRIPTION</div>${copyBox(d.description)}`;
+          if (d.cta) html += `<div style="font-size:9px;color:#ffffff55;letter-spacing:2px;margin:8px 0 4px;">CTA</div>${copyBox(d.cta)}`;
+        }
+        return html;
+      }
+      // ═══════════════════════════════════════════════════════
 
       async function fetchAgentDetail(agentId) {
         try {
@@ -11319,6 +11556,21 @@ app.listen(PORT, '0.0.0.0', () => {
         style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;max-height:280px;overflow-y:auto;">
       </div>
     </div>
+  </div>
+
+  <!-- ═══════════ LIVE AGENT PANEL ═══════════ -->
+  <div id="live-agent-panel" style="display:none;position:fixed;inset:0;z-index:550;background:rgba(0,0,8,.96);backdrop-filter:blur(16px);flex-direction:column;font-family:'Share Tech Mono',monospace;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #00ffff22;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span id="lap-emoji" style="font-size:22px;"></span>
+        <div>
+          <div id="lap-title" style="font-family:'Orbitron',sans-serif;font-size:14px;color:#00ffff;letter-spacing:3px;"></div>
+          <div id="lap-sub" style="font-size:9px;color:#00ffff55;letter-spacing:2px;margin-top:2px;">⚡ DỮ LIỆU THỰC TẾ · LIVE</div>
+        </div>
+      </div>
+      <button onclick="closeLivePanel()" style="background:rgba(255,68,68,.12);border:1px solid #ff444444;color:#ff6666;width:34px;height:34px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+    <div id="lap-body" style="flex:1;overflow-y:auto;padding:16px 20px;"></div>
   </div>
 
   <!-- ═══════════ ANALYTICS MODAL ═══════════ -->
