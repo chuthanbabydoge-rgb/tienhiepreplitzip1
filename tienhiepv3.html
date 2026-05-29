@@ -3460,109 +3460,169 @@
     }
 
     /* ── Canvas floating nodes (Spatial cards) ── */
+    /* ════════════════════════════════════════════════
+       ĐẤU LA ĐẠI LỤC — Xianxia Pháp Khí Node Design
+       ════════════════════════════════════════════════ */
     .canvas-node {
       position: absolute;
       z-index: 10;
-      background: rgba(20, 22, 35, 0.75);
-      border: 1px solid rgba(255,255,255,0.13);
-      color: rgba(255,255,255,0.9);
-      padding: 12px 16px 10px;
       cursor: move;
-      font-size: 12px;
-      font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
-      font-weight: 500;
-      min-width: 150px;
-      text-align: center;
-      border-radius: 16px;
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      box-shadow:
-        0 4px 24px rgba(0,0,0,0.45),
-        0 0 0 1px rgba(255,255,255,0.06),
-        inset 0 1px 0 rgba(255,255,255,0.1);
       user-select: none;
-      transition: box-shadow 0.25s, transform 0.15s;
+      transition: transform 0.2s cubic-bezier(0.34,1.4,0.64,1), filter 0.2s;
     }
     .canvas-node:hover {
-      box-shadow:
-        0 12px 40px rgba(0,0,0,0.6),
-        0 0 0 1px rgba(255,255,255,0.15),
-        inset 0 1px 0 rgba(255,255,255,0.15);
-      transform: translateY(-3px) scale(1.02);
+      transform: translateY(-5px) scale(1.07);
       z-index: 20;
+      filter: brightness(1.18) saturate(1.2);
     }
-    /* Output port dot */
+    /* Output port — element color */
     .canvas-node::after {
       content: '';
       position: absolute;
-      right: -5px; top: 50%;
+      right: -7px; top: 50%;
       transform: translateY(-50%);
-      width: 10px; height: 10px;
-      background: rgba(130,170,255,0.9);
-      border: 2px solid rgba(255,255,255,0.3);
+      width: 13px; height: 13px;
+      background: var(--nc, #8866ff);
+      border: 2px solid rgba(255,255,255,0.55);
       border-radius: 50%;
-      box-shadow: 0 0 8px rgba(130,170,255,0.6);
+      box-shadow: 0 0 12px var(--nc, #8866ff), 0 0 5px rgba(255,255,255,0.3);
+      z-index: 5;
     }
-    /* Input port dot */
+    /* Input port — element color, dimmer */
     .canvas-node::before {
       content: '';
       position: absolute;
-      left: -5px; top: 50%;
+      left: -7px; top: 50%;
       transform: translateY(-50%);
-      width: 10px; height: 10px;
-      background: rgba(100,220,160,0.9);
-      border: 2px solid rgba(255,255,255,0.3);
+      width: 13px; height: 13px;
+      background: var(--nc, #8866ff);
+      border: 2px solid rgba(255,255,255,0.55);
       border-radius: 50%;
-      box-shadow: 0 0 8px rgba(100,220,160,0.5);
+      box-shadow: 0 0 12px var(--nc, #8866ff), 0 0 5px rgba(255,255,255,0.3);
+      z-index: 5;
+      opacity: 0.5;
+    }
+    /* ── Pháp Khí Card — Bát Giác hình thức ── */
+    .node-card {
+      position: relative;
+      overflow: hidden;
+      min-width: 130px;
+      padding: 14px 20px 12px;
+      text-align: center;
+      background: var(--nc-bg, rgba(8,4,28,0.96));
+      border: 1.5px solid var(--nc, #8866ff);
+      clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0% calc(100% - 14px), 0% 14px);
+      box-shadow:
+        0 0 24px var(--nc-glow, rgba(136,102,255,0.45)),
+        0 0 8px var(--nc-glow, rgba(136,102,255,0.3)),
+        inset 0 0 32px rgba(0,0,0,0.7),
+        inset 0 0 20px var(--nc-ring, rgba(136,102,255,0.12));
+      transition: box-shadow 0.25s;
+    }
+    /* Ambient radial inner glow */
+    .node-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 18%, var(--nc-ring, rgba(136,102,255,0.25)) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    /* Inner octagon border (decorative double-frame) */
+    .node-card::after {
+      content: '';
+      position: absolute;
+      top: 4px; left: 4px; right: 4px; bottom: 4px;
+      border: 1px solid var(--nc, #8866ff);
+      clip-path: polygon(10px 0%, calc(100% - 10px) 0%, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0% calc(100% - 10px), 0% 10px);
+      opacity: 0.2;
+      pointer-events: none;
+    }
+    /* Soul rings (vòng linh hồn) */
+    .node-soul-ring {
+      position: absolute;
+      border-radius: 50%;
+      top: 50%; left: 50%;
+      border: 1px dashed var(--nc, #8866ff);
+      pointer-events: none;
+    }
+    .node-soul-ring-1 { width:90px; height:90px; margin:-45px 0 0 -45px; opacity:0.1; animation:xx-soul-cw 10s linear infinite; }
+    .node-soul-ring-2 { width:60px; height:60px; margin:-30px 0 0 -30px; opacity:0.16; animation:xx-soul-ccw 6s linear infinite; }
+    @keyframes xx-soul-cw  { to { transform: rotate(360deg);  } }
+    @keyframes xx-soul-ccw { to { transform: rotate(-360deg); } }
+    /* Element badge (top-right) */
+    .node-element-badge {
+      position: absolute; top:5px; right:8px;
+      font-size: 7px;
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--nc, #8866ff);
+      opacity: 0.5; letter-spacing: 1.5px;
+      pointer-events: none;
+    }
+    /* Large icon */
+    .node-icon-wrap {
+      font-size: 24px; line-height: 1;
+      margin-bottom: 7px;
+      position: relative; z-index: 2;
+      filter: drop-shadow(0 0 10px var(--nc, #8866ff));
+    }
+    /* Xianxia name */
+    .node-name-xx {
+      font-family: 'Share Tech Mono', 'Orbitron', monospace;
+      font-size: 11px; font-weight: 700;
+      color: var(--nc, #8866ff);
+      text-shadow: 0 0 10px var(--nc-glow, rgba(136,102,255,0.8));
+      letter-spacing: 1.5px; line-height: 1.3;
+      position: relative; z-index: 2;
+      margin-bottom: 3px;
+    }
+    /* English sub-type */
+    .node-type-sub {
+      font-family: -apple-system,'Segoe UI',sans-serif;
+      font-size: 8.5px; color: rgba(255,255,255,0.28);
+      letter-spacing: 1.2px; text-transform: uppercase;
+      position: relative; z-index: 2;
     }
 
     /* ── Run Workflow node states ── */
     /* ══════════════════════════════════════════════
        XIANXIA FORMATION RUN STATES — Tiên Hiệp Trận Pháp
        ══════════════════════════════════════════════ */
-    .canvas-node.sp-running {
+    /* ── Xianxia Run States — targets .node-card child ── */
+    .canvas-node.sp-running { animation: xx-node-pulse 0.75s ease-in-out infinite; z-index: 20; }
+    .canvas-node.sp-running .node-card {
       border-color: #ffaa00 !important;
-      color: #ffe080 !important;
-      background: rgba(255,140,0,0.14) !important;
       box-shadow:
-        0 0 0 2px rgba(255,170,0,0.4),
-        0 0 20px rgba(255,140,0,0.7),
-        0 0 45px rgba(255,80,0,0.3),
-        inset 0 0 14px rgba(255,160,0,0.1) !important;
-      animation: xx-node-pulse 0.75s ease-in-out infinite;
-      z-index: 10;
+        0 0 0 2px rgba(255,170,0,0.5),
+        0 0 24px rgba(255,140,0,0.85),
+        0 0 55px rgba(255,80,0,0.4),
+        inset 0 0 18px rgba(255,160,0,0.15) !important;
     }
+    .canvas-node.sp-running .node-name-xx { color:#ffe080 !important; text-shadow:0 0 14px rgba(255,180,0,1) !important; }
+    .canvas-node.sp-running .node-icon-wrap { filter: drop-shadow(0 0 16px #ffaa00) !important; }
+    .canvas-node.sp-running .node-soul-ring { border-color: #ffaa00 !important; opacity: 0.35 !important; }
     @keyframes xx-node-pulse {
-      0%,100% {
-        box-shadow: 0 0 0 2px rgba(255,170,0,0.4), 0 0 20px rgba(255,140,0,0.7), 0 0 45px rgba(255,80,0,0.3);
-        transform: scale(1);
-      }
-      50% {
-        box-shadow: 0 0 0 6px rgba(255,170,0,0.6), 0 0 35px rgba(255,160,0,1), 0 0 70px rgba(255,80,0,0.5);
-        transform: scale(1.05);
-      }
+      0%,100% { transform: scale(1);    filter: brightness(1); }
+      50%      { transform: scale(1.07); filter: brightness(1.35) saturate(1.5); }
     }
-    .canvas-node.sp-done {
+    .canvas-node.sp-done { animation: xx-done-seal 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+    .canvas-node.sp-done .node-card {
       border-color: #00ffaa !important;
-      color: #00ffaa !important;
-      background: rgba(0,255,150,0.09) !important;
       box-shadow:
-        0 0 0 2px rgba(0,255,150,0.3),
-        0 0 18px rgba(0,255,136,0.55),
-        inset 0 0 10px rgba(0,255,136,0.06) !important;
-      animation: xx-done-seal 0.4s cubic-bezier(0.34,1.56,0.64,1);
+        0 0 0 2px rgba(0,255,150,0.4),
+        0 0 22px rgba(0,255,136,0.7),
+        inset 0 0 14px rgba(0,255,136,0.1) !important;
     }
+    .canvas-node.sp-done .node-name-xx { color:#00ffaa !important; text-shadow:0 0 12px rgba(0,255,160,1) !important; }
+    .canvas-node.sp-done .node-soul-ring { border-color:#00ffaa !important; opacity:0.25 !important; }
     @keyframes xx-done-seal {
-      0%  { transform: scale(1.15); opacity: 0.6; filter: brightness(2); }
-      100%{ transform: scale(1);    opacity: 1;   filter: brightness(1); }
+      0%  { transform: scale(1.18); filter: brightness(3); }
+      100%{ transform: scale(1);    filter: brightness(1); }
     }
-    .canvas-node.sp-error {
+    .canvas-node.sp-error { animation: xx-error-shake 0.45s ease-in-out; }
+    .canvas-node.sp-error .node-card {
       border-color: #ff3333 !important;
-      color: #ff6666 !important;
-      background: rgba(255,40,40,0.12) !important;
-      box-shadow: 0 0 0 3px rgba(255,50,50,0.35), 0 0 25px rgba(255,40,40,0.6) !important;
-      animation: xx-error-shake 0.45s ease-in-out;
+      box-shadow: 0 0 0 3px rgba(255,50,50,0.45), 0 0 30px rgba(255,40,40,0.7) !important;
     }
+    .canvas-node.sp-error .node-name-xx { color:#ff6666 !important; }
     @keyframes xx-error-shake {
       0%,100% { transform: translateX(0) rotate(0deg); }
       20%,60%  { transform: translateX(-5px) rotate(-1.5deg); }
@@ -11401,8 +11461,8 @@
         const type = n.getAttribute('data-raw-type');
         if (type) {
           const dispName = lang === 'xx' ? (type.split(' / ')[1] || type) : type.split(' / ')[0];
-          const btnText = lang === 'xx' ? '⚙️ Luyện Hoá' : '⚙️ Config';
-          n.innerHTML = `<div style="margin-bottom:5px;">${dispName}</div><div style="font-size:10px;cursor:pointer;color:#00ffff;text-shadow:0 0 5px #00ffff;background:rgba(0,255,255,0.1);padding:2px 5px;border-radius:4px;border:1px solid rgba(0,255,255,0.3);" onclick="event.stopPropagation();showToast('${lang === 'xx' ? 'Đang luyện hoá' : 'Configuring'} ' + this.parentElement.innerText.split('\\n')[0], 'info')">${btnText}</div>`;
+          _setNodeVars(n, type);
+          n.innerHTML = _mkNodeHtml(type, dispName);
         }
       });
 
@@ -12252,6 +12312,35 @@
       ev.dataTransfer.setData("text", draggedType);
     }
     function allowDrop(ev) { ev.preventDefault(); }
+    // ══ ĐẤUU LA ĐẠI LỤC: Node Element Data ══
+    const _nodeData = {
+      'Data Source': { icon:'📥', color:'#4488ff', bg:'rgba(0,8,38,0.96)',  glow:'rgba(60,130,255,0.5)',  ring:'rgba(80,150,255,0.16)', badge:'水·WATER',   xxName:'Thủy Nguyên Khí'  },
+      'LLM Engine':  { icon:'🧠', color:'#cc55ff', bg:'rgba(15,0,38,0.96)', glow:'rgba(200,80,255,0.5)', ring:'rgba(180,80,255,0.16)', badge:'魂·SOUL',    xxName:'Thần Hồn Lực'     },
+      'Vision API':  { icon:'👁', color:'#ffcc00', bg:'rgba(26,18,0,0.96)', glow:'rgba(255,200,0,0.5)',  ring:'rgba(255,200,0,0.16)',  badge:'光·LIGHT',   xxName:'Thiên Nhãn Thức'  },
+      'Audio Gen':   { icon:'🎵', color:'#ff5533', bg:'rgba(32,5,0,0.96)',  glow:'rgba(255,80,40,0.5)',  ring:'rgba(255,80,40,0.16)',  badge:'火·FIRE',    xxName:'Hỏa Âm Pháp'     },
+      'Filter Logic':{ icon:'⚡', color:'#bb44ff', bg:'rgba(18,0,38,0.96)', glow:'rgba(180,60,255,0.5)', ring:'rgba(180,60,255,0.16)', badge:'雷·THUNDER', xxName:'Lôi Pháp Ấn'     },
+      'Publish':     { icon:'🚀', color:'#00ff88', bg:'rgba(0,24,12,0.96)', glow:'rgba(0,255,130,0.5)',  ring:'rgba(0,255,120,0.16)',  badge:'木·WOOD',    xxName:'Mộc Xuất Thế'    },
+    };
+    const _ndList = Object.values(_nodeData);
+    function _nodeHash(s) { let h=0; for(let i=0;i<s.length;i++) h=(h<<5)-h+s.charCodeAt(i)|0; return Math.abs(h); }
+    function _mkNodeHtml(rawType, dispName) {
+      const typeKey = (rawType||'').split(' / ')[0].trim();
+      const d = _nodeData[typeKey] || _ndList[_nodeHash(typeKey) % _ndList.length];
+      return `<div class="node-card" style="--nc:${d.color};--nc-bg:${d.bg};--nc-glow:${d.glow};--nc-ring:${d.ring};">
+        <div class="node-soul-ring node-soul-ring-1"></div>
+        <div class="node-soul-ring node-soul-ring-2"></div>
+        <div class="node-element-badge">${d.badge}</div>
+        <div class="node-icon-wrap">${d.icon}</div>
+        <div class="node-name-xx">${dispName}</div>
+        <div class="node-type-sub">${typeKey.split(' ')[0]}</div>
+      </div>`;
+    }
+    function _setNodeVars(node, rawType) {
+      const typeKey = (rawType||'').split(' / ')[0].trim();
+      const d = _nodeData[typeKey] || _ndList[_nodeHash(typeKey) % _ndList.length];
+      node.style.setProperty('--nc', d.color);
+    }
+
     function _hideBuilderEmpty() {
       const el = document.getElementById('builder-empty-label');
       if (el) el.style.display = 'none';
@@ -12270,7 +12359,9 @@
       node.style.left = x + 'px';
       node.style.top = y + 'px';
       node.setAttribute('data-raw-type', draggedType);
-      node.innerText = currentTheme === 'xx' ? (draggedType.split(' / ')[1] || draggedType) : draggedType.split(' / ')[0];
+      _setNodeVars(node, draggedType);
+      const _ddisp = currentTheme === 'xx' ? (draggedType.split(' / ')[1] || draggedType) : draggedType.split(' / ')[0];
+      node.innerHTML = _mkNodeHtml(draggedType, _ddisp);
       node.id = 'bnode-' + nodeCounter++;
 
       node.onmousedown = function (e) {
@@ -12542,8 +12633,8 @@
         const rawName = name + " / " + name_xx;
         node.setAttribute('data-raw-type', rawName);
         const dispName = currentTheme === 'xx' ? name_xx : name;
-        const btnText = currentTheme === 'xx' ? '⚙️ Luyện Hoá' : '⚙️ Config';
-        node.innerHTML = `<div style="margin-bottom:5px;">${dispName}</div><div style="font-size:10px;cursor:pointer;color:#00ffff;text-shadow:0 0 5px #00ffff;background:rgba(0,255,255,0.1);padding:2px 5px;border-radius:4px;border:1px solid rgba(0,255,255,0.3);" onclick="event.stopPropagation();showToast('${currentTheme === 'xx' ? 'Đang luyện hoá' : 'Configuring'} ' + this.parentElement.innerText.split('\\n')[0], 'info')">${btnText}</div>`;
+        _setNodeVars(node, rawName);
+        node.innerHTML = _mkNodeHtml(rawName, dispName);
         node.id = 'bnode-' + nodeCounter++;
 
         node.onmousedown = function (e) {
