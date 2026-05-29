@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **02:22:40 29/5/2026**
+> Cập nhật lần cuối: **18:16:26 29/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,650 dòng, 72.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(16,793 dòng, 1.37 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(16,940 dòng, 1.38 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,650 | 72.2 KB |
-| `tienhiepv3.html` | 16,793 | 1.37 MB |
+| `tienhiepv3.html` | 16,940 | 1.38 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **22,164** | **1.61 MB** |
+| **TỔNG** | **22,311** | **1.61 MB** |
 
 ---
 
@@ -59,7 +59,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@google/genai": "^2.6.0",
+    "@google/genai": "^2.7.0",
     "@imgly/background-removal-node": "^1.4.5",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/express-session": "^1.19.0",
@@ -1752,7 +1752,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 16,793 dòng · 1.37 MB
+> 16,940 dòng · 1.38 MB
 
 ```html
 <!DOCTYPE html>
@@ -10196,13 +10196,32 @@ app.listen(PORT, '0.0.0.0', () => {
             Kéo thả các khối để xây dựng luồng tự động
           </span>
         </div>
+        <!-- Clear button -->
+        <button onclick="clearBuilder()" id="builder-clear-btn" style="
+          display:inline-flex;align-items:center;gap:5px;
+          background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+          color:rgba(255,255,255,0.5);padding:6px 13px;
+          font-family:-apple-system,'Segoe UI',sans-serif;font-size:12px;font-weight:500;
+          border-radius:20px;cursor:pointer;transition:all 0.18s;">
+          ✕ Xóa
+        </button>
+        <!-- Run button -->
+        <button onclick="runWorkflow()" id="builder-run-btn" style="
+          display:inline-flex;align-items:center;gap:6px;
+          background:rgba(52,199,89,0.15);border:1px solid rgba(52,199,89,0.4);
+          color:#34c759;padding:6px 16px;
+          font-family:-apple-system,'Segoe UI',sans-serif;font-size:12px;font-weight:600;
+          border-radius:20px;cursor:pointer;transition:all 0.18s;
+          box-shadow:0 0 14px rgba(52,199,89,0.15),inset 0 1px 0 rgba(255,255,255,0.08);">
+          ▶ Chạy
+        </button>
         <!-- Status pill -->
-        <div style="
+        <div id="builder-status-pill" style="
           display:flex;align-items:center;gap:6px;
           background:rgba(52,199,89,0.12);border:1px solid rgba(52,199,89,0.25);
           border-radius:20px;padding:5px 12px;">
-          <span class="pulse-dot" style="background:#34c759;box-shadow:0 0 6px #34c759;"></span>
-          <span style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:11px;color:#34c759;font-weight:500;">Sẵn sàng</span>
+          <span class="pulse-dot" id="builder-status-dot" style="background:#34c759;box-shadow:0 0 6px #34c759;"></span>
+          <span id="builder-status-text" style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:11px;color:#34c759;font-weight:500;">Sẵn sàng</span>
         </div>
       </div>
 
@@ -10281,8 +10300,21 @@ app.listen(PORT, '0.0.0.0', () => {
                 <stop offset="0%" style="stop-color:rgba(100,220,160,0.8)"/>
                 <stop offset="100%" style="stop-color:rgba(94,159,255,0.8)"/>
               </linearGradient>
+              <linearGradient id="sp-active-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:rgba(255,214,10,0.9)"/>
+                <stop offset="100%" style="stop-color:rgba(255,159,10,0.9)"/>
+              </linearGradient>
+              <linearGradient id="sp-done-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:rgba(52,199,89,0.85)"/>
+                <stop offset="100%" style="stop-color:rgba(100,220,160,0.85)"/>
+              </linearGradient>
             </defs>
           </svg>
+
+          <!-- Log panel (slides up from bottom) -->
+          <div id="builder-log-panel">
+            <div id="builder-log-inner"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -11784,12 +11816,127 @@ app.listen(PORT, '0.0.0.0', () => {
       svg.innerHTML = _spGradDefs() + paths;
     }
 
+    // ── SET BUILDER STATUS PILL ──
+    function _setBuilderStatus(text, color) {
+      const dot = document.getElementById('builder-status-dot');
+      const txt = document.getElementById('builder-status-text');
+      if (dot) { dot.style.background = color; dot.style.boxShadow = `0 0 6px ${color}`; }
+      if (txt)  { txt.style.color = color; txt.textContent = text; }
+    }
+
+    // ── BUILDER LOG ──
+    function _blogLog(msg, type) {
+      const panel = document.getElementById('builder-log-panel');
+      const inner = document.getElementById('builder-log-inner');
+      if (!panel || !inner) return;
+      panel.classList.add('sp-open');
+      const line = document.createElement('div');
+      line.className = 'log-' + (type || 'info');
+      const ts = new Date().toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      line.textContent = `[${ts}] ${msg}`;
+      inner.appendChild(line);
+      inner.scrollTop = inner.scrollHeight;
+    }
+
+    // ── CLEAR BUILDER ──
+    function clearBuilder() {
+      bNodes.forEach(n => n.remove());
+      bNodes = [];
+      nodeCounter = 0;
+      document.getElementById('builder-svg').innerHTML = _spGradDefs();
+      const el = document.getElementById('builder-empty-label');
+      if (el) el.style.display = '';
+      const panel = document.getElementById('builder-log-panel');
+      if (panel) { panel.classList.remove('sp-open'); document.getElementById('builder-log-inner').innerHTML = ''; }
+      _setBuilderStatus('Sẵn sàng', '#34c759');
+      const runBtn = document.getElementById('builder-run-btn');
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.textContent = '▶ Chạy'; }
+    }
+
+    // ── RUN WORKFLOW ANIMATION ──
+    let _wfRunning = false;
+    async function runWorkflow() {
+      if (_wfRunning) return;
+      if (bNodes.length === 0) { showToast('Chưa có khối nào trên canvas!', 'error'); return; }
+
+      _wfRunning = true;
+      const runBtn = document.getElementById('builder-run-btn');
+      if (runBtn) { runBtn.disabled = true; runBtn.style.opacity = '0.5'; runBtn.textContent = '⏳ Đang chạy…'; }
+
+      // reset states
+      bNodes.forEach(n => { n.classList.remove('sp-running','sp-done','sp-error'); });
+      document.querySelectorAll('.builder-line').forEach(l => l.classList.remove('sp-active','sp-done-line'));
+      const panel = document.getElementById('builder-log-panel');
+      const inner = document.getElementById('builder-log-inner');
+      if (panel && inner) { panel.classList.add('sp-open'); inner.innerHTML = ''; }
+
+      _blogLog('🚀 Khởi động workflow…', 'run');
+      _setBuilderStatus('Đang chạy…', '#ffd60a');
+
+      const lines = document.querySelectorAll('.builder-line');
+      const delay = ms => new Promise(r => setTimeout(r, ms));
+
+      for (let i = 0; i < bNodes.length; i++) {
+        const node = bNodes[i];
+        const label = node.getAttribute('data-raw-type') || node.innerText.split('\n')[0];
+        const dispLabel = label.split(' / ')[0] || label;
+
+        // activate connection line before this node (if exists)
+        if (i > 0 && lines[i-1]) {
+          lines[i-1].classList.add('sp-active');
+        }
+
+        node.classList.add('sp-running');
+        _blogLog(`⚙ Bước ${i+1}/${bNodes.length}: ${dispLabel}`, 'run');
+        await delay(900 + Math.random() * 400);
+
+        // finish line
+        if (i > 0 && lines[i-1]) {
+          lines[i-1].classList.remove('sp-active');
+          lines[i-1].classList.add('sp-done-line');
+        }
+
+        // 5% chance of simulated error
+        const fail = Math.random() < 0.05;
+        node.classList.remove('sp-running');
+        if (fail) {
+          node.classList.add('sp-error');
+          _blogLog(`✗ Lỗi tại bước ${i+1}: ${dispLabel} — retry…`, 'err');
+          await delay(700);
+          node.classList.remove('sp-error');
+          node.classList.add('sp-running');
+          await delay(600);
+          node.classList.remove('sp-running');
+        }
+        node.classList.add('sp-done');
+        _blogLog(`✓ Hoàn thành: ${dispLabel}`, 'ok');
+      }
+
+      // activate last line if any
+      if (lines.length > 0 && bNodes.length > 1) {
+        const last = lines[lines.length - 1];
+        if (last && !last.classList.contains('sp-done-line')) { last.classList.add('sp-done-line'); }
+      }
+
+      _blogLog(`✅ Workflow hoàn tất — ${bNodes.length} bước thành công!`, 'ok');
+      _setBuilderStatus('Hoàn tất ✓', '#34c759');
+      showToast('Workflow chạy xong!', 'success');
+      _wfRunning = false;
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.textContent = '▶ Chạy lại'; }
+    }
+
     function loadPreset(index) {
       bNodes.forEach(n => n.remove());
       bNodes = [];
       nodeCounter = 0;
       document.getElementById('builder-svg').innerHTML = _spGradDefs();
       _hideBuilderEmpty();
+      _wfRunning = false;
+      const runBtn = document.getElementById('builder-run-btn');
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.textContent = '▶ Chạy'; }
+      _setBuilderStatus('Sẵn sàng', '#34c759');
+      const panel = document.getElementById('builder-log-panel');
+      if (panel) { panel.classList.remove('sp-open'); document.getElementById('builder-log-inner').innerHTML = ''; }
 
       const agent = AI_AGENTS[index];
       if (!agent) return;
