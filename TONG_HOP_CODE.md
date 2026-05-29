@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **19:02:41 29/5/2026**
+> Cập nhật lần cuối: **21:56:21 29/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,650 dòng, 72.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(16,940 dòng, 1.38 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(17,747 dòng, 1.42 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,650 | 72.2 KB |
-| `tienhiepv3.html` | 16,940 | 1.38 MB |
+| `tienhiepv3.html` | 17,747 | 1.42 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **22,311** | **1.61 MB** |
+| **TỔNG** | **23,118** | **1.65 MB** |
 
 ---
 
@@ -1752,7 +1752,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 16,940 dòng · 1.38 MB
+> 17,747 dòng · 1.42 MB
 
 ```html
 <!DOCTYPE html>
@@ -3197,6 +3197,239 @@ app.listen(PORT, '0.0.0.0', () => {
     .vh-item.vh-highlight .vh-xname { color: #ffd700; }
     .vh-item.vh-highlight { border-color: rgba(255,215,0,0.2); background: rgba(255,215,0,0.04); }
 
+    /* ── Voice Hint Badges on Buttons ── */
+    [data-voice]::after {
+      content: '🎤 "' attr(data-voice) '"';
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 7px;
+      color: rgba(0,255,180,0.7);
+      background: rgba(0,5,18,0.9);
+      border: 1px solid rgba(0,255,180,0.2);
+      border-radius: 6px;
+      padding: 2px 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 9999;
+    }
+    [data-voice]:hover::after { opacity: 1; }
+    [data-voice] { position: relative; }
+
+    /* ── Voice Command Hint Ticker ── */
+    #voice-cmd-hints {
+      position: fixed;
+      bottom: 130px;
+      right: 16px;
+      z-index: 9099;
+      width: 220px;
+      background: rgba(0,5,18,0.88);
+      border: 1px solid rgba(0,255,200,0.18);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: none;
+      flex-direction: column;
+      gap: 3px;
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+      box-shadow: 0 0 20px rgba(0,255,180,0.08);
+    }
+    #voice-cmd-hints.visible { display: flex; }
+    .vch-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(0,255,200,0.05);
+    }
+    .vch-row:last-child { border-bottom: none; }
+    .vch-say { color: #00ffb4; opacity: 0.9; }
+    .vch-do  { color: rgba(255,255,255,0.35); text-align: right; }
+    #vch-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 7px;
+      letter-spacing: 2px;
+      color: rgba(0,255,180,0.4);
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    .vh-tab-btn.active {
+      background: rgba(0,255,255,0.15) !important;
+      border-color: rgba(0,255,255,0.5) !important;
+    }
+
+    /* ── THIÊN NHĨ VOICE ORB ── */
+    #jarvis-orb {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      z-index: 9100;
+      width: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      pointer-events: auto;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #jarvis-sphere {
+      position: relative;
+      width: 68px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .jarvis-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1.5px solid rgba(0,180,255,0.3);
+      transition: border-color 0.4s;
+      animation: jarvisIdle 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .jarvis-ring-1 { width: 68px; height: 68px; animation-delay: 0s; }
+    .jarvis-ring-2 { width: 56px; height: 56px; animation-delay: 0.35s; border-color: rgba(0,200,255,0.22); }
+    .jarvis-ring-3 { width: 44px; height: 44px; animation-delay: 0.7s; border-color: rgba(0,220,255,0.18); }
+    @keyframes jarvisIdle {
+      0%,100% { transform: scale(1);    opacity: 0.45; }
+      50%      { transform: scale(1.04); opacity: 0.8;  }
+    }
+    #jarvis-orb.listening .jarvis-ring {
+      animation: jarvisListen 1.1s ease-out infinite !important;
+      border-color: rgba(0,255,180,0.9) !important;
+    }
+    #jarvis-orb.listening .jarvis-ring-1 { animation-delay: 0s !important; }
+    #jarvis-orb.listening .jarvis-ring-2 { animation-delay: 0.22s !important; }
+    #jarvis-orb.listening .jarvis-ring-3 { animation-delay: 0.44s !important; }
+    @keyframes jarvisListen {
+      0%   { transform: scale(1);   opacity: 1; }
+      100% { transform: scale(1.7); opacity: 0; }
+    }
+    #jarvis-orb.speaking .jarvis-ring {
+      animation: jarvisSpeak 0.55s ease-out infinite !important;
+      border-color: rgba(180,100,255,0.9) !important;
+    }
+    @keyframes jarvisSpeak {
+      0%   { transform: scale(1);   opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    #jarvis-core {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 32%, rgba(0,200,255,0.28), rgba(0,15,50,0.97));
+      border: 2px solid rgba(0,180,255,0.55);
+      box-shadow: 0 0 18px rgba(0,160,255,0.35), inset 0 0 10px rgba(0,180,255,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+      z-index: 2;
+    }
+    #jarvis-orb:hover #jarvis-core {
+      border-color: rgba(0,220,255,0.85);
+      box-shadow: 0 0 28px rgba(0,200,255,0.55), inset 0 0 14px rgba(0,200,255,0.15);
+    }
+    #jarvis-orb.listening #jarvis-core {
+      border-color: rgba(0,255,180,0.95);
+      box-shadow: 0 0 32px rgba(0,255,180,0.65), 0 0 70px rgba(0,255,180,0.18), inset 0 0 16px rgba(0,255,180,0.2);
+      background: radial-gradient(circle at 35% 32%, rgba(0,255,180,0.22), rgba(0,15,40,0.97));
+    }
+    #jarvis-orb.speaking #jarvis-core {
+      border-color: rgba(180,100,255,0.95);
+      box-shadow: 0 0 28px rgba(180,100,255,0.5), inset 0 0 14px rgba(180,100,255,0.2);
+      background: radial-gradient(circle at 35% 32%, rgba(180,100,255,0.2), rgba(10,0,30,0.97));
+    }
+    #jarvis-letter {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 17px;
+      font-weight: 900;
+      color: #00c8ff;
+      text-shadow: 0 0 12px rgba(0,200,255,0.9);
+      transition: color 0.3s, text-shadow 0.3s;
+      line-height: 1;
+    }
+    #jarvis-orb.listening #jarvis-letter { color: #00ffb4; text-shadow: 0 0 16px rgba(0,255,180,0.95); }
+    #jarvis-orb.speaking  #jarvis-letter { color: #c87aff; text-shadow: 0 0 16px rgba(200,122,255,0.95); }
+    /* Sound bars */
+    #jarvis-bars {
+      display: flex; align-items: flex-end; justify-content: center;
+      gap: 2px; height: 14px; opacity: 0;
+      transition: opacity 0.3s;
+      position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+    }
+    #jarvis-orb.listening #jarvis-bars { opacity: 1; }
+    #jarvis-orb.speaking  #jarvis-bars { opacity: 1; }
+    .jb {
+      width: 3px; background: #00ffb4; border-radius: 3px;
+      height: 3px; transition: background 0.3s;
+    }
+    #jarvis-orb.listening .jb { animation: jbWave 0.65s ease-in-out infinite; background: #00ffb4; }
+    #jarvis-orb.speaking  .jb { animation: jbWave 0.38s ease-in-out infinite; background: #c87aff; }
+    .jb:nth-child(1){animation-delay:0s}   .jb:nth-child(2){animation-delay:0.08s}
+    .jb:nth-child(3){animation-delay:0.16s} .jb:nth-child(4){animation-delay:0.24s}
+    .jb:nth-child(5){animation-delay:0.32s} .jb:nth-child(6){animation-delay:0.24s}
+    .jb:nth-child(7){animation-delay:0.16s} .jb:nth-child(8){animation-delay:0.08s}
+    @keyframes jbWave {
+      0%,100% { height: 3px; }
+      50%      { height: 13px; }
+    }
+    #jarvis-label {
+      font-family: 'Orbitron', sans-serif; font-size: 7px; letter-spacing: 3px;
+      color: rgba(0,180,255,0.45); transition: color 0.3s; margin-top: 3px;
+    }
+    #jarvis-orb.listening #jarvis-label { color: rgba(0,255,180,0.75); text-shadow: 0 0 6px rgba(0,255,180,0.35); }
+    #jarvis-orb.speaking  #jarvis-label { color: rgba(200,122,255,0.75); }
+    #jarvis-status {
+      font-family: 'Share Tech Mono', monospace; font-size: 6px; letter-spacing: 1.5px;
+      color: rgba(0,160,255,0.3); transition: color 0.3s;
+    }
+    #jarvis-orb.listening #jarvis-status { color: rgba(0,255,180,0.55); }
+    #jarvis-orb.speaking  #jarvis-status { color: rgba(200,122,255,0.55); }
+    /* Jarvis speech bubble */
+    #jarvis-bubble {
+      position: fixed; bottom: 115px; right: 16px;
+      max-width: 250px; min-width: 140px;
+      background: rgba(0,8,28,0.94);
+      border: 1px solid rgba(0,180,255,0.35);
+      border-radius: 12px 12px 4px 12px;
+      padding: 8px 12px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; color: #00ccff;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 24px rgba(0,140,255,0.18);
+      opacity: 0; transform: translateY(8px);
+      transition: opacity 0.22s, transform 0.22s;
+      pointer-events: none; z-index: 9099;
+      word-break: break-word; text-align: right;
+    }
+    #jarvis-bubble.show { opacity: 1; transform: translateY(0); }
+    #jarvis-bubble-label {
+      font-family: 'Orbitron', sans-serif; font-size: 6px; letter-spacing: 2px;
+      color: rgba(0,180,255,0.4); margin-bottom: 4px; text-align: right;
+    }
+    #jarvis-bubble-reply {
+      margin-top: 5px;
+      padding-top: 5px;
+      border-top: 1px solid rgba(0,180,255,0.15);
+      color: rgba(200,122,255,0.75);
+      font-size: 9px;
+      display: none;
+    }
+    #jarvis-bubble-reply.show { display: block; }
+
+    /* ── */
     #hud-voice-btn {
       position: absolute;
       left: 18px;
@@ -6424,11 +6657,48 @@ app.listen(PORT, '0.0.0.0', () => {
 
     <!-- UNIVERSE CHATBOX COLLAPSED ICON -->
     <!-- UNIVERSE VOICE MIC BUTTON (floating, always visible) -->
-    <div id="universe-mic-btn" title="Voice command — nói tên agent để bay tới" style="position:relative;">
-      <div id="univ-mic-icon">🎙️</div>
+    <div id="universe-mic-btn" title="THIÊN NHĨ — Nhấn để bật/tắt giọng nói [Alt+V]" data-voice="Thiên Nhĩ" style="position:relative;">
+      <div id="univ-mic-icon">⚡</div>
       <div id="univ-mic-ring"></div>
-      <div id="univ-mic-label">VOICE</div>
-      <div id="univ-voice-help-btn" class="voice-help-btn" onclick="event.stopPropagation();openVoiceHelp()" title="Danh sách tên có thể nói">?</div>
+      <div id="univ-mic-label">THIÊN NHĨ</div>
+      <div id="univ-voice-help-btn" class="voice-help-btn" onclick="event.stopPropagation();openVoiceHelp()" title="Danh sách lệnh Thiên Nhĩ">?</div>
+    </div>
+
+    <!-- THIÊN NHĨ COMMAND HINT PANEL -->
+    <div id="voice-cmd-hints">
+      <div id="vch-title">⚡ THIÊN NHĨ — LỆNH</div>
+      <div class="vch-row"><span class="vch-say">"Thiên Nhĩ"</span><span class="vch-do">Kích hoạt</span></div>
+      <div class="vch-row"><span class="vch-say">"[Tên Agent]"</span><span class="vch-do">Mở agent</span></div>
+      <div class="vch-row"><span class="vch-say">"Agent 3"</span><span class="vch-do">Agent theo số</span></div>
+      <div class="vch-row"><span class="vch-say">"Kho Tàng"</span><span class="vch-do">Vault</span></div>
+      <div class="vch-row"><span class="vch-say">"Thống Kê"</span><span class="vch-do">Analytics</span></div>
+      <div class="vch-row"><span class="vch-say">"Đặt chủ đề [X]"</span><span class="vch-do">Set topic</span></div>
+      <div class="vch-row"><span class="vch-say">"Câu hỏi 1"</span><span class="vch-do">Quick Q</span></div>
+      <div class="vch-row"><span class="vch-say">"Tắt Thiên Nhĩ"</span><span class="vch-do">Offline</span></div>
+    </div>
+
+    <!-- THIÊN NHĨ VOICE ORB -->
+    <div id="jarvis-orb" onclick="window._wwToggle&&window._wwToggle()" title="THIÊN NHĨ — Nhấn hoặc nói 'Hey Jarvis' [Alt+V]">
+      <div id="jarvis-sphere">
+        <div class="jarvis-ring jarvis-ring-1"></div>
+        <div class="jarvis-ring jarvis-ring-2"></div>
+        <div class="jarvis-ring jarvis-ring-3"></div>
+        <div id="jarvis-core">
+          <div id="jarvis-letter">天</div>
+        </div>
+        <div id="jarvis-bars">
+          <div class="jb"></div><div class="jb"></div><div class="jb"></div><div class="jb"></div>
+          <div class="jb"></div><div class="jb"></div><div class="jb"></div><div class="jb"></div>
+        </div>
+      </div>
+      <div id="jarvis-label">THIÊN NHĨ</div>
+      <div id="jarvis-status">TĨNH TÂM</div>
+    </div>
+    <!-- THIÊN NHĨ SPEECH BUBBLE -->
+    <div id="jarvis-bubble">
+      <div id="jarvis-bubble-label">THIÊN NHĨ NGHE</div>
+      <div id="jarvis-bubble-text"></div>
+      <div id="jarvis-bubble-reply"></div>
     </div>
 
     <div id="uc-collapsed-icon"
@@ -6481,42 +6751,42 @@ app.listen(PORT, '0.0.0.0', () => {
 
     <!-- SIDEBAR RIGHT -->
     <div id="sidebar-right">
-      <div class="panel-btn" onclick="openLeaderboard()">
+      <div class="panel-btn" onclick="openLeaderboard()" data-voice="Leaderboard">
         <span class="pbtn-icon">🏆</span>
         <div>
           <div class="pbtn-label" id="lb-lbl">BẢNG XẾP HẠNG</div>
           <div class="pbtn-sub" id="lb-sub">TOP DOANH THU</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openCompare()">
+      <div class="panel-btn" onclick="openCompare()" data-voice="So sánh">
         <span class="pbtn-icon">⚔️</span>
         <div>
           <div class="pbtn-label" id="comp-lbl">SO SÁNH AGENT</div>
           <div class="pbtn-sub" id="comp-sub">PHÂN TÍCH HIỆU SUẤT</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openGuide()">
+      <div class="panel-btn" onclick="openGuide()" data-voice="Hướng dẫn">
         <span class="icon">📖</span>
         <div>
           <div class="pbtn-label" id="guide-lbl">BÍ KÍP VŨ TRỤ</div>
           <div class="pbtn-sub" id="guide-sub">HƯỚNG DẪN TÂN THỦ</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openBuilder()">
+      <div class="panel-btn" onclick="openBuilder()" data-voice="Builder">
         <span class="icon">🔮</span>
         <div>
           <div class="pbtn-label" id="t-build-l">TRẬN PHÁP BUILDER</div>
           <div class="pbtn-sub" id="t-build-s">TẠO LUỒNG AI</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openNeural()">
+      <div class="panel-btn" onclick="openNeural()" data-voice="Thần kinh">
         <span class="pbtn-icon">🧠</span>
         <div>
           <div class="pbtn-label" id="nn-lbl">MẠNG THẦN KINH</div>
           <div class="pbtn-sub" id="nn-sub">TRỰC QUAN HÓA</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openMission()">
+      <div class="panel-btn" onclick="openMission()" data-voice="Nhiệm vụ">
         <span class="pbtn-icon">🎯</span>
         <div>
           <div class="pbtn-label" id="ms-lbl">NHIỆM VỤ</div>
@@ -6530,56 +6800,56 @@ app.listen(PORT, '0.0.0.0', () => {
           <div class="pbtn-sub" id="runall-sub">100 AGENT SONG SONG</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openAnalytics()">
+      <div class="panel-btn" onclick="openAnalytics()" data-voice="Thống kê">
         <span class="pbtn-icon">📊</span>
         <div>
           <div class="pbtn-label" id="ana-lbl">ANALYTICS</div>
           <div class="pbtn-sub" id="ana-sub">BIỂU ĐỒ DOANH THU</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openFavorites()">
+      <div class="panel-btn" onclick="openFavorites()" data-voice="Yêu thích">
         <span class="pbtn-icon">⭐</span>
         <div>
           <div class="pbtn-label" id="fav-lbl">YÊU THÍCH</div>
           <div class="pbtn-sub" id="fav-count-btn">0 AGENT</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openHistory()">
+      <div class="panel-btn" onclick="openHistory()" data-voice="Lịch sử">
         <span class="pbtn-icon">🕐</span>
         <div>
           <div class="pbtn-label" id="hist-lbl">LỊCH SỬ</div>
           <div class="pbtn-sub" id="hist-sub">NHẬT KÝ KÍCH HOẠT</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openAdvisor()">
+      <div class="panel-btn" onclick="openAdvisor()" data-voice="Cố vấn">
         <span class="pbtn-icon">💡</span>
         <div>
           <div class="pbtn-label" id="adv-lbl">AI ADVISOR</div>
           <div class="pbtn-sub" id="adv-sub">GỢI Ý AGENT</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openMiniGame()">
+      <div class="panel-btn" onclick="openMiniGame()" data-voice="Mini game">
         <span class="pbtn-icon">🎮</span>
         <div>
           <div class="pbtn-label" id="mg-lbl">MINI GAME</div>
           <div class="pbtn-sub" id="mg-sub">AGENT HUNT</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openAlerts()">
+      <div class="panel-btn" onclick="openAlerts()" data-voice="Cảnh báo">
         <span class="pbtn-icon">🔔</span>
         <div>
           <div class="pbtn-label" id="alt-lbl">CẢNH BÁO</div>
           <div class="pbtn-sub" id="alert-count-btn">0 NGƯỠNG</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openWFM()" style="border-color:rgba(136,0,255,0.6);box-shadow:0 0 20px rgba(136,0,255,0.4),0 0 30px rgba(136,0,255,0.4),inset 0 0 10px rgba(136,0,255,0.2);">
+      <div class="panel-btn" onclick="openWFM()" data-voice="WFM" style="border-color:rgba(136,0,255,0.6);box-shadow:0 0 20px rgba(136,0,255,0.4),0 0 30px rgba(136,0,255,0.4),inset 0 0 10px rgba(136,0,255,0.2);">
         <span class="pbtn-icon">⚙</span>
         <div>
           <div class="pbtn-label" style="color:#aa44ff;">LUỒNG AGENT</div>
           <div class="pbtn-sub">WORKFLOW MGR</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openVault()" style="border-color:rgba(255,170,0,0.6);box-shadow:0 0 20px rgba(255,170,0,0.3),0 0 30px rgba(255,170,0,0.2),inset 0 0 10px rgba(255,170,0,0.1);">
+      <div class="panel-btn" onclick="openVault()" data-voice="Kho tàng" style="border-color:rgba(255,170,0,0.6);box-shadow:0 0 20px rgba(255,170,0,0.3),0 0 30px rgba(255,170,0,0.2),inset 0 0 10px rgba(255,170,0,0.1);">
         <span class="pbtn-icon">🏛️</span>
         <div>
           <div class="pbtn-label" style="color:#ffaa00;" id="vault-lbl">KHO TÀNG</div>
@@ -6593,14 +6863,14 @@ app.listen(PORT, '0.0.0.0', () => {
           <div class="pbtn-sub">TẠO KOC ẢO</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openAgentMode()" id="agentmode-btn" style="border-color:rgba(255,80,200,0.7);box-shadow:0 0 22px rgba(255,80,200,0.45),0 0 40px rgba(136,0,255,0.3),inset 0 0 12px rgba(255,80,200,0.12);animation:agentModeBtnPulse 2.5s ease-in-out infinite;">
+      <div class="panel-btn" onclick="openAgentMode()" data-voice="Agent mode" id="agentmode-btn" style="border-color:rgba(255,80,200,0.7);box-shadow:0 0 22px rgba(255,80,200,0.45),0 0 40px rgba(136,0,255,0.3),inset 0 0 12px rgba(255,80,200,0.12);animation:agentModeBtnPulse 2.5s ease-in-out infinite;">
         <span class="pbtn-icon" style="animation:agentModeBtnPulse 2.5s ease-in-out infinite;">🤖</span>
         <div>
           <div class="pbtn-label" style="color:#ff50c8;text-shadow:0 0 12px rgba(255,80,200,0.8);">AI AGENT MODE</div>
           <div class="pbtn-sub" style="color:rgba(255,80,200,0.6);">CONTENT PLAN 30 NGÀY</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openAppSummary()" id="app-summary-btn" style="display:none;border-color:rgba(0,255,128,0.5);box-shadow:0 0 18px rgba(0,255,128,0.2),inset 0 0 8px rgba(0,255,128,0.08);">
+      <div class="panel-btn" onclick="openAppSummary()" data-voice="Tổng hợp" id="app-summary-btn" style="display:none;border-color:rgba(0,255,128,0.5);box-shadow:0 0 18px rgba(0,255,128,0.2),inset 0 0 8px rgba(0,255,128,0.08);">
         <span class="pbtn-icon">📋</span>
         <div>
           <div class="pbtn-label" style="color:#00ff88;">TỔNG HỢP APP</div>
@@ -8517,27 +8787,330 @@ app.listen(PORT, '0.0.0.0', () => {
           }
           console.log('[VOICE] target after strip:', JSON.stringify(target));
 
+          // ── Helper: toast shortcut ─────────────────────────────────────
+          const _vt = (msg) => {
+            if (typeof showToast === 'function') showToast('⚡ Thiên Nhĩ: ' + msg, 'info');
+            _showTranscript(msg);
+            // Jarvis confirms with TTS after slight delay (avoids cutting off speech)
+            setTimeout(() => { if (typeof _jarvisConfirm === 'function') _jarvisConfirm(); }, 150);
+          };
+          const _fn = (name) => typeof window[name] === 'function' ? window[name] : (typeof eval(name) === 'function' ? eval(name) : null);
+
           // ── Special shortcuts ──────────────────────────────────────
           if (/leaderboard|bang xep hang|xep hang/.test(target)) {
             if (typeof openLeaderboard === 'function') openLeaderboard();
-            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → Bảng xếp hạng', 'info');
+            _vt('"' + transcript + '" → Bảng xếp hạng');
             return true;
           }
           if (/kocraft|ko craft|koc kol/.test(target)) {
             if (typeof window.openKOCraftModal === 'function') window.openKOCraftModal();
-            if (typeof showToast === 'function') showToast('🎙️ "' + transcript + '" → KOCraft AI', 'info');
+            _vt('"' + transcript + '" → KOCraft AI');
             return true;
           }
-          if (/thien co cac|agent chat|truyen am/.test(target)) {
+          if (/thien co cac|truyen am/.test(target) && !/tac nhan|agent chat specific/.test(target)) {
             const firstAgent = AI_AGENTS[0];
             if (firstAgent && typeof window.openAgentChat === 'function') window.openAgentChat(firstAgent);
-            if (typeof showToast === 'function') showToast('🎙️ Mở Thiên Cơ Các', 'info');
+            _vt('Mở Thiên Cơ Các');
             return true;
           }
           if (/chin coi|nine realm|cuu gioi/.test(target)) {
             if (typeof window.openNineRealms === 'function') window.openNineRealms();
-            if (typeof showToast === 'function') showToast('🎙️ Mở Chín Cõi', 'info');
+            _vt('Mở Chín Cõi');
             return true;
+          }
+
+          // ── MODALS & SECTIONS ──────────────────────────────────────
+          if (/so sanh|compare|doi chieu/.test(target)) {
+            if (typeof openCompare === 'function') openCompare();
+            _vt('So sánh Agent'); return true;
+          }
+          if (/huong dan|guide|bi kip|huong dan tan thu/.test(target)) {
+            if (typeof openGuide === 'function') openGuide();
+            _vt('Bí Kíp Vũ Trụ'); return true;
+          }
+          if (/^(?:wfm|workflow manager|quan ly workflow)/.test(target) || /wfm modal/.test(target)) {
+            if (typeof openWFM === 'function') openWFM();
+            _vt('Workflow Manager'); return true;
+          }
+          if (/builder|xay dung workflow|tao workflow/.test(target)) {
+            if (typeof openBuilder === 'function') openBuilder();
+            _vt('Workflow Builder'); return true;
+          }
+          if (/than kinh|neural|mang than kinh/.test(target)) {
+            if (typeof openNeural === 'function') openNeural();
+            _vt('Bản đồ Thần Kinh'); return true;
+          }
+          if (/nhiem vu|mission|bang nhiem vu|quest/.test(target)) {
+            if (typeof openMission === 'function') openMission();
+            _vt('Nhiệm Vụ'); return true;
+          }
+          if (/thong ke|analytics|phan tich|bieu do/.test(target)) {
+            if (typeof openAnalytics === 'function') openAnalytics();
+            _vt('Thống Kê & Analytics'); return true;
+          }
+          if (/yeu thich|favorite|fav/.test(target)) {
+            if (typeof openFavorites === 'function') openFavorites();
+            _vt('Yêu Thích'); return true;
+          }
+          if (/lich su|history|nhat ky/.test(target)) {
+            if (typeof openHistory === 'function') openHistory();
+            _vt('Lịch Sử'); return true;
+          }
+          if (/co van|advisor|tu van|chien luoc/.test(target)) {
+            if (typeof openAdvisor === 'function') openAdvisor();
+            _vt('Cố Vấn Chiến Lược'); return true;
+          }
+          if (/game|mini game|choi game|luyen tap/.test(target)) {
+            if (typeof openMiniGame === 'function') openMiniGame();
+            _vt('Mini Game'); return true;
+          }
+          if (/canh bao|alert|thong bao he thong/.test(target)) {
+            if (typeof openAlerts === 'function') openAlerts();
+            _vt('Cảnh Báo'); return true;
+          }
+          if (/kho tang|vault|bao tang|tu do|kho bau/.test(target)) {
+            if (typeof openVault === 'function') openVault();
+            _vt('Kho Tàng'); return true;
+          }
+          if (/tong hop|app summary|bao cao tong hop|tom tat app/.test(target)) {
+            if (typeof window.openAppSummary === 'function') window.openAppSummary();
+            _vt('Tổng Hợp App'); return true;
+          }
+          if (/che do tac nhan|agent mode|bat tac nhan/.test(target)) {
+            if (typeof openAgentMode === 'function') openAgentMode();
+            _vt('Chế Độ Tác Nhân'); return true;
+          }
+          if (/giup do|danh sach lenh|voice help|lenh voice|list lenh/.test(target)) {
+            if (typeof window.openVoiceHelp === 'function') window.openVoiceHelp();
+            _vt('Danh sách lệnh voice'); return true;
+          }
+
+          // ── AR MODE ────────────────────────────────────────────────
+          if (/ar mode|che do ar|thuc te ao|hologram|bat ar|tat ar/.test(target)) {
+            document.body.classList.toggle('ar-mode');
+            _vt(document.body.classList.contains('ar-mode') ? 'Đã bật AR Mode 👓' : 'Đã tắt AR Mode');
+            return true;
+          }
+
+          // ── THEME ──────────────────────────────────────────────────
+          if (/chu de|theme|doi mau|giao dien|doi giao dien/.test(target)) {
+            if (typeof toggleThemeMenu === 'function') toggleThemeMenu();
+            _vt('Menu Chủ Đề'); return true;
+          }
+          if (/cyberpunk|cyber punk|khoa hoc vien tuong/.test(target)) {
+            if (typeof toggleTheme === 'function') toggleTheme('en');
+            _vt('Giao diện Sci-Fi'); return true;
+          }
+          if (/tien hiep|xianxia|co phong|co dai/.test(target)) {
+            if (typeof toggleTheme === 'function') toggleTheme('xx');
+            _vt('Giao diện Tiên Hiệp'); return true;
+          }
+
+          // ── SEARCH AGENTS ──────────────────────────────────────────
+          {
+            const _sm = raw.match(/^(?:tim kiem|tim|search for|search|kiem tra) +(.{2,})$/);
+            if (_sm) {
+              const q = _sm[1].trim();
+              const si = document.getElementById('search-input');
+              if (si) { si.value = q; si.dispatchEvent(new Event('input')); }
+              if (typeof searchAgents === 'function') searchAgents(q);
+              _vt('Tìm: "' + q + '"'); return true;
+            }
+          }
+
+          // ── AGENT CHAT ACTIONS (when chat modal open) ──────────────
+          {
+            const _acModal = document.getElementById('agent-chat-modal');
+            const _acOpen  = _acModal && _acModal.style.display !== 'none';
+            const _acInput = document.getElementById('ac-input');
+            if (_acOpen && _acInput) {
+              // "gửi [tin nhắn]" / "nói [tin nhắn]"
+              const _cm = raw.match(/^(?:gui|send|noi tin nhan|viet|say) +(.{2,})$/);
+              if (_cm) {
+                _acInput.value = transcript.slice(transcript.search(/\s/) + 1).trim();
+                _acInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+                _vt('Đã gửi tin nhắn'); return true;
+              }
+              // "lưu" → save last AI reply to vault
+              if (/luu|save|luu vao kho/.test(target)) {
+                const lastAI = [...document.querySelectorAll('.ac-msg.ai .ac-msg-text')].pop();
+                if (lastAI) {
+                  if (typeof window.addVaultItem === 'function') {
+                    window.addVaultItem({ title: 'Voice Save', content: lastAI.innerText });
+                    _vt('Đã lưu vào Kho Tàng ✅');
+                  } else {
+                    _vt('Không tìm thấy nội dung để lưu');
+                  }
+                }
+                return true;
+              }
+              // "xóa" → clear input
+              if (/xoa|clear|xoa tin|xoa chat/.test(target)) {
+                _acInput.value = '';
+                _vt('Đã xóa'); return true;
+              }
+            }
+          }
+
+          // ── UNIVERSE CHAT: "hỏi [câu hỏi]" / "chat [tin nhắn]" ───
+          {
+            const _ucMatch = raw.match(/^(?:hoi|ask|chat voi thien co|noi chuyen|gui tin) +(.{3,})$/);
+            if (_ucMatch) {
+              const msg = transcript.slice(transcript.search(/\s/) + 1).trim();
+              const ucInput = document.getElementById('uc-input');
+              if (ucInput) {
+                ucInput.value = msg;
+                if (typeof sendUniverseChat === 'function') sendUniverseChat();
+              }
+              _vt('Chat: "' + msg + '"'); return true;
+            }
+          }
+
+          // ── HUD ACTIONS (when HUD active) ──────────────────────────
+          {
+            const _hudEl = document.getElementById('hud');
+            const _hudActive = _hudEl && _hudEl.classList.contains('active');
+            if (_hudActive) {
+              if (/kich hoat|activate|chat tac nhan|noi chuyen voi/.test(target)) {
+                const btn = document.getElementById('hud-activate-btn');
+                if (btn) { btn.click(); _vt('Kích hoạt Tác Nhân'); return true; }
+              }
+              if (/dong hud|thoat hud|ve lai|back home/.test(target)) {
+                if (typeof closeHUD === 'function') { closeHUD(); _vt('Đóng HUD'); return true; }
+              }
+            }
+          }
+
+          // ── SCROLL ─────────────────────────────────────────────────
+          if (/cuon len|scroll up|len tren/.test(target)) { window.scrollBy(0,-300); return false; }
+          if (/cuon xuong|scroll down|xuong duoi/.test(target)) { window.scrollBy(0,300); return false; }
+
+          // ── NUMBERED AGENT ACCESS ──────────────────────────────────
+          // "agent 1" / "mở agent thứ nhất" / "agent ba"
+          {
+            const _numMap = {
+              'mot':1,'nhat':1,'dau':1,'thu nhat':1,'first':1,'one':1,'1':1,
+              'hai':2,'second':2,'two':2,'thu hai':2,'2':2,
+              'ba':3,'third':3,'three':3,'thu ba':3,'3':3,
+              'bon':4,'four':4,'thu bon':4,'4':4,
+              'nam':5,'five':5,'thu nam':5,'5':5,
+              'sau':6,'six':6,'thu sau':6,'6':6,
+              'bay':7,'seven':7,'thu bay':7,'7':7,
+              'tam':8,'eight':8,'thu tam':8,'8':8,
+              'chin':9,'nine':9,'thu chin':9,'9':9,
+              'muoi':10,'ten':10,'thu muoi':10,'10':10,
+            };
+            const _nm = raw.match(/(?:agent|mo agent|tac nhan) +(?:thu +)?(.+)/);
+            if (_nm) {
+              const numStr = _nm[1].trim();
+              const idx = _numMap[numStr] != null ? _numMap[numStr] - 1
+                        : (parseInt(numStr) > 0 ? parseInt(numStr) - 1 : -1);
+              if (idx >= 0 && idx < AI_AGENTS.length) {
+                const a = AI_AGENTS[idx];
+                _showTranscript(transcript);
+                if (typeof showToast === 'function') showToast('🎙️ ' + a.emoji + ' Agent ' + (idx+1) + ': ' + (a.xname||a.name), 'success');
+                setTimeout(() => { if (typeof window.openAgentChat === 'function') window.openAgentChat(a); }, 300);
+                return true;
+              }
+            }
+          }
+
+          // ── SET TOPIC BY VOICE ─────────────────────────────────────
+          // "đặt chủ đề [topic]" / "chủ đề [topic]" / "topic [topic]"
+          {
+            const _tm = raw.match(/^(?:dat chu de|chu de|topic|set topic|chu de la) +(.{2,})$/);
+            if (_tm) {
+              const topicVal = transcript.replace(/^(?:đặt chủ đề|chủ đề|topic|set topic|chủ đề là)\s+/i,'').trim();
+              const inp = document.getElementById('hud-topic-input');
+              if (inp) {
+                inp.value = topicVal;
+                if (typeof hudSaveTopic === 'function') hudSaveTopic();
+                _vt('Đặt chủ đề: "' + topicVal + '"'); return true;
+              }
+              // If HUD not open, open vault with note
+              _vt('Mở HUD agent trước để đặt chủ đề'); return true;
+            }
+          }
+
+          // ── VAULT ADD BY VOICE ─────────────────────────────────────
+          // "thêm vào kho [title]" / "lưu kho [content]"
+          {
+            const _vm = raw.match(/^(?:them vao kho|luu vao kho|them kho|ghi vao kho) +(.{2,})$/);
+            if (_vm) {
+              const vTitle = transcript.replace(/^(?:thêm vào kho|lưu vào kho|thêm kho|ghi vào kho)\s+/i,'').trim();
+              // Open vault and pre-fill title
+              if (typeof openVault === 'function') openVault();
+              setTimeout(() => {
+                const tf = document.getElementById('vf-title');
+                const cf = document.getElementById('vf-content');
+                if (tf) { tf.value = vTitle; tf.focus(); }
+                if (cf) cf.value = '';
+              }, 400);
+              _vt('Mở Kho Tàng — nhập nội dung và lưu'); return true;
+            }
+          }
+
+          // ── QUICK QUESTION BY VOICE ─────────────────────────────────
+          // "câu hỏi 1" / "câu hỏi đầu" / "quick 2"
+          {
+            const _qm = raw.match(/^(?:cau hoi|quick question|quick|cau|q) +(\d+|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi)$/);
+            if (_qm) {
+              const _qn = {'mot':1,'hai':2,'ba':3,'bon':4,'nam':5,'sau':6,'bay':7,'tam':8,'chin':9,'muoi':10};
+              const qIdx = _qn[_qm[1]] != null ? _qn[_qm[1]] - 1 : parseInt(_qm[1]) - 1;
+              const chips = document.querySelectorAll('#hud-quick-q-chips > div');
+              if (chips[qIdx]) {
+                chips[qIdx].click();
+                _vt('Câu hỏi nhanh ' + (qIdx+1)); return true;
+              }
+              _vt('Mở HUD và đặt chủ đề trước'); return true;
+            }
+          }
+
+          // ── HUD TABS BY VOICE ──────────────────────────────────────
+          // "tab [name]" / "chuyển tab [name]"
+          {
+            const _tabm = raw.match(/^(?:tab|chuyen tab|mo tab|sang tab) +(.{2,})$/);
+            if (_tabm) {
+              const tabQ = _tabm[1].trim();
+              const tabBtns = document.querySelectorAll('.hud-tab-btn');
+              let matched = null;
+              tabBtns.forEach(b => {
+                if (_norm(b.textContent).includes(tabQ) || tabQ.includes(_norm(b.textContent).slice(0,4))) matched = b;
+              });
+              if (matched) { matched.click(); _vt('Chuyển tab: ' + matched.textContent.trim()); return true; }
+            }
+          }
+
+          // ── SEND AC-INPUT WITH DICTATION ───────────────────────────
+          // "nhắn [message]" / "truyền âm [message]"
+          {
+            const _am = raw.match(/^(?:nhan|truyen am tin|nhan tin|go|viet tin) +(.{2,})$/);
+            const _acM = document.getElementById('agent-chat-modal');
+            if (_am && _acM && _acM.style.display !== 'none') {
+              const acInp = document.getElementById('ac-input');
+              if (acInp) {
+                acInp.value = transcript.replace(/^(?:nhắn|truyền âm tin|nhắn tin|gõ|viết tin)\s+/i,'').trim();
+                acInp.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+                _vt('Đã gửi tin nhắn'); return true;
+              }
+            }
+          }
+
+          // ── COPY LAST AI RESPONSE ──────────────────────────────────
+          if (/sao chep|copy|chep|copy ket qua/.test(target)) {
+            const lastAI = [...document.querySelectorAll('.ac-msg-text, .uc-msg.system span')].pop();
+            if (lastAI) {
+              navigator.clipboard.writeText(lastAI.innerText || lastAI.textContent).then(() => {
+                _vt('Đã copy nội dung ✅');
+              }).catch(() => _vt('Không thể copy'));
+            } else _vt('Không tìm thấy nội dung');
+            return true;
+          }
+
+          // ── KEYBOARD SHORTCUTS INFO ────────────────────────────────
+          if (/phim tat|keyboard shortcut|ban phim/.test(target)) {
+            if (typeof showToast === 'function') showToast('⌨️ [2] Analytics · [4] Yêu thích · [8] Lịch sử · [Alt+V] Voice', 'info');
+            return false;
           }
 
           // ── Agent name matching ────────────────────────────────────
@@ -8610,34 +9183,124 @@ app.listen(PORT, '0.0.0.0', () => {
         };
         window.filterVoiceHelp = function(q) { _renderVoiceHelp(q); };
 
+        // ── System voice commands catalog ──
+        const SYS_CMDS = [
+          { cat:'🗺️ Điều hướng', cmds:[
+            { say:'Mở [Tên Agent]',  do:'Triệu hồi bất kỳ agent' },
+            { say:'Leaderboard',     do:'Bảng xếp hạng' },
+            { say:'So sánh',         do:'So sánh Agent' },
+            { say:'Kho Tàng',        do:'Mở Vault' },
+            { say:'Chín Cõi',        do:'Nine Realms view' },
+            { say:'KOCraft',         do:'KOCraft AI' },
+          ]},
+          { cat:'📊 Tính năng', cmds:[
+            { say:'Thống kê',        do:'Analytics' },
+            { say:'Nhiệm vụ',        do:'Mission board' },
+            { say:'Yêu thích',       do:'Danh sách yêu thích' },
+            { say:'Lịch sử',         do:'Lịch sử chat' },
+            { say:'Cố vấn',          do:'AI Advisor' },
+            { say:'Thần kinh',       do:'Neural map' },
+            { say:'Cảnh báo',        do:'Alerts' },
+            { say:'Mini Game',       do:'Chơi game' },
+          ]},
+          { cat:'🔧 Công cụ', cmds:[
+            { say:'Builder',         do:'Workflow Builder' },
+            { say:'WFM',             do:'Workflow Manager' },
+            { say:'Tổng hợp',        do:'App Summary' },
+            { say:'Hướng dẫn',       do:'Bí kíp tân thủ' },
+            { say:'Tìm [từ khoá]',   do:'Tìm kiếm agent' },
+          ]},
+          { cat:'🎨 Giao diện', cmds:[
+            { say:'AR Mode',         do:'Bật/tắt AR hologram' },
+            { say:'Chủ đề',          do:'Menu chủ đề' },
+            { say:'Tiên hiệp',       do:'Giao diện cổ phong' },
+            { say:'Cyberpunk',       do:'Giao diện Sci-Fi' },
+          ]},
+          { cat:'💬 Chat', cmds:[
+            { say:'Hỏi [câu hỏi]',  do:'Chat với Thiên Cơ Các' },
+            { say:'Gửi [tin nhắn]',  do:'Gửi tin trong agent chat' },
+            { say:'Lưu',             do:'Lưu nội dung vào Kho Tàng' },
+            { say:'Kích hoạt',       do:'Mở chat với agent hiện tại' },
+          ]},
+          { cat:'🔇 Điều khiển', cmds:[
+            { say:'Đóng / Thoát',    do:'Đóng panel đang mở' },
+            { say:'Tắt Truyền Âm',   do:'Tắt voice engine' },
+            { say:'Mở Truyền Âm',    do:'Bật voice engine' },
+            { say:'Danh sách lệnh',  do:'Mở panel này' },
+          ]},
+        ];
+
+        let _vhTab = 'cmds'; // 'cmds' | 'agents'
+        window._vhSetTab = function(t) {
+          _vhTab = t;
+          document.querySelectorAll('.vh-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+          _renderVoiceHelp(document.getElementById('voice-help-search')?.value || '');
+        };
+
         function _renderVoiceHelp(query) {
           const list = document.getElementById('voice-help-list');
           if (!list) return;
           const q = (query || '').toLowerCase().trim();
-          const items = AI_AGENTS.filter(a => {
-            if (!q) return true;
-            const xn = (a.xname || '').toLowerCase();
-            const nm = (a.name || '').toLowerCase();
-            const nt = (a.xnote || '').toLowerCase();
-            return xn.includes(q) || nm.includes(q) || nt.includes(q);
-          });
-          list.innerHTML = items.map(a => {
-            const xname = a.xname || a.name;
-            const name  = a.name;
-            return `<div class="vh-item" onclick="closeVoiceHelp();setTimeout(()=>window.openAgentChat&&window.openAgentChat(AI_AGENTS.find(x=>x.id===${a.id})),100)">
-              <div class="vh-emoji">${a.emoji || '⚡'}</div>
-              <div class="vh-text">
-                <div class="vh-xname" title="${xname}">${xname}</div>
-                <div class="vh-name" title="${name}">${name}</div>
-              </div>
-            </div>`;
-          }).join('');
-          const title = document.getElementById('voice-help-title');
-          if (title) title.textContent = '🎙️ VOICE — ' + items.length + ' AGENT';
+
+          if (_vhTab === 'cmds') {
+            // Show system commands grouped by category
+            const filtered = SYS_CMDS.map(g => ({
+              ...g,
+              cmds: g.cmds.filter(c => !q || c.say.toLowerCase().includes(q) || c.do.toLowerCase().includes(q))
+            })).filter(g => g.cmds.length > 0);
+
+            list.innerHTML = filtered.map(g => `
+              <div style="margin-bottom:10px;">
+                <div style="font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;color:#00ffff55;margin-bottom:5px;padding-left:4px;">${g.cat}</div>
+                ${g.cmds.map(c => `
+                  <div class="vh-item" style="flex-direction:row;align-items:center;gap:8px;justify-content:space-between;padding:6px 10px;" onclick="closeVoiceHelp()">
+                    <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#00ffff;background:rgba(0,255,255,0.07);padding:2px 8px;border-radius:10px;border:1px solid rgba(0,255,255,0.2);white-space:nowrap;">"${c.say}"</span>
+                    <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,170,0,0.7);text-align:right;">${c.do}</span>
+                  </div>`).join('')}
+              </div>`).join('');
+
+            const title = document.getElementById('voice-help-title');
+            if (title) title.textContent = '🎙️ VOICE — LỆNH HỆ THỐNG';
+          } else {
+            // Show agents list
+            const items = AI_AGENTS.filter(a => {
+              if (!q) return true;
+              return (a.xname||'').toLowerCase().includes(q) || (a.name||'').toLowerCase().includes(q) || (a.xnote||'').toLowerCase().includes(q);
+            });
+            list.innerHTML = items.map(a => {
+              const xname = a.xname || a.name;
+              return `<div class="vh-item" onclick="closeVoiceHelp();setTimeout(()=>window.openAgentChat&&window.openAgentChat(AI_AGENTS.find(x=>x.id===${a.id})),100)">
+                <div class="vh-emoji">${a.emoji || '⚡'}</div>
+                <div class="vh-text">
+                  <div class="vh-xname" title="${xname}">${xname}</div>
+                  <div class="vh-name" title="${a.name}">${a.name}</div>
+                </div>
+              </div>`;
+            }).join('');
+            const title = document.getElementById('voice-help-title');
+            if (title) title.textContent = '🎙️ VOICE — ' + items.length + ' AGENT';
+          }
         }
 
         document.addEventListener('keydown', function(e) {
           if (e.key === 'Escape') window.closeVoiceHelp && window.closeVoiceHelp();
+          // Alt+V → toggle THIÊN NHĨ
+          if (e.altKey && (e.key === 'v' || e.key === 'V')) {
+            e.preventDefault();
+            if (typeof _toggleVoice === 'function') _toggleVoice();
+            else if (typeof window._voiceToggle === 'function') window._voiceToggle();
+          }
+          // Alt+H → open THIÊN NHĨ command list
+          if (e.altKey && (e.key === 'h' || e.key === 'H')) {
+            e.preventDefault();
+            if (typeof window.openVoiceHelp === 'function') window.openVoiceHelp();
+          }
+          // Alt+J → quick THIÊN NHĨ status check
+          if (e.altKey && (e.key === 'j' || e.key === 'J')) {
+            e.preventDefault();
+            const on = typeof window._voiceIsListening === 'function' && window._voiceIsListening();
+            if (typeof showToast === 'function') showToast('⚡ Thiên Nhĩ: ' + (on ? 'ONLINE — đang nghe' : 'OFFLINE — nhấn Alt+V để bật'), on ? 'success' : 'warn');
+          }
         });
 
         function _getOrCreateTranscript() {
@@ -8650,11 +9313,25 @@ app.listen(PORT, '0.0.0.0', () => {
         }
 
         function _showTranscript(text) {
+          // Also update Jarvis bubble
+          const _bub   = document.getElementById('jarvis-bubble');
+          const _bText = document.getElementById('jarvis-bubble-text');
+          const _bLbl  = document.getElementById('jarvis-bubble-label');
+          if (_bub && _bText) {
+            if (_bLbl) _bLbl.textContent = 'THIÊN NHĨ NGHE';
+            _bText.textContent = text;
+            _bub.classList.add('show');
+            clearTimeout(_transcriptTimer);
+            _transcriptTimer = setTimeout(() => _bub.classList.remove('show'), 3000);
+          }
+          // Also update HUD transcript if present
           const el = _getOrCreateTranscript();
-          el.textContent = '🎙 "' + text + '"';
-          el.classList.add('show');
-          clearTimeout(_transcriptTimer);
-          _transcriptTimer = setTimeout(() => el.classList.remove('show'), 2500);
+          if (el) {
+            el.textContent = '◉ "' + text + '"';
+            el.classList.add('show');
+            clearTimeout(_transcriptTimer);
+            _transcriptTimer = setTimeout(() => { el.classList.remove('show'); if(_bub) _bub.classList.remove('show'); }, 3000);
+          }
         }
 
         function _tryClose(transcript) {
@@ -8696,7 +9373,26 @@ app.listen(PORT, '0.0.0.0', () => {
                 if (e.results[i].isFinal) {
                   clearTimeout(_interimTimer);
                   _lastInterim = '';
-                  if (!_tryClose(transcript)) _tryNavigate(transcript);
+                  // Wake word → acknowledge but keep listening
+                  const _ww = (transcript||'').normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/gi,d=>d==='đ'?'d':'D')
+                    .toLowerCase().trim();
+                  const _WAKE = ['thien nhi','oi thien nhi','thien nhi oi','hey thien nhi',
+                    'mo truyen am','bat truyen am','bat voice','mo voice',
+                    'oi thien co','thien co oi','bat mic','hey thien co','open voice',
+                    'chao thien nhi','xin chao thien nhi','bat thien nhi'];
+                  const _STOP = ['tat thien nhi','thien nhi off','stop thien nhi','thien nhi stop',
+                    'tat truyen am','tat voice','dong truyen am','stop voice','tat mic','off voice','thoat thien nhi'];
+                  if (_STOP.some(w => _ww.includes(w))) {
+                    _showTranscript(transcript);
+                    _stopListening();
+                    _jarvisSay('Đã ngắt kết nối. Hẹn gặp lại, thưa đạo hữu.');
+                    if (typeof showToast === 'function') showToast('🔇 Thiên Nhĩ đã offline', 'info');
+                  } else if (_WAKE.some(w => _ww.includes(w))) {
+                    _showTranscript('✅ ' + transcript);
+                    _jarvisSay('Dạ, thưa đạo hữu. Thiên Nhĩ đang lắng nghe.');
+                    if (typeof showToast === 'function') showToast('⚡ Thiên Nhĩ — Đang lắng nghe…', 'success');
+                  } else if (!_tryClose(transcript)) { _tryNavigate(transcript); }
                 } else {
                   // Show interim
                   try {
@@ -8713,7 +9409,23 @@ app.listen(PORT, '0.0.0.0', () => {
                       const t = _lastInterim;
                       _lastInterim = '';
                       console.log('[VOICE] interim→final fallback:', t);
-                      if (!_tryClose(t)) _tryNavigate(t);
+                      const _ww2 = (t||'').normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/gi,d=>d==='đ'?'d':'D')
+                        .toLowerCase().trim();
+                      const _WAKE2 = ['thien nhi','oi thien nhi','thien nhi oi','hey thien nhi',
+                        'mo truyen am','bat truyen am','bat voice','mo voice',
+                        'oi thien co','thien co oi','bat mic','hey thien co','open voice',
+                        'chao thien nhi','bat thien nhi'];
+                      const _STOP2 = ['tat thien nhi','thien nhi off','stop thien nhi','thien nhi stop',
+                        'tat truyen am','tat voice','dong truyen am','stop voice','tat mic'];
+                      if (_STOP2.some(w => _ww2.includes(w))) {
+                        _stopListening();
+                        _jarvisSay('Đã ngắt kết nối. Hẹn gặp lại.');
+                        if (typeof showToast === 'function') showToast('🔇 Thiên Nhĩ đã offline', 'info');
+                      } else if (_WAKE2.some(w => _ww2.includes(w))) {
+                        _jarvisSay('Dạ, thưa đạo hữu. Đang lắng nghe.');
+                        if (typeof showToast === 'function') showToast('⚡ Thiên Nhĩ — Đang lắng nghe…', 'success');
+                      } else if (!_tryClose(t)) { _tryNavigate(t); }
                     }
                   }, 1500);
                 }
@@ -8753,21 +9465,81 @@ app.listen(PORT, '0.0.0.0', () => {
           if (el) el.classList.remove('show');
         }
 
-        /* ── Sync visual state of both mic buttons ── */
+        /* ── Sync visual state: Jarvis Orb + all mic buttons + hint panel ── */
         function _syncMicUI() {
           if (voiceBtn)   voiceBtn.classList.toggle('listening', _listening);
           if (univMicBtn) univMicBtn.classList.toggle('listening', _listening);
+          // Sync Jarvis Orb
+          const _orb    = document.getElementById('jarvis-orb');
+          const _status = document.getElementById('jarvis-status');
+          const _letter = document.getElementById('jarvis-letter');
+          if (_orb) {
+            if (_listening) {
+              _orb.classList.add('listening');
+              _orb.classList.remove('speaking');
+            } else {
+              _orb.classList.remove('listening','speaking');
+            }
+          }
+          if (_status) _status.textContent = _listening ? 'ĐANG NGHE' : 'TĨNH TÂM';
+          if (_letter) _letter.textContent = _listening ? '◉' : '天';
+          // Show/hide command hint panel
+          const _hints = document.getElementById('voice-cmd-hints');
+          if (_hints) _hints.classList.toggle('visible', _listening);
+        }
+
+        /* ── Jarvis TTS response ── */
+        function _jarvisSay(text) {
+          if (!window.speechSynthesis) return;
+          // Show in bubble + orb speaking state
+          const _orb    = document.getElementById('jarvis-orb');
+          const _bText  = document.getElementById('jarvis-bubble-reply');
+          const _bub    = document.getElementById('jarvis-bubble');
+          const _status = document.getElementById('jarvis-status');
+          if (_orb) { _orb.classList.add('speaking'); }
+          if (_bText) { _bText.textContent = text; _bText.classList.add('show'); }
+          if (_status) _status.textContent = 'ĐANG NÓI';
+          // Cancel previous speech
+          window.speechSynthesis.cancel();
+          const utt = new SpeechSynthesisUtterance(text);
+          utt.lang = 'vi-VN'; utt.rate = 1.05; utt.pitch = 0.88; utt.volume = 0.92;
+          // prefer a male/robotic voice if available
+          const voices = window.speechSynthesis.getVoices();
+          const vietVoice = voices.find(v => v.lang.startsWith('vi'));
+          if (vietVoice) utt.voice = vietVoice;
+          utt.onend = function() {
+            if (_orb) { _orb.classList.remove('speaking'); if (_listening) _orb.classList.add('listening'); }
+            if (_bText) { setTimeout(() => _bText.classList.remove('show'), 800); }
+            if (_status) _status.textContent = _listening ? 'ĐANG NGHE' : 'TĨNH TÂM';
+          };
+          window.speechSynthesis.speak(utt);
+        }
+
+        /* ── Jarvis confirm phrases ── */
+        const _THIENNI_CONFIRMS = [
+          'Thực hiện ngay, thưa đạo hữu.', 'Vâng ạ.', 'Đang xử lý.',
+          'Hoàn thành.', 'Ngay ạ.', 'Như lệnh.'
+        ];
+        function _jarvisConfirm() {
+          const p = _THIENNI_CONFIRMS[Math.floor(Math.random() * _THIENNI_CONFIRMS.length)];
+          _jarvisSay(p);
         }
 
         /* ── Toggle helper (shared by both buttons) ── */
         function _toggleVoice() {
           if (_listening) {
-            _stopListening();
-            if (typeof showToast === 'function') showToast('🔇 Voice command đã tắt', 'info');
+            _jarvisSay('Đã ngắt kết nối. Hẹn gặp lại, thưa đạo hữu.');
+            setTimeout(() => {
+              _stopListening();
+              if (typeof showToast === 'function') showToast('🔇 Thiên Nhĩ — Offline', 'info');
+            }, 100);
           } else {
             _startListening();
-            if (typeof showToast === 'function')
-              showToast('🎙️ Đang nghe — nói tên agent, "đóng", "leaderboard"…', 'success');
+            setTimeout(() => {
+              _jarvisSay('Thiên Nhĩ đã khởi động. Thưa đạo hữu, thần đang lắng nghe.');
+              if (typeof showToast === 'function')
+                showToast('⚡ Thiên Nhĩ — Online. Nói "Thiên Nhĩ" bất cứ lúc nào.', 'success');
+            }, 200);
           }
         }
 
@@ -8785,6 +9557,21 @@ app.listen(PORT, '0.0.0.0', () => {
         window._voiceIsListening    = function() { return _listening; };
         window._voiceToggle         = _toggleVoice;
       })();
+      // ──────────────────────────────────────────────────────────────────
+
+      // ══ THIÊN NHĨ ORB — bridge to Voice Command Engine ════
+      // (Chrome chỉ cho 1 SpeechRecognition cùng lúc → dùng chung _rec)
+      window._wwToggle = function() {
+        if (typeof window._voiceToggle === 'function') window._voiceToggle();
+      };
+      // Auto-start voice engine sau khi load (cần user-gesture lần đầu)
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          if (typeof window._voiceStartListening === 'function') {
+            window._voiceStartListening();
+          }
+        }, 1800);
+      });
       // ──────────────────────────────────────────────────────────────────
 
       function openHUD(pm) {
@@ -11689,14 +12476,28 @@ app.listen(PORT, '0.0.0.0', () => {
         // Speak the AI reply aloud with mystical voice
         if ('speechSynthesis' in window) {
           window.speechSynthesis.cancel();
-          const voices = window.speechSynthesis.getVoices();
+          // Load voices async (browsers load voices asynchronously)
+          const _loadVoices = () => new Promise(resolve => {
+            const v = window.speechSynthesis.getVoices();
+            if (v.length) { resolve(v); return; }
+            const handler = () => { resolve(window.speechSynthesis.getVoices()); };
+            window.speechSynthesis.addEventListener('voiceschanged', handler, { once: true });
+            setTimeout(() => resolve(window.speechSynthesis.getVoices()), 1500);
+          });
+          const voices = await _loadVoices();
           const viVoice = voices.find(v => v.lang && v.lang.startsWith('vi')) || null;
 
           // Split into sentences for natural pacing
           const sentences = reply.match(/[^.!?。]+[.!?。]?/g) || [reply];
           let i = 0;
+          // Chrome fix: resume speechSynthesis if it pauses unexpectedly
+          const _ttsResumeInterval = setInterval(() => {
+            if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+          }, 10000);
+
           const speakNext = () => {
             if (i >= sentences.length) {
+              clearInterval(_ttsResumeInterval);
               // After AI finishes speaking → prompt mic again
               if (btn) { btn.textContent = '🎤'; btn.style.pointerEvents = ''; }
               setTimeout(() => startVoiceChat(), 600);
@@ -14065,9 +14866,15 @@ app.listen(PORT, '0.0.0.0', () => {
         <span id="voice-help-title">🎙️ VOICE — DANH SÁCH TRIỆU HỒI</span>
         <div id="voice-help-close" onclick="closeVoiceHelp()">✕</div>
       </div>
-      <input id="voice-help-search" type="text" placeholder="Tìm tên tiên hiệp hoặc tên AI..." oninput="filterVoiceHelp(this.value)" autocomplete="off"/>
-      <div id="voice-help-hint">Nói: MỞ + tên bên dưới · Nhấn để mở thẳng agent</div>
-      <div id="voice-help-list"></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button class="vh-tab-btn active" data-tab="cmds" onclick="window._vhSetTab('cmds')"
+          style="flex:1;padding:6px;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;background:rgba(0,255,255,0.08);border:1px solid rgba(0,255,255,0.3);color:#00ffff;border-radius:6px;cursor:pointer;">⚡ LỆNH HỆ THỐNG</button>
+        <button class="vh-tab-btn" data-tab="agents" onclick="window._vhSetTab('agents')"
+          style="flex:1;padding:6px;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;background:rgba(255,170,0,0.05);border:1px solid rgba(255,170,0,0.2);color:#ffaa00;border-radius:6px;cursor:pointer;">🌟 AGENTS</button>
+      </div>
+      <input id="voice-help-search" type="text" placeholder="Tìm lệnh hoặc tên agent..." oninput="filterVoiceHelp(this.value)" autocomplete="off"/>
+      <div id="voice-help-hint">Nói lệnh để điều khiển · Nhấn ⚡ để xem tất cả lệnh</div>
+      <div id="voice-help-list" style="padding-top:4px;"></div>
     </div>
   </div>
 
