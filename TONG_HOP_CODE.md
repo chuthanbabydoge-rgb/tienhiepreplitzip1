@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **01:13:21 30/5/2026**
+> Cập nhật lần cuối: **01:43:02 30/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,742 dòng, 77.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(18,686 dòng, 1.46 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(18,717 dòng, 1.46 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,742 | 77.2 KB |
-| `tienhiepv3.html` | 18,686 | 1.46 MB |
+| `tienhiepv3.html` | 18,717 | 1.46 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **24,149** | **1.70 MB** |
+| **TỔNG** | **24,180** | **1.70 MB** |
 
 ---
 
@@ -1844,7 +1844,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 18,686 dòng · 1.46 MB
+> 18,717 dòng · 1.46 MB
 
 ```html
 <!DOCTYPE html>
@@ -5636,6 +5636,10 @@ app.listen(PORT, '0.0.0.0', () => {
       white-space: nowrap;
       position: relative;
       overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
     }
     #hud-action-strip .has-btn button::before {
       content: '';
@@ -10196,6 +10200,24 @@ app.listen(PORT, '0.0.0.0', () => {
               </button>
             </div>
           `;
+          // iOS Safari fix: bind touchend directly to bypass 300ms delay & display:flex issues
+          setTimeout(() => {
+            const _rb = document.getElementById(`wf-run-btn-${aid}`);
+            if (_rb && !_rb._touchBound) {
+              _rb._touchBound = true;
+              _rb.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                if (!_rb.disabled) hudRunWorkflow(aid);
+              }, { passive: false });
+            }
+            const _allBtns = runWrap ? runWrap.querySelectorAll('button') : [];
+            _allBtns.forEach(b => {
+              if (!b._touchBound) {
+                b._touchBound = true;
+                b.style.touchAction = 'manipulation';
+              }
+            });
+          }, 0);
         }
       }
 
@@ -10458,24 +10480,28 @@ app.listen(PORT, '0.0.0.0', () => {
       }
 
       function hudRunWorkflow(aid) {
+        try {
         const btn = document.getElementById(`wf-run-btn-${aid}`);
         const statusEl = document.getElementById(`wf-run-status-${aid}`);
         const dat = window._wfData && window._wfData[aid] ? window._wfData[aid] : [];
-        if (!dat.length) return;
+        if (!dat.length) {
+          if (typeof showToast === 'function') showToast('⚡ Quy trình chưa có bước nào — mở agent để cấu hình', 'error');
+          return;
+        }
 
         const ag = AI_AGENTS.find(a => a.id === aid);
         const agColor = ag ? ag.color : '#00ffff';
 
-        btn.disabled = true;
+        if (btn) btn.disabled = true;
 
         // === Button launch flash ===
-        btn.classList.add('wf-btn-launching');
-        setTimeout(() => btn.classList.remove('wf-btn-launching'), 600);
+        if (btn) { btn.classList.add('wf-btn-launching'); setTimeout(() => { if(btn) btn.classList.remove('wf-btn-launching'); }, 600); }
 
         const cards = dat.map((_, i) => document.getElementById(`wf-card-${aid}-${i}`));
 
         // === Scan line ===
         const container = document.getElementById('workflow-container');
+        if (!container) { if (typeof showToast==='function') showToast('⚡ Mở HUD agent trước khi chạy quy trình', 'error'); if(btn){btn.disabled=false;} return; }
         let scanLine = container.querySelector('.hud-pipeline-scanline');
         if (!scanLine) {
           scanLine = document.createElement('div');
@@ -10531,7 +10557,7 @@ app.listen(PORT, '0.0.0.0', () => {
           }
         });
 
-        btn.textContent = '⟳ ĐANG CHẠY...';
+        if (btn) btn.textContent = '⟳ ĐANG CHẠY...';
         if (statusEl) { statusEl.textContent = `⟳ Khởi động quy trình...`; statusEl.className = 'wf-run-status running'; }
 
         let step = 0;
@@ -10557,8 +10583,7 @@ app.listen(PORT, '0.0.0.0', () => {
             container.appendChild(overlay);
             setTimeout(() => { if (overlay.parentNode) container.removeChild(overlay); }, 900);
             if (statusEl) { statusEl.textContent = `✓ Hoàn thành tất cả ${dat.length} bước!`; statusEl.className = 'wf-run-status done'; }
-            btn.disabled = false;
-            btn.textContent = '↺ CHẠY LẠI';
+            if (btn) { btn.disabled = false; btn.textContent = '↺ CHẠY LẠI'; }
             return;
           }
           if (statusEl) { statusEl.textContent = `⟳ Đang chạy bước ${step + 1}/${dat.length}: ${dat[step].name}...`; statusEl.className = 'wf-run-status running'; }
@@ -10578,6 +10603,12 @@ app.listen(PORT, '0.0.0.0', () => {
         }
 
         setTimeout(runStep, 400);
+        } catch(e) {
+          console.error('[hudRunWorkflow] lỗi:', e);
+          if (typeof showToast === 'function') showToast('⚡ Lỗi chạy quy trình: ' + e.message, 'error');
+          const _b = document.getElementById(`wf-run-btn-${aid}`);
+          if (_b) { _b.disabled = false; _b.textContent = '▶ CHẠY QUY TRÌNH'; }
+        }
       }
 
       function closeHUD() {
