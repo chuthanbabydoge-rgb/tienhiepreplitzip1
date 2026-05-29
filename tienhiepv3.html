@@ -1440,6 +1440,29 @@
     .vh-item.vh-highlight .vh-xname { color: #ffd700; }
     .vh-item.vh-highlight { border-color: rgba(255,215,0,0.2); background: rgba(255,215,0,0.04); }
 
+    /* ── Voice Hint Badges on Buttons ── */
+    [data-voice]::after {
+      content: '🎤 "' attr(data-voice) '"';
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 7px;
+      color: rgba(0,255,180,0.7);
+      background: rgba(0,5,18,0.9);
+      border: 1px solid rgba(0,255,180,0.2);
+      border-radius: 6px;
+      padding: 2px 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 9999;
+    }
+    [data-voice]:hover::after { opacity: 1; }
+    [data-voice] { position: relative; }
+
     /* ── Voice Command Hint Ticker ── */
     #voice-cmd-hints {
       position: fixed;
@@ -4781,7 +4804,7 @@
 
     <!-- UNIVERSE CHATBOX COLLAPSED ICON -->
     <!-- UNIVERSE VOICE MIC BUTTON (floating, always visible) -->
-    <div id="universe-mic-btn" title="Voice command — nói tên agent để bay tới" style="position:relative;">
+    <div id="universe-mic-btn" title="Voice command — nói tên agent để bay tới [Alt+V]" data-voice="Mở Truyền Âm" style="position:relative;">
       <div id="univ-mic-icon">🎙️</div>
       <div id="univ-mic-ring"></div>
       <div id="univ-mic-label">VOICE</div>
@@ -4802,7 +4825,7 @@
     </div>
 
     <!-- WAKE WORD INDICATOR -->
-    <div id="wake-word-indicator" title="Nói 'Mở Truyền Âm' để kích hoạt giọng nói · Nhấn để bật/tắt" onclick="window._wwToggle && window._wwToggle()">
+    <div id="wake-word-indicator" title="Nói 'Mở Truyền Âm' · Nhấn để bật/tắt · Phím tắt: Alt+V" onclick="window._wwToggle && window._wwToggle()">
       <span id="ww-mic-icon">🎤</span>
       <div id="ww-dot"></div>
       <span id="ww-label">MỞ TRUYỀN ÂM</span>
@@ -4858,42 +4881,42 @@
 
     <!-- SIDEBAR RIGHT -->
     <div id="sidebar-right">
-      <div class="panel-btn" onclick="openLeaderboard()">
+      <div class="panel-btn" onclick="openLeaderboard()" data-voice="Leaderboard">
         <span class="pbtn-icon">🏆</span>
         <div>
           <div class="pbtn-label" id="lb-lbl">BẢNG XẾP HẠNG</div>
           <div class="pbtn-sub" id="lb-sub">TOP DOANH THU</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openCompare()">
+      <div class="panel-btn" onclick="openCompare()" data-voice="So sánh">
         <span class="pbtn-icon">⚔️</span>
         <div>
           <div class="pbtn-label" id="comp-lbl">SO SÁNH AGENT</div>
           <div class="pbtn-sub" id="comp-sub">PHÂN TÍCH HIỆU SUẤT</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openGuide()">
+      <div class="panel-btn" onclick="openGuide()" data-voice="Hướng dẫn">
         <span class="icon">📖</span>
         <div>
           <div class="pbtn-label" id="guide-lbl">BÍ KÍP VŨ TRỤ</div>
           <div class="pbtn-sub" id="guide-sub">HƯỚNG DẪN TÂN THỦ</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openBuilder()">
+      <div class="panel-btn" onclick="openBuilder()" data-voice="Builder">
         <span class="icon">🔮</span>
         <div>
           <div class="pbtn-label" id="t-build-l">TRẬN PHÁP BUILDER</div>
           <div class="pbtn-sub" id="t-build-s">TẠO LUỒNG AI</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openNeural()">
+      <div class="panel-btn" onclick="openNeural()" data-voice="Thần kinh">
         <span class="pbtn-icon">🧠</span>
         <div>
           <div class="pbtn-label" id="nn-lbl">MẠNG THẦN KINH</div>
           <div class="pbtn-sub" id="nn-sub">TRỰC QUAN HÓA</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openMission()">
+      <div class="panel-btn" onclick="openMission()" data-voice="Nhiệm vụ">
         <span class="pbtn-icon">🎯</span>
         <div>
           <div class="pbtn-label" id="ms-lbl">NHIỆM VỤ</div>
@@ -4907,56 +4930,56 @@
           <div class="pbtn-sub" id="runall-sub">100 AGENT SONG SONG</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openAnalytics()">
+      <div class="panel-btn" onclick="openAnalytics()" data-voice="Thống kê">
         <span class="pbtn-icon">📊</span>
         <div>
           <div class="pbtn-label" id="ana-lbl">ANALYTICS</div>
           <div class="pbtn-sub" id="ana-sub">BIỂU ĐỒ DOANH THU</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openFavorites()">
+      <div class="panel-btn" onclick="openFavorites()" data-voice="Yêu thích">
         <span class="pbtn-icon">⭐</span>
         <div>
           <div class="pbtn-label" id="fav-lbl">YÊU THÍCH</div>
           <div class="pbtn-sub" id="fav-count-btn">0 AGENT</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openHistory()">
+      <div class="panel-btn" onclick="openHistory()" data-voice="Lịch sử">
         <span class="pbtn-icon">🕐</span>
         <div>
           <div class="pbtn-label" id="hist-lbl">LỊCH SỬ</div>
           <div class="pbtn-sub" id="hist-sub">NHẬT KÝ KÍCH HOẠT</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openAdvisor()">
+      <div class="panel-btn" onclick="openAdvisor()" data-voice="Cố vấn">
         <span class="pbtn-icon">💡</span>
         <div>
           <div class="pbtn-label" id="adv-lbl">AI ADVISOR</div>
           <div class="pbtn-sub" id="adv-sub">GỢI Ý AGENT</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openMiniGame()">
+      <div class="panel-btn" onclick="openMiniGame()" data-voice="Mini game">
         <span class="pbtn-icon">🎮</span>
         <div>
           <div class="pbtn-label" id="mg-lbl">MINI GAME</div>
           <div class="pbtn-sub" id="mg-sub">AGENT HUNT</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openAlerts()">
+      <div class="panel-btn" onclick="openAlerts()" data-voice="Cảnh báo">
         <span class="pbtn-icon">🔔</span>
         <div>
           <div class="pbtn-label" id="alt-lbl">CẢNH BÁO</div>
           <div class="pbtn-sub" id="alert-count-btn">0 NGƯỠNG</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openWFM()" style="border-color:rgba(136,0,255,0.6);box-shadow:0 0 20px rgba(136,0,255,0.4),0 0 30px rgba(136,0,255,0.4),inset 0 0 10px rgba(136,0,255,0.2);">
+      <div class="panel-btn" onclick="openWFM()" data-voice="WFM" style="border-color:rgba(136,0,255,0.6);box-shadow:0 0 20px rgba(136,0,255,0.4),0 0 30px rgba(136,0,255,0.4),inset 0 0 10px rgba(136,0,255,0.2);">
         <span class="pbtn-icon">⚙</span>
         <div>
           <div class="pbtn-label" style="color:#aa44ff;">LUỒNG AGENT</div>
           <div class="pbtn-sub">WORKFLOW MGR</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openVault()" style="border-color:rgba(255,170,0,0.6);box-shadow:0 0 20px rgba(255,170,0,0.3),0 0 30px rgba(255,170,0,0.2),inset 0 0 10px rgba(255,170,0,0.1);">
+      <div class="panel-btn" onclick="openVault()" data-voice="Kho tàng" style="border-color:rgba(255,170,0,0.6);box-shadow:0 0 20px rgba(255,170,0,0.3),0 0 30px rgba(255,170,0,0.2),inset 0 0 10px rgba(255,170,0,0.1);">
         <span class="pbtn-icon">🏛️</span>
         <div>
           <div class="pbtn-label" style="color:#ffaa00;" id="vault-lbl">KHO TÀNG</div>
@@ -4970,14 +4993,14 @@
           <div class="pbtn-sub">TẠO KOC ẢO</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openAgentMode()" id="agentmode-btn" style="border-color:rgba(255,80,200,0.7);box-shadow:0 0 22px rgba(255,80,200,0.45),0 0 40px rgba(136,0,255,0.3),inset 0 0 12px rgba(255,80,200,0.12);animation:agentModeBtnPulse 2.5s ease-in-out infinite;">
+      <div class="panel-btn" onclick="openAgentMode()" data-voice="Agent mode" id="agentmode-btn" style="border-color:rgba(255,80,200,0.7);box-shadow:0 0 22px rgba(255,80,200,0.45),0 0 40px rgba(136,0,255,0.3),inset 0 0 12px rgba(255,80,200,0.12);animation:agentModeBtnPulse 2.5s ease-in-out infinite;">
         <span class="pbtn-icon" style="animation:agentModeBtnPulse 2.5s ease-in-out infinite;">🤖</span>
         <div>
           <div class="pbtn-label" style="color:#ff50c8;text-shadow:0 0 12px rgba(255,80,200,0.8);">AI AGENT MODE</div>
           <div class="pbtn-sub" style="color:rgba(255,80,200,0.6);">CONTENT PLAN 30 NGÀY</div>
         </div>
       </div>
-      <div class="panel-btn" onclick="openAppSummary()" id="app-summary-btn" style="display:none;border-color:rgba(0,255,128,0.5);box-shadow:0 0 18px rgba(0,255,128,0.2),inset 0 0 8px rgba(0,255,128,0.08);">
+      <div class="panel-btn" onclick="openAppSummary()" data-voice="Tổng hợp" id="app-summary-btn" style="display:none;border-color:rgba(0,255,128,0.5);box-shadow:0 0 18px rgba(0,255,128,0.2),inset 0 0 8px rgba(0,255,128,0.08);">
         <span class="pbtn-icon">📋</span>
         <div>
           <div class="pbtn-label" style="color:#00ff88;">TỔNG HỢP APP</div>
@@ -7087,6 +7110,134 @@
           if (/cuon len|scroll up|len tren/.test(target)) { window.scrollBy(0,-300); return false; }
           if (/cuon xuong|scroll down|xuong duoi/.test(target)) { window.scrollBy(0,300); return false; }
 
+          // ── NUMBERED AGENT ACCESS ──────────────────────────────────
+          // "agent 1" / "mở agent thứ nhất" / "agent ba"
+          {
+            const _numMap = {
+              'mot':1,'nhat':1,'dau':1,'thu nhat':1,'first':1,'one':1,'1':1,
+              'hai':2,'second':2,'two':2,'thu hai':2,'2':2,
+              'ba':3,'third':3,'three':3,'thu ba':3,'3':3,
+              'bon':4,'four':4,'thu bon':4,'4':4,
+              'nam':5,'five':5,'thu nam':5,'5':5,
+              'sau':6,'six':6,'thu sau':6,'6':6,
+              'bay':7,'seven':7,'thu bay':7,'7':7,
+              'tam':8,'eight':8,'thu tam':8,'8':8,
+              'chin':9,'nine':9,'thu chin':9,'9':9,
+              'muoi':10,'ten':10,'thu muoi':10,'10':10,
+            };
+            const _nm = raw.match(/(?:agent|mo agent|tac nhan) +(?:thu +)?(.+)/);
+            if (_nm) {
+              const numStr = _nm[1].trim();
+              const idx = _numMap[numStr] != null ? _numMap[numStr] - 1
+                        : (parseInt(numStr) > 0 ? parseInt(numStr) - 1 : -1);
+              if (idx >= 0 && idx < AI_AGENTS.length) {
+                const a = AI_AGENTS[idx];
+                _showTranscript(transcript);
+                if (typeof showToast === 'function') showToast('🎙️ ' + a.emoji + ' Agent ' + (idx+1) + ': ' + (a.xname||a.name), 'success');
+                setTimeout(() => { if (typeof window.openAgentChat === 'function') window.openAgentChat(a); }, 300);
+                return true;
+              }
+            }
+          }
+
+          // ── SET TOPIC BY VOICE ─────────────────────────────────────
+          // "đặt chủ đề [topic]" / "chủ đề [topic]" / "topic [topic]"
+          {
+            const _tm = raw.match(/^(?:dat chu de|chu de|topic|set topic|chu de la) +(.{2,})$/);
+            if (_tm) {
+              const topicVal = transcript.replace(/^(?:đặt chủ đề|chủ đề|topic|set topic|chủ đề là)\s+/i,'').trim();
+              const inp = document.getElementById('hud-topic-input');
+              if (inp) {
+                inp.value = topicVal;
+                if (typeof hudSaveTopic === 'function') hudSaveTopic();
+                _vt('Đặt chủ đề: "' + topicVal + '"'); return true;
+              }
+              // If HUD not open, open vault with note
+              _vt('Mở HUD agent trước để đặt chủ đề'); return true;
+            }
+          }
+
+          // ── VAULT ADD BY VOICE ─────────────────────────────────────
+          // "thêm vào kho [title]" / "lưu kho [content]"
+          {
+            const _vm = raw.match(/^(?:them vao kho|luu vao kho|them kho|ghi vao kho) +(.{2,})$/);
+            if (_vm) {
+              const vTitle = transcript.replace(/^(?:thêm vào kho|lưu vào kho|thêm kho|ghi vào kho)\s+/i,'').trim();
+              // Open vault and pre-fill title
+              if (typeof openVault === 'function') openVault();
+              setTimeout(() => {
+                const tf = document.getElementById('vf-title');
+                const cf = document.getElementById('vf-content');
+                if (tf) { tf.value = vTitle; tf.focus(); }
+                if (cf) cf.value = '';
+              }, 400);
+              _vt('Mở Kho Tàng — nhập nội dung và lưu'); return true;
+            }
+          }
+
+          // ── QUICK QUESTION BY VOICE ─────────────────────────────────
+          // "câu hỏi 1" / "câu hỏi đầu" / "quick 2"
+          {
+            const _qm = raw.match(/^(?:cau hoi|quick question|quick|cau|q) +(\d+|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi)$/);
+            if (_qm) {
+              const _qn = {'mot':1,'hai':2,'ba':3,'bon':4,'nam':5,'sau':6,'bay':7,'tam':8,'chin':9,'muoi':10};
+              const qIdx = _qn[_qm[1]] != null ? _qn[_qm[1]] - 1 : parseInt(_qm[1]) - 1;
+              const chips = document.querySelectorAll('#hud-quick-q-chips > div');
+              if (chips[qIdx]) {
+                chips[qIdx].click();
+                _vt('Câu hỏi nhanh ' + (qIdx+1)); return true;
+              }
+              _vt('Mở HUD và đặt chủ đề trước'); return true;
+            }
+          }
+
+          // ── HUD TABS BY VOICE ──────────────────────────────────────
+          // "tab [name]" / "chuyển tab [name]"
+          {
+            const _tabm = raw.match(/^(?:tab|chuyen tab|mo tab|sang tab) +(.{2,})$/);
+            if (_tabm) {
+              const tabQ = _tabm[1].trim();
+              const tabBtns = document.querySelectorAll('.hud-tab-btn');
+              let matched = null;
+              tabBtns.forEach(b => {
+                if (_norm(b.textContent).includes(tabQ) || tabQ.includes(_norm(b.textContent).slice(0,4))) matched = b;
+              });
+              if (matched) { matched.click(); _vt('Chuyển tab: ' + matched.textContent.trim()); return true; }
+            }
+          }
+
+          // ── SEND AC-INPUT WITH DICTATION ───────────────────────────
+          // "nhắn [message]" / "truyền âm [message]"
+          {
+            const _am = raw.match(/^(?:nhan|truyen am tin|nhan tin|go|viet tin) +(.{2,})$/);
+            const _acM = document.getElementById('agent-chat-modal');
+            if (_am && _acM && _acM.style.display !== 'none') {
+              const acInp = document.getElementById('ac-input');
+              if (acInp) {
+                acInp.value = transcript.replace(/^(?:nhắn|truyền âm tin|nhắn tin|gõ|viết tin)\s+/i,'').trim();
+                acInp.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+                _vt('Đã gửi tin nhắn'); return true;
+              }
+            }
+          }
+
+          // ── COPY LAST AI RESPONSE ──────────────────────────────────
+          if (/sao chep|copy|chep|copy ket qua/.test(target)) {
+            const lastAI = [...document.querySelectorAll('.ac-msg-text, .uc-msg.system span')].pop();
+            if (lastAI) {
+              navigator.clipboard.writeText(lastAI.innerText || lastAI.textContent).then(() => {
+                _vt('Đã copy nội dung ✅');
+              }).catch(() => _vt('Không thể copy'));
+            } else _vt('Không tìm thấy nội dung');
+            return true;
+          }
+
+          // ── KEYBOARD SHORTCUTS INFO ────────────────────────────────
+          if (/phim tat|keyboard shortcut|ban phim/.test(target)) {
+            if (typeof showToast === 'function') showToast('⌨️ [2] Analytics · [4] Yêu thích · [8] Lịch sử · [Alt+V] Voice', 'info');
+            return false;
+          }
+
           // ── Agent name matching ────────────────────────────────────
           if (!_agentIndex) _agentIndex = _buildAgentIndex();
           if (target.length < 3) {
@@ -7258,6 +7409,16 @@
 
         document.addEventListener('keydown', function(e) {
           if (e.key === 'Escape') window.closeVoiceHelp && window.closeVoiceHelp();
+          // Alt+V → toggle voice engine
+          if (e.altKey && (e.key === 'v' || e.key === 'V')) {
+            e.preventDefault();
+            if (typeof _toggleVoice === 'function') _toggleVoice();
+          }
+          // Alt+H → open voice help
+          if (e.altKey && (e.key === 'h' || e.key === 'H')) {
+            e.preventDefault();
+            if (typeof window.openVoiceHelp === 'function') window.openVoiceHelp();
+          }
         });
 
         function _getOrCreateTranscript() {
