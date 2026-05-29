@@ -3517,67 +3517,119 @@
     }
 
     /* ── Run Workflow node states ── */
+    /* ══════════════════════════════════════════════
+       XIANXIA FORMATION RUN STATES — Tiên Hiệp Trận Pháp
+       ══════════════════════════════════════════════ */
     .canvas-node.sp-running {
-      border-color: rgba(255,214,10,0.7) !important;
+      border-color: #ffaa00 !important;
+      color: #ffe080 !important;
+      background: rgba(255,140,0,0.14) !important;
       box-shadow:
-        0 0 0 3px rgba(255,214,10,0.18),
-        0 6px 28px rgba(0,0,0,0.5),
-        inset 0 1px 0 rgba(255,255,255,0.12) !important;
-      animation: sp-node-pulse 0.9s ease-in-out infinite;
+        0 0 0 2px rgba(255,170,0,0.4),
+        0 0 20px rgba(255,140,0,0.7),
+        0 0 45px rgba(255,80,0,0.3),
+        inset 0 0 14px rgba(255,160,0,0.1) !important;
+      animation: xx-node-pulse 0.75s ease-in-out infinite;
+      z-index: 10;
+    }
+    @keyframes xx-node-pulse {
+      0%,100% {
+        box-shadow: 0 0 0 2px rgba(255,170,0,0.4), 0 0 20px rgba(255,140,0,0.7), 0 0 45px rgba(255,80,0,0.3);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 0 6px rgba(255,170,0,0.6), 0 0 35px rgba(255,160,0,1), 0 0 70px rgba(255,80,0,0.5);
+        transform: scale(1.05);
+      }
     }
     .canvas-node.sp-done {
-      border-color: rgba(52,199,89,0.7) !important;
+      border-color: #00ffaa !important;
+      color: #00ffaa !important;
+      background: rgba(0,255,150,0.09) !important;
       box-shadow:
-        0 0 0 3px rgba(52,199,89,0.18),
-        0 6px 28px rgba(0,0,0,0.5),
-        inset 0 1px 0 rgba(255,255,255,0.12) !important;
+        0 0 0 2px rgba(0,255,150,0.3),
+        0 0 18px rgba(0,255,136,0.55),
+        inset 0 0 10px rgba(0,255,136,0.06) !important;
+      animation: xx-done-seal 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes xx-done-seal {
+      0%  { transform: scale(1.15); opacity: 0.6; filter: brightness(2); }
+      100%{ transform: scale(1);    opacity: 1;   filter: brightness(1); }
     }
     .canvas-node.sp-error {
-      border-color: rgba(255,69,58,0.7) !important;
-      box-shadow:
-        0 0 0 3px rgba(255,69,58,0.18),
-        0 6px 28px rgba(0,0,0,0.5) !important;
+      border-color: #ff3333 !important;
+      color: #ff6666 !important;
+      background: rgba(255,40,40,0.12) !important;
+      box-shadow: 0 0 0 3px rgba(255,50,50,0.35), 0 0 25px rgba(255,40,40,0.6) !important;
+      animation: xx-error-shake 0.45s ease-in-out;
     }
-    @keyframes sp-node-pulse {
-      0%,100% { box-shadow: 0 0 0 3px rgba(255,214,10,0.18), 0 6px 28px rgba(0,0,0,0.5); }
-      50%      { box-shadow: 0 0 0 6px rgba(255,214,10,0.35), 0 6px 28px rgba(0,0,0,0.5); }
+    @keyframes xx-error-shake {
+      0%,100% { transform: translateX(0) rotate(0deg); }
+      20%,60%  { transform: translateX(-5px) rotate(-1.5deg); }
+      40%,80%  { transform: translateX(5px) rotate(1.5deg); }
     }
-    /* ── SVG animated line ── */
+    /* ── SVG: linh khí energy beam ── */
     .builder-line.sp-active {
-      stroke: url(#sp-active-grad) !important;
-      stroke-dasharray: 12 6;
-      animation: sp-line-march 0.5s linear infinite;
-      stroke-width: 2.5px !important;
-      filter: drop-shadow(0 0 4px rgba(255,214,10,0.6));
+      stroke: #ffcc00 !important;
+      stroke-dasharray: 10 5;
+      animation: xx-linh-khi 0.32s linear infinite;
+      stroke-width: 4px !important;
+      filter: drop-shadow(0 0 6px rgba(255,200,0,1)) drop-shadow(0 0 16px rgba(255,120,0,0.8));
+      opacity: 1 !important;
     }
     .builder-line.sp-done-line {
-      stroke: url(#sp-done-grad) !important;
-      stroke-width: 2px !important;
+      stroke: #00ffaa !important;
+      stroke-width: 2.5px !important;
+      stroke-dasharray: none !important;
+      animation: none !important;
+      filter: drop-shadow(0 0 5px rgba(0,255,160,0.8));
+      opacity: 1 !important;
     }
-    @keyframes sp-line-march {
-      to { stroke-dashoffset: -18; }
+    @keyframes xx-linh-khi {
+      to { stroke-dashoffset: -15; }
     }
-    /* ── Builder log panel ── */
+    /* ── Bát Quái Formation overlay ── */
+    #builder-formation-overlay {
+      position: absolute; inset: 0; z-index: 4;
+      pointer-events: none;
+      opacity: 0; transition: opacity 0.8s ease;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    #builder-formation-overlay.active { opacity: 1; }
+    .xx-ring-cw {
+      position: absolute; border-radius: 50%;
+      top: 50%; left: 50%;
+      animation: xx-ring-spin-cw linear infinite;
+    }
+    .xx-ring-ccw {
+      position: absolute; border-radius: 50%;
+      top: 50%; left: 50%;
+      animation: xx-ring-spin-ccw linear infinite;
+    }
+    @keyframes xx-ring-spin-cw  { from { transform: translate(-50%,-50%) rotate(0deg);   } to { transform: translate(-50%,-50%) rotate(360deg);  } }
+    @keyframes xx-ring-spin-ccw { from { transform: translate(-50%,-50%) rotate(0deg);   } to { transform: translate(-50%,-50%) rotate(-360deg); } }
+    /* ── Builder log panel: cổ thư cuộn ── */
     #builder-log-panel {
       position:absolute;bottom:0;left:0;right:0;z-index:30;
-      background:rgba(8,10,22,0.88);
-      border-top:1px solid rgba(255,255,255,0.08);
-      backdrop-filter:blur(16px);
+      background:linear-gradient(to top,rgba(22,7,0,0.97),rgba(14,4,0,0.94));
+      border-top:1px solid rgba(255,150,0,0.28);
+      box-shadow:0 -4px 24px rgba(255,90,0,0.15);
       max-height:0;overflow:hidden;
-      transition:max-height 0.3s ease;
+      transition:max-height 0.4s ease;
     }
-    #builder-log-panel.sp-open { max-height:160px; }
+    #builder-log-panel.sp-open { max-height:180px; }
     #builder-log-inner {
-      padding:10px 14px;
-      font-family:'SF Mono','Fira Mono',monospace;
-      font-size:11px;line-height:1.7;
-      color:rgba(255,255,255,0.7);
-      overflow-y:auto;max-height:140px;
+      padding:10px 16px;
+      font-family:'Share Tech Mono','Fira Mono',monospace;
+      font-size:11px;line-height:1.85;
+      color:rgba(255,190,80,0.55);
+      overflow-y:auto;max-height:160px;
     }
-    #builder-log-inner .log-run  { color:#ffd60a; }
-    #builder-log-inner .log-ok   { color:#34c759; }
-    #builder-log-inner .log-err  { color:#ff453a; }
-    #builder-log-inner .log-info { color:rgba(255,255,255,0.45); }
+    #builder-log-inner .log-run  { color:#ffaa00; text-shadow:0 0 8px rgba(255,170,0,0.6); }
+    #builder-log-inner .log-ok   { color:#00ffaa; text-shadow:0 0 8px rgba(0,255,160,0.5); }
+    #builder-log-inner .log-err  { color:#ff4444; text-shadow:0 0 8px rgba(255,60,60,0.5); }
+    #builder-log-inner .log-info { color:rgba(255,190,80,0.35); }
 
     .close-btn,
     .modal-close {
@@ -10056,23 +10108,25 @@
           border-radius:20px;cursor:pointer;transition:all 0.18s;">
           ✕ Xóa
         </button>
-        <!-- Run button -->
+        <!-- Run button: Vận Trận -->
         <button onclick="runWorkflow()" id="builder-run-btn" style="
-          display:inline-flex;align-items:center;gap:6px;
-          background:rgba(52,199,89,0.15);border:1px solid rgba(52,199,89,0.4);
-          color:#34c759;padding:6px 16px;
-          font-family:-apple-system,'Segoe UI',sans-serif;font-size:12px;font-weight:600;
-          border-radius:20px;cursor:pointer;transition:all 0.18s;
-          box-shadow:0 0 14px rgba(52,199,89,0.15),inset 0 1px 0 rgba(255,255,255,0.08);">
-          ▶ Chạy
+          display:inline-flex;align-items:center;gap:8px;
+          background:linear-gradient(135deg,rgba(255,160,0,0.22),rgba(255,70,0,0.14));
+          border:1px solid rgba(255,160,0,0.6);
+          color:#ffcc00;padding:7px 20px;
+          font-family:'Orbitron','Share Tech Mono',sans-serif;font-size:11px;font-weight:700;letter-spacing:2.5px;
+          border-radius:8px;cursor:pointer;transition:all 0.2s;
+          box-shadow:0 0 18px rgba(255,140,0,0.3),0 0 4px rgba(255,200,0,0.2),inset 0 1px 0 rgba(255,220,100,0.12);
+          text-shadow:0 0 12px rgba(255,180,0,0.8);">
+          ⚡ VẬN TRẬN
         </button>
         <!-- Status pill -->
         <div id="builder-status-pill" style="
           display:flex;align-items:center;gap:6px;
-          background:rgba(52,199,89,0.12);border:1px solid rgba(52,199,89,0.25);
-          border-radius:20px;padding:5px 12px;">
-          <span class="pulse-dot" id="builder-status-dot" style="background:#34c759;box-shadow:0 0 6px #34c759;"></span>
-          <span id="builder-status-text" style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:11px;color:#34c759;font-weight:500;">Sẵn sàng</span>
+          background:rgba(255,160,0,0.08);border:1px solid rgba(255,150,0,0.22);
+          border-radius:8px;padding:5px 13px;">
+          <span class="pulse-dot" id="builder-status-dot" style="background:#ffaa00;box-shadow:0 0 6px #ffaa00;"></span>
+          <span id="builder-status-text" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#ffaa00;font-weight:500;letter-spacing:1px;">LINH KHÍ SẴN SÀNG</span>
         </div>
       </div>
 
@@ -10161,6 +10215,52 @@
               </linearGradient>
             </defs>
           </svg>
+
+          <!-- ══ BÁT QUÁI FORMATION OVERLAY ══ -->
+          <div id="builder-formation-overlay">
+            <!-- Static SVG formation base -->
+            <svg viewBox="0 0 600 600" style="position:absolute;width:min(560px,88%);height:min(560px,88%);top:50%;left:50%;transform:translate(-50%,-50%);">
+              <defs>
+                <radialGradient id="fo-glow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%"   stop-color="rgba(255,180,0,0.15)"/>
+                  <stop offset="100%" stop-color="rgba(255,80,0,0)"/>
+                </radialGradient>
+              </defs>
+              <!-- Center ambient glow -->
+              <circle cx="300" cy="300" r="260" fill="url(#fo-glow)"/>
+              <!-- Outer ring -->
+              <circle cx="300" cy="300" r="248" fill="none" stroke="#ffaa00" stroke-width="1.2" stroke-dasharray="6 8" opacity="0.35"/>
+              <!-- Mid ring -->
+              <circle cx="300" cy="300" r="190" fill="none" stroke="#ff8800" stroke-width="0.9" stroke-dasharray="3 9" opacity="0.28"/>
+              <!-- Inner ring -->
+              <circle cx="300" cy="300" r="130" fill="none" stroke="#ffcc44" stroke-width="1" stroke-dasharray="2 6" opacity="0.32"/>
+              <!-- Core -->
+              <circle cx="300" cy="300" r="70" fill="none" stroke="#ffdd00" stroke-width="1.5" stroke-dasharray="2 4" opacity="0.45"/>
+              <!-- Cross axes -->
+              <line x1="52" y1="300" x2="548" y2="300" stroke="#ffaa00" stroke-width="0.6" opacity="0.25"/>
+              <line x1="300" y1="52" x2="300" y2="548" stroke="#ffaa00" stroke-width="0.6" opacity="0.25"/>
+              <line x1="122" y1="122" x2="478" y2="478" stroke="#ff9900" stroke-width="0.5" opacity="0.2"/>
+              <line x1="478" y1="122" x2="122" y2="478" stroke="#ff9900" stroke-width="0.5" opacity="0.2"/>
+              <!-- 8 trigram position markers -->
+              <circle cx="300" cy="52"  r="5" fill="#ffaa00" opacity="0.6"/>
+              <circle cx="300" cy="548" r="5" fill="#ffaa00" opacity="0.6"/>
+              <circle cx="52"  cy="300" r="5" fill="#ffaa00" opacity="0.6"/>
+              <circle cx="548" cy="300" r="5" fill="#ffaa00" opacity="0.6"/>
+              <circle cx="122" cy="122" r="4" fill="#ff8800" opacity="0.5"/>
+              <circle cx="478" cy="122" r="4" fill="#ff8800" opacity="0.5"/>
+              <circle cx="122" cy="478" r="4" fill="#ff8800" opacity="0.5"/>
+              <circle cx="478" cy="478" r="4" fill="#ff8800" opacity="0.5"/>
+              <!-- Yin-yang center -->
+              <circle cx="300" cy="300" r="32" fill="none" stroke="#ffdd00" stroke-width="2" opacity="0.75"/>
+              <text x="300" y="312" text-anchor="middle" font-size="32" fill="#ffcc00" opacity="0.7" font-family="serif">☯</text>
+            </svg>
+            <!-- Rotating outer ring (clockwise, slow) -->
+            <div class="xx-ring-cw" style="width:500px;height:500px;border:1px dashed rgba(255,150,0,0.2);animation-duration:12s;"></div>
+            <!-- Counter-rotating middle ring -->
+            <div class="xx-ring-ccw" style="width:380px;height:380px;border:1px solid rgba(255,120,0,0.15);animation-duration:7s;"></div>
+            <!-- Fast inner ring -->
+            <div class="xx-ring-cw" style="width:260px;height:260px;border:1px dotted rgba(255,200,0,0.2);animation-duration:4s;"></div>
+          </div>
 
           <!-- Log panel (slides up from bottom) -->
           <div id="builder-log-panel">
@@ -12226,6 +12326,16 @@
       if (txt)  { txt.style.color = color; txt.textContent = text; }
     }
 
+    // ── BÁT QUÁI FORMATION OVERLAY ──
+    function _showFormationOverlay() {
+      const ov = document.getElementById('builder-formation-overlay');
+      if (ov) ov.classList.add('active');
+    }
+    function _hideFormationOverlay() {
+      const ov = document.getElementById('builder-formation-overlay');
+      if (ov) ov.classList.remove('active');
+    }
+
     // ── BUILDER LOG ──
     function _blogLog(msg, type) {
       const panel = document.getElementById('builder-log-panel');
@@ -12250,9 +12360,10 @@
       if (el) el.style.display = '';
       const panel = document.getElementById('builder-log-panel');
       if (panel) { panel.classList.remove('sp-open'); document.getElementById('builder-log-inner').innerHTML = ''; }
-      _setBuilderStatus('Sẵn sàng', '#34c759');
+      _setBuilderStatus('LINH KHÍ SẴN SÀNG', '#ffaa00');
+      _hideFormationOverlay();
       const runBtn = document.getElementById('builder-run-btn');
-      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.textContent = '▶ Chạy'; }
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '⚡ VẬN TRẬN'; }
     }
 
     // ── RUN WORKFLOW ANIMATION ──
@@ -12263,7 +12374,7 @@
 
       _wfRunning = true;
       const runBtn = document.getElementById('builder-run-btn');
-      if (runBtn) { runBtn.disabled = true; runBtn.style.opacity = '0.5'; runBtn.textContent = '⏳ Đang chạy…'; }
+      if (runBtn) { runBtn.disabled = true; runBtn.style.opacity = '0.55'; runBtn.innerHTML = '☯ ĐANG VẬN...'; }
 
       // reset states
       bNodes.forEach(n => { n.classList.remove('sp-running','sp-done','sp-error'); });
@@ -12272,8 +12383,9 @@
       const inner = document.getElementById('builder-log-inner');
       if (panel && inner) { panel.classList.add('sp-open'); inner.innerHTML = ''; }
 
-      _blogLog('🚀 Khởi động workflow…', 'run');
-      _setBuilderStatus('Đang chạy…', '#ffd60a');
+      _showFormationOverlay();
+      _blogLog('⚡ Thiên Địa Chi Lực Vận Động — Bát Quái Trận Pháp Khai Thiên...', 'run');
+      _setBuilderStatus('⚡ TRẬN PHÁP VẬN HÀNH', '#ffaa00');
 
       const lines = document.querySelectorAll('.builder-line');
       const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -12289,7 +12401,7 @@
         }
 
         node.classList.add('sp-running');
-        _blogLog(`⚙ Bước ${i+1}/${bNodes.length}: ${dispLabel}`, 'run');
+        _blogLog(`◈ Luyện Hoá ${i+1}/${bNodes.length} — ${dispLabel} thu nạp linh khí...`, 'run');
         await delay(900 + Math.random() * 400);
 
         // finish line
@@ -12303,7 +12415,7 @@
         node.classList.remove('sp-running');
         if (fail) {
           node.classList.add('sp-error');
-          _blogLog(`✗ Lỗi tại bước ${i+1}: ${dispLabel} — retry…`, 'err');
+          _blogLog(`⚠ Linh Khí Hỗn Loạn tại tầng ${i+1} — ${dispLabel} đang tái kết cấu...`, 'err');
           await delay(700);
           node.classList.remove('sp-error');
           node.classList.add('sp-running');
@@ -12311,7 +12423,7 @@
           node.classList.remove('sp-running');
         }
         node.classList.add('sp-done');
-        _blogLog(`✓ Hoàn thành: ${dispLabel}`, 'ok');
+        _blogLog(`✦ Pháp Khí Tựu Thành — ${dispLabel} viên mãn!`, 'ok');
       }
 
       // activate last line if any
@@ -12320,11 +12432,13 @@
         if (last && !last.classList.contains('sp-done-line')) { last.classList.add('sp-done-line'); }
       }
 
-      _blogLog(`✅ Workflow hoàn tất — ${bNodes.length} bước thành công!`, 'ok');
-      _setBuilderStatus('Hoàn tất ✓', '#34c759');
-      showToast('Workflow chạy xong!', 'success');
+      await new Promise(r => setTimeout(r, 400));
+      _blogLog(`🌟 Trận Pháp Đại Thành — ${bNodes.length} Pháp Khí Vận Hành Viên Mãn!`, 'ok');
+      _setBuilderStatus('✦ VIÊN MÃN', '#00ffaa');
+      showToast('⚡ Trận Pháp hoàn tất!', 'success');
       _wfRunning = false;
-      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.textContent = '▶ Chạy lại'; }
+      _hideFormationOverlay();
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '⚡ VẬN TRẬN LẠI'; }
     }
 
     function loadPreset(index) {
@@ -12334,9 +12448,10 @@
       document.getElementById('builder-svg').innerHTML = _spGradDefs();
       _hideBuilderEmpty();
       _wfRunning = false;
+      _hideFormationOverlay();
       const runBtn = document.getElementById('builder-run-btn');
-      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.textContent = '▶ Chạy'; }
-      _setBuilderStatus('Sẵn sàng', '#34c759');
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '⚡ VẬN TRẬN'; }
+      _setBuilderStatus('LINH KHÍ SẴN SÀNG', '#ffaa00');
       const panel = document.getElementById('builder-log-panel');
       if (panel) { panel.classList.remove('sp-open'); document.getElementById('builder-log-inner').innerHTML = ''; }
 
