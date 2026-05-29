@@ -2615,8 +2615,6 @@
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 10, .88);
-      backdrop-filter: blur(10px);
     }
 
     #compare-modal.show {
@@ -2711,8 +2709,6 @@
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 10, .88);
-      backdrop-filter: blur(10px);
     }
 
     #leaderboard-modal.show {
@@ -2877,8 +2873,6 @@
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 10, .88);
-      backdrop-filter: blur(10px);
     }
 
     #neural-modal.show {
@@ -2917,8 +2911,6 @@
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 10, .88);
-      backdrop-filter: blur(10px);
     }
 
     #mission-modal.show {
@@ -3173,8 +3165,6 @@
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 10, 0.88);
-      backdrop-filter: blur(10px);
     }
 
     .modal-overlay.show {
@@ -4340,6 +4330,18 @@
         delete _hiddenUIState[id];
       }
     });
+  };
+
+  // ── Dùng chung cho mọi panel: ẩn/hiện toàn bộ UI + topbar ──────────────
+  window._panelOpen = function() {
+    if (typeof window.hideMainUI === 'function') window.hideMainUI();
+    var tb = document.getElementById('topbar');
+    if (tb) { window._panelTopbarDisplay = tb.style.display; tb.style.display = 'none'; }
+  };
+  window._panelClose = function() {
+    if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
+    var tb = document.getElementById('topbar');
+    if (tb) { tb.style.display = (window._panelTopbarDisplay !== undefined ? window._panelTopbarDisplay : ''); delete window._panelTopbarDisplay; }
   };
 
   // ── Parent HUD hide/restore (AR Layer principle) ──────────────────────────
@@ -9512,6 +9514,7 @@
     // LEADERBOARD
     // ═══════════════════════════════════════════════════════════
     function openLeaderboard() {
+      window._panelOpen();
       document.getElementById('leaderboard-modal').classList.add('show');
       renderLB('revenue', document.querySelector('.lb-tab'));
     }
@@ -9548,6 +9551,7 @@
     // COMPARE
     // ═══════════════════════════════════════════════════════════
     function openCompare() {
+      window._panelOpen();
       document.getElementById('compare-modal').classList.add('show');
       const selA = document.getElementById('cmp-a');
       const selB = document.getElementById('cmp-b');
@@ -9598,6 +9602,7 @@
     // ═══════════════════════════════════════════════════════════
     let neuralRAF = null;
     function openNeural() {
+      window._panelOpen();
       document.getElementById('neural-modal').classList.add('show');
       setTimeout(() => startNeural(), 100);
     }
@@ -9682,6 +9687,7 @@
       { id: 7, name: 'KHOA HỌC TƯƠNG LAI', desc: 'Nhóm nghiên cứu khoa học & công nghệ vũ trụ.', reward: '$200,000/tháng', agents: [75, 76, 77, 78, 80, 85, 90, 41, 68, 70], status: 'active' },
     ];
     function openMission() {
+      window._panelOpen();
       document.getElementById('mission-modal').classList.add('show');
       const grid = document.getElementById('mission-grid');
       grid.innerHTML = MISSIONS.map(m => `
@@ -9800,7 +9806,7 @@
   <div id="leaderboard-modal">
     <div id="lb-box" style="position:relative;">
       <button class="modal-close"
-        onclick="document.getElementById('leaderboard-modal').classList.remove('show')">✕</button>
+        onclick="window._panelClose&&window._panelClose();document.getElementById('leaderboard-modal').classList.remove('show')">✕</button>
       <div id="lb-title-txt" class="lb-title">🏆 BẢNG XẾP HẠNG</div>
       <div id="lb-rank-sub" class="lb-sub">PHÂN LOẠI THEO HIỆU SUẤT VÀ DOANH THU</div>
       <div class="lb-tabs">
@@ -9814,7 +9820,7 @@
   </div>
 
   <!-- COMPARE MODAL -->
-  <div class="modal-overlay" id="builder-modal" style="background:rgba(4,6,18,0.92);backdrop-filter:blur(24px);">
+  <div class="modal-overlay" id="builder-modal" style="background:transparent;backdrop-filter:none;">
     <div class="builder-modal-content" style="
       width:100vw;height:100vh;max-width:100vw;max-height:100vh;
       background:transparent;border-radius:0;border:none;
@@ -10023,7 +10029,7 @@
 
   <div id="compare-modal">
     <div id="compare-box" style="position:relative;">
-      <button class="modal-close" onclick="document.getElementById('compare-modal').classList.remove('show')">✕</button>
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('compare-modal').classList.remove('show')">✕</button>
       <div class="compare-title">⚔️ SO SÁNH AGENT</div>
       <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
         <div style="display:flex;flex-direction:column;gap:4px;">
@@ -10048,7 +10054,7 @@
   <div id="neural-modal">
     <div id="neural-box" style="position:relative;">
       <button class="modal-close"
-        onclick="document.getElementById('neural-modal').classList.remove('show');stopNeural()">✕</button>
+        onclick="window._panelClose&&window._panelClose();document.getElementById('neural-modal').classList.remove('show');stopNeural()">✕</button>
       <div class="neural-title" id="neural-modal-title">🧠 MẠNG THẦN KINH VŨ TRỤ</div>
       <canvas id="neural-canvas" height="420"></canvas>
       <div
@@ -10064,7 +10070,7 @@
   <!-- MISSION MODAL -->
   <div id="mission-modal">
     <div id="mission-box" style="position:relative;">
-      <button class="modal-close" onclick="document.getElementById('mission-modal').classList.remove('show')">✕</button>
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('mission-modal').classList.remove('show')">✕</button>
       <div class="mission-title">🎯 MISSION CONTROL</div>
       <div class="mission-sub" id="mission-sub-lbl">CHỌN NHIỆM VỤ ĐỂ KÍCH HOẠT CỤM AGENT</div>
       <div class="mission-grid" id="mission-grid"></div>
@@ -10120,10 +10126,10 @@
 
   <!-- ═══════════ ANALYTICS MODAL ═══════════ -->
   <div id="analytics-modal"
-    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,10,.88);backdrop-filter:blur(12px);">
+    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;">
     <div
       style="width:min(900px,97vw);max-height:90vh;overflow-y:auto;background:rgba(0,5,18,.97);border:1px solid #00ffff33;border-top:2px solid #00ffff;padding:28px;position:relative;font-family:'Share Tech Mono',monospace;">
-      <button class="modal-close" onclick="document.getElementById('analytics-modal').style.display='none'">✕</button>
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('analytics-modal').style.display='none'">✕</button>
       <div style="font-family:'Orbitron',sans-serif;font-size:18px;color:#00ffff;letter-spacing:4px;margin-bottom:4px;">
         📊 ANALYTICS DASHBOARD</div>
       <div style="font-size:9px;color:#00ffff66;letter-spacing:2px;margin-bottom:20px;">PHÂN TÍCH DOANH THU & HIỆU SUẤT
@@ -10158,10 +10164,10 @@
 
   <!-- ═══════════ FAVORITES MODAL ═══════════ -->
   <div id="favorites-modal"
-    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,10,.88);backdrop-filter:blur(12px);">
+    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;">
     <div
       style="width:min(700px,97vw);max-height:88vh;overflow-y:auto;background:rgba(0,5,18,.97);border:1px solid #ffcc0033;border-top:2px solid #ffcc00;padding:28px;position:relative;font-family:'Share Tech Mono',monospace;">
-      <button class="modal-close" onclick="document.getElementById('favorites-modal').style.display='none'"
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('favorites-modal').style.display='none'"
         style="color:#ffcc00;border-color:#ffcc0044;">✕</button>
       <div style="font-family:'Orbitron',sans-serif;font-size:18px;color:#ffcc00;letter-spacing:4px;margin-bottom:4px;">
         ⭐ AGENT YÊU THÍCH</div>
@@ -10175,10 +10181,10 @@
 
   <!-- ═══════════ HISTORY MODAL ═══════════ -->
   <div id="history-modal"
-    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,10,.88);backdrop-filter:blur(12px);">
+    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;">
     <div
       style="width:min(700px,97vw);max-height:88vh;overflow-y:auto;background:rgba(0,5,18,.97);border:1px solid #00ff8833;border-top:2px solid #00ff88;padding:28px;position:relative;font-family:'Share Tech Mono',monospace;">
-      <button class="modal-close" onclick="document.getElementById('history-modal').style.display='none'"
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('history-modal').style.display='none'"
         style="color:#00ff88;border-color:#00ff8844;">✕</button>
       <div style="font-family:'Orbitron',sans-serif;font-size:18px;color:#00ff88;letter-spacing:4px;margin-bottom:4px;">
         <span id="history-modal-title">🕐 LỊCH SỬ KÍCH HOẠT</span></div>
@@ -10196,10 +10202,10 @@
 
   <!-- ═══════════ AI ADVISOR MODAL ═══════════ -->
   <div id="advisor-modal"
-    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,10,.88);backdrop-filter:blur(12px);">
+    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;">
     <div
       style="width:min(700px,97vw);max-height:88vh;overflow-y:auto;background:rgba(0,5,18,.97);border:1px solid #44aaff33;border-top:2px solid #44aaff;padding:28px;position:relative;font-family:'Share Tech Mono',monospace;">
-      <button class="modal-close" onclick="document.getElementById('advisor-modal').style.display='none'"
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('advisor-modal').style.display='none'"
         style="color:#44aaff;border-color:#44aaff44;">✕</button>
       <div style="font-family:'Orbitron',sans-serif;font-size:18px;color:#44aaff;letter-spacing:4px;margin-bottom:4px;">
         💡 AI ADVISOR</div>
@@ -10244,7 +10250,7 @@
 
   <!-- ═══════════ MINI GAME MODAL ═══════════ -->
   <div id="game-modal"
-    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,10,.92);backdrop-filter:blur(16px);">
+    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;">
     <div
       style="width:min(700px,97vw);max-height:88vh;background:rgba(0,5,18,.99);border:1px solid #ff00aa33;border-top:2px solid #ff00aa;padding:24px;position:relative;font-family:'Share Tech Mono',monospace;overflow:hidden;">
       <button class="modal-close" onclick="stopGame()" style="color:#ff00aa;border-color:#ff00aa44;">✕</button>
@@ -10277,10 +10283,10 @@
 
   <!-- ═══════════ ALERTS MODAL ═══════════ -->
   <div id="alerts-modal"
-    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,10,.88);backdrop-filter:blur(12px);">
+    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;">
     <div
       style="width:min(620px,97vw);max-height:88vh;overflow-y:auto;background:rgba(0,5,18,.97);border:1px solid #ff880033;border-top:2px solid #ff8800;padding:28px;position:relative;font-family:'Share Tech Mono',monospace;">
-      <button class="modal-close" onclick="document.getElementById('alerts-modal').style.display='none'"
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('alerts-modal').style.display='none'"
         style="color:#ff8800;border-color:#ff880044;">✕</button>
       <div style="font-family:'Orbitron',sans-serif;font-size:18px;color:#ff8800;letter-spacing:4px;margin-bottom:4px;">
         🔔 HỆ THỐNG CẢNH BÁO</div>
@@ -10378,6 +10384,7 @@
     document.addEventListener('DOMContentLoaded', () => { });
 
     function openFavorites() {
+      window._panelOpen();
       document.getElementById('favorites-modal').style.display = 'flex';
       const list = document.getElementById('fav-list');
       const empty = document.getElementById('fav-empty');
@@ -10399,6 +10406,7 @@
     }
 
     function favSelectAgent(id) {
+      window._panelClose && window._panelClose();
       document.getElementById('favorites-modal').style.display = 'none';
       if (window._planetMeshes && window._openHUD) {
         const pm = window._planetMeshes.find(p => p.agent.id === id);
@@ -10423,6 +10431,7 @@
       saveHistory();
     }
     function openHistory() {
+      window._panelOpen();
       document.getElementById('history-modal').style.display = 'flex';
       renderHistory();
     }
@@ -10461,6 +10470,7 @@
     // AI ADVISOR
     // ══════════════════════════════════════════════════════
     function openAdvisor() {
+      window._panelOpen();
       document.getElementById('advisor-modal').style.display = 'flex';
       advisorGoal = null; advisorField = null;
       document.querySelectorAll('.adv-btn,.adv-btn2').forEach(b => b.style.opacity = '0.6');
@@ -10511,6 +10521,7 @@
   </div>`;
     }
     function advisorSelect(id) {
+      window._panelClose && window._panelClose();
       document.getElementById('advisor-modal').style.display = 'none';
       if (window._planetMeshes && window._openHUD) {
         const pm = window._planetMeshes.find(p => p.agent.id === id);
@@ -10522,6 +10533,7 @@
     // MINI GAME — AGENT HUNT
     // ══════════════════════════════════════════════════════
     function openMiniGame() {
+      window._panelOpen();
       document.getElementById('game-modal').style.display = 'flex';
       document.getElementById('game-hi').textContent = gameHiScore;
       document.getElementById('game-result').style.display = 'none';
@@ -10604,6 +10616,7 @@
     }
     function stopGame() {
       if (gameRunning) endGame();
+      window._panelClose && window._panelClose();
       document.getElementById('game-modal').style.display = 'none';
     }
 
@@ -10611,6 +10624,7 @@
     // ALERT SYSTEM
     // ══════════════════════════════════════════════════════
     function openAlerts() {
+      window._panelOpen();
       document.getElementById('alerts-modal').style.display = 'flex';
       const sel = document.getElementById('alert-agent-sel');
       if (!sel.options.length) {
@@ -10667,6 +10681,7 @@
     // ANALYTICS DASHBOARD
     // ══════════════════════════════════════════════════════
     function openAnalytics() {
+      window._panelOpen();
       document.getElementById('analytics-modal').style.display = 'flex';
       setTimeout(renderAnalytics, 50);
     }
@@ -11408,17 +11423,21 @@
 
     // ── GUIDE MODAL ──
     function openGuide() {
+      window._panelOpen();
       document.getElementById('guide-modal').classList.add('show');
     }
     function closeGuide() {
+      window._panelClose();
       document.getElementById('guide-modal').classList.remove('show');
     }
 
     // ── DRAG & DROP BUILDER ──
     function openBuilder() {
+      window._panelOpen();
       document.getElementById('builder-modal').classList.add('show');
     }
     function closeBuilder() {
+      window._panelClose();
       document.getElementById('builder-modal').classList.remove('show');
     }
 
