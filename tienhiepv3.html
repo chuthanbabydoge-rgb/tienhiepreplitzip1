@@ -3171,6 +3171,44 @@
       display: flex !important;
     }
 
+    /* ── CLUSTER MAP ─────────────────────────────── */
+    #cluster-map-modal {
+      background: #000206;
+    }
+    #cluster-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+    #cluster-canvas:active { cursor: grabbing; }
+    #cluster-filter-bar {
+      pointer-events: all;
+    }
+    .cm-filter-btn {
+      background: rgba(0,5,18,.88);
+      border: 1px solid rgba(0,200,255,.28);
+      color: rgba(0,200,255,.65);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      padding: 5px 11px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all .18s;
+    }
+    .cm-filter-btn:hover {
+      border-color: rgba(0,200,255,.8);
+      color: #00c8ff;
+      background: rgba(0,200,255,.08);
+    }
+    .cm-filter-btn.active {
+      background: rgba(0,200,255,.15);
+      border-color: #00c8ff;
+      color: #00c8ff;
+      box-shadow: 0 0 10px rgba(0,200,255,.35);
+    }
+
     .dharma-wheel {
       position: absolute;
       top: 50%;
@@ -5077,6 +5115,13 @@
         <div>
           <div class="pbtn-label" id="alt-lbl">CẢNH BÁO</div>
           <div class="pbtn-sub" id="alert-count-btn">0 NGƯỠNG</div>
+        </div>
+      </div>
+      <div class="panel-btn" onclick="openClusterMap()" data-voice="Bản đồ cụm" style="border-color:rgba(0,200,255,0.6);box-shadow:0 0 20px rgba(0,200,255,0.3),0 0 30px rgba(0,200,255,0.2),inset 0 0 10px rgba(0,200,255,0.1);">
+        <span class="pbtn-icon">🗺️</span>
+        <div>
+          <div class="pbtn-label" style="color:#00c8ff;">BẢN ĐỒ CỤM</div>
+          <div class="pbtn-sub">CLUSTER MAP</div>
         </div>
       </div>
       <div class="panel-btn" onclick="openWFM()" data-voice="WFM" style="border-color:rgba(136,0,255,0.6);box-shadow:0 0 20px rgba(136,0,255,0.4),0 0 30px rgba(136,0,255,0.4),inset 0 0 10px rgba(136,0,255,0.2);">
@@ -10328,6 +10373,23 @@
     </div>
   </div>
 
+  <!-- ═══════════ CLUSTER MAP MODAL ═══════════ -->
+  <div id="cluster-map-modal" style="position:fixed;inset:0;z-index:600;display:none;flex-direction:column;">
+    <canvas id="cluster-canvas"></canvas>
+    <div id="cluster-tooltip" style="position:fixed;display:none;pointer-events:none;background:rgba(0,5,18,.97);border:1px solid #00ffff44;padding:8px 14px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#00ffff;z-index:9999;white-space:nowrap;border-left:2px solid #00c8ff;"></div>
+    <div id="cluster-filter-bar" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+      <button class="cm-filter-btn active" onclick="cmSetFilter('all',this)">🌌 TẤT CẢ</button>
+      <button class="cm-filter-btn" onclick="cmSetFilter('top10',this)">👑 THIÊN BẢNG</button>
+      <button class="cm-filter-btn" onclick="cmSetFilter('content',this)">📺 NỘI DUNG</button>
+      <button class="cm-filter-btn" onclick="cmSetFilter('finance',this)">💰 TÀI CHÍNH</button>
+      <button class="cm-filter-btn" onclick="cmSetFilter('tech',this)">⚡ CÔNG NGHỆ</button>
+      <button class="cm-filter-btn" onclick="cmSetFilter('marketing',this)">📡 MARKETING</button>
+      <button class="cm-filter-btn" onclick="cmSetFilter('other',this)">🌀 ĐA NĂNG</button>
+    </div>
+    <button onclick="closeClusterMap()" style="position:fixed;top:18px;right:22px;z-index:9999;background:rgba(0,5,18,.9);border:1px solid #ff444455;color:#ff6666;font-size:17px;width:36px;height:36px;cursor:pointer;font-family:'Share Tech Mono',monospace;">✕</button>
+    <div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);font-family:'Share Tech Mono',monospace;font-size:8px;color:#00ffff33;letter-spacing:2px;pointer-events:none;white-space:nowrap;">CLICK AGENT ĐỂ XEM CHI TIẾT &nbsp;·&nbsp; SCROLL ĐỂ ZOOM &nbsp;·&nbsp; KÉO ĐỂ DI CHUYỂN</div>
+  </div>
+
   <script>
     // ══════════════════════════════════════════════════════
     // STATE
@@ -11420,6 +11482,264 @@
       }
     }
 
+
+    // ══════════════════════════════════════════════════════
+    // CLUSTER MAP
+    // ══════════════════════════════════════════════════════
+    let _cmRAF = null, _cmZoom = 1, _cmPanX = 0, _cmPanY = 0;
+    let _cmDragging = false, _cmDragStart = {x:0,y:0,px:0,py:0};
+    let _cmFilter = 'all', _cmHovered = null, _cmT = 0;
+    let _cmClusters = [], _cmStars = null;
+
+    const CM_DEFS = [
+      {key:'top10',    name:'THIÊN BẢNG', emoji:'👑', color:'#ffaa00', rx:0.5,  ry:0.13},
+      {key:'content',  name:'NỘI DUNG',   emoji:'📺', color:'#00ffff', rx:0.18, ry:0.40},
+      {key:'finance',  name:'TÀI CHÍNH',  emoji:'💰', color:'#00ff88', rx:0.82, ry:0.40},
+      {key:'tech',     name:'CÔNG NGHỆ',  emoji:'⚡', color:'#8844ff', rx:0.18, ry:0.74},
+      {key:'marketing',name:'MARKETING',  emoji:'📡', color:'#ff4488', rx:0.82, ry:0.74},
+      {key:'other',    name:'ĐA NĂNG',    emoji:'🌀', color:'#44aaff', rx:0.5,  ry:0.88},
+    ];
+
+    function openClusterMap() {
+      window._panelOpen();
+      const modal = document.getElementById('cluster-map-modal');
+      modal.style.display = 'flex';
+      _cmFilter = 'all';
+      document.querySelectorAll('.cm-filter-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+      setTimeout(_cmInit, 60);
+    }
+    function closeClusterMap() {
+      window._panelClose();
+      document.getElementById('cluster-map-modal').style.display = 'none';
+      if (_cmRAF) { cancelAnimationFrame(_cmRAF); _cmRAF = null; }
+    }
+    function cmSetFilter(key, btn) {
+      _cmFilter = key;
+      document.querySelectorAll('.cm-filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+
+    function _cmInit() {
+      const canvas = document.getElementById('cluster-canvas');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const W = canvas.width, H = canvas.height;
+
+      // Compute top10 ids
+      const top10ids = AI_AGENTS.slice()
+        .sort((a,b) => parseFloat(b.revenue.replace(/[$,∞]/g,'')) - parseFloat(a.revenue.replace(/[$,∞]/g,'')))
+        .slice(0,10).map(a => a.id);
+
+      // Categorise agents
+      const groups = {}; CM_DEFS.forEach(c => { groups[c.key] = []; });
+      AI_AGENTS.forEach(ag => {
+        const t = (ag.type + ' ' + ag.name).toLowerCase();
+        let cat;
+        if (top10ids.includes(ag.id))                                                                            cat = 'top10';
+        else if (['content','video','tiktok','youtube','podcast','news','image','copy','newsletter','photo'].some(k=>t.includes(k))) cat = 'content';
+        else if (['trading','finance','invest','crypto','tax','insurance','fintech','market'].some(k=>t.includes(k))) cat = 'finance';
+        else if (['code','software','cloud','cyber','quantum','robotic','neural','bio','space'].some(k=>t.includes(k))) cat = 'tech';
+        else if (['seo','affiliate','email','social','ad','influencer','pr','brand','funnel'].some(k=>t.includes(k))) cat = 'marketing';
+        else cat = 'other';
+        groups[cat].push(ag);
+      });
+
+      // Build cluster objects with positioned agents
+      _cmClusters = CM_DEFS.map(def => {
+        const agents = groups[def.key];
+        const cx = def.rx * W, cy = def.ry * H;
+        const n = agents.length;
+        // Ring layout
+        const positions = [];
+        let placed = 0, ring = 0;
+        while (placed < n) {
+          if (ring === 0) { positions.push({x:0,y:0}); placed++; ring++; }
+          else {
+            const cnt = Math.min(n - placed, Math.ceil(6.5 * ring));
+            const r = ring * 24;
+            for (let i = 0; i < cnt && placed < n; i++) {
+              const a = (i / cnt) * Math.PI * 2;
+              positions.push({x: Math.cos(a)*r, y: Math.sin(a)*r});
+              placed++;
+            }
+            ring++;
+          }
+        }
+        const maxR = positions.reduce((m,p) => Math.max(m, Math.hypot(p.x, p.y)), 0);
+        return { ...def, cx, cy, clusterR: maxR + 34,
+          agents: agents.map((ag,i) => ({ agent: ag, ox: positions[i]?.x||0, oy: positions[i]?.y||0 })) };
+      });
+
+      _cmZoom = 1; _cmPanX = 0; _cmPanY = 0; _cmT = 0; _cmStars = null;
+
+      // Mouse / touch events
+      canvas.onmousedown = e => { _cmDragging=true; _cmDragStart={x:e.clientX,y:e.clientY,px:_cmPanX,py:_cmPanY}; };
+      canvas.onmouseup   = e => {
+        const moved = Math.abs(e.clientX-_cmDragStart.x)+Math.abs(e.clientY-_cmDragStart.y);
+        _cmDragging = false;
+        if (moved < 5) _cmClick(e);
+      };
+      canvas.onmousemove = e => {
+        if (_cmDragging) { _cmPanX=_cmDragStart.px+(e.clientX-_cmDragStart.x); _cmPanY=_cmDragStart.py+(e.clientY-_cmDragStart.y); }
+        else _cmHover(e);
+      };
+      canvas.onwheel = e => {
+        e.preventDefault();
+        const f = e.deltaY < 0 ? 1.1 : 0.9;
+        const r = canvas.getBoundingClientRect();
+        const mx = e.clientX-r.left, my = e.clientY-r.top;
+        _cmPanX = mx+(_cmPanX-mx)*f; _cmPanY = my+(_cmPanY-my)*f;
+        _cmZoom = Math.min(4, Math.max(0.25, _cmZoom*f));
+      };
+      canvas.onmouseleave = () => { _cmDragging=false; _cmHovered=null; document.getElementById('cluster-tooltip').style.display='none'; };
+
+      if (_cmRAF) cancelAnimationFrame(_cmRAF);
+      _cmDraw();
+    }
+
+    function _cmS2W(sx,sy) {
+      const c = document.getElementById('cluster-canvas');
+      return { x:(sx-c.width/2-_cmPanX)/_cmZoom+c.width/2, y:(sy-c.height/2-_cmPanY)/_cmZoom+c.height/2 };
+    }
+    function _cmHover(e) {
+      const r = document.getElementById('cluster-canvas').getBoundingClientRect();
+      const w = _cmS2W(e.clientX-r.left, e.clientY-r.top);
+      let found = null;
+      outer: for (const cl of _cmClusters) {
+        if (_cmFilter !== 'all' && cl.key !== _cmFilter) continue;
+        for (const ag of cl.agents) {
+          const dx=w.x-(cl.cx+ag.ox), dy=w.y-(cl.cy+ag.oy);
+          if (dx*dx+dy*dy < 196) { found={agent:ag.agent}; break outer; }
+        }
+      }
+      _cmHovered = found;
+      const tip = document.getElementById('cluster-tooltip');
+      if (found) {
+        const a = found.agent;
+        tip.style.cssText = `position:fixed;display:block;pointer-events:none;background:rgba(0,5,18,.97);border:1px solid ${a.color}44;border-left:2px solid ${a.color};padding:8px 14px;font-family:'Share Tech Mono',monospace;font-size:10px;color:${a.color};z-index:9999;white-space:nowrap;left:${e.clientX+16}px;top:${e.clientY-10}px;`;
+        tip.innerHTML = `<span style="font-size:18px;vertical-align:middle;">${a.emoji}</span> <span style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1px;">${a.name}</span><br><span style="color:#666;font-size:8px;">${a.type}</span><br><span style="color:#00ff88;font-size:11px;font-weight:700;">${a.revenue}<span style="color:#00ff8866;font-size:8px;">/ngày</span></span>`;
+        document.getElementById('cluster-canvas').style.cursor = 'pointer';
+      } else {
+        tip.style.display = 'none';
+        document.getElementById('cluster-canvas').style.cursor = _cmDragging ? 'grabbing' : 'grab';
+      }
+    }
+    function _cmClick(e) {
+      if (!_cmHovered) return;
+      const id = _cmHovered.agent.id;
+      closeClusterMap();
+      setTimeout(() => {
+        if (window._planetMeshes && window._openHUD) {
+          const pm = window._planetMeshes.find(p => p.agent.id === id);
+          if (pm) window._openHUD(pm);
+        }
+      }, 120);
+    }
+
+    function _cmDraw() {
+      const canvas = document.getElementById('cluster-canvas');
+      if (!canvas || document.getElementById('cluster-map-modal').style.display === 'none') return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      _cmT += 0.007;
+
+      // Background
+      ctx.fillStyle = '#000308';
+      ctx.fillRect(0,0,W,H);
+
+      // Stars (generated once)
+      if (!_cmStars) {
+        _cmStars = Array.from({length:220}, ()=>({ x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.4, b:Math.random()*Math.PI*2 }));
+      }
+      _cmStars.forEach(s => {
+        const a = 0.25 + 0.25*Math.sin(_cmT*1.8+s.b);
+        ctx.fillStyle = `rgba(180,210,255,${a})`;
+        ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+      });
+
+      ctx.save();
+      ctx.translate(W/2+_cmPanX, H/2+_cmPanY);
+      ctx.scale(_cmZoom, _cmZoom);
+      ctx.translate(-W/2, -H/2);
+
+      const NODE_R = 13;
+
+      _cmClusters.forEach(cl => {
+        const vis = _cmFilter==='all' || cl.key===_cmFilter;
+        const alpha = vis ? 1 : 0.12;
+        const pulse = 1 + 0.035*Math.sin(_cmT*1.2 + cl.rx*8);
+        const nr = (cl.clusterR + 28) * pulse;
+
+        // Nebula glow
+        const g1 = ctx.createRadialGradient(cl.cx,cl.cy,0,cl.cx,cl.cy,nr*1.6);
+        const ca = Math.round(alpha*255).toString(16).padStart(2,'0');
+        g1.addColorStop(0,  cl.color + Math.round(0.22*alpha*255).toString(16).padStart(2,'0'));
+        g1.addColorStop(0.5,cl.color + Math.round(0.07*alpha*255).toString(16).padStart(2,'0'));
+        g1.addColorStop(1, 'transparent');
+        ctx.fillStyle = g1;
+        ctx.beginPath(); ctx.arc(cl.cx,cl.cy,nr*1.6,0,Math.PI*2); ctx.fill();
+
+        // Dashed border ring
+        ctx.setLineDash([5,9]); ctx.lineWidth = 1;
+        ctx.strokeStyle = cl.color + Math.round(0.22*alpha*255).toString(16).padStart(2,'0');
+        ctx.beginPath(); ctx.arc(cl.cx,cl.cy,nr,0,Math.PI*2); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Cluster label
+        ctx.save(); ctx.globalAlpha = alpha;
+        ctx.textAlign = 'center';
+        ctx.font = `bold 10px 'Orbitron',sans-serif`;
+        ctx.fillStyle = cl.color;
+        ctx.fillText(`${cl.emoji} ${cl.name}`, cl.cx, cl.cy - nr - 9);
+        ctx.font = `8px 'Share Tech Mono',monospace`;
+        ctx.fillStyle = cl.color + '99';
+        ctx.fillText(`${cl.agents.length} AGENT`, cl.cx, cl.cy - nr + 4);
+        ctx.restore();
+
+        // Agent nodes
+        cl.agents.forEach((ag, i) => {
+          const ax = cl.cx + ag.ox, ay = cl.cy + ag.oy;
+          const isHov = _cmHovered && _cmHovered.agent.id === ag.agent.id;
+          const agA = vis ? 1 : 0.08;
+          const r = NODE_R * (isHov ? 1.45 : 1 + 0.06*Math.sin(_cmT*3+i*0.9));
+
+          ctx.save(); ctx.globalAlpha = agA;
+
+          // Outer glow
+          if (vis) {
+            const glow = ctx.createRadialGradient(ax,ay,0,ax,ay,r*2.8);
+            glow.addColorStop(0, ag.agent.color+'77');
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.beginPath(); ctx.arc(ax,ay,r*2.8,0,Math.PI*2); ctx.fill();
+          }
+
+          // Node body
+          const bg = ctx.createRadialGradient(ax,ay-r*.3,r*.1,ax,ay,r);
+          bg.addColorStop(0, ag.agent.color+'cc');
+          bg.addColorStop(1, '#000b20');
+          ctx.fillStyle = bg;
+          ctx.beginPath(); ctx.arc(ax,ay,r,0,Math.PI*2); ctx.fill();
+
+          // Ring
+          ctx.strokeStyle = isHov ? ag.agent.color : ag.agent.color+'66';
+          ctx.lineWidth = isHov ? 2 : 1;
+          ctx.beginPath(); ctx.arc(ax,ay,r,0,Math.PI*2); ctx.stroke();
+
+          // Emoji
+          ctx.font = `${Math.round(r*1.15)}px serif`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#fff';
+          ctx.globalAlpha = agA;
+          ctx.fillText(ag.agent.emoji, ax, ay);
+          ctx.textBaseline = 'alphabetic';
+          ctx.restore();
+        });
+      });
+
+      ctx.restore();
+      _cmRAF = requestAnimationFrame(_cmDraw);
+    }
 
     // ── GUIDE MODAL ──
     function openGuide() {
