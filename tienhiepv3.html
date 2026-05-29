@@ -906,44 +906,6 @@
     }
 
     /* BOTTOM TRẠNG THÁI BAR */
-    #statusbar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 44px;
-      background: linear-gradient(0deg, rgba(0, 0, 0, .95) 0%, transparent 100%);
-      border-top: 1px solid #00ffff11;
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      gap: 30px;
-      overflow: hidden;
-    }
-
-    .log-item {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 10px;
-      color: #00ffff66;
-      white-space: nowrap;
-      animation: scrollLeft 20s linear infinite;
-    }
-
-    @keyframes scrollLeft {
-      from {
-        transform: translateX(0);
-      }
-
-      to {
-        transform: translateX(-50%);
-      }
-    }
-
-    #log-track {
-      display: flex;
-      gap: 30px;
-      white-space: nowrap;
-    }
 
     /* PLANET LABEL */
     /* ============================================================
@@ -4636,9 +4598,6 @@
 
 
 
-    <div id="statusbar">
-      <div id="log-track"></div>
-    </div>
     <!-- UNIVERSE MIC BUTTON + CHATBOX -->
     <style>
       /* ── UNIVERSE MIC FLOATING BUTTON ── */
@@ -6349,18 +6308,6 @@
         }, 3);
       }
 
-      // TRẠNG THÁI LOG
-      const logMessages = AI_AGENTS.slice(0, 20).flatMap(a => a.logs.map(l => `[${a.name}] ${l}`));
-      const logTrack = document.getElementById('log-track');
-      if (logTrack) {
-        const doubled = [...logMessages, ...logMessages];
-        doubled.forEach(m => {
-          const el = document.createElement('div');
-          el.className = 'log-item';
-          el.textContent = '◈ ' + m;
-          logTrack.appendChild(el);
-        });
-      }
     }
 
     // ============================================================
