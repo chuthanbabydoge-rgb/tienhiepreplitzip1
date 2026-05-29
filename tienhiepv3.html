@@ -2440,8 +2440,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.82);
-      backdrop-filter: blur(12px);
+      background: transparent;
     }
     #vault-modal.show { display: flex; }
     #vault-box {
@@ -13286,6 +13285,10 @@
 
     function openVault() {
       document.getElementById('vault-modal').classList.add('show');
+      // Ẩn toàn bộ UI, chỉ để nền vũ trụ + vault
+      if (typeof hideMainUI === 'function') hideMainUI();
+      var tb = document.getElementById('topbar');
+      if (tb) { window._vaultTopbarDisplay = tb.style.display; tb.style.display = 'none'; }
       // Populate agent select
       const sel = document.getElementById('vf-agent');
       if (sel && sel.options.length < 2) {
@@ -13304,6 +13307,10 @@
 
     function closeVault() {
       document.getElementById('vault-modal').classList.remove('show');
+      // Khôi phục toàn bộ UI
+      if (typeof restoreMainUI === 'function') restoreMainUI();
+      var tb = document.getElementById('topbar');
+      if (tb) { tb.style.display = window._vaultTopbarDisplay !== undefined ? window._vaultTopbarDisplay : ''; delete window._vaultTopbarDisplay; }
       closeVaultDetail();
     }
 
