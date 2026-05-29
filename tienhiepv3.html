@@ -1440,6 +1440,75 @@
     .vh-item.vh-highlight .vh-xname { color: #ffd700; }
     .vh-item.vh-highlight { border-color: rgba(255,215,0,0.2); background: rgba(255,215,0,0.04); }
 
+    /* ── Wake Word Indicator ── */
+    #wake-word-indicator {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      z-index: 9100;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(0,5,18,0.82);
+      border: 1px solid rgba(0,255,200,0.25);
+      border-radius: 20px;
+      padding: 5px 12px 5px 8px;
+      cursor: pointer;
+      pointer-events: auto;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 14px rgba(0,255,200,0.08);
+      transition: border-color 0.3s, box-shadow 0.3s;
+      user-select: none;
+    }
+    #wake-word-indicator:hover {
+      border-color: rgba(0,255,200,0.5);
+      box-shadow: 0 0 20px rgba(0,255,200,0.2);
+    }
+    #wake-word-indicator.ww-active {
+      border-color: rgba(0,255,180,0.5);
+      box-shadow: 0 0 18px rgba(0,255,180,0.25);
+    }
+    #ww-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(0,255,180,0.25);
+      border: 1.5px solid rgba(0,255,180,0.4);
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    #wake-word-indicator.ww-active #ww-dot {
+      background: #00ffb4;
+      box-shadow: 0 0 8px #00ffb4, 0 0 16px #00ffb4;
+      animation: wwPulse 1.8s ease-in-out infinite;
+    }
+    #wake-word-indicator.ww-heard #ww-dot {
+      background: #ffd700;
+      box-shadow: 0 0 12px #ffd700;
+    }
+    @keyframes wwPulse {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.35); opacity: 0.6; }
+    }
+    #ww-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: rgba(0,255,180,0.55);
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      transition: color 0.3s;
+    }
+    #wake-word-indicator.ww-active #ww-label { color: #00ffb4; }
+    #wake-word-indicator.ww-heard #ww-label  { color: #ffd700; }
+
+    #ww-mic-icon {
+      font-size: 13px;
+      opacity: 0.45;
+      transition: opacity 0.3s;
+    }
+    #wake-word-indicator.ww-active #ww-mic-icon { opacity: 0.9; }
+    #wake-word-indicator.ww-heard  #ww-mic-icon { opacity: 1; }
+
+    /* ── */
     #hud-voice-btn {
       position: absolute;
       left: 18px;
@@ -4674,6 +4743,13 @@
       <div id="univ-voice-help-btn" class="voice-help-btn" onclick="event.stopPropagation();openVoiceHelp()" title="Danh sách tên có thể nói">?</div>
     </div>
 
+    <!-- WAKE WORD INDICATOR -->
+    <div id="wake-word-indicator" title="Nói 'Mở Truyền Âm' để kích hoạt giọng nói · Nhấn để bật/tắt" onclick="window._wwToggle && window._wwToggle()">
+      <span id="ww-mic-icon">🎤</span>
+      <div id="ww-dot"></div>
+      <span id="ww-label">MỞ TRUYỀN ÂM</span>
+    </div>
+
     <div id="uc-collapsed-icon"
       onclick="ucToggleCollapse()"
       style="display:none;position:absolute;bottom:80px;left:20px;width:44px;height:44px;background:rgba(0,5,18,0.93);border:2px solid #00ffff;border-radius:50%;box-shadow:0 0 18px rgba(0,255,255,0.4);z-index:11;cursor:pointer;pointer-events:auto;align-items:center;justify-content:center;font-size:20px;transition:box-shadow 0.2s;"
@@ -7027,6 +7103,147 @@
         window._voiceStopListening  = _stopListening;
         window._voiceIsListening    = function() { return _listening; };
         window._voiceToggle         = _toggleVoice;
+      })();
+      // ──────────────────────────────────────────────────────────────────
+
+      // ══ WAKE WORD ENGINE — "Mở Truyền Âm" ═══════════════════════════
+      (function() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) return;
+
+        // Normalise Vietnamese → ASCII lowercase for matching
+        function _n(s) {
+          return (s||'').normalize('NFD')
+            .replace(/[\u0300-\u036f]/g,'')
+            .replace(/[đĐ]/gi, d => d==='đ'?'d':'D')
+            .toLowerCase().trim();
+        }
+
+        // Wake word variants (normalised)
+        const WAKE_WORDS = [
+          'mo truyen am','bat truyen am','bat voice','mo voice',
+          'oi thien co','thien co oi','oi thien co cac',
+          'bat mic','bat microphone','start voice','open voice',
+          'mo mic','kich hoat truyen am','hey thien co'
+        ];
+
+        // "Stop" words
+        const STOP_WORDS = [
+          'tat truyen am','tat voice','dong truyen am','stop voice',
+          'tat mic','off voice','dung truyen am'
+        ];
+
+        let _wwRec  = null;
+        let _wwOn   = false;
+        let _restartTimer = null;
+
+        const _ind = () => document.getElementById('wake-word-indicator');
+        const _lbl = () => document.getElementById('ww-label');
+
+        function _setUI(state) {
+          const el = _ind();
+          if (!el) return;
+          el.classList.remove('ww-active','ww-heard');
+          if (state === 'active')  el.classList.add('ww-active');
+          if (state === 'heard')   el.classList.add('ww-heard');
+          const lbl = _lbl();
+          if (lbl) {
+            if (state === 'active') lbl.textContent = 'ĐANG NGHE…';
+            if (state === 'heard')  lbl.textContent = 'ĐÃ NHẬN!';
+            if (state === 'idle')   lbl.textContent = 'MỞ TRUYỀN ÂM';
+          }
+        }
+
+        function _startWW() {
+          if (_wwOn) return;
+          try {
+            _wwRec = new SR();
+            _wwRec.continuous     = true;
+            _wwRec.interimResults = false;
+            _wwRec.lang           = 'vi-VN';
+
+            _wwRec.onresult = function(e) {
+              for (let i = e.resultIndex; i < e.results.length; i++) {
+                if (!e.results[i].isFinal) continue;
+                const raw = e.results[i][0].transcript;
+                const t   = _n(raw);
+                console.log('[WW] heard:', JSON.stringify(raw), '→', t);
+
+                // Stop command
+                if (STOP_WORDS.some(w => t.includes(w))) {
+                  _setUI('heard');
+                  setTimeout(() => _setUI('active'), 800);
+                  if (typeof window._voiceStopListening === 'function') window._voiceStopListening();
+                  if (typeof showToast === 'function') showToast('🔇 Truyền âm đã tắt', 'info');
+                  return;
+                }
+
+                // Wake word
+                if (WAKE_WORDS.some(w => t.includes(w))) {
+                  _setUI('heard');
+                  setTimeout(() => _setUI('active'), 1200);
+                  if (typeof showToast === 'function')
+                    showToast('🎙️ Truyền âm kích hoạt! Hãy nói yêu cầu…', 'success');
+                  // If HUD is open → toggle HUD voice; else → startVoiceChat
+                  const hud = document.getElementById('hud');
+                  if (hud && hud.classList.contains('active')) {
+                    if (typeof window._voiceToggle === 'function') window._voiceToggle();
+                  } else {
+                    if (typeof startVoiceChat === 'function') startVoiceChat();
+                  }
+                }
+              }
+            };
+
+            _wwRec.onerror = function(e) {
+              if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                _wwOn = false;
+                _setUI('idle');
+                if (typeof showToast === 'function')
+                  showToast('🚫 Cần quyền microphone để dùng Wake Word', 'warn');
+              } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
+                clearTimeout(_restartTimer);
+                _restartTimer = setTimeout(() => { if (_wwOn) try { _wwRec.start(); } catch(ex){} }, 600);
+              }
+            };
+
+            _wwRec.onend = function() {
+              if (_wwOn) {
+                clearTimeout(_restartTimer);
+                _restartTimer = setTimeout(() => { try { _wwRec.start(); } catch(ex){} }, 400);
+              }
+            };
+
+            _wwRec.start();
+            _wwOn = true;
+            _setUI('active');
+          } catch(err) {
+            _wwOn = false;
+            _setUI('idle');
+          }
+        }
+
+        function _stopWW() {
+          _wwOn = false;
+          clearTimeout(_restartTimer);
+          if (_wwRec) { try { _wwRec.stop(); } catch(e) {} _wwRec = null; }
+          _setUI('idle');
+        }
+
+        window._wwToggle = function() {
+          if (_wwOn) {
+            _stopWW();
+            if (typeof showToast === 'function') showToast('🔇 Wake Word đã tắt', 'info');
+          } else {
+            _startWW();
+            if (typeof showToast === 'function') showToast('🎙️ Wake Word sẵn sàng — nói "Mở Truyền Âm"', 'success');
+          }
+        };
+
+        // Auto-start after page fully loads (first user interaction may be needed for mic)
+        window.addEventListener('load', () => {
+          setTimeout(_startWW, 2000);
+        });
       })();
       // ──────────────────────────────────────────────────────────────────
 
