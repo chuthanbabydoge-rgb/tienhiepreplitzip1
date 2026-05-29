@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **04:25:07 30/5/2026**
+> Cập nhật lần cuối: **05:11:48 30/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,742 dòng, 77.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(18,885 dòng, 1.48 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(19,525 dòng, 1.51 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,742 | 77.2 KB |
-| `tienhiepv3.html` | 18,885 | 1.48 MB |
+| `tienhiepv3.html` | 19,525 | 1.51 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **24,348** | **1.71 MB** |
+| **TỔNG** | **24,988** | **1.75 MB** |
 
 ---
 
@@ -1844,7 +1844,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 18,885 dòng · 1.48 MB
+> 19,525 dòng · 1.51 MB
 
 ```html
 <!DOCTYPE html>
@@ -4289,8 +4289,7 @@ app.listen(PORT, '0.0.0.0', () => {
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.82);
-      backdrop-filter: blur(12px);
+      background: transparent;
     }
     #vault-modal.show { display: flex; }
     #vault-box {
@@ -4465,8 +4464,6 @@ app.listen(PORT, '0.0.0.0', () => {
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 10, .88);
-      backdrop-filter: blur(10px);
     }
 
     #compare-modal.show {
@@ -4561,8 +4558,6 @@ app.listen(PORT, '0.0.0.0', () => {
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 10, .88);
-      backdrop-filter: blur(10px);
     }
 
     #leaderboard-modal.show {
@@ -4727,8 +4722,6 @@ app.listen(PORT, '0.0.0.0', () => {
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 10, .88);
-      backdrop-filter: blur(10px);
     }
 
     #neural-modal.show {
@@ -4767,8 +4760,6 @@ app.listen(PORT, '0.0.0.0', () => {
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 10, .88);
-      backdrop-filter: blur(10px);
     }
 
     #mission-modal.show {
@@ -5023,13 +5014,134 @@ app.listen(PORT, '0.0.0.0', () => {
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 10, 0.88);
-      backdrop-filter: blur(10px);
     }
 
     .modal-overlay.show {
       display: flex !important;
     }
+
+    /* ── CLUSTER MAP ─────────────────────────────── */
+    #cluster-map-modal {
+      background: #000206;
+    }
+    #cluster-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+    #cluster-canvas:active { cursor: grabbing; }
+    #cluster-filter-bar {
+      pointer-events: all;
+    }
+    .cm-filter-btn {
+      background: rgba(0,5,18,.88);
+      border: 1px solid rgba(0,200,255,.28);
+      color: rgba(0,200,255,.65);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      padding: 5px 11px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all .18s;
+    }
+    .cm-filter-btn:hover {
+      border-color: rgba(0,200,255,.8);
+      color: #00c8ff;
+      background: rgba(0,200,255,.08);
+    }
+    .cm-filter-btn.active {
+      background: rgba(0,200,255,.15);
+      border-color: #00c8ff;
+      color: #00c8ff;
+      box-shadow: 0 0 10px rgba(0,200,255,.35);
+    }
+
+    /* ── NHẬT KÝ VƯƠNG ĐẾ ─────────────────────────── */
+    #diary-modal {
+      position: fixed; inset: 0; z-index: 600;
+      display: none; align-items: center; justify-content: center;
+    }
+    #diary-box {
+      width: min(780px,97vw); max-height: 90vh;
+      background: rgba(6,3,0,.97);
+      border: 1px solid #ffc85033;
+      border-top: 2px solid #ffc850;
+      display: flex; flex-direction: column;
+      font-family: 'Share Tech Mono', monospace;
+      position: relative; overflow: hidden;
+    }
+    #diary-box::before {
+      content:'';
+      position:absolute; inset:0;
+      background: repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,200,80,.025) 28px,rgba(255,200,80,.025) 29px);
+      pointer-events:none;
+    }
+    .diary-header {
+      padding: 18px 24px 12px;
+      border-bottom: 1px solid #ffc85022;
+      display: flex; align-items: center; gap: 14px;
+      flex-shrink: 0;
+    }
+    .diary-tabs {
+      display: flex; gap: 6px;
+      padding: 10px 24px 0;
+      flex-shrink: 0;
+    }
+    .diary-tab {
+      background: transparent;
+      border: 1px solid #ffc85033;
+      color: #ffc85066;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 8px; letter-spacing: 1.5px;
+      padding: 5px 14px; cursor: pointer;
+      transition: all .18s;
+    }
+    .diary-tab.active, .diary-tab:hover {
+      background: rgba(255,200,80,.1);
+      border-color: #ffc850;
+      color: #ffc850;
+    }
+    .diary-body { padding: 16px 24px 20px; overflow-y: auto; flex: 1; }
+    /* Notes */
+    .diary-note-card {
+      background: rgba(255,200,80,.04);
+      border: 1px solid #ffc85022;
+      border-left: 3px solid #ffc850;
+      padding: 10px 14px; margin-bottom: 8px;
+      cursor: pointer; transition: all .18s; position: relative;
+    }
+    .diary-note-card:hover { background: rgba(255,200,80,.08); border-color: #ffc85066; }
+    .diary-note-title { font-size: 10px; color: #ffc850; letter-spacing: 1px; font-family:'Orbitron',sans-serif; margin-bottom: 4px; }
+    .diary-note-body  { font-size: 9px; color: #ffc85099; line-height: 1.6; white-space: pre-wrap; }
+    .diary-note-meta  { font-size: 7px; color: #ffc85044; margin-top: 6px; }
+    /* Todos */
+    .diary-todo-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-bottom: 1px solid #ffc85011;
+      transition: background .15s;
+    }
+    .diary-todo-row:hover { background: rgba(255,200,80,.04); }
+    .diary-todo-check {
+      width: 16px; height: 16px; border: 1px solid #ffc85055;
+      background: transparent; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; transition: all .15s;
+    }
+    .diary-todo-check.done { background: rgba(255,200,80,.15); border-color: #ffc850; color: #ffc850; }
+    .diary-todo-text { flex: 1; font-size: 10px; color: #ffc850cc; }
+    .diary-todo-text.done { text-decoration: line-through; color: #ffc85044; }
+    .diary-todo-del { color: #ff444455; cursor: pointer; font-size: 13px; opacity: 0; transition: opacity .15s; }
+    .diary-todo-row:hover .diary-todo-del { opacity: 1; }
+    /* Tags */
+    .diary-tag {
+      display: inline-block; padding: 2px 8px;
+      border: 1px solid currentColor; border-radius: 2px;
+      font-size: 8px; opacity: .7; cursor: pointer; margin: 2px;
+      transition: opacity .15s;
+    }
+    .diary-tag:hover { opacity: 1; }
 
     .dharma-wheel {
       position: absolute;
@@ -6192,6 +6304,18 @@ app.listen(PORT, '0.0.0.0', () => {
     });
   };
 
+  // ── Dùng chung cho mọi panel: ẩn/hiện toàn bộ UI + topbar ──────────────
+  window._panelOpen = function() {
+    if (typeof window.hideMainUI === 'function') window.hideMainUI();
+    var tb = document.getElementById('topbar');
+    if (tb) { window._panelTopbarDisplay = tb.style.display; tb.style.display = 'none'; }
+  };
+  window._panelClose = function() {
+    if (typeof window.restoreMainUI === 'function') window.restoreMainUI();
+    var tb = document.getElementById('topbar');
+    if (tb) { tb.style.display = (window._panelTopbarDisplay !== undefined ? window._panelTopbarDisplay : ''); delete window._panelTopbarDisplay; }
+  };
+
   // ── Parent HUD hide/restore (AR Layer principle) ──────────────────────────
   // Khi HUD con mở từ HUD hành tinh → ẩn HUD hành tinh, chỉ để HUD con + vũ trụ
   // WFM (editing workflow) KHÔNG bị ẩn khi mở panel con
@@ -6447,9 +6571,6 @@ app.listen(PORT, '0.0.0.0', () => {
 
 
 
-    <div id="statusbar">
-      <div id="log-track"></div>
-    </div>
     <!-- UNIVERSE MIC BUTTON + CHATBOX -->
     <style>
       /* ── UNIVERSE MIC FLOATING BUTTON ── */
@@ -6930,6 +7051,13 @@ app.listen(PORT, '0.0.0.0', () => {
           <div class="pbtn-sub" id="alert-count-btn">0 NGƯỠNG</div>
         </div>
       </div>
+      <div class="panel-btn" onclick="openClusterMap()" data-voice="Bản đồ cụm" style="border-color:rgba(0,200,255,0.6);box-shadow:0 0 20px rgba(0,200,255,0.3),0 0 30px rgba(0,200,255,0.2),inset 0 0 10px rgba(0,200,255,0.1);">
+        <span class="pbtn-icon">🗺️</span>
+        <div>
+          <div class="pbtn-label" style="color:#00c8ff;">BẢN ĐỒ CỤM</div>
+          <div class="pbtn-sub">CLUSTER MAP</div>
+        </div>
+      </div>
       <div class="panel-btn" onclick="openWFM()" data-voice="WFM" style="border-color:rgba(136,0,255,0.6);box-shadow:0 0 20px rgba(136,0,255,0.4),0 0 30px rgba(136,0,255,0.4),inset 0 0 10px rgba(136,0,255,0.2);">
         <span class="pbtn-icon">⚙</span>
         <div>
@@ -6956,6 +7084,13 @@ app.listen(PORT, '0.0.0.0', () => {
         <div>
           <div class="pbtn-label" style="color:#ff50c8;text-shadow:0 0 12px rgba(255,80,200,0.8);">AI AGENT MODE</div>
           <div class="pbtn-sub" style="color:rgba(255,80,200,0.6);">CONTENT PLAN 30 NGÀY</div>
+        </div>
+      </div>
+      <div class="panel-btn" onclick="openDiary()" data-voice="Nhật ký" style="border-color:rgba(255,200,80,0.6);box-shadow:0 0 20px rgba(255,200,80,0.25),0 0 30px rgba(255,150,0,0.15),inset 0 0 10px rgba(255,200,80,0.08);">
+        <span class="pbtn-icon">📜</span>
+        <div>
+          <div class="pbtn-label" style="color:#ffc850;">NHẬT KÝ</div>
+          <div class="pbtn-sub">VƯƠNG ĐẾ</div>
         </div>
       </div>
       <div class="panel-btn" onclick="openAppSummary()" data-voice="Tổng hợp" id="app-summary-btn" style="display:none;border-color:rgba(0,255,128,0.5);box-shadow:0 0 18px rgba(0,255,128,0.2),inset 0 0 8px rgba(0,255,128,0.08);">
@@ -8160,18 +8295,6 @@ app.listen(PORT, '0.0.0.0', () => {
         }, 3);
       }
 
-      // TRẠNG THÁI LOG
-      const logMessages = AI_AGENTS.slice(0, 20).flatMap(a => a.logs.map(l => `[${a.name}] ${l}`));
-      const logTrack = document.getElementById('log-track');
-      if (logTrack) {
-        const doubled = [...logMessages, ...logMessages];
-        doubled.forEach(m => {
-          const el = document.createElement('div');
-          el.className = 'log-item';
-          el.textContent = '◈ ' + m;
-          logTrack.appendChild(el);
-        });
-      }
     }
 
     // ============================================================
@@ -11377,6 +11500,7 @@ app.listen(PORT, '0.0.0.0', () => {
     // LEADERBOARD
     // ═══════════════════════════════════════════════════════════
     function openLeaderboard() {
+      window._panelOpen();
       document.getElementById('leaderboard-modal').classList.add('show');
       renderLB('revenue', document.querySelector('.lb-tab'));
     }
@@ -11413,6 +11537,7 @@ app.listen(PORT, '0.0.0.0', () => {
     // COMPARE
     // ═══════════════════════════════════════════════════════════
     function openCompare() {
+      window._panelOpen();
       document.getElementById('compare-modal').classList.add('show');
       const selA = document.getElementById('cmp-a');
       const selB = document.getElementById('cmp-b');
@@ -11463,6 +11588,7 @@ app.listen(PORT, '0.0.0.0', () => {
     // ═══════════════════════════════════════════════════════════
     let neuralRAF = null;
     function openNeural() {
+      window._panelOpen();
       document.getElementById('neural-modal').classList.add('show');
       setTimeout(() => startNeural(), 100);
     }
@@ -11547,6 +11673,7 @@ app.listen(PORT, '0.0.0.0', () => {
       { id: 7, name: 'KHOA HỌC TƯƠNG LAI', desc: 'Nhóm nghiên cứu khoa học & công nghệ vũ trụ.', reward: '$200,000/tháng', agents: [75, 76, 77, 78, 80, 85, 90, 41, 68, 70], status: 'active' },
     ];
     function openMission() {
+      window._panelOpen();
       document.getElementById('mission-modal').classList.add('show');
       const grid = document.getElementById('mission-grid');
       grid.innerHTML = MISSIONS.map(m => `
@@ -11665,7 +11792,7 @@ app.listen(PORT, '0.0.0.0', () => {
   <div id="leaderboard-modal">
     <div id="lb-box" style="position:relative;">
       <button class="modal-close"
-        onclick="document.getElementById('leaderboard-modal').classList.remove('show')">✕</button>
+        onclick="window._panelClose&&window._panelClose();document.getElementById('leaderboard-modal').classList.remove('show')">✕</button>
       <div id="lb-title-txt" class="lb-title">🏆 BẢNG XẾP HẠNG</div>
       <div id="lb-rank-sub" class="lb-sub">PHÂN LOẠI THEO HIỆU SUẤT VÀ DOANH THU</div>
       <div class="lb-tabs">
@@ -11679,7 +11806,7 @@ app.listen(PORT, '0.0.0.0', () => {
   </div>
 
   <!-- COMPARE MODAL -->
-  <div class="modal-overlay" id="builder-modal" style="background:rgba(4,6,18,0.92);backdrop-filter:blur(24px);">
+  <div class="modal-overlay" id="builder-modal" style="background:transparent;backdrop-filter:none;">
     <div class="builder-modal-content" style="
       width:100vw;height:100vh;max-width:100vw;max-height:100vh;
       background:transparent;border-radius:0;border:none;
@@ -11888,7 +12015,7 @@ app.listen(PORT, '0.0.0.0', () => {
 
   <div id="compare-modal">
     <div id="compare-box" style="position:relative;">
-      <button class="modal-close" onclick="document.getElementById('compare-modal').classList.remove('show')">✕</button>
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('compare-modal').classList.remove('show')">✕</button>
       <div class="compare-title">⚔️ SO SÁNH AGENT</div>
       <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
         <div style="display:flex;flex-direction:column;gap:4px;">
@@ -11913,7 +12040,7 @@ app.listen(PORT, '0.0.0.0', () => {
   <div id="neural-modal">
     <div id="neural-box" style="position:relative;">
       <button class="modal-close"
-        onclick="document.getElementById('neural-modal').classList.remove('show');stopNeural()">✕</button>
+        onclick="window._panelClose&&window._panelClose();document.getElementById('neural-modal').classList.remove('show');stopNeural()">✕</button>
       <div class="neural-title" id="neural-modal-title">🧠 MẠNG THẦN KINH VŨ TRỤ</div>
       <canvas id="neural-canvas" height="420"></canvas>
       <div
@@ -11929,7 +12056,7 @@ app.listen(PORT, '0.0.0.0', () => {
   <!-- MISSION MODAL -->
   <div id="mission-modal">
     <div id="mission-box" style="position:relative;">
-      <button class="modal-close" onclick="document.getElementById('mission-modal').classList.remove('show')">✕</button>
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('mission-modal').classList.remove('show')">✕</button>
       <div class="mission-title">🎯 MISSION CONTROL</div>
       <div class="mission-sub" id="mission-sub-lbl">CHỌN NHIỆM VỤ ĐỂ KÍCH HOẠT CỤM AGENT</div>
       <div class="mission-grid" id="mission-grid"></div>
@@ -11985,10 +12112,10 @@ app.listen(PORT, '0.0.0.0', () => {
 
   <!-- ═══════════ ANALYTICS MODAL ═══════════ -->
   <div id="analytics-modal"
-    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,10,.88);backdrop-filter:blur(12px);">
+    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;">
     <div
       style="width:min(900px,97vw);max-height:90vh;overflow-y:auto;background:rgba(0,5,18,.97);border:1px solid #00ffff33;border-top:2px solid #00ffff;padding:28px;position:relative;font-family:'Share Tech Mono',monospace;">
-      <button class="modal-close" onclick="document.getElementById('analytics-modal').style.display='none'">✕</button>
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('analytics-modal').style.display='none'">✕</button>
       <div style="font-family:'Orbitron',sans-serif;font-size:18px;color:#00ffff;letter-spacing:4px;margin-bottom:4px;">
         📊 ANALYTICS DASHBOARD</div>
       <div style="font-size:9px;color:#00ffff66;letter-spacing:2px;margin-bottom:20px;">PHÂN TÍCH DOANH THU & HIỆU SUẤT
@@ -12023,10 +12150,10 @@ app.listen(PORT, '0.0.0.0', () => {
 
   <!-- ═══════════ FAVORITES MODAL ═══════════ -->
   <div id="favorites-modal"
-    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,10,.88);backdrop-filter:blur(12px);">
+    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;">
     <div
       style="width:min(700px,97vw);max-height:88vh;overflow-y:auto;background:rgba(0,5,18,.97);border:1px solid #ffcc0033;border-top:2px solid #ffcc00;padding:28px;position:relative;font-family:'Share Tech Mono',monospace;">
-      <button class="modal-close" onclick="document.getElementById('favorites-modal').style.display='none'"
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('favorites-modal').style.display='none'"
         style="color:#ffcc00;border-color:#ffcc0044;">✕</button>
       <div style="font-family:'Orbitron',sans-serif;font-size:18px;color:#ffcc00;letter-spacing:4px;margin-bottom:4px;">
         ⭐ AGENT YÊU THÍCH</div>
@@ -12040,10 +12167,10 @@ app.listen(PORT, '0.0.0.0', () => {
 
   <!-- ═══════════ HISTORY MODAL ═══════════ -->
   <div id="history-modal"
-    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,10,.88);backdrop-filter:blur(12px);">
+    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;">
     <div
       style="width:min(700px,97vw);max-height:88vh;overflow-y:auto;background:rgba(0,5,18,.97);border:1px solid #00ff8833;border-top:2px solid #00ff88;padding:28px;position:relative;font-family:'Share Tech Mono',monospace;">
-      <button class="modal-close" onclick="document.getElementById('history-modal').style.display='none'"
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('history-modal').style.display='none'"
         style="color:#00ff88;border-color:#00ff8844;">✕</button>
       <div style="font-family:'Orbitron',sans-serif;font-size:18px;color:#00ff88;letter-spacing:4px;margin-bottom:4px;">
         <span id="history-modal-title">🕐 LỊCH SỬ KÍCH HOẠT</span></div>
@@ -12061,10 +12188,10 @@ app.listen(PORT, '0.0.0.0', () => {
 
   <!-- ═══════════ AI ADVISOR MODAL ═══════════ -->
   <div id="advisor-modal"
-    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,10,.88);backdrop-filter:blur(12px);">
+    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;">
     <div
       style="width:min(700px,97vw);max-height:88vh;overflow-y:auto;background:rgba(0,5,18,.97);border:1px solid #44aaff33;border-top:2px solid #44aaff;padding:28px;position:relative;font-family:'Share Tech Mono',monospace;">
-      <button class="modal-close" onclick="document.getElementById('advisor-modal').style.display='none'"
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('advisor-modal').style.display='none'"
         style="color:#44aaff;border-color:#44aaff44;">✕</button>
       <div style="font-family:'Orbitron',sans-serif;font-size:18px;color:#44aaff;letter-spacing:4px;margin-bottom:4px;">
         💡 AI ADVISOR</div>
@@ -12109,7 +12236,7 @@ app.listen(PORT, '0.0.0.0', () => {
 
   <!-- ═══════════ MINI GAME MODAL ═══════════ -->
   <div id="game-modal"
-    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,10,.92);backdrop-filter:blur(16px);">
+    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;">
     <div
       style="width:min(700px,97vw);max-height:88vh;background:rgba(0,5,18,.99);border:1px solid #ff00aa33;border-top:2px solid #ff00aa;padding:24px;position:relative;font-family:'Share Tech Mono',monospace;overflow:hidden;">
       <button class="modal-close" onclick="stopGame()" style="color:#ff00aa;border-color:#ff00aa44;">✕</button>
@@ -12142,10 +12269,10 @@ app.listen(PORT, '0.0.0.0', () => {
 
   <!-- ═══════════ ALERTS MODAL ═══════════ -->
   <div id="alerts-modal"
-    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,10,.88);backdrop-filter:blur(12px);">
+    style="position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;">
     <div
       style="width:min(620px,97vw);max-height:88vh;overflow-y:auto;background:rgba(0,5,18,.97);border:1px solid #ff880033;border-top:2px solid #ff8800;padding:28px;position:relative;font-family:'Share Tech Mono',monospace;">
-      <button class="modal-close" onclick="document.getElementById('alerts-modal').style.display='none'"
+      <button class="modal-close" onclick="window._panelClose&&window._panelClose();document.getElementById('alerts-modal').style.display='none'"
         style="color:#ff8800;border-color:#ff880044;">✕</button>
       <div style="font-family:'Orbitron',sans-serif;font-size:18px;color:#ff8800;letter-spacing:4px;margin-bottom:4px;">
         🔔 HỆ THỐNG CẢNH BÁO</div>
@@ -12185,6 +12312,87 @@ app.listen(PORT, '0.0.0.0', () => {
         💡 Cảnh báo sẽ hiển thị toast khi điều kiện được đáp ứng trong quá trình kích hoạt agent.
       </div>
     </div>
+  </div>
+
+  <!-- ═══════════ NHẬT KÝ VƯƠNG ĐẾ MODAL ═══════════ -->
+  <div id="diary-modal">
+    <div id="diary-box">
+      <div class="diary-header">
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:16px;color:#ffc850;letter-spacing:4px;">📜 NHẬT KÝ VƯƠNG ĐẾ</div>
+          <div style="font-size:8px;color:#ffc85055;letter-spacing:2px;margin-top:3px;">GHI CHÉP · KẾ HOẠCH · SỨ MỆNH</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+          <div id="diary-stats" style="font-size:8px;color:#ffc85044;text-align:right;"></div>
+          <button onclick="closeDiary()" style="background:rgba(255,50,50,.08);border:1px solid #ff333333;color:#ff6666;width:30px;height:30px;cursor:pointer;font-size:15px;font-family:'Share Tech Mono',monospace;">✕</button>
+        </div>
+      </div>
+      <div class="diary-tabs">
+        <button class="diary-tab active" onclick="diaryTab('notes',this)">📝 GHI CHÚ</button>
+        <button class="diary-tab" onclick="diaryTab('todo',this)">☑️ NHIỆM VỤ</button>
+        <button class="diary-tab" onclick="diaryTab('plan',this)">⚔️ KẾ HOẠCH</button>
+      </div>
+
+      <!-- NOTES TAB -->
+      <div id="diary-notes-tab" class="diary-body">
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <input id="diary-note-title-inp" placeholder="Tiêu đề..." style="flex:1;min-width:120px;background:rgba(255,200,80,.04);border:1px solid #ffc85033;color:#ffc850;padding:7px 10px;font-family:'Share Tech Mono',monospace;font-size:9px;outline:none;">
+          <select id="diary-note-tag" style="background:rgba(255,200,80,.04);border:1px solid #ffc85033;color:#ffc85099;font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 8px;">
+            <option value="🌌">🌌 Vũ Trụ</option>
+            <option value="💡">💡 Ý Tưởng</option>
+            <option value="⚔️">⚔️ Chiến Lược</option>
+            <option value="💰">💰 Tài Chính</option>
+            <option value="🔥">🔥 Khẩn Cấp</option>
+          </select>
+          <button onclick="diaryAddNote()" style="background:rgba(255,200,80,.1);border:1px solid #ffc85066;color:#ffc850;font-family:'Orbitron',monospace;font-size:8px;padding:7px 14px;cursor:pointer;letter-spacing:1px;">+ THÊM</button>
+        </div>
+        <textarea id="diary-note-body-inp" placeholder="Nội dung ghi chú..." rows="3" style="width:100%;box-sizing:border-box;background:rgba(255,200,80,.03);border:1px solid #ffc85022;color:#ffc850aa;padding:9px;font-family:'Share Tech Mono',monospace;font-size:9px;resize:vertical;outline:none;line-height:1.7;margin-bottom:14px;"></textarea>
+        <div id="diary-notes-list"></div>
+      </div>
+
+      <!-- TODO TAB -->
+      <div id="diary-todo-tab" class="diary-body" style="display:none;">
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <input id="diary-todo-inp" placeholder="Thêm nhiệm vụ mới..." style="flex:1;background:rgba(255,200,80,.04);border:1px solid #ffc85033;color:#ffc850;padding:7px 10px;font-family:'Share Tech Mono',monospace;font-size:9px;outline:none;" onkeydown="if(event.key==='Enter')diaryAddTodo()">
+          <select id="diary-todo-pri" style="background:rgba(255,200,80,.04);border:1px solid #ffc85033;color:#ffc85099;font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 8px;">
+            <option value="🔴">🔴 Khẩn</option>
+            <option value="🟡" selected>🟡 Bình</option>
+            <option value="🟢">🟢 Nhẹ</option>
+          </select>
+          <button onclick="diaryAddTodo()" style="background:rgba(255,200,80,.1);border:1px solid #ffc85066;color:#ffc850;font-family:'Orbitron',monospace;font-size:8px;padding:7px 14px;cursor:pointer;letter-spacing:1px;">+ THÊM</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <button onclick="diaryTodoFilter('all',this)" class="cm-filter-btn active" style="font-size:8px;padding:4px 10px;">TẤT CẢ</button>
+          <button onclick="diaryTodoFilter('active',this)" class="cm-filter-btn" style="font-size:8px;padding:4px 10px;">ĐANG LÀM</button>
+          <button onclick="diaryTodoFilter('done',this)" class="cm-filter-btn" style="font-size:8px;padding:4px 10px;">HOÀN THÀNH</button>
+        </div>
+        <div id="diary-todo-list"></div>
+      </div>
+
+      <!-- PLAN TAB -->
+      <div id="diary-plan-tab" class="diary-body" style="display:none;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:9px;color:#ffc85066;letter-spacing:2px;margin-bottom:14px;">◈ KẾ HOẠCH XÂY DỰNG ĐẾ QUỐC AI</div>
+        <div id="diary-plan-list"></div>
+        <button onclick="diaryAddPlan()" style="width:100%;margin-top:10px;background:rgba(255,200,80,.05);border:1px dashed #ffc85033;color:#ffc85066;font-family:'Share Tech Mono',monospace;font-size:9px;padding:10px;cursor:pointer;letter-spacing:1px;transition:all .2s;" onmouseover="this.style.borderColor='#ffc85066';this.style.color='#ffc850'" onmouseout="this.style.borderColor='#ffc85033';this.style.color='#ffc85066'">+ THÊM MỤC TIÊU MỚI</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ CLUSTER MAP MODAL ═══════════ -->
+  <div id="cluster-map-modal" style="position:fixed;inset:0;z-index:600;display:none;flex-direction:column;">
+    <canvas id="cluster-canvas"></canvas>
+    <div id="cluster-tooltip" style="position:fixed;display:none;pointer-events:none;background:rgba(0,5,18,.97);border:1px solid #00ffff44;padding:8px 14px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#00ffff;z-index:9999;white-space:nowrap;border-left:2px solid #00c8ff;"></div>
+    <div id="cluster-filter-bar" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+      <button class="cm-filter-btn active" onclick="cmSetFilter('all',this)">🌌 TẤT CẢ</button>
+      <button class="cm-filter-btn" onclick="cmSetFilter('top10',this)">👑 THIÊN BẢNG</button>
+      <button class="cm-filter-btn" onclick="cmSetFilter('content',this)">📺 NỘI DUNG</button>
+      <button class="cm-filter-btn" onclick="cmSetFilter('finance',this)">💰 TÀI CHÍNH</button>
+      <button class="cm-filter-btn" onclick="cmSetFilter('tech',this)">⚡ CÔNG NGHỆ</button>
+      <button class="cm-filter-btn" onclick="cmSetFilter('marketing',this)">📡 MARKETING</button>
+      <button class="cm-filter-btn" onclick="cmSetFilter('other',this)">🌀 ĐA NĂNG</button>
+    </div>
+    <button onclick="closeClusterMap()" style="position:fixed;top:18px;right:22px;z-index:9999;background:rgba(0,5,18,.9);border:1px solid #ff444455;color:#ff6666;font-size:17px;width:36px;height:36px;cursor:pointer;font-family:'Share Tech Mono',monospace;">✕</button>
+    <div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);font-family:'Share Tech Mono',monospace;font-size:8px;color:#00ffff33;letter-spacing:2px;pointer-events:none;white-space:nowrap;">CLICK AGENT ĐỂ XEM CHI TIẾT &nbsp;·&nbsp; SCROLL ĐỂ ZOOM &nbsp;·&nbsp; KÉO ĐỂ DI CHUYỂN</div>
   </div>
 
   <script>
@@ -12243,6 +12451,7 @@ app.listen(PORT, '0.0.0.0', () => {
     document.addEventListener('DOMContentLoaded', () => { });
 
     function openFavorites() {
+      window._panelOpen();
       document.getElementById('favorites-modal').style.display = 'flex';
       const list = document.getElementById('fav-list');
       const empty = document.getElementById('fav-empty');
@@ -12264,6 +12473,7 @@ app.listen(PORT, '0.0.0.0', () => {
     }
 
     function favSelectAgent(id) {
+      window._panelClose && window._panelClose();
       document.getElementById('favorites-modal').style.display = 'none';
       if (window._planetMeshes && window._openHUD) {
         const pm = window._planetMeshes.find(p => p.agent.id === id);
@@ -12288,6 +12498,7 @@ app.listen(PORT, '0.0.0.0', () => {
       saveHistory();
     }
     function openHistory() {
+      window._panelOpen();
       document.getElementById('history-modal').style.display = 'flex';
       renderHistory();
     }
@@ -12326,6 +12537,7 @@ app.listen(PORT, '0.0.0.0', () => {
     // AI ADVISOR
     // ══════════════════════════════════════════════════════
     function openAdvisor() {
+      window._panelOpen();
       document.getElementById('advisor-modal').style.display = 'flex';
       advisorGoal = null; advisorField = null;
       document.querySelectorAll('.adv-btn,.adv-btn2').forEach(b => b.style.opacity = '0.6');
@@ -12376,6 +12588,7 @@ app.listen(PORT, '0.0.0.0', () => {
   </div>`;
     }
     function advisorSelect(id) {
+      window._panelClose && window._panelClose();
       document.getElementById('advisor-modal').style.display = 'none';
       if (window._planetMeshes && window._openHUD) {
         const pm = window._planetMeshes.find(p => p.agent.id === id);
@@ -12387,6 +12600,7 @@ app.listen(PORT, '0.0.0.0', () => {
     // MINI GAME — AGENT HUNT
     // ══════════════════════════════════════════════════════
     function openMiniGame() {
+      window._panelOpen();
       document.getElementById('game-modal').style.display = 'flex';
       document.getElementById('game-hi').textContent = gameHiScore;
       document.getElementById('game-result').style.display = 'none';
@@ -12469,6 +12683,7 @@ app.listen(PORT, '0.0.0.0', () => {
     }
     function stopGame() {
       if (gameRunning) endGame();
+      window._panelClose && window._panelClose();
       document.getElementById('game-modal').style.display = 'none';
     }
 
@@ -12476,6 +12691,7 @@ app.listen(PORT, '0.0.0.0', () => {
     // ALERT SYSTEM
     // ══════════════════════════════════════════════════════
     function openAlerts() {
+      window._panelOpen();
       document.getElementById('alerts-modal').style.display = 'flex';
       const sel = document.getElementById('alert-agent-sel');
       if (!sel.options.length) {
@@ -12532,6 +12748,7 @@ app.listen(PORT, '0.0.0.0', () => {
     // ANALYTICS DASHBOARD
     // ══════════════════════════════════════════════════════
     function openAnalytics() {
+      window._panelOpen();
       document.getElementById('analytics-modal').style.display = 'flex';
       setTimeout(renderAnalytics, 50);
     }
@@ -13271,19 +13488,434 @@ app.listen(PORT, '0.0.0.0', () => {
     }
 
 
+    // ══════════════════════════════════════════════════════
+    // CLUSTER MAP
+    // ══════════════════════════════════════════════════════
+    let _cmRAF = null, _cmZoom = 1, _cmPanX = 0, _cmPanY = 0;
+    let _cmDragging = false, _cmDragStart = {x:0,y:0,px:0,py:0};
+    let _cmFilter = 'all', _cmHovered = null, _cmT = 0;
+    let _cmClusters = [], _cmStars = null;
+
+    const CM_DEFS = [
+      {key:'top10',    name:'THIÊN BẢNG', emoji:'👑', color:'#ffaa00', rx:0.5,  ry:0.13},
+      {key:'content',  name:'NỘI DUNG',   emoji:'📺', color:'#00ffff', rx:0.18, ry:0.40},
+      {key:'finance',  name:'TÀI CHÍNH',  emoji:'💰', color:'#00ff88', rx:0.82, ry:0.40},
+      {key:'tech',     name:'CÔNG NGHỆ',  emoji:'⚡', color:'#8844ff', rx:0.18, ry:0.74},
+      {key:'marketing',name:'MARKETING',  emoji:'📡', color:'#ff4488', rx:0.82, ry:0.74},
+      {key:'other',    name:'ĐA NĂNG',    emoji:'🌀', color:'#44aaff', rx:0.5,  ry:0.88},
+    ];
+
+    function openClusterMap() {
+      window._panelOpen();
+      const modal = document.getElementById('cluster-map-modal');
+      modal.style.display = 'flex';
+      _cmFilter = 'all';
+      document.querySelectorAll('.cm-filter-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+      setTimeout(_cmInit, 60);
+    }
+    function closeClusterMap() {
+      window._panelClose();
+      document.getElementById('cluster-map-modal').style.display = 'none';
+      if (_cmRAF) { cancelAnimationFrame(_cmRAF); _cmRAF = null; }
+    }
+
+    // ══════════════════════════════════════════════════════
+    // NHẬT KÝ VƯƠNG ĐẾ
+    // ══════════════════════════════════════════════════════
+    let _diaryData = JSON.parse(localStorage.getItem('vdai_diary') || '{"notes":[],"todos":[],"plans":[]}');
+    let _diaryActiveTab = 'notes', _diaryTodoFilter = 'all';
+
+    function _diarySave() { localStorage.setItem('vdai_diary', JSON.stringify(_diaryData)); _diaryUpdateStats(); }
+
+    function _diaryUpdateStats() {
+      const done = _diaryData.todos.filter(t=>t.done).length;
+      const tot  = _diaryData.todos.length;
+      document.getElementById('diary-stats').innerHTML =
+        `📝 ${_diaryData.notes.length} ghi chú &nbsp;·&nbsp; ☑️ ${done}/${tot} nhiệm vụ`;
+    }
+
+    function openDiary() {
+      window._panelOpen();
+      document.getElementById('diary-modal').style.display = 'flex';
+      _diaryActiveTab = 'notes';
+      document.querySelectorAll('.diary-tab').forEach((b,i) => b.classList.toggle('active', i===0));
+      ['notes','todo','plan'].forEach(t => {
+        document.getElementById('diary-' + t + '-tab').style.display = t === 'notes' ? '' : 'none';
+      });
+      _diaryRenderNotes(); _diaryRenderTodos(); _diaryRenderPlans(); _diaryUpdateStats();
+    }
+    function closeDiary() {
+      window._panelClose();
+      document.getElementById('diary-modal').style.display = 'none';
+    }
+    function diaryTab(tab, btn) {
+      _diaryActiveTab = tab;
+      document.querySelectorAll('.diary-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['notes','todo','plan'].forEach(t => {
+        document.getElementById('diary-' + t + '-tab').style.display = t === tab ? '' : 'none';
+      });
+    }
+
+    /* ── NOTES ── */
+    function diaryAddNote() {
+      const title = document.getElementById('diary-note-title-inp').value.trim();
+      const body  = document.getElementById('diary-note-body-inp').value.trim();
+      const tag   = document.getElementById('diary-note-tag').value;
+      if (!title && !body) { showToast('Nhập tiêu đề hoặc nội dung!','warn'); return; }
+      _diaryData.notes.unshift({ id: Date.now(), title: title || '(Không tiêu đề)', body, tag, ts: new Date().toISOString() });
+      _diarySave(); _diaryRenderNotes();
+      document.getElementById('diary-note-title-inp').value = '';
+      document.getElementById('diary-note-body-inp').value = '';
+      showToast('📝 Đã lưu ghi chú!', 'success');
+    }
+    function diaryDeleteNote(id) {
+      _diaryData.notes = _diaryData.notes.filter(n => n.id !== id);
+      _diarySave(); _diaryRenderNotes();
+    }
+    function _diaryRenderNotes() {
+      const el = document.getElementById('diary-notes-list');
+      if (!_diaryData.notes.length) {
+        el.innerHTML = '<div style="text-align:center;padding:28px;color:#ffc85033;font-size:10px;">Chưa có ghi chú nào.<br>Bắt đầu ghi lại kế hoạch của Vương Đế!</div>';
+        return;
+      }
+      el.innerHTML = _diaryData.notes.map(n => {
+        const d = new Date(n.ts);
+        const ds = d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN',{hour12:false,hour:'2-digit',minute:'2-digit'});
+        return `<div class="diary-note-card">
+          <button onclick="diaryDeleteNote(${n.id})" style="position:absolute;top:8px;right:8px;background:none;border:none;color:#ff444455;cursor:pointer;font-size:12px;" onmouseover="this.style.color='#ff6666'" onmouseout="this.style.color='#ff444455'">✕</button>
+          <div class="diary-note-title">${n.tag} ${n.title}</div>
+          <div class="diary-note-body">${n.body || '<span style="opacity:.35;font-style:italic">Không có nội dung</span>'}</div>
+          <div class="diary-note-meta">🕐 ${ds}</div>
+        </div>`;
+      }).join('');
+    }
+
+    /* ── TODOS ── */
+    function diaryAddTodo() {
+      const text = document.getElementById('diary-todo-inp').value.trim();
+      const pri  = document.getElementById('diary-todo-pri').value;
+      if (!text) { showToast('Nhập nội dung nhiệm vụ!','warn'); return; }
+      _diaryData.todos.unshift({ id: Date.now(), text, pri, done: false, ts: new Date().toISOString() });
+      _diarySave(); _diaryRenderTodos();
+      document.getElementById('diary-todo-inp').value = '';
+      showToast('☑️ Đã thêm nhiệm vụ!', 'success');
+    }
+    function diaryToggleTodo(id) {
+      const t = _diaryData.todos.find(x => x.id === id);
+      if (t) { t.done = !t.done; _diarySave(); _diaryRenderTodos(); }
+    }
+    function diaryDeleteTodo(id) {
+      _diaryData.todos = _diaryData.todos.filter(t => t.id !== id);
+      _diarySave(); _diaryRenderTodos();
+    }
+    function diaryTodoFilter(f, btn) {
+      _diaryTodoFilter = f;
+      document.querySelectorAll('#diary-todo-tab .cm-filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      _diaryRenderTodos();
+    }
+    function _diaryRenderTodos() {
+      const el = document.getElementById('diary-todo-list');
+      let list = _diaryData.todos;
+      if (_diaryTodoFilter === 'active') list = list.filter(t => !t.done);
+      if (_diaryTodoFilter === 'done')   list = list.filter(t => t.done);
+      if (!list.length) {
+        el.innerHTML = '<div style="text-align:center;padding:28px;color:#ffc85033;font-size:10px;">Không có nhiệm vụ nào.</div>';
+        return;
+      }
+      el.innerHTML = list.map(t => `
+        <div class="diary-todo-row">
+          <div class="diary-todo-check ${t.done?'done':''}" onclick="diaryToggleTodo(${t.id})">${t.done?'✔':''}</div>
+          <span style="font-size:13px;flex-shrink:0;">${t.pri}</span>
+          <span class="diary-todo-text ${t.done?'done':''}">${t.text}</span>
+          <span class="diary-todo-del" onclick="diaryDeleteTodo(${t.id})">✕</span>
+        </div>`).join('');
+    }
+
+    /* ── PLANS ── */
+    const _PLAN_TEMPLATES = [
+      { title: 'Chinh Phục Nội Dung', desc: 'Kích hoạt 10 agent content mỗi ngày, tăng 30% doanh thu/tháng', progress: 40, color: '#00ffff' },
+      { title: 'Máy In Tiền Tự Động',  desc: 'Thiết lập pipeline tài chính — 5 agent chạy 24/7',             progress: 65, color: '#00ff88' },
+      { title: 'Thống Trị Marketing',  desc: 'Tự động hóa toàn bộ kênh quảng cáo với AI agent',               progress: 20, color: '#ff4488' },
+    ];
+    function diaryAddPlan() {
+      const t = prompt('Tên kế hoạch:'); if (!t) return;
+      const d = prompt('Mô tả ngắn:') || '';
+      _diaryData.plans.push({ id: Date.now(), title: t, desc: d, progress: 0, color: '#ffc850' });
+      _diarySave(); _diaryRenderPlans();
+      showToast('⚔️ Đã thêm kế hoạch!','success');
+    }
+    function diarySetProgress(id, val) {
+      const p = _diaryData.plans.find(x => x.id === id);
+      if (p) { p.progress = parseInt(val); _diarySave(); }
+    }
+    function diaryDeletePlan(id) {
+      _diaryData.plans = _diaryData.plans.filter(p => p.id !== id);
+      _diarySave(); _diaryRenderPlans();
+    }
+    function _diaryRenderPlans() {
+      const el = document.getElementById('diary-plan-list');
+      const list = _diaryData.plans.length ? _diaryData.plans : _PLAN_TEMPLATES.map((p,i) => ({...p, id: -(i+1)}));
+      el.innerHTML = list.map(p => `
+        <div style="background:rgba(255,200,80,.04);border:1px solid ${p.color}22;border-left:3px solid ${p.color};padding:12px 14px;margin-bottom:10px;position:relative;">
+          ${p.id > 0 ? `<button onclick="diaryDeletePlan(${p.id})" style="position:absolute;top:8px;right:8px;background:none;border:none;color:#ff444455;cursor:pointer;font-size:12px;" onmouseover="this.style.color='#ff6666'" onmouseout="this.style.color='#ff444455'">✕</button>` : ''}
+          <div style="font-family:'Orbitron',sans-serif;font-size:10px;color:${p.color};letter-spacing:1px;margin-bottom:4px;">${p.title}</div>
+          <div style="font-size:8px;color:${p.color}88;margin-bottom:10px;">${p.desc}</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="flex:1;height:5px;background:#ffc85011;border-radius:2px;">
+              <div style="height:100%;width:${p.progress}%;background:linear-gradient(90deg,${p.color}88,${p.color});border-radius:2px;transition:width .3s;"></div>
+            </div>
+            <span style="font-size:9px;color:${p.color};width:32px;text-align:right;">${p.progress}%</span>
+            ${p.id > 0 ? `<input type="range" min="0" max="100" value="${p.progress}" oninput="diarySetProgress(${p.id},this.value);this.previousElementSibling.textContent=this.value+'%';this.previousElementSibling.previousElementSibling.firstElementChild.style.width=this.value+'%'" style="width:70px;accent-color:${p.color};">` : ''}
+          </div>
+        </div>`).join('');
+    }
+    function cmSetFilter(key, btn) {
+      _cmFilter = key;
+      document.querySelectorAll('.cm-filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+
+    function _cmInit() {
+      const canvas = document.getElementById('cluster-canvas');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const W = canvas.width, H = canvas.height;
+
+      // Compute top10 ids
+      const top10ids = AI_AGENTS.slice()
+        .sort((a,b) => parseFloat(b.revenue.replace(/[$,∞]/g,'')) - parseFloat(a.revenue.replace(/[$,∞]/g,'')))
+        .slice(0,10).map(a => a.id);
+
+      // Categorise agents
+      const groups = {}; CM_DEFS.forEach(c => { groups[c.key] = []; });
+      AI_AGENTS.forEach(ag => {
+        const t = (ag.type + ' ' + ag.name).toLowerCase();
+        let cat;
+        if (top10ids.includes(ag.id))                                                                            cat = 'top10';
+        else if (['content','video','tiktok','youtube','podcast','news','image','copy','newsletter','photo'].some(k=>t.includes(k))) cat = 'content';
+        else if (['trading','finance','invest','crypto','tax','insurance','fintech','market'].some(k=>t.includes(k))) cat = 'finance';
+        else if (['code','software','cloud','cyber','quantum','robotic','neural','bio','space'].some(k=>t.includes(k))) cat = 'tech';
+        else if (['seo','affiliate','email','social','ad','influencer','pr','brand','funnel'].some(k=>t.includes(k))) cat = 'marketing';
+        else cat = 'other';
+        groups[cat].push(ag);
+      });
+
+      // Build cluster objects with positioned agents
+      _cmClusters = CM_DEFS.map(def => {
+        const agents = groups[def.key];
+        const cx = def.rx * W, cy = def.ry * H;
+        const n = agents.length;
+        // Ring layout
+        const positions = [];
+        let placed = 0, ring = 0;
+        while (placed < n) {
+          if (ring === 0) { positions.push({x:0,y:0}); placed++; ring++; }
+          else {
+            const cnt = Math.min(n - placed, Math.ceil(6.5 * ring));
+            const r = ring * 24;
+            for (let i = 0; i < cnt && placed < n; i++) {
+              const a = (i / cnt) * Math.PI * 2;
+              positions.push({x: Math.cos(a)*r, y: Math.sin(a)*r});
+              placed++;
+            }
+            ring++;
+          }
+        }
+        const maxR = positions.reduce((m,p) => Math.max(m, Math.hypot(p.x, p.y)), 0);
+        return { ...def, cx, cy, clusterR: maxR + 34,
+          agents: agents.map((ag,i) => ({ agent: ag, ox: positions[i]?.x||0, oy: positions[i]?.y||0 })) };
+      });
+
+      _cmZoom = 1; _cmPanX = 0; _cmPanY = 0; _cmT = 0; _cmStars = null;
+
+      // Mouse / touch events
+      canvas.onmousedown = e => { _cmDragging=true; _cmDragStart={x:e.clientX,y:e.clientY,px:_cmPanX,py:_cmPanY}; };
+      canvas.onmouseup   = e => {
+        const moved = Math.abs(e.clientX-_cmDragStart.x)+Math.abs(e.clientY-_cmDragStart.y);
+        _cmDragging = false;
+        if (moved < 5) _cmClick(e);
+      };
+      canvas.onmousemove = e => {
+        if (_cmDragging) { _cmPanX=_cmDragStart.px+(e.clientX-_cmDragStart.x); _cmPanY=_cmDragStart.py+(e.clientY-_cmDragStart.y); }
+        else _cmHover(e);
+      };
+      canvas.onwheel = e => {
+        e.preventDefault();
+        const f = e.deltaY < 0 ? 1.1 : 0.9;
+        const r = canvas.getBoundingClientRect();
+        const mx = e.clientX-r.left, my = e.clientY-r.top;
+        _cmPanX = mx+(_cmPanX-mx)*f; _cmPanY = my+(_cmPanY-my)*f;
+        _cmZoom = Math.min(4, Math.max(0.25, _cmZoom*f));
+      };
+      canvas.onmouseleave = () => { _cmDragging=false; _cmHovered=null; document.getElementById('cluster-tooltip').style.display='none'; };
+
+      if (_cmRAF) cancelAnimationFrame(_cmRAF);
+      _cmDraw();
+    }
+
+    function _cmS2W(sx,sy) {
+      const c = document.getElementById('cluster-canvas');
+      return { x:(sx-c.width/2-_cmPanX)/_cmZoom+c.width/2, y:(sy-c.height/2-_cmPanY)/_cmZoom+c.height/2 };
+    }
+    function _cmHover(e) {
+      const r = document.getElementById('cluster-canvas').getBoundingClientRect();
+      const w = _cmS2W(e.clientX-r.left, e.clientY-r.top);
+      let found = null;
+      outer: for (const cl of _cmClusters) {
+        if (_cmFilter !== 'all' && cl.key !== _cmFilter) continue;
+        for (const ag of cl.agents) {
+          const dx=w.x-(cl.cx+ag.ox), dy=w.y-(cl.cy+ag.oy);
+          if (dx*dx+dy*dy < 196) { found={agent:ag.agent}; break outer; }
+        }
+      }
+      _cmHovered = found;
+      const tip = document.getElementById('cluster-tooltip');
+      if (found) {
+        const a = found.agent;
+        tip.style.cssText = `position:fixed;display:block;pointer-events:none;background:rgba(0,5,18,.97);border:1px solid ${a.color}44;border-left:2px solid ${a.color};padding:8px 14px;font-family:'Share Tech Mono',monospace;font-size:10px;color:${a.color};z-index:9999;white-space:nowrap;left:${e.clientX+16}px;top:${e.clientY-10}px;`;
+        tip.innerHTML = `<span style="font-size:18px;vertical-align:middle;">${a.emoji}</span> <span style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1px;">${a.name}</span><br><span style="color:#666;font-size:8px;">${a.type}</span><br><span style="color:#00ff88;font-size:11px;font-weight:700;">${a.revenue}<span style="color:#00ff8866;font-size:8px;">/ngày</span></span>`;
+        document.getElementById('cluster-canvas').style.cursor = 'pointer';
+      } else {
+        tip.style.display = 'none';
+        document.getElementById('cluster-canvas').style.cursor = _cmDragging ? 'grabbing' : 'grab';
+      }
+    }
+    function _cmClick(e) {
+      if (!_cmHovered) return;
+      const id = _cmHovered.agent.id;
+      closeClusterMap();
+      setTimeout(() => {
+        if (window._planetMeshes && window._openHUD) {
+          const pm = window._planetMeshes.find(p => p.agent.id === id);
+          if (pm) window._openHUD(pm);
+        }
+      }, 120);
+    }
+
+    function _cmDraw() {
+      const canvas = document.getElementById('cluster-canvas');
+      if (!canvas || document.getElementById('cluster-map-modal').style.display === 'none') return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      _cmT += 0.007;
+
+      // Background
+      ctx.fillStyle = '#000308';
+      ctx.fillRect(0,0,W,H);
+
+      // Stars (generated once)
+      if (!_cmStars) {
+        _cmStars = Array.from({length:220}, ()=>({ x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.4, b:Math.random()*Math.PI*2 }));
+      }
+      _cmStars.forEach(s => {
+        const a = 0.25 + 0.25*Math.sin(_cmT*1.8+s.b);
+        ctx.fillStyle = `rgba(180,210,255,${a})`;
+        ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+      });
+
+      ctx.save();
+      ctx.translate(W/2+_cmPanX, H/2+_cmPanY);
+      ctx.scale(_cmZoom, _cmZoom);
+      ctx.translate(-W/2, -H/2);
+
+      const NODE_R = 13;
+
+      _cmClusters.forEach(cl => {
+        const vis = _cmFilter==='all' || cl.key===_cmFilter;
+        const alpha = vis ? 1 : 0.12;
+        const pulse = 1 + 0.035*Math.sin(_cmT*1.2 + cl.rx*8);
+        const nr = (cl.clusterR + 28) * pulse;
+
+        // Nebula glow
+        const g1 = ctx.createRadialGradient(cl.cx,cl.cy,0,cl.cx,cl.cy,nr*1.6);
+        const ca = Math.round(alpha*255).toString(16).padStart(2,'0');
+        g1.addColorStop(0,  cl.color + Math.round(0.22*alpha*255).toString(16).padStart(2,'0'));
+        g1.addColorStop(0.5,cl.color + Math.round(0.07*alpha*255).toString(16).padStart(2,'0'));
+        g1.addColorStop(1, 'transparent');
+        ctx.fillStyle = g1;
+        ctx.beginPath(); ctx.arc(cl.cx,cl.cy,nr*1.6,0,Math.PI*2); ctx.fill();
+
+        // Dashed border ring
+        ctx.setLineDash([5,9]); ctx.lineWidth = 1;
+        ctx.strokeStyle = cl.color + Math.round(0.22*alpha*255).toString(16).padStart(2,'0');
+        ctx.beginPath(); ctx.arc(cl.cx,cl.cy,nr,0,Math.PI*2); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Cluster label
+        ctx.save(); ctx.globalAlpha = alpha;
+        ctx.textAlign = 'center';
+        ctx.font = `bold 10px 'Orbitron',sans-serif`;
+        ctx.fillStyle = cl.color;
+        ctx.fillText(`${cl.emoji} ${cl.name}`, cl.cx, cl.cy - nr - 9);
+        ctx.font = `8px 'Share Tech Mono',monospace`;
+        ctx.fillStyle = cl.color + '99';
+        ctx.fillText(`${cl.agents.length} AGENT`, cl.cx, cl.cy - nr + 4);
+        ctx.restore();
+
+        // Agent nodes
+        cl.agents.forEach((ag, i) => {
+          const ax = cl.cx + ag.ox, ay = cl.cy + ag.oy;
+          const isHov = _cmHovered && _cmHovered.agent.id === ag.agent.id;
+          const agA = vis ? 1 : 0.08;
+          const r = NODE_R * (isHov ? 1.45 : 1 + 0.06*Math.sin(_cmT*3+i*0.9));
+
+          ctx.save(); ctx.globalAlpha = agA;
+
+          // Outer glow
+          if (vis) {
+            const glow = ctx.createRadialGradient(ax,ay,0,ax,ay,r*2.8);
+            glow.addColorStop(0, ag.agent.color+'77');
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.beginPath(); ctx.arc(ax,ay,r*2.8,0,Math.PI*2); ctx.fill();
+          }
+
+          // Node body
+          const bg = ctx.createRadialGradient(ax,ay-r*.3,r*.1,ax,ay,r);
+          bg.addColorStop(0, ag.agent.color+'cc');
+          bg.addColorStop(1, '#000b20');
+          ctx.fillStyle = bg;
+          ctx.beginPath(); ctx.arc(ax,ay,r,0,Math.PI*2); ctx.fill();
+
+          // Ring
+          ctx.strokeStyle = isHov ? ag.agent.color : ag.agent.color+'66';
+          ctx.lineWidth = isHov ? 2 : 1;
+          ctx.beginPath(); ctx.arc(ax,ay,r,0,Math.PI*2); ctx.stroke();
+
+          // Emoji
+          ctx.font = `${Math.round(r*1.15)}px serif`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#fff';
+          ctx.globalAlpha = agA;
+          ctx.fillText(ag.agent.emoji, ax, ay);
+          ctx.textBaseline = 'alphabetic';
+          ctx.restore();
+        });
+      });
+
+      ctx.restore();
+      _cmRAF = requestAnimationFrame(_cmDraw);
+    }
+
     // ── GUIDE MODAL ──
     function openGuide() {
+      window._panelOpen();
       document.getElementById('guide-modal').classList.add('show');
     }
     function closeGuide() {
+      window._panelClose();
       document.getElementById('guide-modal').classList.remove('show');
     }
 
     // ── DRAG & DROP BUILDER ──
     function openBuilder() {
+      window._panelOpen();
       document.getElementById('builder-modal').classList.add('show');
     }
     function closeBuilder() {
+      window._panelClose();
       document.getElementById('builder-modal').classList.remove('show');
     }
 
@@ -15150,6 +15782,10 @@ app.listen(PORT, '0.0.0.0', () => {
 
     function openVault() {
       document.getElementById('vault-modal').classList.add('show');
+      // Ẩn toàn bộ UI, chỉ để nền vũ trụ + vault
+      if (typeof hideMainUI === 'function') hideMainUI();
+      var tb = document.getElementById('topbar');
+      if (tb) { window._vaultTopbarDisplay = tb.style.display; tb.style.display = 'none'; }
       // Populate agent select
       const sel = document.getElementById('vf-agent');
       if (sel && sel.options.length < 2) {
@@ -15168,6 +15804,10 @@ app.listen(PORT, '0.0.0.0', () => {
 
     function closeVault() {
       document.getElementById('vault-modal').classList.remove('show');
+      // Khôi phục toàn bộ UI
+      if (typeof restoreMainUI === 'function') restoreMainUI();
+      var tb = document.getElementById('topbar');
+      if (tb) { tb.style.display = window._vaultTopbarDisplay !== undefined ? window._vaultTopbarDisplay : ''; delete window._vaultTopbarDisplay; }
       closeVaultDetail();
     }
 
