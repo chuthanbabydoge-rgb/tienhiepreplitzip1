@@ -3537,17 +3537,58 @@
       pointer-events: none;
     }
     /* Soul rings (vòng linh hồn) */
-    .node-soul-ring {
+    /* ════════════════════════════════════════════════
+       ĐẤU LA ĐẠI LỤC — Vòng Hồn Hoàn Động
+       Rings orbit OUTSIDE the card using 3D perspective
+       ════════════════════════════════════════════════ */
+    .soul-orbit {
       position: absolute;
       border-radius: 50%;
-      top: 50%; left: 50%;
-      border: 1px dashed var(--nc, #8866ff);
+      left: 50%; top: 50%;
       pointer-events: none;
+      border: 2px solid var(--nc, #8866ff);
+      box-shadow:
+        0 0 12px var(--nc, #8866ff),
+        0 0 28px var(--nc, #8866ff),
+        inset 0 0 8px rgba(0,0,0,0.5);
     }
-    .node-soul-ring-1 { width:90px; height:90px; margin:-45px 0 0 -45px; opacity:0.1; animation:xx-soul-cw 10s linear infinite; }
-    .node-soul-ring-2 { width:60px; height:60px; margin:-30px 0 0 -30px; opacity:0.16; animation:xx-soul-ccw 6s linear infinite; }
-    @keyframes xx-soul-cw  { to { transform: rotate(360deg);  } }
-    @keyframes xx-soul-ccw { to { transform: rotate(-360deg); } }
+    /* Ring 1 — closest, brightest, fastest */
+    .soul-orbit-1 {
+      width: 108px; height: 108px;
+      margin: -54px 0 0 -54px;
+      opacity: 0.75;
+      border-width: 2.5px;
+      animation: xx-hoan-orbit 3s linear infinite, xx-hoan-glow 2s ease-in-out infinite alternate;
+    }
+    /* Ring 2 — medium, medium speed, reverse */
+    .soul-orbit-2 {
+      width: 145px; height: 145px;
+      margin: -72.5px 0 0 -72.5px;
+      opacity: 0.5;
+      border-width: 2px;
+      animation: xx-hoan-orbit 5s linear infinite reverse, xx-hoan-glow 2.5s ease-in-out infinite alternate;
+      animation-delay: 0.4s, 0.4s;
+    }
+    /* Ring 3 — outermost, faintest, slowest, dashed */
+    .soul-orbit-3 {
+      width: 183px; height: 183px;
+      margin: -91.5px 0 0 -91.5px;
+      opacity: 0.3;
+      border-width: 1.5px;
+      border-style: dashed;
+      animation: xx-hoan-orbit 8s linear infinite, xx-hoan-glow 3.5s ease-in-out infinite alternate;
+      animation-delay: 0.8s, 0.8s;
+    }
+    /* 3D flat-horizontal orbit — rotateX tilts ring to horizontal plane */
+    @keyframes xx-hoan-orbit {
+      from { transform: perspective(220px) rotateX(72deg) rotateZ(0deg);   }
+      to   { transform: perspective(220px) rotateX(72deg) rotateZ(360deg); }
+    }
+    /* Breathing glow pulse */
+    @keyframes xx-hoan-glow {
+      from { box-shadow: 0 0 8px var(--nc),  0 0 18px var(--nc); opacity: var(--so, 0.5); }
+      to   { box-shadow: 0 0 18px var(--nc), 0 0 40px var(--nc), 0 0 60px var(--nc); opacity: calc(var(--so, 0.5) * 0.6); }
+    }
     /* Element badge (top-right) */
     .node-element-badge {
       position: absolute; top:5px; right:8px;
@@ -3598,7 +3639,7 @@
     }
     .canvas-node.sp-running .node-name-xx { color:#ffe080 !important; text-shadow:0 0 14px rgba(255,180,0,1) !important; }
     .canvas-node.sp-running .node-icon-wrap { filter: drop-shadow(0 0 16px #ffaa00) !important; }
-    .canvas-node.sp-running .node-soul-ring { border-color: #ffaa00 !important; opacity: 0.35 !important; }
+    .canvas-node.sp-running .soul-orbit { border-color: #ffaa00 !important; box-shadow: 0 0 20px #ffaa00, 0 0 45px #ffaa00 !important; opacity: 0.8 !important; animation-duration: 1.2s, 0.6s !important; }
     @keyframes xx-node-pulse {
       0%,100% { transform: scale(1);    filter: brightness(1); }
       50%      { transform: scale(1.07); filter: brightness(1.35) saturate(1.5); }
@@ -3612,7 +3653,7 @@
         inset 0 0 14px rgba(0,255,136,0.1) !important;
     }
     .canvas-node.sp-done .node-name-xx { color:#00ffaa !important; text-shadow:0 0 12px rgba(0,255,160,1) !important; }
-    .canvas-node.sp-done .node-soul-ring { border-color:#00ffaa !important; opacity:0.25 !important; }
+    .canvas-node.sp-done .soul-orbit { border-color:#00ffaa !important; box-shadow: 0 0 16px #00ffaa, 0 0 32px #00ffaa !important; opacity: 0.6 !important; }
     @keyframes xx-done-seal {
       0%  { transform: scale(1.18); filter: brightness(3); }
       100%{ transform: scale(1);    filter: brightness(1); }
@@ -12326,9 +12367,10 @@
     function _mkNodeHtml(rawType, dispName) {
       const typeKey = (rawType||'').split(' / ')[0].trim();
       const d = _nodeData[typeKey] || _ndList[_nodeHash(typeKey) % _ndList.length];
-      return `<div class="node-card" style="--nc:${d.color};--nc-bg:${d.bg};--nc-glow:${d.glow};--nc-ring:${d.ring};">
-        <div class="node-soul-ring node-soul-ring-1"></div>
-        <div class="node-soul-ring node-soul-ring-2"></div>
+      return `<div class="soul-orbit soul-orbit-1"></div>
+      <div class="soul-orbit soul-orbit-2"></div>
+      <div class="soul-orbit soul-orbit-3"></div>
+      <div class="node-card" style="--nc:${d.color};--nc-bg:${d.bg};--nc-glow:${d.glow};--nc-ring:${d.ring};">
         <div class="node-element-badge">${d.badge}</div>
         <div class="node-icon-wrap">${d.icon}</div>
         <div class="node-name-xx">${dispName}</div>
