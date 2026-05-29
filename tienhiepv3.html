@@ -7413,6 +7413,9 @@
                   _showTranscript('⚡ Chạy: ' + _rName);
                   if (typeof showToast === 'function') showToast('⚡ ' + _rAg.emoji + ' Kích hoạt ' + _rName + '...', 'success');
 
+                  // ── Tắt mic ngay lập tức để TTS không bị mic nghe lại ──
+                  _stopListening();
+
                   // TTS xác nhận kích hoạt — nói tên agent rõ ràng
                   const _rPhrases = [
                     'Đang kích hoạt ' + _rModName + '. Xin chờ một chút, thưa đạo hữu.',
@@ -7432,6 +7435,8 @@
                   const _rPm = window._planetMeshes && window._planetMeshes.find(p => p.agent && p.agent.id === _rAg.id);
                   if (_rPm && typeof window._openHUD === 'function') {
                     window._openHUD(_rPm);
+                    // openHUD gọi _voiceStartListening bên trong — tắt mic lại ngay sau đó
+                    setTimeout(_stopListening, 120);
                     setTimeout(function() {
                       try {
                         window.hudRunWorkflow(_rAg.id);
@@ -7460,6 +7465,10 @@
                     const _rDone = _rDonePhrases[Math.floor(Math.random() * _rDonePhrases.length)];
                     if (typeof _jarvisSay === 'function') _jarvisSay(_rDone);
                     if (typeof showToast === 'function') showToast('✅ ' + _rAg.emoji + ' ' + _rName + ' — quy trình hoàn thành', 'success');
+                    // Bật lại mic sau khi TTS hoàn thành xong (~3s để TTS phát xong)
+                    setTimeout(function() {
+                      if (typeof window._voiceStartListening === 'function') window._voiceStartListening();
+                    }, 3000);
                   }, _rEstMs);
 
                   return true;
