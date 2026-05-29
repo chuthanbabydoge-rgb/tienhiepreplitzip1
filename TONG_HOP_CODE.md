@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **00:25:20 30/5/2026**
+> Cập nhật lần cuối: **01:13:21 30/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,742 dòng, 77.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(17,998 dòng, 1.44 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(18,686 dòng, 1.46 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,742 | 77.2 KB |
-| `tienhiepv3.html` | 17,998 | 1.44 MB |
+| `tienhiepv3.html` | 18,686 | 1.46 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **23,461** | **1.68 MB** |
+| **TỔNG** | **24,149** | **1.70 MB** |
 
 ---
 
@@ -1844,7 +1844,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 17,998 dòng · 1.44 MB
+> 18,686 dòng · 1.46 MB
 
 ```html
 <!DOCTYPE html>
@@ -7078,7 +7078,7 @@ app.listen(PORT, '0.0.0.0', () => {
 
         <!-- ACTION STRIP: horizontal buttons at the very top, full width -->
         <div id="hud-action-strip">
-          <div id="hud-run-bar-wrap" style="display:contents;"></div>
+          <div id="hud-run-bar-wrap" style="display:flex;align-items:stretch;width:100%;"></div>
         </div>
 
         <!-- COLUMNS ROW: all info panels side by side -->
@@ -10779,47 +10779,160 @@ app.listen(PORT, '0.0.0.0', () => {
       });
 
       // ══════════════════════════════════════════════════════════
-      // AR/XR INITIALISATION
+      // AR/XR INITIALISATION — Full Implementation
       // ══════════════════════════════════════════════════════════
 
-      // Activate AR overlay for this route
+      // Activate AR overlay
       document.body.classList.add('ar-ready');
       const arAgentsEl = document.getElementById('ar-val-agents');
       if (arAgentsEl) arAgentsEl.textContent = String(AI_AGENTS.length);
 
-      // ── DeviceOrientation / gyroscope head tracking ──────────
-      // Works on phone & AR glasses (Magic Leap, HoloLens browser, Quest browser)
+      // ── 1. CAMERA PASSTHROUGH ─────────────────────────────────
+      const _arVid = document.getElementById('ar-camera');
+      let _arCameraStream = null;
+
+      async function _startCameraPassthrough() {
+        if (_arCameraStream || !navigator.mediaDevices) return;
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+            audio: false
+          });
+          _arVid.srcObject = stream;
+          _arVid.style.display = 'block';
+          _arCameraStream = stream;
+          if (typeof showToast === 'function') showToast('📷 Camera passthrough đã bật', 'success');
+        } catch(e) {
+          console.warn('[AR Camera]', e.message);
+          if (typeof showToast === 'function') showToast('📷 Camera: ' + e.message, 'error');
+        }
+      }
+
+      function _stopCameraPassthrough() {
+        if (!_arCameraStream) return;
+        _arCameraStream.getTracks().forEach(t => t.stop());
+        _arCameraStream = null;
+        if (_arVid) { _arVid.srcObject = null; _arVid.style.display = 'none'; }
+      }
+
+      // Auto-start camera if page loaded with ?ar param
+      if (new URLSearchParams(location.search).has('ar')) {
+        document.body.classList.add('ar-mode');
+        _startCameraPassthrough();
+      }
+
+      // ── 2. DEVICE ORIENTATION — gyroscope + real compass ──────
       let _gyroActive = false;
+
       function _onDeviceOrientation(e) {
-        const gamma = e.gamma || 0; // left-right tilt  (-90 to +90)
-        const beta  = e.beta  || 0; // front-back tilt  (-180 to +180)
-        // Map to parallax values (same vars used by mouse parallax)
+        const gamma = e.gamma || 0;   // left-right tilt
+        const beta  = e.beta  || 0;   // front-back tilt
+        const alpha = e.alpha || 0;   // compass heading 0=N, 90=E
+
+        // 3D tilt parallax (existing behaviour)
         mouseParallaxX = Math.max(-1, Math.min(1, gamma / 35));
         mouseParallaxY = Math.max(-1, Math.min(1, (beta - 45) / 40));
         if (!_gyroActive) {
           _gyroActive = true;
           document.body.classList.add('ar-gyro');
         }
+
+        // Real compass heading from magnetometer
+        const hdg = Math.round(alpha);
+        const hdgStr = String(hdg).padStart(3, '0');
+        const hdgEl  = document.getElementById('ar-compass-hdg');
+        const hdgVal = document.getElementById('ar-val-hdg');
+        if (hdgEl)  hdgEl.textContent  = hdgStr + '°';
+        if (hdgVal) hdgVal.textContent = hdgStr + '°';
+        const track = document.getElementById('ar-compass-track');
+        if (track) track.style.transform = `translateX(${-(alpha / 360) * 960}px)`;
       }
-      // iOS 13+ requires explicit permission for DeviceOrientation
+
       if (typeof DeviceOrientationEvent !== 'undefined') {
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-          // iOS 13+ — add a permission button on first interaction
-          const _reqGyro = () => {
+          document.addEventListener('click', function _reqGyro() {
             DeviceOrientationEvent.requestPermission().then(state => {
-              if (state === 'granted') window.addEventListener('deviceorientation', _onDeviceOrientation);
+              if (state === 'granted') window.addEventListener('deviceorientation', _onDeviceOrientation, { passive: true });
             }).catch(() => {});
             document.removeEventListener('click', _reqGyro);
-          };
-          document.addEventListener('click', _reqGyro, { once: true });
+          }, { once: true });
         } else {
-          // Android / non-restricted browsers
-          window.addEventListener('deviceorientation', _onDeviceOrientation);
+          window.addEventListener('deviceorientation', _onDeviceOrientation, { passive: true });
         }
       }
 
-      // ── WebXR immersive-ar support ───────────────────────────
+      // ── 3. XR RETICLE — 3D ring shown on detected surfaces ───
+      const _reticleGeo = new THREE.RingGeometry(0.12, 0.18, 32);
+      _reticleGeo.rotateX(-Math.PI / 2);
+      const _reticle = new THREE.Mesh(
+        _reticleGeo,
+        new THREE.MeshBasicMaterial({ color: 0x00ffcc, opacity: 0.9, transparent: true, side: THREE.DoubleSide })
+      );
+      _reticle.matrixAutoUpdate = false;
+      _reticle.visible = false;
+      scene.add(_reticle);
+
+      // Outer pulse ring
+      const _reticleOuterGeo = new THREE.RingGeometry(0.21, 0.24, 32);
+      _reticleOuterGeo.rotateX(-Math.PI / 2);
+      const _reticleOuterMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, opacity: 0.4, transparent: true, side: THREE.DoubleSide });
+      const _reticleOuter = new THREE.Mesh(_reticleOuterGeo, _reticleOuterMat);
+      _reticleOuter.matrixAutoUpdate = false;
+      _reticleOuter.visible = false;
+      scene.add(_reticleOuter);
+
+      // ── 4. AR AGENT MARKERS — place agents in real world ─────
+      const _arMarkers = [];
+
+      function _placeAgentMarker(hitPose) {
+        const agent = AI_AGENTS[Math.floor(Math.random() * AI_AGENTS.length)];
+        const col = parseInt((agent.color || '#00ffff').replace('#', ''), 16);
+
+        const group = new THREE.Group();
+        group.matrixAutoUpdate = false;
+        group.matrix.fromArray(hitPose.transform.matrix);
+        group.matrixWorldNeedsUpdate = true;
+
+        // Floating sphere body
+        const sphere = new THREE.Mesh(
+          new THREE.SphereGeometry(0.055, 16, 16),
+          new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.7, roughness: 0.3, metalness: 0.5 })
+        );
+        sphere.userData.floatPhase = Math.random() * Math.PI * 2;
+        group.add(sphere);
+
+        // Ground ring
+        const rg = new THREE.RingGeometry(0.07, 0.09, 32);
+        rg.rotateX(-Math.PI / 2);
+        group.add(new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ color: col, opacity: 0.55, transparent: true })));
+
+        // Point light
+        const light = new THREE.PointLight(col, 0.8, 0.6);
+        group.add(light);
+
+        scene.add(group);
+        _arMarkers.push({ group, sphere, agent });
+
+        const targetEl = document.getElementById('ar-val-target');
+        if (targetEl) targetEl.textContent = agent.emoji;
+        if (typeof showToast === 'function') showToast(`📍 ${agent.emoji} ${agent.xname || agent.name} đặt vào không gian thật`, 'success');
+      }
+
+      // Float animation for placed markers (called from animate hook)
+      window._arAnimateHook = function(t) {
+        _arMarkers.forEach(({ sphere }) => {
+          sphere.position.y = Math.sin(t * 1.4 + (sphere.userData.floatPhase || 0)) * 0.035;
+          sphere.rotation.y += 0.018;
+        });
+        if (_reticleOuter.visible) {
+          _reticleOuterMat.opacity = 0.25 + Math.sin(t * 5) * 0.2;
+        }
+      };
+
+      // ── 5. WEBXR IMMERSIVE-AR WITH HIT-TEST ──────────────────
       window._enterXR = null;
+      window._xrSession = null;
+
       if (navigator.xr) {
         navigator.xr.isSessionSupported('immersive-ar').then(supported => {
           if (!supported) return;
@@ -10828,21 +10941,111 @@ app.listen(PORT, '0.0.0.0', () => {
 
           window._enterXR = async () => {
             try {
+              // WebXR provides its own camera — stop manual passthrough
+              _stopCameraPassthrough();
+
               const session = await navigator.xr.requestSession('immersive-ar', {
                 requiredFeatures: ['local'],
                 optionalFeatures: ['dom-overlay', 'hit-test'],
-                domOverlay: { root: document.getElementById('labels') || document.body },
+                domOverlay: { root: document.body },
               });
+              window._xrSession = session;
+
+              let _hitTestSource = null;
+              let _hitTestReady  = false;
+              let _refSpace      = null;
+              let _lastHitPose   = null;
+
               renderer.xr.setSession(session);
               document.body.classList.add('ar-mode');
-              if (xrBtn) { xrBtn.textContent = '✕ EXIT AR'; xrBtn.onclick = () => session.end(); }
-              session.addEventListener('end', () => {
-                document.body.classList.remove('ar-mode');
-                if (xrBtn) { xrBtn.innerHTML = '<div style="font-size:18px;">🥽</div><div>ENTER AR</div>'; xrBtn.onclick = () => window._enterXR && window._enterXR(); }
+              if (xrBtn) {
+                xrBtn.innerHTML = '<div style="font-size:12px;letter-spacing:1px;">✕ EXIT AR</div>';
+                xrBtn.onclick = () => session.end();
+              }
+
+              // Switch to XR animation loop
+              renderer.setAnimationLoop(async (t, frame) => {
+                if (!frame) { renderer.render(scene, camera); return; }
+
+                // Grab reference space once
+                if (!_refSpace) {
+                  try { _refSpace = renderer.xr.getReferenceSpace(); } catch(e) {}
+                }
+
+                // Init hit-test source once
+                if (!_hitTestReady && _refSpace) {
+                  _hitTestReady = true;
+                  try {
+                    const viewerSpace = await session.requestReferenceSpace('viewer');
+                    _hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+                  } catch(e) { console.warn('[XR hit-test init]', e.message); }
+                }
+
+                // Process hit results each frame
+                if (_hitTestSource && _refSpace) {
+                  const hits = frame.getHitTestResults(_hitTestSource);
+                  if (hits.length > 0) {
+                    const pose = hits[0].getPose(_refSpace);
+                    if (pose) {
+                      _lastHitPose = pose;
+                      _reticle.visible = true;
+                      _reticle.matrix.fromArray(pose.transform.matrix);
+                      _reticleOuter.visible = true;
+                      _reticleOuter.matrix.fromArray(pose.transform.matrix);
+                      // Update depth bar
+                      const p = pose.transform.position;
+                      const cam = renderer.xr.getCamera(camera).position;
+                      const dist = Math.sqrt((p.x-cam.x)**2 + (p.y-cam.y)**2 + (p.z-cam.z)**2);
+                      const depthEl = document.getElementById('ar-val-depth');
+                      if (depthEl) depthEl.textContent = dist.toFixed(1);
+                    }
+                  } else {
+                    _reticle.visible = false;
+                    _reticleOuter.visible = false;
+                    _lastHitPose = null;
+                    const depthEl = document.getElementById('ar-val-depth');
+                    if (depthEl) depthEl.textContent = '∞';
+                  }
+                }
+
+                // Run marker float animation
+                if (window._arAnimateHook) window._arAnimateHook(t * 0.001);
+
+                renderer.render(scene, camera);
               });
+
+              // Tap → place agent marker at reticle position
+              session.addEventListener('select', () => {
+                if (_lastHitPose) _placeAgentMarker(_lastHitPose);
+              });
+
+              session.addEventListener('end', () => {
+                _hitTestSource = null;
+                _hitTestReady  = false;
+                _refSpace      = null;
+                _lastHitPose   = null;
+                _reticle.visible = false;
+                _reticleOuter.visible = false;
+                window._xrSession = null;
+                renderer.setAnimationLoop(null);
+                document.body.classList.remove('ar-mode');
+                // Resume camera passthrough + normal render loop
+                _startCameraPassthrough();
+                requestAnimationFrame(animate);
+                if (xrBtn) {
+                  xrBtn.innerHTML = '<div style="font-size:18px;">🥽</div><div>ENTER AR</div><div style="font-size:6px;opacity:0.6;letter-spacing:1px;">WebXR MODE</div>';
+                  xrBtn.onclick = () => window._enterXR && window._enterXR();
+                }
+                if (typeof showToast === 'function') showToast('🥽 Đã thoát WebXR AR', 'info');
+              });
+
+              if (typeof showToast === 'function') showToast('🥽 WebXR AR đã bật — chạm để đặt AI Agent', 'success');
+
             } catch(err) {
-              console.warn('[WebXR] session failed:', err.message);
-              if (typeof showToast === 'function') showToast('🥽 Thiết bị chưa hỗ trợ AR session: ' + err.message, 'error');
+              console.warn('[WebXR]', err.message);
+              if (typeof showToast === 'function') showToast('🥽 Không hỗ trợ WebXR: ' + err.message + ' — đang dùng camera mode', 'error');
+              // Fallback: camera passthrough only
+              _startCameraPassthrough();
             }
           };
         }).catch(() => {});
@@ -19842,6 +20045,491 @@ console.log('[KC] KOCraft script v3 loading...');
 </script>
 
 <script src="inject7.js"></script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SÁNG TẠO UI: 4 hiệu ứng chính — Thiên Lôi / Tiên Khí / Bảng Phong Thần / Linh Khí Network
+════════════════════════════════════════════════════════════════════ -->
+<style>
+/* ── 1. THIÊN LÔI — lightning canvas overlay ── */
+#thien-loi-canvas {
+  position: fixed; inset: 0; pointer-events: none; z-index: 50;
+  opacity: 0; transition: opacity 0.05s;
+}
+/* ── 2. TIÊN KHÍ TRAIL — cursor particles ── */
+.qi-particle {
+  position: fixed; pointer-events: none; z-index: 9998; border-radius: 50%;
+  width: 6px; height: 6px; transform: translate(-50%,-50%);
+  animation: qiFade 0.7s ease-out forwards;
+}
+@keyframes qiFade {
+  0%   { opacity: 0.95; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity: 0;    transform: translate(-50%,-50%) scale(0.1) translateY(-18px); }
+}
+/* ── 3. BẢNG PHONG THẦN — ranking strip ── */
+#bang-phong-than {
+  position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+  z-index: 25; display: flex; flex-direction: column; gap: 0;
+  pointer-events: auto;
+}
+#bpt-title {
+  writing-mode: vertical-rl; text-orientation: mixed;
+  font-family: 'Orbitron', sans-serif; font-size: 8px; letter-spacing: 3px;
+  color: rgba(255,204,0,0.5); padding: 8px 4px; background: rgba(0,5,15,0.7);
+  border-left: 1px solid rgba(255,204,0,0.2); border-top: 1px solid rgba(255,204,0,0.2);
+  border-bottom: 1px solid rgba(255,204,0,0.15); text-align: center;
+}
+.bpt-row {
+  display: flex; align-items: center; gap: 0;
+  background: rgba(0,5,15,0.82); border-left: 1px solid rgba(255,204,0,0.15);
+  border-bottom: 1px solid rgba(255,204,0,0.07);
+  transition: all 0.35s cubic-bezier(.4,0,.2,1);
+  cursor: pointer; overflow: hidden; max-width: 38px;
+}
+.bpt-row:hover { max-width: 180px; background: rgba(0,15,30,0.95); border-left-color: rgba(255,204,0,0.5); }
+.bpt-rank {
+  min-width: 22px; width: 22px; text-align: center;
+  font-family: 'Orbitron', sans-serif; font-size: 8px; color: rgba(255,204,0,0.55);
+  padding: 8px 2px; flex-shrink: 0;
+}
+.bpt-row:nth-child(2) .bpt-rank { color: #ffd700; text-shadow: 0 0 8px #ffd700; }
+.bpt-row:nth-child(3) .bpt-rank { color: #c0c0c0; }
+.bpt-row:nth-child(4) .bpt-rank { color: #cd7f32; }
+.bpt-emoji { font-size: 14px; flex-shrink: 0; padding: 0 4px; }
+.bpt-info { display: flex; flex-direction: column; padding: 4px 8px 4px 2px; min-width: 110px; }
+.bpt-name {
+  font-family: 'Orbitron', sans-serif; font-size: 8px; letter-spacing: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;
+}
+.bpt-score {
+  font-family: 'Share Tech Mono', monospace; font-size: 7px; color: rgba(255,204,0,0.5);
+  letter-spacing: 1px; margin-top: 1px;
+}
+.bpt-bar-wrap { width: 60px; height: 3px; background: rgba(255,204,0,0.1); border-radius: 2px; margin-top: 3px; }
+.bpt-bar { height: 3px; border-radius: 2px; background: linear-gradient(90deg, #ffaa00, #ffff00); transition: width 0.5s; }
+/* Rank-change flash */
+@keyframes bptRankUp {
+  0%   { background: rgba(0,255,136,0.35); }
+  100% { background: transparent; }
+}
+.bpt-rankup { animation: bptRankUp 0.6s ease-out; }
+
+/* ── 4. LINH KHÍ NETWORK — SVG overlay ── */
+#linh-khi-svg {
+  position: fixed; inset: 0; pointer-events: none; z-index: 2;
+  width: 100%; height: 100%;
+}
+.lk-link { stroke-dasharray: 6 8; stroke-linecap: round; }
+.lk-particle { r: 3; }
+
+/* ── SCREEN FLASH on lightning ── */
+@keyframes screenFlash {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+#thien-loi-flash {
+  position: fixed; inset: 0; pointer-events: none; z-index: 49;
+  background: rgba(180,220,255,0.18); opacity: 0;
+}
+#thien-loi-flash.active { animation: screenFlash 0.35s ease-out forwards; }
+</style>
+
+<!-- HTML elements -->
+<canvas id="thien-loi-canvas"></canvas>
+<div id="thien-loi-flash"></div>
+
+<svg id="linh-khi-svg" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="lk-glow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g id="lk-links-group"></g>
+  <g id="lk-particles-group"></g>
+</svg>
+
+<div id="bang-phong-than">
+  <div id="bpt-title">BẢNG PHONG THẦN</div>
+</div>
+
+<script>
+(function() {
+'use strict';
+
+// ══════════════════════════════════════════════════════════
+// SHARED STATE — activation map
+// ══════════════════════════════════════════════════════════
+const _actMap = {}; // agentId → { count, lastX, lastY, agent }
+
+function _recordActivation(agent, x, y) {
+  if (!agent) return;
+  const id = agent.id;
+  if (!_actMap[id]) _actMap[id] = { count: 0, lastX: x || window.innerWidth/2, lastY: y || window.innerHeight/2, agent };
+  _actMap[id].count++;
+  if (x != null) { _actMap[id].lastX = x; _actMap[id].lastY = y; }
+  _bptUpdate();
+  _lkRefreshLinks();
+}
+
+// ══════════════════════════════════════════════════════════
+// 1. THIÊN LÔI — LIGHTNING BOLT EFFECT
+// ══════════════════════════════════════════════════════════
+const _lCanvas = document.getElementById('thien-loi-canvas');
+const _lCtx    = _lCanvas.getContext('2d');
+const _lFlash  = document.getElementById('thien-loi-flash');
+
+function _resizeLCanvas() {
+  _lCanvas.width  = window.innerWidth;
+  _lCanvas.height = window.innerHeight;
+}
+_resizeLCanvas();
+window.addEventListener('resize', _resizeLCanvas);
+
+function _lightningBranch(ctx, x1, y1, x2, y2, depth, spread) {
+  if (depth === 0) return;
+  const mx = (x1+x2)/2 + (Math.random()-0.5) * spread;
+  const my = (y1+y2)/2 + (Math.random()-0.5) * spread;
+  ctx.moveTo(x1, y1); ctx.lineTo(mx, my);
+  ctx.moveTo(mx, my);  ctx.lineTo(x2, y2);
+  _lightningBranch(ctx, x1, y1, mx, my, depth-1, spread*0.6);
+  _lightningBranch(ctx, mx, my, x2, y2, depth-1, spread*0.6);
+  // Random fork
+  if (depth > 2 && Math.random() > 0.55) {
+    const fx = mx + (Math.random()-0.5) * spread * 2;
+    const fy = my + Math.random() * spread * 2;
+    ctx.moveTo(mx, my); ctx.lineTo(fx, fy);
+  }
+}
+
+function _fireLightning(fromX, fromY, toX, toY, colorHex) {
+  const color = colorHex || '#88ccff';
+  let frame = 0;
+  const frames = 8;
+  _lCanvas.style.opacity = '1';
+  // Screen flash
+  _lFlash.classList.remove('active');
+  void _lFlash.offsetWidth;
+  _lFlash.classList.add('active');
+
+  function drawFrame() {
+    _lCtx.clearRect(0, 0, _lCanvas.width, _lCanvas.height);
+    const alpha = 1 - frame / frames;
+
+    // Outer glow pass
+    _lCtx.save();
+    _lCtx.shadowColor = color;
+    _lCtx.shadowBlur  = 22;
+    _lCtx.strokeStyle = color.replace(')', `,${alpha * 0.4})`).replace('rgb', 'rgba');
+    if (!_lCtx.strokeStyle.includes('rgba')) _lCtx.strokeStyle = color;
+    _lCtx.lineWidth = 4;
+    _lCtx.globalAlpha = alpha * 0.5;
+    _lCtx.beginPath();
+    _lightningBranch(_lCtx, fromX, fromY, toX, toY, 5, 80);
+    _lCtx.stroke();
+    _lCtx.restore();
+
+    // Core bright pass
+    _lCtx.save();
+    _lCtx.shadowColor = '#ffffff';
+    _lCtx.shadowBlur  = 8;
+    _lCtx.strokeStyle = `rgba(220,240,255,${alpha * 0.9})`;
+    _lCtx.lineWidth = 1.5;
+    _lCtx.globalAlpha = alpha;
+    _lCtx.beginPath();
+    _lightningBranch(_lCtx, fromX, fromY, toX, toY, 4, 60);
+    _lCtx.stroke();
+    _lCtx.restore();
+
+    // Impact ring at destination
+    _lCtx.save();
+    _lCtx.strokeStyle = color;
+    _lCtx.globalAlpha = alpha * 0.7;
+    _lCtx.lineWidth = 1;
+    _lCtx.shadowColor = color; _lCtx.shadowBlur = 12;
+    _lCtx.beginPath();
+    _lCtx.arc(toX, toY, 8 + frame * 5, 0, Math.PI * 2);
+    _lCtx.stroke();
+    _lCtx.restore();
+
+    frame++;
+    if (frame < frames) requestAnimationFrame(drawFrame);
+    else { _lCtx.clearRect(0,0,_lCanvas.width,_lCanvas.height); _lCanvas.style.opacity='0'; }
+  }
+  requestAnimationFrame(drawFrame);
+}
+
+// Hook into _openHUD to fire lightning when clicking a planet
+(function _patchOpenHUD() {
+  let _retries = 0;
+  function tryPatch() {
+    if (typeof window._openHUD === 'function' && window._planetMeshes) {
+      const _orig = window._openHUD;
+      window._openHUD = function(pm) {
+        _orig(pm);
+        // Get screen position of the planet
+        if (pm && pm.group && window._arThreeScene) {
+          try {
+            const THREE = window.THREE;
+            const renderer = document.getElementById('canvas');
+            const pos = new THREE.Vector3();
+            pm.group.getWorldPosition(pos);
+            // Project to screen
+            const canvas = document.getElementById('canvas');
+            const W = canvas.clientWidth, H = canvas.clientHeight;
+            const cam = window._arThreeScene.__camera;
+            // Use the known camera from global if available
+            let sx = W/2, sy = H/3;
+            // Fire lightning from planet screen pos → center bottom
+            const color = pm.agent.color || '#00ccff';
+            _fireLightning(sx, sy, W/2, H * 0.85, color);
+            _recordActivation(pm.agent, sx, sy);
+          } catch(e) {}
+        }
+      };
+    } else if (_retries++ < 30) {
+      setTimeout(tryPatch, 300);
+    }
+  }
+  tryPatch();
+})();
+
+// Also patch openAgentChat to record activation
+(function _patchChat() {
+  let _r = 0;
+  function tryPatch() {
+    if (typeof window.openAgentChat === 'function') {
+      const _orig = window.openAgentChat;
+      window.openAgentChat = async function(agent) {
+        if (agent) _recordActivation(agent, null, null);
+        return _orig.apply(this, arguments);
+      };
+    } else if (_r++ < 30) setTimeout(tryPatch, 300);
+  }
+  tryPatch();
+})();
+
+// Patch canvas click to get real screen position for lightning
+(function _patchCanvasClick() {
+  let _r = 0;
+  function tryPatch() {
+    const canvas = document.getElementById('canvas');
+    if (canvas && window._planetMeshes) {
+      canvas.addEventListener('click', function(e) {
+        const THREE = window.THREE;
+        if (!THREE || !window._planetMeshes) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const my = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        // Check if any planet was actually hit (same raycaster logic)
+        // We just record the click position for lightning origin
+        window._lastClickX = e.clientX;
+        window._lastClickY = e.clientY;
+      }, true);
+    } else if (_r++ < 30) setTimeout(tryPatch, 400);
+  }
+  tryPatch();
+})();
+
+// Better hook: intercept at canvas click level to get coordinates
+(function _betterLightning() {
+  let _r = 0;
+  function tryPatch() {
+    if (typeof window._openHUD === 'function' && window._planetMeshes) {
+      const _orig2 = window._openHUD;
+      window._openHUD = function(pm) {
+        _orig2.apply(this, arguments);
+        const W = window.innerWidth, H = window.innerHeight;
+        const fromX = window._lastClickX || W/2;
+        const fromY = window._lastClickY || H/3;
+        const color = (pm && pm.agent && pm.agent.color) ? pm.agent.color : '#44aaff';
+        _fireLightning(fromX, fromY, W/2, H * 0.82, color);
+        if (pm && pm.agent) _recordActivation(pm.agent, fromX, fromY);
+      };
+    } else if (_r++ < 50) setTimeout(tryPatch, 350);
+  }
+  setTimeout(tryPatch, 1500);
+})();
+
+
+// ══════════════════════════════════════════════════════════
+// 2. TIÊN KHÍ CURSOR TRAIL
+// ══════════════════════════════════════════════════════════
+const QI_COLORS = ['#00ffff','#88ffcc','#ffaa00','#ff44ff','#00ff88','#4488ff','#ffff44'];
+let _lastQiX = -999, _lastQiY = -999, _qiThrottle = 0;
+
+document.addEventListener('mousemove', function(e) {
+  const now = Date.now();
+  if (now - _qiThrottle < 28) return;
+  _qiThrottle = now;
+  const dx = e.clientX - _lastQiX, dy = e.clientY - _lastQiY;
+  if (dx*dx + dy*dy < 36) return; // min move 6px
+  _lastQiX = e.clientX; _lastQiY = e.clientY;
+
+  const count = Math.min(3, 1 + Math.floor(Math.sqrt(dx*dx+dy*dy) / 12));
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'qi-particle';
+    const col = QI_COLORS[Math.floor(Math.random() * QI_COLORS.length)];
+    const size = 3 + Math.random() * 5;
+    const ox = (Math.random() - 0.5) * 12;
+    const oy = (Math.random() - 0.5) * 12;
+    p.style.cssText = `left:${e.clientX + ox}px;top:${e.clientY + oy}px;width:${size}px;height:${size}px;background:${col};box-shadow:0 0 ${size*2}px ${col};animation-duration:${0.45+Math.random()*0.45}s;animation-delay:${i*0.05}s;`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1200);
+  }
+}, { passive: true });
+
+
+// ══════════════════════════════════════════════════════════
+// 3. BẢNG PHONG THẦN — LIVE RANKING STRIP
+// ══════════════════════════════════════════════════════════
+const _bptEl = document.getElementById('bang-phong-than');
+let _bptPrevOrder = [];
+
+function _bptUpdate() {
+  const sorted = Object.values(_actMap)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 7);
+  if (sorted.length === 0) return;
+
+  const maxCount = sorted[0].count || 1;
+  const ranks = ['👑','②','③','④','⑤','⑥','⑦'];
+
+  // Remove old rows
+  _bptEl.querySelectorAll('.bpt-row').forEach(r => r.remove());
+
+  sorted.forEach((entry, i) => {
+    const { agent, count } = entry;
+    const row = document.createElement('div');
+    row.className = 'bpt-row';
+    row.title = `${agent.xname || agent.name} — ${count} lần kích hoạt`;
+    const color = agent.color || '#00ffff';
+    const wasAt = _bptPrevOrder.indexOf(agent.id);
+    if (wasAt > i) row.classList.add('bpt-rankup');
+
+    row.innerHTML = `
+      <div class="bpt-rank" style="color:${color};">${ranks[i]}</div>
+      <div class="bpt-emoji">${agent.emoji || '⬡'}</div>
+      <div class="bpt-info">
+        <div class="bpt-name" style="color:${color};text-shadow:0 0 8px ${color}66;">${(agent.xname || agent.name).toUpperCase()}</div>
+        <div class="bpt-score">⚡ ${count} KH</div>
+        <div class="bpt-bar-wrap"><div class="bpt-bar" style="width:${Math.round((count/maxCount)*100)}%;background:linear-gradient(90deg,${color}88,${color});"></div></div>
+      </div>`;
+
+    row.addEventListener('click', () => {
+      if (typeof window._openHUD === 'function' && window._planetMeshes) {
+        const pm = window._planetMeshes.find(p => p.agent.id === agent.id);
+        if (pm) window._openHUD(pm);
+      }
+    });
+    _bptEl.appendChild(row);
+  });
+
+  _bptPrevOrder = sorted.map(e => e.agent.id);
+}
+
+// Seed ranking with random initial data after app loads
+setTimeout(() => {
+  if (typeof window.AI_AGENTS !== 'undefined' && AI_AGENTS.length > 0) {
+    const seed = AI_AGENTS.slice(0, 7);
+    seed.forEach((a, i) => _recordActivation(a, window.innerWidth*0.5, window.innerHeight*0.4));
+    _bptUpdate();
+  }
+}, 2800);
+
+
+// ══════════════════════════════════════════════════════════
+// 4. LINH KHÍ NETWORK — SVG ENERGY STREAMS
+// ══════════════════════════════════════════════════════════
+const _lkSvg        = document.getElementById('linh-khi-svg');
+const _lkLinksG     = document.getElementById('lk-links-group');
+const _lkParticlesG = document.getElementById('lk-particles-group');
+const _lkParticles  = []; // { el, path, progress, speed }
+
+function _lkRefreshLinks() {
+  _lkLinksG.innerHTML = '';
+  _lkParticlesG.innerHTML = '';
+  _lkParticles.length = 0;
+
+  const entries = Object.values(_actMap)
+    .filter(e => e.lastX && e.lastY)
+    .sort((a,b) => b.count - a.count)
+    .slice(0, 6);
+
+  if (entries.length < 2) return;
+
+  // Draw links between top agents
+  for (let i = 0; i < entries.length - 1; i++) {
+    for (let j = i + 1; j < Math.min(i + 3, entries.length); j++) {
+      const a = entries[i], b = entries[j];
+      const col = a.agent.color || '#00ffff';
+      const strength = Math.min(1, (a.count + b.count) / 20);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      // Curved bezier path
+      const cx = (a.lastX + b.lastX) / 2 + (Math.random()-0.5) * 80;
+      const cy = (a.lastY + b.lastY) / 2 - 40;
+      const d = `M ${a.lastX} ${a.lastY} Q ${cx} ${cy} ${b.lastX} ${b.lastY}`;
+      line.setAttribute('d', d);
+      line.setAttribute('class', 'lk-link');
+      line.setAttribute('fill', 'none');
+      line.setAttribute('stroke', col);
+      line.setAttribute('stroke-width', 0.8 + strength * 1.2);
+      line.setAttribute('stroke-opacity', 0.15 + strength * 0.3);
+      line.setAttribute('filter', 'url(#lk-glow)');
+      _lkLinksG.appendChild(line);
+
+      // Add flowing particle on this path
+      if (Math.random() > 0.3) {
+        const circ = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circ.setAttribute('r', 2.5);
+        circ.setAttribute('fill', col);
+        circ.setAttribute('opacity', 0.8);
+        circ.setAttribute('filter', 'url(#lk-glow)');
+        _lkParticlesG.appendChild(circ);
+        _lkParticles.push({
+          el: circ, d,
+          progress: Math.random(),
+          speed: 0.0008 + Math.random() * 0.001,
+          reverse: Math.random() > 0.5
+        });
+      }
+    }
+  }
+}
+
+// Animate particle positions along SVG paths
+(function _animateParticles() {
+  const tmp = _lkSvg.createSVGPoint ? _lkSvg : document.createElementNS('http://www.w3.org/2000/svg','svg');
+  function tick() {
+    _lkParticles.forEach(p => {
+      p.progress += p.reverse ? -p.speed : p.speed;
+      if (p.progress > 1) p.progress = 0;
+      if (p.progress < 0) p.progress = 1;
+      // Get point along path
+      try {
+        const pathEl = document.createElementNS('http://www.w3.org/2000/svg','path');
+        pathEl.setAttribute('d', p.d);
+        const len = pathEl.getTotalLength();
+        const pt  = pathEl.getPointAtLength(p.progress * len);
+        p.el.setAttribute('cx', pt.x);
+        p.el.setAttribute('cy', pt.y);
+        p.el.setAttribute('opacity', 0.4 + Math.sin(p.progress * Math.PI) * 0.6);
+      } catch(e) {}
+    });
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+
+// Resize SVG and refresh on window resize
+window.addEventListener('resize', () => {
+  if (Object.keys(_actMap).length > 0) setTimeout(_lkRefreshLinks, 200);
+});
+
+})();
+</script>
 </body>
 
 </html>

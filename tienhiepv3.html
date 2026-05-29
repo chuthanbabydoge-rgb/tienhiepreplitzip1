@@ -3787,6 +3787,10 @@
       white-space: nowrap;
       position: relative;
       overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
     }
     #hud-action-strip .has-btn button::before {
       content: '';
@@ -5229,7 +5233,7 @@
 
         <!-- ACTION STRIP: horizontal buttons at the very top, full width -->
         <div id="hud-action-strip">
-          <div id="hud-run-bar-wrap" style="display:contents;"></div>
+          <div id="hud-run-bar-wrap" style="display:flex;align-items:stretch;width:100%;"></div>
         </div>
 
         <!-- COLUMNS ROW: all info panels side by side -->
@@ -8347,6 +8351,24 @@
               </button>
             </div>
           `;
+          // iOS Safari fix: bind touchend directly to bypass 300ms delay & display:flex issues
+          setTimeout(() => {
+            const _rb = document.getElementById(`wf-run-btn-${aid}`);
+            if (_rb && !_rb._touchBound) {
+              _rb._touchBound = true;
+              _rb.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                if (!_rb.disabled) hudRunWorkflow(aid);
+              }, { passive: false });
+            }
+            const _allBtns = runWrap ? runWrap.querySelectorAll('button') : [];
+            _allBtns.forEach(b => {
+              if (!b._touchBound) {
+                b._touchBound = true;
+                b.style.touchAction = 'manipulation';
+              }
+            });
+          }, 0);
         }
       }
 
@@ -8609,24 +8631,28 @@
       }
 
       function hudRunWorkflow(aid) {
+        try {
         const btn = document.getElementById(`wf-run-btn-${aid}`);
         const statusEl = document.getElementById(`wf-run-status-${aid}`);
         const dat = window._wfData && window._wfData[aid] ? window._wfData[aid] : [];
-        if (!dat.length) return;
+        if (!dat.length) {
+          if (typeof showToast === 'function') showToast('⚡ Quy trình chưa có bước nào — mở agent để cấu hình', 'error');
+          return;
+        }
 
         const ag = AI_AGENTS.find(a => a.id === aid);
         const agColor = ag ? ag.color : '#00ffff';
 
-        btn.disabled = true;
+        if (btn) btn.disabled = true;
 
         // === Button launch flash ===
-        btn.classList.add('wf-btn-launching');
-        setTimeout(() => btn.classList.remove('wf-btn-launching'), 600);
+        if (btn) { btn.classList.add('wf-btn-launching'); setTimeout(() => { if(btn) btn.classList.remove('wf-btn-launching'); }, 600); }
 
         const cards = dat.map((_, i) => document.getElementById(`wf-card-${aid}-${i}`));
 
         // === Scan line ===
         const container = document.getElementById('workflow-container');
+        if (!container) { if (typeof showToast==='function') showToast('⚡ Mở HUD agent trước khi chạy quy trình', 'error'); if(btn){btn.disabled=false;} return; }
         let scanLine = container.querySelector('.hud-pipeline-scanline');
         if (!scanLine) {
           scanLine = document.createElement('div');
@@ -8682,7 +8708,7 @@
           }
         });
 
-        btn.textContent = '⟳ ĐANG CHẠY...';
+        if (btn) btn.textContent = '⟳ ĐANG CHẠY...';
         if (statusEl) { statusEl.textContent = `⟳ Khởi động quy trình...`; statusEl.className = 'wf-run-status running'; }
 
         let step = 0;
@@ -8708,8 +8734,7 @@
             container.appendChild(overlay);
             setTimeout(() => { if (overlay.parentNode) container.removeChild(overlay); }, 900);
             if (statusEl) { statusEl.textContent = `✓ Hoàn thành tất cả ${dat.length} bước!`; statusEl.className = 'wf-run-status done'; }
-            btn.disabled = false;
-            btn.textContent = '↺ CHẠY LẠI';
+            if (btn) { btn.disabled = false; btn.textContent = '↺ CHẠY LẠI'; }
             return;
           }
           if (statusEl) { statusEl.textContent = `⟳ Đang chạy bước ${step + 1}/${dat.length}: ${dat[step].name}...`; statusEl.className = 'wf-run-status running'; }
@@ -8729,6 +8754,12 @@
         }
 
         setTimeout(runStep, 400);
+        } catch(e) {
+          console.error('[hudRunWorkflow] lỗi:', e);
+          if (typeof showToast === 'function') showToast('⚡ Lỗi chạy quy trình: ' + e.message, 'error');
+          const _b = document.getElementById(`wf-run-btn-${aid}`);
+          if (_b) { _b.disabled = false; _b.textContent = '▶ CHẠY QUY TRÌNH'; }
+        }
       }
 
       function closeHUD() {
