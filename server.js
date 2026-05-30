@@ -288,10 +288,13 @@ app.get('/api/login', async (req, res, next) => {
       '| REPLIT_DOMAINS=', process.env.REPLIT_DOMAINS || '(unset)');
     const returnTo = req.query.returnTo || req.session.returnTo || '/user';
     const name = await ensureStrategy(req.hostname);
-    // Regenerate session to clear any stale OIDC state (e.g. when switching accounts)
-    req.session.regenerate((err) => {
-      if (err) console.error('Session regenerate error:', err);
-      req.session.returnTo = returnTo;
+    // Clear stale OIDC state keys from session (caused "invalid request" when switching accounts)
+    for (const key of Object.keys(req.session)) {
+      if (key !== 'cookie') delete req.session[key];
+    }
+    req.session.returnTo = returnTo;
+    req.session.save((saveErr) => {
+      if (saveErr) console.error('Session save error before login:', saveErr);
       passport.authenticate(name, {
         prompt: 'login consent',
         scope: ['openid', 'email', 'profile', 'offline_access'],
