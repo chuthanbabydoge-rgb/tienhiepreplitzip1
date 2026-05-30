@@ -6301,6 +6301,27 @@
       }
     }
 
+    // ── Auto-logout khi phiên hết hạn ────────────────────────────────────
+    let _sessionCheckInterval = null;
+    function startSessionWatcher() {
+      if (_sessionCheckInterval) return;
+      _sessionCheckInterval = setInterval(async () => {
+        try {
+          const r = await fetch('/api/auth/user', { cache: 'no-store' });
+          if (r.status === 401) {
+            clearInterval(_sessionCheckInterval);
+            _sessionCheckInterval = null;
+            // Hiện thông báo rồi tự động redirect về login
+            const banner = document.createElement('div');
+            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(255,60,60,0.95);color:#fff;text-align:center;padding:14px;font-family:Orbitron,sans-serif;font-size:13px;letter-spacing:2px;';
+            banner.textContent = '⚠ PHIÊN ĐÃ HẾT HẠN — Đang chuyển về trang đăng nhập...';
+            document.body.appendChild(banner);
+            setTimeout(() => { window.location.href = '/api/login'; }, 2500);
+          }
+        } catch (e) {}
+      }, 5 * 60 * 1000); // kiểm tra mỗi 5 phút
+    }
+
     // ══════════════════════════════════════════════════════
     // NHÂN VẬT MỞ MIỆNG HỎI KHI VÀO GIAO DIỆN CHÍNH
     // ══════════════════════════════════════════════════════
@@ -6592,6 +6613,7 @@
       } catch(e) {}
       // Load real user info into topbar
       loadAuthUser();
+      startSessionWatcher();
       setTimeout(() => showCharacterGreeting(), 900);
     } else {
       // Check if user is already authenticated — if so, skip boot directly to /user

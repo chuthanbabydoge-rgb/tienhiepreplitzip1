@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **16:41:12 30/5/2026**
+> Cập nhật lần cuối: **16:44:53 30/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,751 dòng, 77.7 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(19,913 dòng, 1.53 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(19,934 dòng, 1.53 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,751 | 77.7 KB |
-| `tienhiepv3.html` | 19,913 | 1.53 MB |
+| `tienhiepv3.html` | 19,934 | 1.53 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **25,385** | **1.77 MB** |
+| **TỔNG** | **25,406** | **1.77 MB** |
 
 ---
 
@@ -1853,7 +1853,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 19,913 dòng · 1.53 MB
+> 19,934 dòng · 1.53 MB
 
 ```html
 <!DOCTYPE html>
@@ -8157,6 +8157,27 @@ app.listen(PORT, '0.0.0.0', () => {
       } catch (e) {
         return null;
       }
+    }
+
+    // ── Auto-logout khi phiên hết hạn ────────────────────────────────────
+    let _sessionCheckInterval = null;
+    function startSessionWatcher() {
+      if (_sessionCheckInterval) return;
+      _sessionCheckInterval = setInterval(async () => {
+        try {
+          const r = await fetch('/api/auth/user', { cache: 'no-store' });
+          if (r.status === 401) {
+            clearInterval(_sessionCheckInterval);
+            _sessionCheckInterval = null;
+            // Hiện thông báo rồi tự động redirect về login
+            const banner = document.createElement('div');
+            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(255,60,60,0.95);color:#fff;text-align:center;padding:14px;font-family:Orbitron,sans-serif;font-size:13px;letter-spacing:2px;';
+            banner.textContent = '⚠ PHIÊN ĐÃ HẾT HẠN — Đang chuyển về trang đăng nhập...';
+            document.body.appendChild(banner);
+            setTimeout(() => { window.location.href = '/api/login'; }, 2500);
+          }
+        } catch (e) {}
+      }, 5 * 60 * 1000); // kiểm tra mỗi 5 phút
     }
 
     // ══════════════════════════════════════════════════════
