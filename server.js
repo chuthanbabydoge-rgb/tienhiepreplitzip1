@@ -320,9 +320,17 @@ app.get('/api/callback', async (req, res, next) => {
             return res.redirect('/?auth_error=login_failed');
           }
           upsertUser(user, true);
-          const returnTo = req.session.returnTo || '/user';
+          const returnPath = req.session.returnTo || '/user';
           delete req.session.returnTo;
-          req.session.save(() => res.redirect(returnTo));
+          const domain = getExternalDomain(req.hostname);
+          const fullUrl = `https://${domain}${returnPath}`;
+          req.session.save(() => {
+            // Use HTML meta-refresh redirect so mobile webviews navigate correctly
+            res.send(`<!DOCTYPE html><html><head>
+              <meta http-equiv="refresh" content="0;url=${fullUrl}">
+              <script>window.location.replace(${JSON.stringify(fullUrl)});</script>
+            </head><body><p>Đang chuyển hướng...</p></body></html>`);
+          });
         });
       }
     )(req, res, next);
