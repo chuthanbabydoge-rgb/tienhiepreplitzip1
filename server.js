@@ -451,14 +451,16 @@ app.post('/api/chat', async (req, res) => {
 function requireAuth(req, res, next) {
   if (req.isAuthenticated()) return next();
   req.session.returnTo = req.originalUrl;
-  // Use JS to break out of Replit preview iframe before redirecting to OIDC login
+  // Use absolute URL so window.top navigation goes to our app, not replit.com
+  const loginUrl = `https://${getExternalDomain(req.hostname)}/api/login`;
   res.send(`<!DOCTYPE html><html><head>
     <script>
+      var loginUrl = ${JSON.stringify(loginUrl)};
       // If inside an iframe (Replit preview), navigate the top-level window
       if (window.top !== window.self) {
-        window.top.location.href = '/api/login';
+        window.top.location.href = loginUrl;
       } else {
-        window.location.href = '/api/login';
+        window.location.href = loginUrl;
       }
     </script>
   </head><body></body></html>`);
