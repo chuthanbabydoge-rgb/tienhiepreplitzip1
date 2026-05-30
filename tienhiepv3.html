@@ -852,6 +852,28 @@
       color: #fff;
       box-shadow: 0 0 12px rgba(255, 60, 60, 0.4);
     }
+    #btn-switch-account {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(0, 180, 255, 0.08);
+      border: 1px solid rgba(0, 180, 255, 0.35);
+      color: #00b4ff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.25s;
+      pointer-events: all;
+      margin-left: 6px;
+    }
+    #btn-switch-account:hover {
+      background: rgba(0, 180, 255, 0.22);
+      border-color: #00b4ff;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(0, 180, 255, 0.45);
+    }
 
     .pulse-dot {
       display: inline-block;
@@ -4797,6 +4819,7 @@
         </div>
       </div>
       <button id="btn-back-home" onclick="window.location.href='/api/logout'" title="Đăng xuất">⬅ THOÁT</button>
+      <button id="btn-switch-account" onclick="window.location.href='/api/switch-account'" title="Đổi tài khoản Replit">⇄ ĐỔI TK</button>
       <button id="btn-voice-run" title="Noi: Chay [Ten Agent] de chay quy trinh bang giong noi">
         <span id="vrun-mic-icon">🎙️</span> CHẠY
       </button>
@@ -14918,6 +14941,11 @@
     font-size: 8px;
     padding: 5px 10px;
     margin-left: 4px;
+  }
+  #btn-switch-account {
+    font-size: 8px;
+    padding: 5px 10px;
+    margin-left: 3px;
   }
   #theme-toggle-btn {
     padding: 5px 10px !important;
