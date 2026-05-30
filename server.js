@@ -286,20 +286,12 @@ app.get('/api/login', async (req, res, next) => {
     console.log('LOGIN: reqHostname=', req.hostname, '| resolved domain=', domain,
       '| REPLIT_DEV_DOMAIN=', process.env.REPLIT_DEV_DOMAIN || '(unset)',
       '| REPLIT_DOMAINS=', process.env.REPLIT_DOMAINS || '(unset)');
-    const returnTo = req.query.returnTo || req.session.returnTo || '/user';
+    if (req.query.returnTo) req.session.returnTo = req.query.returnTo;
     const name = await ensureStrategy(req.hostname);
-    // Clear stale OIDC state keys from session (caused "invalid request" when switching accounts)
-    for (const key of Object.keys(req.session)) {
-      if (key !== 'cookie') delete req.session[key];
-    }
-    req.session.returnTo = returnTo;
-    req.session.save((saveErr) => {
-      if (saveErr) console.error('Session save error before login:', saveErr);
-      passport.authenticate(name, {
-        prompt: 'login consent',
-        scope: ['openid', 'email', 'profile', 'offline_access'],
-      })(req, res, next);
-    });
+    passport.authenticate(name, {
+      prompt: 'login consent',
+      scope: ['openid', 'email', 'profile', 'offline_access'],
+    })(req, res, next);
   } catch (err) {
     console.error('Login error:', err);
     res.redirect('/?auth_error=1');
@@ -338,6 +330,16 @@ app.get('/api/callback', async (req, res, next) => {
     console.error('Callback error:', err);
     res.redirect('/?auth_error=' + encodeURIComponent(err.message || 'exception'));
   }
+});
+
+// Switch account: destroy session first, then redirect to OIDC login fresh
+app.get('/api/switch-account', (req, res) => {
+  req.logout(() => {
+    req.session.destroy(() => {
+      res.clearCookie('connect.sid');
+      res.redirect('/api/login');
+    });
+  });
 });
 
 app.get('/api/logout', async (req, res) => {
