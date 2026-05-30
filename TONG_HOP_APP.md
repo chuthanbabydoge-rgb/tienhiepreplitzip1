@@ -1,6 +1,6 @@
 # 🏯 TỔNG HỢP APP — VƯƠNG ĐẾ AI
 > ⚡ Tự động cập nhật khi code thay đổi — build xong feature → file này tự tick ✅
-> 🕐 Cập nhật lần cuối: **06:03:04 30/5/2026**
+> 🕐 Cập nhật lần cuối: **13:52:53 30/5/2026**
 
 ---
 
@@ -293,9 +293,7 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 
 ## 10. 🆕 VỪA HOÀN THÀNH (auto-detect từ lần cập nhật trước)
 
-> Phát hiện **1 feature mới** được hoàn thành kể từ lần cập nhật trước:
-
-- ✅ 🔴 **Markdown rendering trong chat (bold, code block, danh sách)**
+> *(Chưa có feature roadmap nào mới hoàn thành kể từ lần cập nhật trước)*
 
 ---
-*Auto-generated bởi `generate-app-summary.js` lúc 06:03:04 30/5/2026 — Build xong feature → file tự cập nhật ✅*
+*Auto-generated bởi `generate-app-summary.js` lúc 13:52:53 30/5/2026 — Build xong feature → file tự cập nhật ✅*
