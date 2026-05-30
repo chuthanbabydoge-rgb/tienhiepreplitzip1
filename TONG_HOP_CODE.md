@@ -1,11 +1,11 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **13:53:46 30/5/2026**
+> Cập nhật lần cuối: **16:21:13 30/5/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,742 dòng, 77.2 KB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,748 dòng, 77.5 KB)*
 - [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(19,913 dòng, 1.53 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
@@ -22,7 +22,7 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 39 | 987 B |
-| `server.js` | 1,742 | 77.2 KB |
+| `server.js` | 1,748 | 77.5 KB |
 | `tienhiepv3.html` | 19,913 | 1.53 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **25,376** | **1.77 MB** |
+| **TỔNG** | **25,382** | **1.77 MB** |
 
 ---
 
@@ -91,7 +91,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,742 dòng · 77.2 KB
+> 1,748 dòng · 77.5 KB
 
 ```javascript
 const express = require('express');
@@ -382,10 +382,16 @@ app.get('/api/login', async (req, res, next) => {
     console.log('LOGIN: reqHostname=', req.hostname, '| resolved domain=', domain,
       '| REPLIT_DEV_DOMAIN=', process.env.REPLIT_DEV_DOMAIN || '(unset)',
       '| REPLIT_DOMAINS=', process.env.REPLIT_DOMAINS || '(unset)');
+    const returnTo = req.query.returnTo || req.session.returnTo || '/user';
+    // Destroy old session first to avoid OIDC state mismatch when switching accounts
+    req.session.destroy(() => {
+      req.session = null;
+    });
     const name = await ensureStrategy(req.hostname);
     passport.authenticate(name, {
       prompt: 'login consent',
       scope: ['openid', 'email', 'profile', 'offline_access'],
+      state: Buffer.from(JSON.stringify({ returnTo })).toString('base64'),
     })(req, res, next);
   } catch (err) {
     console.error('Login error:', err);

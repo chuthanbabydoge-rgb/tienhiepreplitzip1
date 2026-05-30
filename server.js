@@ -286,11 +286,17 @@ app.get('/api/login', async (req, res, next) => {
     console.log('LOGIN: reqHostname=', req.hostname, '| resolved domain=', domain,
       '| REPLIT_DEV_DOMAIN=', process.env.REPLIT_DEV_DOMAIN || '(unset)',
       '| REPLIT_DOMAINS=', process.env.REPLIT_DOMAINS || '(unset)');
+    const returnTo = req.query.returnTo || req.session.returnTo || '/user';
     const name = await ensureStrategy(req.hostname);
-    passport.authenticate(name, {
-      prompt: 'login consent',
-      scope: ['openid', 'email', 'profile', 'offline_access'],
-    })(req, res, next);
+    // Regenerate session to clear any stale OIDC state (e.g. when switching accounts)
+    req.session.regenerate((err) => {
+      if (err) console.error('Session regenerate error:', err);
+      req.session.returnTo = returnTo;
+      passport.authenticate(name, {
+        prompt: 'login consent',
+        scope: ['openid', 'email', 'profile', 'offline_access'],
+      })(req, res, next);
+    });
   } catch (err) {
     console.error('Login error:', err);
     res.redirect('/?auth_error=1');
