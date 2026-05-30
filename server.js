@@ -310,12 +310,23 @@ app.get('/api/callback', async (req, res, next) => {
   try {
     const domain = getExternalDomain(req.hostname);
     console.log('CALLBACK: domain =', domain, 'query =', JSON.stringify(req.query));
+    console.log('CALLBACK: sessionID =', req.sessionID?.substring(0,8), '| session keys =', Object.keys(req.session || {}));
     const name = await ensureStrategy(req.hostname);
     passport.authenticate(name, { failureRedirect: '/?auth_error=1', failureMessage: true },
       (err, user) => {
-        if (err || !user) return res.redirect('/?auth_error=1');
+        if (err) {
+          console.error('CALLBACK auth error:', err.message, err.error || '', err.error_description || '');
+          return res.redirect('/?auth_error=' + encodeURIComponent(err.message || 'unknown'));
+        }
+        if (!user) {
+          console.error('CALLBACK: no user returned');
+          return res.redirect('/?auth_error=no_user');
+        }
         req.logIn(user, (loginErr) => {
-          if (loginErr) return res.redirect('/?auth_error=1');
+          if (loginErr) {
+            console.error('CALLBACK logIn error:', loginErr);
+            return res.redirect('/?auth_error=login_failed');
+          }
           upsertUser(user, true);
           const returnTo = req.session.returnTo || '/user';
           delete req.session.returnTo;
@@ -325,7 +336,7 @@ app.get('/api/callback', async (req, res, next) => {
     )(req, res, next);
   } catch (err) {
     console.error('Callback error:', err);
-    res.redirect('/?auth_error=1');
+    res.redirect('/?auth_error=' + encodeURIComponent(err.message || 'exception'));
   }
 });
 
