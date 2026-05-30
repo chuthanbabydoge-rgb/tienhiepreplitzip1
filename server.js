@@ -451,7 +451,17 @@ app.post('/api/chat', async (req, res) => {
 function requireAuth(req, res, next) {
   if (req.isAuthenticated()) return next();
   req.session.returnTo = req.originalUrl;
-  res.redirect('/api/login');
+  // Use JS to break out of Replit preview iframe before redirecting to OIDC login
+  res.send(`<!DOCTYPE html><html><head>
+    <script>
+      // If inside an iframe (Replit preview), navigate the top-level window
+      if (window.top !== window.self) {
+        window.top.location.href = '/api/login';
+      } else {
+        window.location.href = '/api/login';
+      }
+    </script>
+  </head><body></body></html>`);
 }
 
 function requireAdminPassword(req, res, next) {
