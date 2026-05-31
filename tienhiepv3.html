@@ -3408,12 +3408,17 @@
     .builder-line {
       fill: none;
       stroke: url(#sp-line-grad);
-      stroke-width: 2.5;
+      stroke-width: 1.6;
       stroke-linecap: round;
-      filter: drop-shadow(0 0 4px rgba(130,170,255,0.4));
-      opacity: 0.75;
+      filter: drop-shadow(0 0 5px rgba(160,100,255,0.55));
+      opacity: 0.65;
+      animation: builderLineDash 1.8s linear infinite;
     }
+    @keyframes builderLineDash { to { stroke-dashoffset: -28; } }
     @keyframes flow { to { stroke-dashoffset: -15; } }
+    #builder-canvas {
+      background: radial-gradient(ellipse at center, rgba(20,8,40,0.85) 0%, rgba(5,5,18,0.95) 100%);
+    }
 
     .builder-title {
       font-family: -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif;
@@ -8835,46 +8840,53 @@
       // ── Position calculation ──────────────────────────────
       function calcSpaceNodePositions(n) {
         const pos = [];
-        if (n <= 4) {
-          // Single row centered
-          const gap = Math.min(22, 80 / Math.max(n - 1, 1));
-          const startX = 50 - ((n - 1) * gap) / 2;
+        if (n === 1) {
+          pos.push({ x: 50, y: 50 });
+        } else if (n <= 7) {
+          // Trận đơn: vòng tròn duy nhất
+          const rx = 30, ry = 30;
           for (let i = 0; i < n; i++) {
-            pos.push({ x: startX + i * gap, y: 45 + (i % 2 === 0 ? -6 : 6) });
+            const a = (2 * Math.PI / n) * i - Math.PI / 2;
+            pos.push({ x: 50 + rx * Math.cos(a), y: 50 + ry * Math.sin(a) });
           }
-        } else if (n <= 8) {
-          // Two rows
-          const r1 = Math.ceil(n / 2), r2 = n - r1;
-          const g1 = Math.min(20, 76 / Math.max(r1 - 1, 1));
-          const g2 = Math.min(20, 76 / Math.max(r2 - 1, 1));
-          const s1 = 50 - ((r1 - 1) * g1) / 2;
-          const s2 = 50 - ((r2 - 1) * g2) / 2;
-          for (let i = 0; i < r1; i++) pos.push({ x: s1 + i * g1, y: 30 });
-          for (let i = 0; i < r2; i++) pos.push({ x: s2 + i * g2, y: 65 });
         } else {
-          // Three rows
-          const r1 = Math.ceil(n / 3), r2 = Math.ceil((n - r1) / 2), r3 = n - r1 - r2;
-          const rows = [r1, r2, r3];
-          const ys   = [22, 50, 78];
-          let idx = 0;
-          rows.forEach((cnt, ri) => {
-            const g = Math.min(18, 72 / Math.max(cnt - 1, 1));
-            const s = 50 - ((cnt - 1) * g) / 2;
-            for (let i = 0; i < cnt; i++) { pos.push({ x: s + i * g, y: ys[ri] }); idx++; }
-          });
+          // Trận kép: vòng trong + vòng ngoài
+          const inner = Math.round(n * 0.4);
+          const outer = n - inner;
+          const riX = 16, riY = 16, roX = 34, roY = 34;
+          for (let i = 0; i < inner; i++) {
+            const a = (2 * Math.PI / inner) * i - Math.PI / 2;
+            pos.push({ x: 50 + riX * Math.cos(a), y: 50 + riY * Math.sin(a) });
+          }
+          for (let i = 0; i < outer; i++) {
+            const a = (2 * Math.PI / outer) * i - Math.PI / 2;
+            pos.push({ x: 50 + roX * Math.cos(a), y: 50 + roY * Math.sin(a) });
+          }
         }
         return pos;
       }
 
-      // ── Draw SVG bezier connections ───────────────────────
+      // ── Draw SVG linh khí connections (trận pháp circle) ─────
       function drawSpaceConnections(container, aid, n, color) {
         const svg = document.getElementById('hud-conn-svg');
         if (!svg) return;
-        svg.innerHTML = '';
+        svg.innerHTML = `<defs>
+          <linearGradient id="hud-lg-${aid}" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="${color}" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="rgba(200,160,255,0.9)"/>
+            <stop offset="100%" stop-color="${color}" stop-opacity="0.8"/>
+          </linearGradient>
+          <filter id="hud-glow-${aid}">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>`;
         const cr = container.getBoundingClientRect();
-        for (let i = 0; i < n - 1; i++) {
+        const NS = 'http://www.w3.org/2000/svg';
+        // Kết nối vòng tròn trận pháp: mỗi node nối với node kế tiếp VÀ khép vòng
+        for (let i = 0; i < n; i++) {
           const a = document.getElementById(`wf-card-${aid}-${i}`);
-          const b = document.getElementById(`wf-card-${aid}-${i+1}`);
+          const b = document.getElementById(`wf-card-${aid}-${(i+1) % n}`);
           if (!a || !b) continue;
           const ar = a.getBoundingClientRect();
           const br = b.getBoundingClientRect();
@@ -8882,36 +8894,44 @@
           const y1 = ar.top  + ar.height / 2 - cr.top;
           const x2 = br.left + br.width / 2 - cr.left;
           const y2 = br.top  + br.height / 2 - cr.top;
-          const mx = (x1 + x2) / 2;
 
-          // Glow path (thick, low opacity)
-          const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          glow.setAttribute('d', `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+          // Outer hào quang beam
+          const glow = document.createElementNS(NS, 'line');
+          glow.setAttribute('x1', x1); glow.setAttribute('y1', y1);
+          glow.setAttribute('x2', x2); glow.setAttribute('y2', y2);
           glow.setAttribute('stroke', color);
-          glow.setAttribute('stroke-width', '4');
-          glow.setAttribute('fill', 'none');
-          glow.setAttribute('opacity', '0.08');
+          glow.setAttribute('stroke-width', '6');
+          glow.setAttribute('opacity', '0.07');
           svg.appendChild(glow);
 
-          // Animated dash line
-          const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          line.setAttribute('d', `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
-          line.setAttribute('stroke', color);
-          line.setAttribute('stroke-width', '1.2');
-          line.setAttribute('fill', 'none');
-          line.setAttribute('stroke-dasharray', '7 5');
-          line.setAttribute('opacity', '0.45');
-          line.style.animation = 'connFlow 2.5s linear infinite';
+          // Main linh khí beam
+          const line = document.createElementNS(NS, 'line');
+          line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+          line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+          line.setAttribute('stroke', `url(#hud-lg-${aid})`);
+          line.setAttribute('stroke-width', '1.4');
+          line.setAttribute('opacity', '0.55');
+          line.setAttribute('stroke-dasharray', '8 5');
+          line.style.animation = 'connFlow 2.2s linear infinite';
           svg.appendChild(line);
 
-          // Arrow at midpoint
-          const ax = mx, ay = (y1 + y2) / 2;
-          const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-          arrow.setAttribute('cx', ax); arrow.setAttribute('cy', ay);
-          arrow.setAttribute('r', '3');
-          arrow.setAttribute('fill', color);
-          arrow.setAttribute('opacity', '0.5');
-          svg.appendChild(arrow);
+          // Bright core
+          const core = document.createElementNS(NS, 'line');
+          core.setAttribute('x1', x1); core.setAttribute('y1', y1);
+          core.setAttribute('x2', x2); core.setAttribute('y2', y2);
+          core.setAttribute('stroke', 'rgba(230,210,255,0.22)');
+          core.setAttribute('stroke-width', '0.5');
+          svg.appendChild(core);
+
+          // Mid-point energy orb
+          const ox = (x1+x2)/2, oy = (y1+y2)/2;
+          const orb = document.createElementNS(NS, 'circle');
+          orb.setAttribute('cx', ox); orb.setAttribute('cy', oy);
+          orb.setAttribute('r', '3');
+          orb.setAttribute('fill', color);
+          orb.setAttribute('opacity', '0.5');
+          orb.setAttribute('filter', `url(#hud-glow-${aid})`);
+          svg.appendChild(orb);
         }
       }
 
@@ -12354,13 +12374,28 @@
       return `<div class="node-card" style="--nc:${d.color};--nc-bg:${d.bg};--nc-glow:${d.glow};--nc-ring:${d.ring};">
         <div class="phap-luan-wheel">
           <svg class="plaw-svg" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="40" cy="40" r="36" stroke="currentColor" stroke-width="2.5"/>
-            <circle cx="40" cy="40" r="22" stroke="currentColor" stroke-width="1" opacity="0.4"/>
-            <line x1="40" y1="4" x2="40" y2="76" stroke="currentColor" stroke-width="2.2"/>
-            <line x1="4" y1="40" x2="76" y2="40" stroke="currentColor" stroke-width="2.2"/>
-            <line x1="14.9" y1="14.9" x2="65.1" y2="65.1" stroke="currentColor" stroke-width="1.8"/>
-            <line x1="65.1" y1="14.9" x2="14.9" y2="65.1" stroke="currentColor" stroke-width="1.8"/>
-            <circle cx="40" cy="40" r="6" fill="currentColor" opacity="0.9"/>
+            <!-- Outer rim -->
+            <circle cx="40" cy="40" r="36" stroke="currentColor" stroke-width="2.2"/>
+            <!-- Middle ring -->
+            <circle cx="40" cy="40" r="24" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+            <!-- Inner ring -->
+            <circle cx="40" cy="40" r="13" stroke="currentColor" stroke-width="0.9" opacity="0.4"/>
+            <!-- 8 căm (bát quái spokes) -->
+            <line x1="40" y1="4" x2="40" y2="76" stroke="currentColor" stroke-width="2"/>
+            <line x1="4" y1="40" x2="76" y2="40" stroke="currentColor" stroke-width="2"/>
+            <line x1="14.9" y1="14.9" x2="65.1" y2="65.1" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="65.1" y1="14.9" x2="14.9" y2="65.1" stroke="currentColor" stroke-width="1.5"/>
+            <!-- Bát cực dots at rim (8 directions) -->
+            <circle cx="40" cy="4" r="2.8" fill="currentColor"/>
+            <circle cx="76" cy="40" r="2.8" fill="currentColor"/>
+            <circle cx="40" cy="76" r="2.8" fill="currentColor"/>
+            <circle cx="4" cy="40" r="2.8" fill="currentColor"/>
+            <circle cx="65.1" cy="14.9" r="2.2" fill="currentColor" opacity="0.8"/>
+            <circle cx="65.1" cy="65.1" r="2.2" fill="currentColor" opacity="0.8"/>
+            <circle cx="14.9" cy="65.1" r="2.2" fill="currentColor" opacity="0.8"/>
+            <circle cx="14.9" cy="14.9" r="2.2" fill="currentColor" opacity="0.8"/>
+            <!-- Hub trung tâm -->
+            <circle cx="40" cy="40" r="5.5" fill="currentColor" opacity="0.95"/>
           </svg>
           <div class="plaw-hub"></div>
         </div>
@@ -12419,11 +12454,26 @@
     }
 
     function _spGradDefs() {
+      const canvas = document.getElementById('builder-canvas');
+      const cw = canvas ? canvas.clientWidth : 800;
+      const ch = canvas ? canvas.clientHeight : 500;
+      const cx = cw / 2, cy = ch / 2;
+      const R = Math.min(cx, cy) * 0.78;
+      // 8 spoke lines for mandala bg
+      const spokes = Array.from({length:8}, (_,i) => {
+        const a = (Math.PI * 2 / 8) * i;
+        return `<line x1="${cx}" y1="${cy}" x2="${(cx + R*Math.cos(a)).toFixed(1)}" y2="${(cy + R*Math.sin(a)).toFixed(1)}" stroke="#7755ff" stroke-width="0.5"/>`;
+      }).join('');
       return `<defs>
         <linearGradient id="sp-line-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" style="stop-color:rgba(100,220,160,0.8)"/>
-          <stop offset="100%" style="stop-color:rgba(94,159,255,0.8)"/>
+          <stop offset="0%" style="stop-color:rgba(180,80,255,0.9)"/>
+          <stop offset="50%" style="stop-color:rgba(80,200,255,0.9)"/>
+          <stop offset="100%" style="stop-color:rgba(255,180,60,0.9)"/>
         </linearGradient>
+        <radialGradient id="sp-center-grad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" style="stop-color:rgba(120,80,255,0.18)"/>
+          <stop offset="100%" style="stop-color:rgba(0,0,0,0)"/>
+        </radialGradient>
         <filter id="particle-glow" x="-80%" y="-80%" width="260%" height="260%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur"/>
           <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
@@ -12432,24 +12482,44 @@
           <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
           <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
-      </defs>`;
+        <filter id="mandala-blur">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>
+        </filter>
+      </defs>
+      <!-- Trận Pháp Mandala nền -->
+      <g opacity="0.13" pointer-events="none">
+        <circle cx="${cx}" cy="${cy}" r="${R}" stroke="#aa88ff" stroke-width="1" fill="none"/>
+        <circle cx="${cx}" cy="${cy}" r="${(R*0.72).toFixed(1)}" stroke="#88aaff" stroke-width="0.7" fill="none" stroke-dasharray="14 7"/>
+        <circle cx="${cx}" cy="${cy}" r="${(R*0.44).toFixed(1)}" stroke="#cc88ff" stroke-width="0.7" fill="none"/>
+        <circle cx="${cx}" cy="${cy}" r="${(R*0.18).toFixed(1)}" stroke="#ffcc88" stroke-width="1" fill="none"/>
+        ${spokes}
+        <circle cx="${cx}" cy="${cy}" r="${(R*1.05).toFixed(1)}" stroke="#6644cc" stroke-width="0.4" fill="none" stroke-dasharray="3 18"/>
+      </g>
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#sp-center-grad)" pointer-events="none" opacity="0.6"/>`;
     }
     function drawLines() {
       const svg = document.getElementById('builder-svg');
+      const c1 = document.getElementById('builder-canvas').getBoundingClientRect();
+      const n = bNodes.length;
+      if (!n) { svg.innerHTML = _spGradDefs(); return; }
+      // Get center of each node
+      function nc(node) {
+        const r = node.getBoundingClientRect();
+        return { x: r.left - c1.left + r.width / 2, y: r.top - c1.top + r.height / 2 };
+      }
       let paths = '';
-      for (let i = 0; i < bNodes.length - 1; i++) {
-        const n1 = bNodes[i];
-        const n2 = bNodes[i + 1];
-        const r1 = n1.getBoundingClientRect();
-        const r2 = n2.getBoundingClientRect();
-        const c1 = document.getElementById('builder-canvas').getBoundingClientRect();
-
-        const x1 = r1.left - c1.left + r1.width;
-        const y1 = r1.top - c1.top + r1.height / 2;
-        const x2 = r2.left - c1.left;
-        const y2 = r2.top - c1.top + r2.height / 2;
-
-        paths += `<path id="sp-line-${i}" d="M${x1},${y1} C${x1+60},${y1} ${x2-60},${y2} ${x2},${y2}" class="builder-line"/>`;
+      for (let i = 0; i < n; i++) {
+        const p1 = nc(bNodes[i]);
+        const p2 = nc(bNodes[(i + 1) % n]); // khép vòng tròn trận pháp
+        // Outer glow hào quang
+        paths += `<path d="M${p1.x},${p1.y} L${p2.x},${p2.y}" stroke="url(#sp-line-grad)" stroke-width="7" opacity="0.06" fill="none"/>`;
+        // Main linh khí beam
+        paths += `<path id="sp-line-${i}" d="M${p1.x},${p1.y} L${p2.x},${p2.y}" stroke="url(#sp-line-grad)" stroke-width="1.6" opacity="0.60" fill="none" stroke-dasharray="9 5" class="builder-line"/>`;
+        // Bright core tia sáng
+        paths += `<path d="M${p1.x},${p1.y} L${p2.x},${p2.y}" stroke="rgba(220,200,255,0.28)" stroke-width="0.6" fill="none"/>`;
+        // Mid-point energy orb
+        const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+        paths += `<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="2.5" fill="rgba(180,120,255,0.55)" filter="url(#particle-glow-sm)"/>`;
       }
       svg.innerHTML = _spGradDefs() + paths;
     }
@@ -12646,14 +12716,18 @@
 
       const canvas = document.getElementById('builder-canvas');
       const rect = canvas.getBoundingClientRect();
-      const startX = 50;
-      const startY = rect.height / 2 - 20;
+      const _formN = nodesData.length;
+      const _fcx = rect.width / 2;
+      const _fcy = rect.height / 2;
+      const _frad = Math.min(_fcx * 0.70, _fcy * 0.70);
 
       nodesData.forEach((name, i) => {
         const node = document.createElement('div');
         node.className = 'canvas-node';
-        node.style.left = (startX + i * 220) + 'px';
-        node.style.top = startY + 'px';
+        // Bày trận pháp: vị trí theo vòng tròn
+        const _fAngle = (2 * Math.PI / _formN) * i - Math.PI / 2;
+        node.style.left = Math.round(_fcx + _frad * Math.cos(_fAngle) - 45) + 'px';
+        node.style.top  = Math.round(_fcy + _frad * Math.sin(_fAngle) - 50) + 'px';
 
         // Auto translate english node name to Xianxia node name
         const xxNodePrefix = ["Luyện", "Tụ", "Thu", "Phát", "Hóa", "Tạo", "Truy", "Thám", "Kiến", "Phân"];
