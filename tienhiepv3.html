@@ -3524,124 +3524,69 @@
       z-index: 5;
       opacity: 0.5;
     }
-    /* ── Pháp Khí Card — Bát Giác hình thức ── */
+    /* ── Pháp Luân Node — Bánh Xe Pháp Luân ── */
     .node-card {
       position: relative;
-      overflow: hidden;
-      min-width: 130px;
-      padding: 14px 20px 12px;
+      background: transparent;
+      border: none;
+      clip-path: none;
+      box-shadow: none;
+      padding: 0;
+      min-width: unset;
       text-align: center;
-      background: var(--nc-bg, rgba(8,4,28,0.96));
-      border: 1.5px solid var(--nc, #8866ff);
-      clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0% calc(100% - 14px), 0% 14px);
-      box-shadow:
-        0 0 24px var(--nc-glow, rgba(136,102,255,0.45)),
-        0 0 8px var(--nc-glow, rgba(136,102,255,0.3)),
-        inset 0 0 32px rgba(0,0,0,0.7),
-        inset 0 0 20px var(--nc-ring, rgba(136,102,255,0.12));
-      transition: box-shadow 0.25s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    /* Ambient radial inner glow */
-    .node-card::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 50% 18%, var(--nc-ring, rgba(136,102,255,0.25)) 0%, transparent 65%);
-      pointer-events: none;
+    .node-card::before, .node-card::after { display: none; }
+    /* Ẩn soul-orbit rings cũ */
+    .soul-orbit, .soul-orbit-1, .soul-orbit-2, .soul-orbit-3 { display: none; }
+    /* Ẩn badge, icon, sub-type */
+    .node-element-badge, .node-icon-wrap, .node-type-sub { display: none; }
+
+    /* ── Pháp Luân Wheel container ── */
+    .phap-luan-wheel {
+      position: relative;
+      width: 76px; height: 76px;
+      display: flex; align-items: center; justify-content: center;
     }
-    /* Inner octagon border (decorative double-frame) */
-    .node-card::after {
-      content: '';
-      position: absolute;
-      top: 4px; left: 4px; right: 4px; bottom: 4px;
-      border: 1px solid var(--nc, #8866ff);
-      clip-path: polygon(10px 0%, calc(100% - 10px) 0%, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0% calc(100% - 10px), 0% 10px);
-      opacity: 0.2;
-      pointer-events: none;
-    }
-    /* Soul rings (vòng linh hồn) */
-    /* ════════════════════════════════════════════════
-       ĐẤU LA ĐẠI LỤC — Vòng Hồn Hoàn Động
-       Rings orbit OUTSIDE the card using 3D perspective
-       ════════════════════════════════════════════════ */
-    .soul-orbit {
-      position: absolute;
-      border-radius: 50%;
-      left: 50%; top: 50%;
-      pointer-events: none;
-      border: 2px solid var(--nc, #8866ff);
-      box-shadow:
-        0 0 12px var(--nc, #8866ff),
-        0 0 28px var(--nc, #8866ff),
-        inset 0 0 8px rgba(0,0,0,0.5);
-    }
-    /* Ring 1 — closest, brightest, fastest */
-    .soul-orbit-1 {
-      width: 108px; height: 108px;
-      margin: -54px 0 0 -54px;
-      opacity: 0.75;
-      border-width: 2.5px;
-      animation: xx-hoan-orbit 3s linear infinite, xx-hoan-glow 2s ease-in-out infinite alternate;
-    }
-    /* Ring 2 — medium, medium speed, reverse */
-    .soul-orbit-2 {
-      width: 145px; height: 145px;
-      margin: -72.5px 0 0 -72.5px;
-      opacity: 0.5;
-      border-width: 2px;
-      animation: xx-hoan-orbit 5s linear infinite reverse, xx-hoan-glow 2.5s ease-in-out infinite alternate;
-      animation-delay: 0.4s, 0.4s;
-    }
-    /* Ring 3 — outermost, faintest, slowest, dashed */
-    .soul-orbit-3 {
-      width: 183px; height: 183px;
-      margin: -91.5px 0 0 -91.5px;
-      opacity: 0.3;
-      border-width: 1.5px;
-      border-style: dashed;
-      animation: xx-hoan-orbit 8s linear infinite, xx-hoan-glow 3.5s ease-in-out infinite alternate;
-      animation-delay: 0.8s, 0.8s;
-    }
-    /* 3D flat-horizontal orbit — rotateX tilts ring to horizontal plane */
-    @keyframes xx-hoan-orbit {
-      from { transform: perspective(220px) rotateX(72deg) rotateZ(0deg);   }
-      to   { transform: perspective(220px) rotateX(72deg) rotateZ(360deg); }
-    }
-    /* Breathing glow pulse */
-    @keyframes xx-hoan-glow {
-      from { box-shadow: 0 0 8px var(--nc),  0 0 18px var(--nc); opacity: var(--so, 0.5); }
-      to   { box-shadow: 0 0 18px var(--nc), 0 0 40px var(--nc), 0 0 60px var(--nc); opacity: calc(var(--so, 0.5) * 0.6); }
-    }
-    /* Element badge (top-right) */
-    .node-element-badge {
-      position: absolute; top:5px; right:8px;
-      font-size: 7px;
-      font-family: 'Share Tech Mono', monospace;
+    .plaw-svg {
+      width: 76px; height: 76px;
       color: var(--nc, #8866ff);
-      opacity: 0.5; letter-spacing: 1.5px;
+      filter:
+        drop-shadow(0 0 5px var(--nc, #8866ff))
+        drop-shadow(0 0 14px var(--nc, #8866ff));
+      animation: plaw-spin 9s linear infinite;
+      overflow: visible;
+    }
+    @keyframes plaw-spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    /* Hub trung tâm nhấp nháy */
+    .plaw-hub {
+      position: absolute;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--nc, #8866ff);
+      box-shadow: 0 0 10px var(--nc, #8866ff), 0 0 22px var(--nc, #8866ff);
+      animation: plaw-hub-pulse 2.2s ease-in-out infinite alternate;
       pointer-events: none;
     }
-    /* Large icon */
-    .node-icon-wrap {
-      font-size: 24px; line-height: 1;
-      margin-bottom: 7px;
-      position: relative; z-index: 2;
-      filter: drop-shadow(0 0 10px var(--nc, #8866ff));
+    @keyframes plaw-hub-pulse {
+      from { box-shadow: 0 0 6px var(--nc, #8866ff), 0 0 14px var(--nc, #8866ff); opacity: 0.85; }
+      to   { box-shadow: 0 0 14px var(--nc, #8866ff), 0 0 32px var(--nc, #8866ff), 0 0 50px var(--nc, #8866ff); opacity: 1; }
     }
-    /* Xianxia name */
+    /* Tên node */
     .node-name-xx {
       font-family: 'Share Tech Mono', 'Orbitron', monospace;
-      font-size: 11px; font-weight: 700;
+      font-size: 10px; font-weight: 700;
       color: var(--nc, #8866ff);
       text-shadow: 0 0 10px var(--nc-glow, rgba(136,102,255,0.8));
-      letter-spacing: 1.5px; line-height: 1.3;
-      position: relative; z-index: 2;
-      margin-bottom: 3px;
-    }
-    /* English sub-type */
-    .node-type-sub {
-      font-family: -apple-system,'Segoe UI',sans-serif;
-      font-size: 8.5px; color: rgba(255,255,255,0.28);
-      letter-spacing: 1.2px; text-transform: uppercase;
+      letter-spacing: 1px; line-height: 1.3;
+      text-align: center;
+      max-width: 100px;
+      margin-top: 6px;
       position: relative; z-index: 2;
     }
 
@@ -3651,40 +3596,24 @@
        ══════════════════════════════════════════════ */
     /* ── Xianxia Run States — targets .node-card child ── */
     .canvas-node.sp-running { animation: xx-node-pulse 0.75s ease-in-out infinite; z-index: 20; }
-    .canvas-node.sp-running .node-card {
-      border-color: #ffaa00 !important;
-      box-shadow:
-        0 0 0 2px rgba(255,170,0,0.5),
-        0 0 24px rgba(255,140,0,0.85),
-        0 0 55px rgba(255,80,0,0.4),
-        inset 0 0 18px rgba(255,160,0,0.15) !important;
-    }
+    .canvas-node.sp-running .plaw-svg { color:#ffaa00 !important; filter: drop-shadow(0 0 10px #ffaa00) drop-shadow(0 0 28px #ffaa00) !important; animation-duration: 2s !important; }
+    .canvas-node.sp-running .plaw-hub { background:#ffaa00 !important; box-shadow: 0 0 18px #ffaa00, 0 0 40px #ffaa00 !important; }
     .canvas-node.sp-running .node-name-xx { color:#ffe080 !important; text-shadow:0 0 14px rgba(255,180,0,1) !important; }
-    .canvas-node.sp-running .node-icon-wrap { filter: drop-shadow(0 0 16px #ffaa00) !important; }
-    .canvas-node.sp-running .soul-orbit { border-color: #ffaa00 !important; box-shadow: 0 0 20px #ffaa00, 0 0 45px #ffaa00 !important; opacity: 0.8 !important; animation-duration: 1.2s, 0.6s !important; }
     @keyframes xx-node-pulse {
       0%,100% { transform: scale(1);    filter: brightness(1); }
       50%      { transform: scale(1.07); filter: brightness(1.35) saturate(1.5); }
     }
     .canvas-node.sp-done { animation: xx-done-seal 0.4s cubic-bezier(0.34,1.56,0.64,1); }
-    .canvas-node.sp-done .node-card {
-      border-color: #00ffaa !important;
-      box-shadow:
-        0 0 0 2px rgba(0,255,150,0.4),
-        0 0 22px rgba(0,255,136,0.7),
-        inset 0 0 14px rgba(0,255,136,0.1) !important;
-    }
+    .canvas-node.sp-done .plaw-svg { color:#00ffaa !important; filter: drop-shadow(0 0 8px #00ffaa) drop-shadow(0 0 20px #00ffaa) !important; }
+    .canvas-node.sp-done .plaw-hub { background:#00ffaa !important; box-shadow: 0 0 14px #00ffaa, 0 0 28px #00ffaa !important; }
     .canvas-node.sp-done .node-name-xx { color:#00ffaa !important; text-shadow:0 0 12px rgba(0,255,160,1) !important; }
-    .canvas-node.sp-done .soul-orbit { border-color:#00ffaa !important; box-shadow: 0 0 16px #00ffaa, 0 0 32px #00ffaa !important; opacity: 0.6 !important; }
     @keyframes xx-done-seal {
       0%  { transform: scale(1.18); filter: brightness(3); }
       100%{ transform: scale(1);    filter: brightness(1); }
     }
     .canvas-node.sp-error { animation: xx-error-shake 0.45s ease-in-out; }
-    .canvas-node.sp-error .node-card {
-      border-color: #ff3333 !important;
-      box-shadow: 0 0 0 3px rgba(255,50,50,0.45), 0 0 30px rgba(255,40,40,0.7) !important;
-    }
+    .canvas-node.sp-error .plaw-svg { color:#ff3333 !important; filter: drop-shadow(0 0 10px #ff3333) drop-shadow(0 0 22px #ff3333) !important; }
+    .canvas-node.sp-error .plaw-hub { background:#ff3333 !important; box-shadow: 0 0 14px #ff3333 !important; }
     .canvas-node.sp-error .node-name-xx { color:#ff6666 !important; }
     @keyframes xx-error-shake {
       0%,100% { transform: translateX(0) rotate(0deg); }
@@ -12422,14 +12351,20 @@
     function _mkNodeHtml(rawType, dispName) {
       const typeKey = (rawType||'').split(' / ')[0].trim();
       const d = _nodeData[typeKey] || _ndList[_nodeHash(typeKey) % _ndList.length];
-      return `<div class="soul-orbit soul-orbit-1"></div>
-      <div class="soul-orbit soul-orbit-2"></div>
-      <div class="soul-orbit soul-orbit-3"></div>
-      <div class="node-card" style="--nc:${d.color};--nc-bg:${d.bg};--nc-glow:${d.glow};--nc-ring:${d.ring};">
-        <div class="node-element-badge">${d.badge}</div>
-        <div class="node-icon-wrap">${d.icon}</div>
+      return `<div class="node-card" style="--nc:${d.color};--nc-bg:${d.bg};--nc-glow:${d.glow};--nc-ring:${d.ring};">
+        <div class="phap-luan-wheel">
+          <svg class="plaw-svg" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="40" cy="40" r="36" stroke="currentColor" stroke-width="2.5"/>
+            <circle cx="40" cy="40" r="22" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+            <line x1="40" y1="4" x2="40" y2="76" stroke="currentColor" stroke-width="2.2"/>
+            <line x1="4" y1="40" x2="76" y2="40" stroke="currentColor" stroke-width="2.2"/>
+            <line x1="14.9" y1="14.9" x2="65.1" y2="65.1" stroke="currentColor" stroke-width="1.8"/>
+            <line x1="65.1" y1="14.9" x2="14.9" y2="65.1" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="40" cy="40" r="6" fill="currentColor" opacity="0.9"/>
+          </svg>
+          <div class="plaw-hub"></div>
+        </div>
         <div class="node-name-xx">${dispName}</div>
-        <div class="node-type-sub">${typeKey.split(' ')[0]}</div>
       </div>`;
     }
     function _setNodeVars(node, rawType) {

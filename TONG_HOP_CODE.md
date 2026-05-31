@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **00:27:44 1/6/2026**
+> Cập nhật lần cuối: **00:42:53 1/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,784 dòng, 79.1 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(19,973 dòng, 1.53 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(19,918 dòng, 1.53 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,784 | 79.1 KB |
-| `tienhiepv3.html` | 19,973 | 1.53 MB |
+| `tienhiepv3.html` | 19,918 | 1.53 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **25,478** | **1.77 MB** |
+| **TỔNG** | **25,423** | **1.77 MB** |
 
 ---
 
@@ -1886,7 +1886,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 19,973 dòng · 1.53 MB
+> 19,918 dòng · 1.53 MB
 
 ```html
 <!DOCTYPE html>
@@ -5415,124 +5415,69 @@ app.listen(PORT, '0.0.0.0', () => {
       z-index: 5;
       opacity: 0.5;
     }
-    /* ── Pháp Khí Card — Bát Giác hình thức ── */
+    /* ── Pháp Luân Node — Bánh Xe Pháp Luân ── */
     .node-card {
       position: relative;
-      overflow: hidden;
-      min-width: 130px;
-      padding: 14px 20px 12px;
+      background: transparent;
+      border: none;
+      clip-path: none;
+      box-shadow: none;
+      padding: 0;
+      min-width: unset;
       text-align: center;
-      background: var(--nc-bg, rgba(8,4,28,0.96));
-      border: 1.5px solid var(--nc, #8866ff);
-      clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0% calc(100% - 14px), 0% 14px);
-      box-shadow:
-        0 0 24px var(--nc-glow, rgba(136,102,255,0.45)),
-        0 0 8px var(--nc-glow, rgba(136,102,255,0.3)),
-        inset 0 0 32px rgba(0,0,0,0.7),
-        inset 0 0 20px var(--nc-ring, rgba(136,102,255,0.12));
-      transition: box-shadow 0.25s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    /* Ambient radial inner glow */
-    .node-card::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 50% 18%, var(--nc-ring, rgba(136,102,255,0.25)) 0%, transparent 65%);
-      pointer-events: none;
+    .node-card::before, .node-card::after { display: none; }
+    /* Ẩn soul-orbit rings cũ */
+    .soul-orbit, .soul-orbit-1, .soul-orbit-2, .soul-orbit-3 { display: none; }
+    /* Ẩn badge, icon, sub-type */
+    .node-element-badge, .node-icon-wrap, .node-type-sub { display: none; }
+
+    /* ── Pháp Luân Wheel container ── */
+    .phap-luan-wheel {
+      position: relative;
+      width: 76px; height: 76px;
+      display: flex; align-items: center; justify-content: center;
     }
-    /* Inner octagon border (decorative double-frame) */
-    .node-card::after {
-      content: '';
-      position: absolute;
-      top: 4px; left: 4px; right: 4px; bottom: 4px;
-      border: 1px solid var(--nc, #8866ff);
-      clip-path: polygon(10px 0%, calc(100% - 10px) 0%, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0% calc(100% - 10px), 0% 10px);
-      opacity: 0.2;
-      pointer-events: none;
-    }
-    /* Soul rings (vòng linh hồn) */
-    /* ════════════════════════════════════════════════
-       ĐẤU LA ĐẠI LỤC — Vòng Hồn Hoàn Động
-       Rings orbit OUTSIDE the card using 3D perspective
-       ════════════════════════════════════════════════ */
-    .soul-orbit {
-      position: absolute;
-      border-radius: 50%;
-      left: 50%; top: 50%;
-      pointer-events: none;
-      border: 2px solid var(--nc, #8866ff);
-      box-shadow:
-        0 0 12px var(--nc, #8866ff),
-        0 0 28px var(--nc, #8866ff),
-        inset 0 0 8px rgba(0,0,0,0.5);
-    }
-    /* Ring 1 — closest, brightest, fastest */
-    .soul-orbit-1 {
-      width: 108px; height: 108px;
-      margin: -54px 0 0 -54px;
-      opacity: 0.75;
-      border-width: 2.5px;
-      animation: xx-hoan-orbit 3s linear infinite, xx-hoan-glow 2s ease-in-out infinite alternate;
-    }
-    /* Ring 2 — medium, medium speed, reverse */
-    .soul-orbit-2 {
-      width: 145px; height: 145px;
-      margin: -72.5px 0 0 -72.5px;
-      opacity: 0.5;
-      border-width: 2px;
-      animation: xx-hoan-orbit 5s linear infinite reverse, xx-hoan-glow 2.5s ease-in-out infinite alternate;
-      animation-delay: 0.4s, 0.4s;
-    }
-    /* Ring 3 — outermost, faintest, slowest, dashed */
-    .soul-orbit-3 {
-      width: 183px; height: 183px;
-      margin: -91.5px 0 0 -91.5px;
-      opacity: 0.3;
-      border-width: 1.5px;
-      border-style: dashed;
-      animation: xx-hoan-orbit 8s linear infinite, xx-hoan-glow 3.5s ease-in-out infinite alternate;
-      animation-delay: 0.8s, 0.8s;
-    }
-    /* 3D flat-horizontal orbit — rotateX tilts ring to horizontal plane */
-    @keyframes xx-hoan-orbit {
-      from { transform: perspective(220px) rotateX(72deg) rotateZ(0deg);   }
-      to   { transform: perspective(220px) rotateX(72deg) rotateZ(360deg); }
-    }
-    /* Breathing glow pulse */
-    @keyframes xx-hoan-glow {
-      from { box-shadow: 0 0 8px var(--nc),  0 0 18px var(--nc); opacity: var(--so, 0.5); }
-      to   { box-shadow: 0 0 18px var(--nc), 0 0 40px var(--nc), 0 0 60px var(--nc); opacity: calc(var(--so, 0.5) * 0.6); }
-    }
-    /* Element badge (top-right) */
-    .node-element-badge {
-      position: absolute; top:5px; right:8px;
-      font-size: 7px;
-      font-family: 'Share Tech Mono', monospace;
+    .plaw-svg {
+      width: 76px; height: 76px;
       color: var(--nc, #8866ff);
-      opacity: 0.5; letter-spacing: 1.5px;
+      filter:
+        drop-shadow(0 0 5px var(--nc, #8866ff))
+        drop-shadow(0 0 14px var(--nc, #8866ff));
+      animation: plaw-spin 9s linear infinite;
+      overflow: visible;
+    }
+    @keyframes plaw-spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    /* Hub trung tâm nhấp nháy */
+    .plaw-hub {
+      position: absolute;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--nc, #8866ff);
+      box-shadow: 0 0 10px var(--nc, #8866ff), 0 0 22px var(--nc, #8866ff);
+      animation: plaw-hub-pulse 2.2s ease-in-out infinite alternate;
       pointer-events: none;
     }
-    /* Large icon */
-    .node-icon-wrap {
-      font-size: 24px; line-height: 1;
-      margin-bottom: 7px;
-      position: relative; z-index: 2;
-      filter: drop-shadow(0 0 10px var(--nc, #8866ff));
+    @keyframes plaw-hub-pulse {
+      from { box-shadow: 0 0 6px var(--nc, #8866ff), 0 0 14px var(--nc, #8866ff); opacity: 0.85; }
+      to   { box-shadow: 0 0 14px var(--nc, #8866ff), 0 0 32px var(--nc, #8866ff), 0 0 50px var(--nc, #8866ff); opacity: 1; }
     }
-    /* Xianxia name */
+    /* Tên node */
     .node-name-xx {
       font-family: 'Share Tech Mono', 'Orbitron', monospace;
-      font-size: 11px; font-weight: 700;
+      font-size: 10px; font-weight: 700;
       color: var(--nc, #8866ff);
       text-shadow: 0 0 10px var(--nc-glow, rgba(136,102,255,0.8));
-      letter-spacing: 1.5px; line-height: 1.3;
-      position: relative; z-index: 2;
-      margin-bottom: 3px;
-    }
-    /* English sub-type */
-    .node-type-sub {
-      font-family: -apple-system,'Segoe UI',sans-serif;
-      font-size: 8.5px; color: rgba(255,255,255,0.28);
-      letter-spacing: 1.2px; text-transform: uppercase;
+      letter-spacing: 1px; line-height: 1.3;
+      text-align: center;
+      max-width: 100px;
+      margin-top: 6px;
       position: relative; z-index: 2;
     }
 
