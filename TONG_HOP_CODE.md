@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **16:44:53 30/5/2026**
+> Cập nhật lần cuối: **00:13:42 1/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,751 dòng, 77.7 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(19,934 dòng, 1.53 MB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,784 dòng, 79.1 KB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(19,973 dòng, 1.53 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -22,8 +22,8 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 39 | 987 B |
-| `server.js` | 1,751 | 77.7 KB |
-| `tienhiepv3.html` | 19,934 | 1.53 MB |
+| `server.js` | 1,784 | 79.1 KB |
+| `tienhiepv3.html` | 19,973 | 1.53 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **25,406** | **1.77 MB** |
+| **TỔNG** | **25,478** | **1.77 MB** |
 
 ---
 
@@ -91,7 +91,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,751 dòng · 77.7 KB
+> 1,784 dòng · 79.1 KB
 
 ```javascript
 const express = require('express');
@@ -382,20 +382,12 @@ app.get('/api/login', async (req, res, next) => {
     console.log('LOGIN: reqHostname=', req.hostname, '| resolved domain=', domain,
       '| REPLIT_DEV_DOMAIN=', process.env.REPLIT_DEV_DOMAIN || '(unset)',
       '| REPLIT_DOMAINS=', process.env.REPLIT_DOMAINS || '(unset)');
-    const returnTo = req.query.returnTo || req.session.returnTo || '/user';
+    if (req.query.returnTo) req.session.returnTo = req.query.returnTo;
     const name = await ensureStrategy(req.hostname);
-    // Clear stale OIDC state keys from session (caused "invalid request" when switching accounts)
-    for (const key of Object.keys(req.session)) {
-      if (key !== 'cookie') delete req.session[key];
-    }
-    req.session.returnTo = returnTo;
-    req.session.save((saveErr) => {
-      if (saveErr) console.error('Session save error before login:', saveErr);
-      passport.authenticate(name, {
-        prompt: 'login consent',
-        scope: ['openid', 'email', 'profile', 'offline_access'],
-      })(req, res, next);
-    });
+    passport.authenticate(name, {
+      prompt: 'login consent',
+      scope: ['openid', 'email', 'profile', 'offline_access'],
+    })(req, res, next);
   } catch (err) {
     console.error('Login error:', err);
     res.redirect('/?auth_error=1');
@@ -406,23 +398,52 @@ app.get('/api/callback', async (req, res, next) => {
   try {
     const domain = getExternalDomain(req.hostname);
     console.log('CALLBACK: domain =', domain, 'query =', JSON.stringify(req.query));
+    console.log('CALLBACK: sessionID =', req.sessionID?.substring(0,8), '| session keys =', Object.keys(req.session || {}));
     const name = await ensureStrategy(req.hostname);
     passport.authenticate(name, { failureRedirect: '/?auth_error=1', failureMessage: true },
       (err, user) => {
-        if (err || !user) return res.redirect('/?auth_error=1');
+        if (err) {
+          console.error('CALLBACK auth error:', err.message, err.error || '', err.error_description || '');
+          return res.redirect('/?auth_error=' + encodeURIComponent(err.message || 'unknown'));
+        }
+        if (!user) {
+          console.error('CALLBACK: no user returned');
+          return res.redirect('/?auth_error=no_user');
+        }
         req.logIn(user, (loginErr) => {
-          if (loginErr) return res.redirect('/?auth_error=1');
+          if (loginErr) {
+            console.error('CALLBACK logIn error:', loginErr);
+            return res.redirect('/?auth_error=login_failed');
+          }
           upsertUser(user, true);
-          const returnTo = req.session.returnTo || '/user';
+          const returnPath = req.session.returnTo || '/user';
           delete req.session.returnTo;
-          req.session.save(() => res.redirect(returnTo));
+          const domain = getExternalDomain(req.hostname);
+          const fullUrl = `https://${domain}${returnPath}`;
+          req.session.save(() => {
+            // Use HTML meta-refresh redirect so mobile webviews navigate correctly
+            res.send(`<!DOCTYPE html><html><head>
+              <meta http-equiv="refresh" content="0;url=${fullUrl}">
+              <script>window.location.replace(${JSON.stringify(fullUrl)});</script>
+            </head><body><p>Đang chuyển hướng...</p></body></html>`);
+          });
         });
       }
     )(req, res, next);
   } catch (err) {
     console.error('Callback error:', err);
-    res.redirect('/?auth_error=1');
+    res.redirect('/?auth_error=' + encodeURIComponent(err.message || 'exception'));
   }
+});
+
+// Switch account: destroy session first, then redirect to OIDC login fresh
+app.get('/api/switch-account', (req, res) => {
+  req.logout(() => {
+    req.session.destroy(() => {
+      res.clearCookie('connect.sid');
+      res.redirect('/api/login');
+    });
+  });
 });
 
 app.get('/api/logout', async (req, res) => {
@@ -526,7 +547,19 @@ app.post('/api/chat', async (req, res) => {
 function requireAuth(req, res, next) {
   if (req.isAuthenticated()) return next();
   req.session.returnTo = req.originalUrl;
-  res.redirect('/api/login');
+  // Use absolute URL so window.top navigation goes to our app, not replit.com
+  const loginUrl = `https://${getExternalDomain(req.hostname)}/api/login`;
+  res.send(`<!DOCTYPE html><html><head>
+    <script>
+      var loginUrl = ${JSON.stringify(loginUrl)};
+      // If inside an iframe (Replit preview), navigate the top-level window
+      if (window.top !== window.self) {
+        window.top.location.href = loginUrl;
+      } else {
+        window.location.href = loginUrl;
+      }
+    </script>
+  </head><body></body></html>`);
 }
 
 function requireAdminPassword(req, res, next) {
@@ -1853,7 +1886,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 19,934 dòng · 1.53 MB
+> 19,973 dòng · 1.53 MB
 
 ```html
 <!DOCTYPE html>
@@ -2709,6 +2742,28 @@ app.listen(PORT, '0.0.0.0', () => {
       border-color: #ff4444;
       color: #fff;
       box-shadow: 0 0 12px rgba(255, 60, 60, 0.4);
+    }
+    #btn-switch-account {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(0, 180, 255, 0.08);
+      border: 1px solid rgba(0, 180, 255, 0.35);
+      color: #00b4ff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.25s;
+      pointer-events: all;
+      margin-left: 6px;
+    }
+    #btn-switch-account:hover {
+      background: rgba(0, 180, 255, 0.22);
+      border-color: #00b4ff;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(0, 180, 255, 0.45);
     }
 
     .pulse-dot {
@@ -6655,6 +6710,7 @@ app.listen(PORT, '0.0.0.0', () => {
         </div>
       </div>
       <button id="btn-back-home" onclick="window.location.href='/api/logout'" title="Đăng xuất">⬅ THOÁT</button>
+      <button id="btn-switch-account" onclick="window.location.href='/api/switch-account'" title="Đổi tài khoản Replit">⇄ ĐỔI TK</button>
       <button id="btn-voice-run" title="Noi: Chay [Ten Agent] de chay quy trinh bang giong noi">
         <span id="vrun-mic-icon">🎙️</span> CHẠY
       </button>
@@ -8471,6 +8527,7 @@ app.listen(PORT, '0.0.0.0', () => {
       } catch(e) {}
       // Load real user info into topbar
       loadAuthUser();
+      startSessionWatcher();
       setTimeout(() => showCharacterGreeting(), 900);
     } else {
       // Check if user is already authenticated — if so, skip boot directly to /user
@@ -9724,17 +9781,27 @@ app.listen(PORT, '0.0.0.0', () => {
               showToast('🎙️ ' + best.emoji + ' ' + displayName + ' — triệu hồi...', 'success');
             setTimeout(() => {
               try {
-                console.log('[VOICE] calling openAgentChat for', best.name, 'id=', best.id);
-                if (typeof window.openAgentChat === 'function') {
-                  window.openAgentChat(best.agent || AI_AGENTS.find(a => a.id === best.id));
-                } else if (typeof openAgentChat === 'function') {
-                  openAgentChat(best.agent || AI_AGENTS.find(a => a.id === best.id));
-                } else if (window._planetMeshes) {
-                  const pm = window._planetMeshes.find(p => p.agent.id === best.id);
-                  if (pm && window._openHUD) window._openHUD(pm);
+                console.log('[VOICE] opening HUD for', best.name, 'id=', best.id);
+                // Ưu tiên mở HUD (giao diện quy trình), fallback sang chat
+                let opened = false;
+                if (window._planetMeshes) {
+                  const pm = window._planetMeshes.find(p => p.agent && p.agent.id === best.id);
+                  if (pm && typeof window._openHUD === 'function') {
+                    window._openHUD(pm);
+                    opened = true;
+                  } else if (pm && typeof openHUD === 'function') {
+                    openHUD(pm);
+                    opened = true;
+                  }
+                }
+                if (!opened) {
+                  // Fallback: mở chat nếu không có HUD
+                  const ag = best.agent || AI_AGENTS.find(a => a.id === best.id);
+                  if (typeof window.openAgentChat === 'function') window.openAgentChat(ag);
+                  else if (typeof openAgentChat === 'function') openAgentChat(ag);
                 }
               } catch(err) {
-                console.error('[VOICE] openAgentChat failed:', err);
+                console.error('[VOICE] open agent failed:', err);
                 if (typeof showToast === 'function') showToast('🎙️ Lỗi mở agent: ' + err.message, 'warn');
               }
             }, 300);
@@ -16775,6 +16842,11 @@ app.listen(PORT, '0.0.0.0', () => {
     font-size: 8px;
     padding: 5px 10px;
     margin-left: 4px;
+  }
+  #btn-switch-account {
+    font-size: 8px;
+    padding: 5px 10px;
+    margin-left: 3px;
   }
   #theme-toggle-btn {
     padding: 5px 10px !important;
