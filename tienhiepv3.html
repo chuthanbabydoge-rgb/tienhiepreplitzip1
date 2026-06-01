@@ -9996,8 +9996,9 @@
         // Reset all nodes
         cards.forEach(c => {
           if (c) {
-            c.classList.remove('wf-running', 'wf-done', 'wf-done-burst', 'ld-fly-in');
+            c.classList.remove('wf-running', 'wf-done', 'wf-done-burst', 'ld-fly-in', 'dn-pre-absorb', 'dn-processing');
             c.style.opacity = '1';
+            c.style.transition = '';
             const f = c.querySelector('.wf-pipe-status-txt');
             if (f) f.innerHTML = '<span class="hsn-dot" style="background:var(--nc,#ff8800);box-shadow:0 0 5px var(--nc,#ff8800);"></span>⏳ CHỜ...';
           }
@@ -21485,6 +21486,17 @@ window.addEventListener('resize', () => {
         mutations.forEach(function(m) {
           if (m.type === 'attributes' && m.attributeName === 'class') {
             var node = m.target;
+
+            // Current step starting: briefly show this card for processing feedback
+            if (node.classList && node.classList.contains('wf-running') &&
+                node.classList.contains('hud-space-node')) {
+              node.classList.remove('dn-pre-absorb');
+              node.style.opacity = '';
+              node.style.transform = '';
+              node.classList.add('dn-processing');
+              setTimeout(function() { node.classList.remove('dn-processing'); }, 650);
+            }
+
             if (node.classList && node.classList.contains('ld-fly-in')) {
               var icon = _herbQueue[_throwIdx] || '🌿';
               _throwIdx++;
@@ -21545,11 +21557,29 @@ window.addEventListener('resize', () => {
 
         if (container && wfData.length) {
           spawnDaoNhan(container);
-          // Short delay to let character appear, then start watching
           setTimeout(function() { watchContainer(container, wfData); }, 300);
         }
 
-        return _orig.apply(this, arguments);
+        // Run original workflow (synchronous part: resets cards, sets opacity:1)
+        var result = _orig.apply(this, arguments);
+
+        // After original resets cards to opacity:1, immediately absorb all into furnace
+        // Use rAF so the reset paint happens first, then our absorption
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() {
+            var cards = wfData.map(function(_, i) {
+              return document.getElementById('wf-card-' + aid + '-' + i);
+            });
+            cards.forEach(function(c) {
+              if (!c) return;
+              c.style.opacity = '';          // clear inline style set by reset
+              c.style.transition = '';       // let CSS class handle transition
+              c.classList.add('dn-pre-absorb');
+            });
+          });
+        });
+
+        return result;
       };
       window.hudRunWorkflow._dn_patched = true;
     }
