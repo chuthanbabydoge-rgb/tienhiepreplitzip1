@@ -3610,6 +3610,100 @@
     }
     @keyframes kd-hint-blink { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
     #kim-dan-el:hover .kim-dan-orb { filter: brightness(1.2); transform: scale(1.12); }
+
+    /* ══════════════════════════════════════
+       LUYỆN ĐAN — Enhanced VFX
+       ══════════════════════════════════════ */
+
+    /* Shockwave ring bùng ra từ lò khi Đan Thành */
+    .lo-shockwave {
+      position: absolute; border-radius: 50%;
+      border: 3px solid rgba(255,220,80,0.9);
+      pointer-events: none; z-index: 30;
+      left: 50%; top: 50%;
+      transform: translate(-50%,-50%) scale(0.2);
+      animation: lo-shockwave-expand 0.8s cubic-bezier(0.2,0.8,0.4,1) forwards;
+    }
+    .lo-shockwave-2 {
+      border-color: rgba(255,160,40,0.6);
+      animation-delay: 0.12s;
+      animation-duration: 1.0s;
+    }
+    .lo-shockwave-3 {
+      border-color: rgba(255,100,0,0.35);
+      animation-delay: 0.28s;
+      animation-duration: 1.3s;
+    }
+    @keyframes lo-shockwave-expand {
+      0%   { transform: translate(-50%,-50%) scale(0.15); opacity: 1; }
+      100% { transform: translate(-50%,-50%) scale(3.5);  opacity: 0; }
+    }
+
+    /* Canvas-wide gold flash on Đan Thành */
+    .lo-dan-flash {
+      position: absolute; inset: 0; z-index: 25; pointer-events: none;
+      background: radial-gradient(ellipse at 50% 50%, rgba(255,220,80,0.55), rgba(255,160,0,0.2) 50%, transparent 75%);
+      animation: lo-dan-flash-anim 0.9s ease-out forwards;
+    }
+    @keyframes lo-dan-flash-anim {
+      0%   { opacity: 0; }
+      18%  { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    /* Ember particles drifting up from furnace */
+    .lo-ember {
+      position: absolute; border-radius: 50%; pointer-events: none; z-index: 18;
+      background: radial-gradient(circle, rgba(255,230,100,0.95), rgba(255,120,0,0.6));
+      box-shadow: 0 0 6px rgba(255,180,0,0.9);
+      animation: lo-ember-rise linear forwards;
+    }
+    @keyframes lo-ember-rise {
+      0%   { opacity: 1;   transform: translate(0, 0)     scale(1)    rotate(0deg); }
+      60%  { opacity: 0.7; transform: translate(var(--ex,0px), var(--ey,-80px)) scale(0.7) rotate(180deg); }
+      100% { opacity: 0;   transform: translate(var(--ex2,0px), var(--ey2,-160px)) scale(0.2) rotate(360deg); }
+    }
+
+    /* Heat shimmer overlay on furnace body (active state) */
+    #lo-luyen-dan.lo-active::before {
+      content: '';
+      position: absolute; inset: -8px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at 50% 80%, rgba(255,100,0,0.18), transparent 65%);
+      animation: lo-heat-shimmer 0.6s ease-in-out infinite alternate;
+      pointer-events: none; z-index: 1;
+    }
+    @keyframes lo-heat-shimmer {
+      from { opacity: 0.4; transform: scaleY(1)    skewX(-1deg); }
+      to   { opacity: 1;   transform: scaleY(1.04) skewX(1deg);  }
+    }
+
+    /* XR badge */
+    #builder-xr-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(0,200,255,0.05);
+      border: 1px solid rgba(0,200,255,0.22);
+      border-radius: 7px; padding: 5px 11px;
+      font-family: 'Orbitron', monospace; font-size: 9px;
+      letter-spacing: 2.5px; color: rgba(0,200,255,0.45);
+      cursor: default; position: relative;
+      transition: all 0.2s;
+    }
+    #builder-xr-badge::after {
+      content: 'SẮP RA MẮT';
+      position: absolute; bottom: calc(100% + 7px); left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,10,20,0.95); border: 1px solid rgba(0,200,255,0.3);
+      color: rgba(0,200,255,0.8); font-size: 8px; letter-spacing: 2px;
+      padding: 4px 10px; border-radius: 5px; white-space: nowrap;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    #builder-xr-badge:hover {
+      border-color: rgba(0,200,255,0.45);
+      color: rgba(0,220,255,0.65);
+      background: rgba(0,200,255,0.09);
+    }
+    #builder-xr-badge:hover::after { opacity: 1; }
     /* Kim Đan Output Panel */
     #kim-dan-panel {
       position: absolute;
@@ -10548,6 +10642,11 @@
           text-shadow:0 0 12px rgba(255,180,0,0.8);">
           ⚡ VẬN TRẬN
         </button>
+        <!-- AR/XR badge -->
+        <div id="builder-xr-badge" title="AR / MR / XR Mode">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8l10-5 10 5M2 8v8l10 5 10-5V8M12 3v18M2 8l10 5 10-5"/></svg>
+          AR · XR
+        </div>
         <!-- Status pill -->
         <div id="builder-status-pill" style="
           display:flex;align-items:center;gap:6px;
@@ -13046,12 +13145,43 @@
       });
     }
 
+    // ── Tự đặt tên Đan theo chủ đề workflow ──
+    function _nameDan(steps) {
+      const txt = steps.join(' ').toLowerCase();
+      const n = steps.length;
+      if (/code|lập trình|debug|develop|backend|frontend|api/.test(txt))
+        return { vn:'Càn Long Kỳ Tích Đan', zh:'乾龍奇跡丹', icon:'⚙️' };
+      if (/viết|write|content|nội dung|blog|văn|copywrite/.test(txt))
+        return { vn:'Văn Khí Huyền Thiên Đan', zh:'文氣玄天丹', icon:'✍️' };
+      if (/search|tìm kiếm|research|nghiên cứu|web|crawl/.test(txt))
+        return { vn:'Thám Thiên Vạn Lý Đan', zh:'探天萬里丹', icon:'🌐' };
+      if (/phân tích|analysis|data|dữ liệu|thống kê|report/.test(txt))
+        return { vn:'Linh Tuệ Phán Đoán Đan', zh:'靈慧判斷丹', icon:'🔮' };
+      if (/thiết kế|design|ui|ux|hình ảnh|image|visual/.test(txt))
+        return { vn:'Mỹ Khí Tạo Hóa Đan', zh:'美氣造化丹', icon:'🎨' };
+      if (/dịch|translat|ngôn ngữ|language|localize/.test(txt))
+        return { vn:'Thiên Ngôn Vạn Hóa Đan', zh:'天言萬化丹', icon:'📜' };
+      if (/video|âm thanh|audio|phim|media|nhạc/.test(txt))
+        return { vn:'Thanh Âm Huyền Không Đan', zh:'聲音玄空丹', icon:'🎵' };
+      if (/kinh doanh|business|sales|marketing|thương mại/.test(txt))
+        return { vn:'Kim Thương Đại Thịnh Đan', zh:'金商大盛丹', icon:'💰' };
+      if (n === 1)  return { vn:'Nhất Khí Độc Tôn Đan',     zh:'一氣獨尊丹',  icon:'☯️' };
+      if (n <= 3)   return { vn:'Tam Thanh Hội Nguyên Đan',  zh:'三清會元丹',  icon:'△' };
+      if (n <= 5)   return { vn:'Ngũ Hành Viên Mãn Đan',    zh:'五行圓滿丹',  icon:'⬠' };
+      if (n <= 7)   return { vn:'Thất Tinh Tụ Linh Đan',    zh:'七星聚靈丹',  icon:'✦' };
+      if (n <= 9)   return { vn:'Cửu Chuyển Đại Hoàn Đan',  zh:'九轉大還丹',  icon:'◉' };
+      return          { vn:'Thiên Địa Huyền Hoàng Đan',     zh:'天地玄黃丹',  icon:'☰' };
+    }
+
     // ── Kim Đan xuất lò — Golden Pill Output ──
     function _spawnKimDan(steps) {
       // Xoá Kim Đan và panel cũ nếu có
       ['kim-dan-el','kim-dan-panel'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
       const canvas = document.getElementById('builder-canvas');
       if (!canvas) return;
+
+      // Tự đặt tên theo chủ đề
+      const danName = _nameDan(steps);
 
       // Build step list rows
       const rows = steps.map((s, i) => `
@@ -13067,8 +13197,9 @@
       panelEl.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
           <div>
-            <div style="font-family:'Orbitron',monospace;font-size:13px;color:#ffcc44;letter-spacing:3px;text-shadow:0 0 14px rgba(255,180,0,0.8);">🌟 KIM ĐAN NGƯNG TỤ</div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:8.5px;color:rgba(255,200,60,0.5);letter-spacing:2px;margin-top:4px;">${steps.length} DƯỢC LIỆU · ĐẠI ĐAN VIÊN MÃN</div>
+            <div style="font-family:'Orbitron',monospace;font-size:12px;color:#ffcc44;letter-spacing:2.5px;text-shadow:0 0 14px rgba(255,180,0,0.8);">${danName.icon} ${danName.vn.toUpperCase()}</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,200,60,0.4);letter-spacing:3px;margin-top:3px;">${danName.zh}</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,200,60,0.4);letter-spacing:1.5px;margin-top:4px;">${steps.length} DƯỢC LIỆU · ĐẠI ĐAN VIÊN MÃN</div>
           </div>
           <button onclick="document.getElementById('kim-dan-panel').classList.remove('visible')"
             style="background:none;border:1px solid rgba(255,200,60,0.3);border-radius:6px;color:rgba(255,200,60,0.6);font-size:13px;cursor:pointer;width:26px;height:26px;display:flex;align-items:center;justify-content:center;">✕</button>
@@ -13079,9 +13210,10 @@
         </div>`;
       canvas.appendChild(panelEl);
 
-      // Kim Đan orb element
+      // Kim Đan orb element — dùng tên đã tự đặt
       const el = document.createElement('div');
       el.id = 'kim-dan-el';
+      el.setAttribute('data-xr-type', 'kim-dan');
       el.innerHTML = `
         <div style="position:relative;width:84px;height:84px;display:flex;align-items:center;justify-content:center;">
           <div class="kim-dan-ring" style="width:78px;height:78px;animation-duration:7s;"></div>
@@ -13089,7 +13221,8 @@
           <div class="kim-dan-ring" style="width:116px;height:116px;opacity:0.2;animation-duration:18s;border-color:rgba(255,180,40,0.15);"></div>
           <div class="kim-dan-orb"></div>
         </div>
-        <div class="kim-dan-label">金 丹 · KIM ĐAN</div>
+        <div class="kim-dan-label" style="font-size:9px;letter-spacing:2px;">${danName.vn}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:rgba(255,200,60,0.38);margin-top:1px;">${danName.zh}</div>
         <div class="kim-dan-hint">✦ CHẠM ĐỂ XEM KẾT QUẢ ✦</div>`;
       canvas.appendChild(el);
 
@@ -13101,6 +13234,27 @@
 
       // Click toggle panel
       el.addEventListener('click', () => { panelEl.classList.toggle('visible'); });
+    }
+
+    // ── Ember particles bay lên từ lò ──
+    function _spawnEmbers(canvas, count) {
+      if (!canvas) return;
+      const cr = canvas.getBoundingClientRect();
+      const cx = cr.width / 2, cy = cr.height / 2;
+      for (let i = 0; i < count; i++) {
+        const e = document.createElement('div');
+        e.className = 'lo-ember';
+        const size = 3 + Math.random() * 5;
+        const angle = (Math.random() * 2 - 1) * 80; // độ lệch ngang
+        const drift = (Math.random() - 0.5) * 40;
+        const rise1 = -(60 + Math.random() * 60);
+        const rise2 = -(130 + Math.random() * 80);
+        const dur = 0.8 + Math.random() * 0.8;
+        const delay = Math.random() * 350;
+        e.style.cssText = `width:${size}px;height:${size}px;left:${cx - size/2 + (Math.random()-0.5)*30}px;top:${cy - size/2 - 55}px;--ex:${drift + angle}px;--ey:${rise1}px;--ex2:${drift*1.5}px;--ey2:${rise2}px;animation-duration:${dur}s;animation-delay:${delay}ms;`;
+        canvas.appendChild(e);
+        setTimeout(() => e.remove(), (dur + delay/1000 + 0.1) * 1000);
+      }
     }
 
     // ── Bay dược liệu vào lò (dùng CSS custom property) ──
@@ -13182,19 +13336,39 @@
           node.classList.remove('sp-running');
         }
 
-        // Dược liệu nhập lò — furnace absorb flash
+        // Dược liệu nhập lò — furnace absorb flash + embers
         _flyDuocLieuVaoLo(node);
         await delay(280);
         if (lo) { lo.classList.add('lo-absorb'); setTimeout(() => lo.classList.remove('lo-absorb'), 480); }
+        // Spawn ember burst mỗi lần hấp thụ
+        _spawnEmbers(document.getElementById('builder-canvas'), 6 + Math.floor(Math.random()*4));
         await delay(300);
         node.classList.add('sp-done');
         _blogLog(`✦ ${dispLabel} đã nhập lò — linh khí đang ngưng tụ...`, 'ok');
         await delay(180);
       }
 
-      // Đan Thành — Kim Đan xuất lò!
+      // ĐAN THÀNH — Shockwave + Flash + Kim Đan xuất lò!
       await delay(500);
       _removeAllParticles();
+      // Screen flash vàng gold
+      const flash = document.createElement('div');
+      flash.className = 'lo-dan-flash';
+      document.getElementById('builder-canvas').appendChild(flash);
+      setTimeout(() => flash.remove(), 1000);
+      // 3 lớp shockwave đồng tâm
+      ['','lo-shockwave-2','lo-shockwave-3'].forEach((cls, idx) => {
+        setTimeout(() => {
+          const sw = document.createElement('div');
+          const s = 120 + idx * 30;
+          sw.className = `lo-shockwave ${cls}`;
+          sw.style.cssText = `width:${s}px;height:${s}px;`;
+          document.getElementById('builder-canvas').appendChild(sw);
+          setTimeout(() => sw.remove(), 1400);
+        }, idx * 100);
+      });
+      // Ember burst lớn khi đan thành
+      _spawnEmbers(document.getElementById('builder-canvas'), 18);
       if (lo) {
         lo.classList.remove('lo-active');
         lo.classList.add('lo-dan-thanh');
