@@ -1,5 +1,5 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **10:07:43 1/6/2026**
+> Cập nhật lần cuối: **10:51:57 1/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
@@ -3831,17 +3831,17 @@ app.listen(PORT, '0.0.0.0', () => {
       transition: width 1s ease;
     }
 
-    /* WORKFLOW CENTER */
+    /* LÒ LUYỆN ĐAN CENTER */
     #workflow-panel {
       position: relative;
       display: flex;
       flex-direction: column;
       background:
-        radial-gradient(ellipse 90% 60% at 20% 20%, rgba(60, 0, 140, 0.4) 0%, transparent 55%),
-        radial-gradient(ellipse 80% 55% at 80% 80%, rgba(0, 20, 90, 0.45) 0%, transparent 50%),
-        radial-gradient(ellipse 60% 40% at 55% 5%, rgba(100, 0, 180, 0.25) 0%, transparent 45%),
-        rgba(0, 2, 14, 0.88) !important;
-      border-color: rgba(120, 60, 255, 0.2) !important;
+        radial-gradient(ellipse 80% 55% at 50% 88%, rgba(200, 70, 0, 0.32) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 45% at 50% 50%, rgba(100, 30, 0, 0.22) 0%, transparent 55%),
+        radial-gradient(ellipse 100% 30% at 50% 100%, rgba(160, 50, 0, 0.28) 0%, transparent 50%),
+        rgba(5, 1, 0, 0.93) !important;
+      border-color: rgba(200, 90, 0, 0.25) !important;
       overflow: hidden;
     }
 
@@ -3850,21 +3850,21 @@ app.listen(PORT, '0.0.0.0', () => {
       position: absolute;
       inset: 0;
       background-image:
-        radial-gradient(1px 1px at 9% 8%, rgba(255,255,255,0.85) 0%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 24% 38%, rgba(200,220,255,0.7) 0%, transparent 100%),
-        radial-gradient(1px 1px at 42% 12%, rgba(255,255,255,0.8) 0%, transparent 100%),
-        radial-gradient(1px 1px at 63% 58%, rgba(180,200,255,0.65) 0%, transparent 100%),
-        radial-gradient(2px 2px at 78% 22%, rgba(255,255,255,0.9) 0%, transparent 100%),
-        radial-gradient(1px 1px at 88% 68%, rgba(200,220,255,0.7) 0%, transparent 100%),
-        radial-gradient(1px 1px at 35% 82%, rgba(255,255,255,0.7) 0%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 14% 72%, rgba(220,230,255,0.75) 0%, transparent 100%),
-        radial-gradient(1px 1px at 56% 44%, rgba(255,255,255,0.65) 0%, transparent 100%),
-        radial-gradient(1px 1px at 72% 88%, rgba(200,210,255,0.7) 0%, transparent 100%),
-        radial-gradient(2px 2px at 93% 32%, rgba(255,255,255,0.8) 0%, transparent 100%),
-        radial-gradient(1px 1px at 50% 95%, rgba(220,240,255,0.7) 0%, transparent 100%);
+        radial-gradient(1.5px 1.5px at 10% 85%, rgba(255,120,0,0.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 22% 70%, rgba(255,80,0,0.55) 0%, transparent 100%),
+        radial-gradient(2px 2px at 38% 90%, rgba(255,160,0,0.75) 0%, transparent 100%),
+        radial-gradient(1px 1px at 55% 78%, rgba(255,100,20,0.6) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 70% 88%, rgba(255,140,0,0.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 84% 75%, rgba(255,80,0,0.55) 0%, transparent 100%),
+        radial-gradient(1px 1px at 16% 60%, rgba(255,180,0,0.45) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 32% 80%, rgba(255,60,0,0.65) 0%, transparent 100%),
+        radial-gradient(1px 1px at 60% 92%, rgba(255,120,40,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 76% 65%, rgba(255,100,0,0.65) 0%, transparent 100%),
+        radial-gradient(2px 2px at 91% 55%, rgba(255,180,0,0.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 47% 68%, rgba(255,80,0,0.5) 0%, transparent 100%);
       pointer-events: none;
       z-index: 0;
-      animation: starTwinkleHud 6s ease-in-out infinite alternate;
+      animation: emberDrift 5s ease-in-out infinite alternate;
     }
 
     #workflow-panel > * {
