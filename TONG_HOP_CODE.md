@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **23:21:55 1/6/2026**
+> Cập nhật lần cuối: **23:26:30 1/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,784 dòng, 79.1 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,752 dòng, 1.60 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,740 dòng, 1.60 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,784 | 79.1 KB |
-| `tienhiepv3.html` | 21,752 | 1.60 MB |
+| `tienhiepv3.html` | 21,740 | 1.60 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **27,257** | **1.85 MB** |
+| **TỔNG** | **27,245** | **1.84 MB** |
 
 ---
 
@@ -1886,7 +1886,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 21,752 dòng · 1.60 MB
+> 21,740 dòng · 1.60 MB
 
 ```html
 <!DOCTYPE html>
@@ -13133,15 +13133,6 @@ app.listen(PORT, '0.0.0.0', () => {
               <span class="ld-orb-label">Kim Đan</span>
             </div>
 
-            <div style="width:40px;height:1px;background:rgba(255,150,0,0.2);margin:2px 0;"></div>
-
-            <div style="
-              font-family:'Share Tech Mono',monospace;
-              font-size:9px;letter-spacing:1.2px;
-              color:rgba(255,160,60,0.5);
-              text-align:center;
-              text-transform:uppercase;">📜 Đơn Phương</div>
-            <div id="preset-list-float" style="display:flex;flex-direction:column;gap:5px;width:70px;"></div>
           </div>
 
           <!-- Empty-state label -->
@@ -15306,10 +15297,7 @@ app.listen(PORT, '0.0.0.0', () => {
     setTimeout(_bldEnsureEmbers, 300);
       window._panelOpen();
       document.getElementById('builder-modal').classList.add('show');
-      // Mirror presets to floating list
-      const _pFloat = document.getElementById('preset-list-float');
-      const _pMain  = document.getElementById('preset-list');
-      if (_pFloat && _pMain) { _pFloat.innerHTML = _pMain.innerHTML; }
+
     }
     function closeBuilder() {
       window._panelClose();

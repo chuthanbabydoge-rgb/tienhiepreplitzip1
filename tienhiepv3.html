@@ -11242,15 +11242,6 @@
               <span class="ld-orb-label">Kim Đan</span>
             </div>
 
-            <div style="width:40px;height:1px;background:rgba(255,150,0,0.2);margin:2px 0;"></div>
-
-            <div style="
-              font-family:'Share Tech Mono',monospace;
-              font-size:9px;letter-spacing:1.2px;
-              color:rgba(255,160,60,0.5);
-              text-align:center;
-              text-transform:uppercase;">📜 Đơn Phương</div>
-            <div id="preset-list-float" style="display:flex;flex-direction:column;gap:5px;width:70px;"></div>
           </div>
 
           <!-- Empty-state label -->
@@ -13415,10 +13406,7 @@
     setTimeout(_bldEnsureEmbers, 300);
       window._panelOpen();
       document.getElementById('builder-modal').classList.add('show');
-      // Mirror presets to floating list
-      const _pFloat = document.getElementById('preset-list-float');
-      const _pMain  = document.getElementById('preset-list');
-      if (_pFloat && _pMain) { _pFloat.innerHTML = _pMain.innerHTML; }
+
     }
     function closeBuilder() {
       window._panelClose();
