@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **23:26:30 1/6/2026**
+> Cập nhật lần cuối: **23:27:49 1/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,784 dòng, 79.1 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,740 dòng, 1.60 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,670 dòng, 1.60 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,784 | 79.1 KB |
-| `tienhiepv3.html` | 21,740 | 1.60 MB |
+| `tienhiepv3.html` | 21,670 | 1.60 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **27,245** | **1.84 MB** |
+| **TỔNG** | **27,175** | **1.84 MB** |
 
 ---
 
@@ -1886,7 +1886,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 21,740 dòng · 1.60 MB
+> 21,670 dòng · 1.60 MB
 
 ```html
 <!DOCTYPE html>
@@ -5392,53 +5392,6 @@ app.listen(PORT, '0.0.0.0', () => {
       100% { transform: scale(1)    rotate(0deg);  opacity: 1; filter: brightness(1); }
     }
     .ld-herb-land { animation: ld-herb-land 0.55s cubic-bezier(0.34,1.56,0.64,1) both; }
-    /* ══ Floating Herb Shelf Orbs ══ */
-    #ld-herb-shelf {
-      filter: drop-shadow(0 0 24px rgba(255,100,0,0.15));
-    }
-    .ld-shelf-orb {
-      pointer-events: auto;
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
-      border: 1.5px solid color-mix(in srgb, var(--orb-color) 45%, transparent);
-      background: color-mix(in srgb, var(--orb-color) 10%, rgba(8,4,0,0.72));
-      cursor: grab;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 1px;
-      transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1);
-      position: relative;
-      backdrop-filter: blur(8px);
-      box-shadow:
-        0 0 12px color-mix(in srgb, var(--orb-color) 18%, transparent),
-        inset 0 1px 0 rgba(255,255,255,0.08);
-    }
-    .ld-shelf-orb:hover {
-      transform: scale(1.18) translateX(4px);
-      border-color: color-mix(in srgb, var(--orb-color) 80%, transparent);
-      background: color-mix(in srgb, var(--orb-color) 22%, rgba(12,6,0,0.85));
-      box-shadow:
-        0 0 22px color-mix(in srgb, var(--orb-color) 45%, transparent),
-        0 0 8px color-mix(in srgb, var(--orb-color) 30%, transparent),
-        inset 0 1px 0 rgba(255,255,255,0.12);
-    }
-    .ld-shelf-orb:active { cursor: grabbing; transform: scale(0.95); }
-    .ld-orb-emoji {
-      font-size: 20px;
-      line-height: 1;
-      filter: drop-shadow(0 0 6px var(--orb-color));
-    }
-    .ld-orb-label {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 7.5px;
-      letter-spacing: 0.5px;
-      color: color-mix(in srgb, var(--orb-color) 80%, #fff);
-      text-align: center;
-      white-space: nowrap;
-    }
 
     /* ── Connection lines: fire pulse ── */
     .builder-line {
@@ -13020,7 +12973,11 @@ app.listen(PORT, '0.0.0.0', () => {
       <div id="builder-layout" style="flex:1;overflow:hidden;">
 
         <!-- LEFT SIDEBAR -->
-        <div id="builder-sidebar" style="display:none;">
+        <div id="builder-sidebar" style="
+          width:220px;flex-shrink:0;
+          background:rgba(255,255,255,0.03);
+          border-right:1px solid rgba(255,255,255,0.07);
+          padding:18px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
 
           <div class="builder-title" id="t-b-title2">⚗️ Dược Liệu Trân Quý</div>
 
@@ -13068,30 +13025,6 @@ app.listen(PORT, '0.0.0.0', () => {
             pointer-events:none;z-index:0;"></div>
 
 
-
-          <!-- ══ FLOATING HERB SHELF (replaces sidebar) ══ -->
-          <div id="ld-herb-shelf" style="
-            position:absolute;
-            top:50%;left:20px;
-            transform:translateY(-50%);
-            z-index:20;
-            display:flex;flex-direction:column;align-items:center;gap:10px;
-            pointer-events:none;">
-
-            <div style="
-              font-family:'Share Tech Mono',monospace;
-              font-size:9px;letter-spacing:1.5px;
-              color:rgba(255,160,60,0.6);
-              text-align:center;margin-bottom:4px;
-              text-transform:uppercase;">⚗️ Dược Liệu</div>
-
-            <div class="ld-shelf-orb" draggable="true" ondragstart="drag(event)"
-              data-type="Data Source" data-icon="🌿"
-              style="--orb-color:#50c878;--orb-glow:#50c878;"
-              title="🌿 Linh Căn / Thu Thập">
-              <span class="ld-orb-emoji">🌿</span>
-              <span class="ld-orb-label">Linh Căn</span>
-            </div>
 
             <div class="ld-shelf-orb" draggable="true" ondragstart="drag(event)"
               data-type="LLM Engine" data-icon="🔥"
@@ -15309,10 +15242,7 @@ app.listen(PORT, '0.0.0.0', () => {
     let bNodes = [];
 
     function drag(ev) {
-      // Walk up to the draggable element that has data-type
-      let src = ev.target;
-      while (src && !src.dataset.type && src !== ev.currentTarget) src = src.parentElement;
-      draggedType = (src && src.dataset.type) ? src.dataset.type : ev.target.innerText;
+      draggedType = ev.target.innerText;
       ev.dataTransfer.setData("text", draggedType);
     }
     function allowDrop(ev) { ev.preventDefault(); }
