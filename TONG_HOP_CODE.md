@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **22:45:45 1/6/2026**
+> Cập nhật lần cuối: **22:52:45 1/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,784 dòng, 79.1 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,609 dòng, 1.60 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,624 dòng, 1.60 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,784 | 79.1 KB |
-| `tienhiepv3.html` | 21,609 | 1.60 MB |
+| `tienhiepv3.html` | 21,624 | 1.60 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **27,114** | **1.84 MB** |
+| **TỔNG** | **27,129** | **1.84 MB** |
 
 ---
 
@@ -1886,7 +1886,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 21,609 dòng · 1.60 MB
+> 21,624 dòng · 1.60 MB
 
 ```html
 <!DOCTYPE html>
@@ -5640,6 +5640,12 @@ app.listen(PORT, '0.0.0.0', () => {
     .hud-space-node.khai-tran {
       animation: hud-khai-lo 0.65s cubic-bezier(0.34,1.56,0.64,1) !important;
     }
+    /* dn-pre-absorb beats khai-tran — node already absorbed, stays invisible */
+    .hud-space-node.dn-pre-absorb.khai-tran {
+      animation: none !important;
+      opacity: 0 !important;
+      transform: translate(-50%,-50%) scale(0) !important;
+    }
     @keyframes hud-khai-lo {
       0%   { transform: translate(-50%,-50%) scale(1);    filter: brightness(1); }
       22%  { transform: translate(-50%,-50%) scale(1.32); filter: brightness(5) saturate(3) hue-rotate(-20deg); }
@@ -6282,6 +6288,16 @@ app.listen(PORT, '0.0.0.0', () => {
     @keyframes ldGlowRingPulse {
       from { opacity: 0.6; transform: translate(-50%,-50%) scale(1); }
       to   { opacity: 1;   transform: translate(-50%,-50%) scale(1.07); }
+    }
+
+    /* Hide orbit SVG lines when workflow is running (nodes are pre-absorbed) */
+    #workflow-container.pipeline-running #hud-conn-svg {
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    /* Also hide orbit node dot indicators */
+    #workflow-container.pipeline-running .hud-space-node.dn-pre-absorb {
+      display: none !important;
     }
     @keyframes emberDrift {
       from { transform: translateY(0px); opacity: 0.7; }
@@ -23454,21 +23470,20 @@ window.addEventListener('resize', () => {
         // Run original workflow (synchronous part: resets cards, sets opacity:1)
         var result = _orig.apply(this, arguments);
 
-        // After original resets cards to opacity:1, immediately absorb all into furnace
-        // Use rAF so the reset paint happens first, then our absorption
-        requestAnimationFrame(function() {
-          requestAnimationFrame(function() {
-            var cards = wfData.map(function(_, i) {
-              return document.getElementById('wf-card-' + aid + '-' + i);
-            });
-            cards.forEach(function(c) {
-              if (!c) return;
-              c.style.opacity = '';          // clear inline style set by reset
-              c.style.transition = '';       // let CSS class handle transition
-              c.classList.add('dn-pre-absorb');
-            });
-          });
-        });
+        // Absorb all orbit nodes — must read wfData AFTER _orig populates _wfData[aid]
+        // Use setTimeout so khai-tran flash (setTimeout 0) fires first, then we hide
+        setTimeout(function() {
+          var freshData = (window._wfData && window._wfData[aid]) ? window._wfData[aid] : [];
+          var n = freshData.length;
+          if (!n) return;
+          for (var i = 0; i < n; i++) {
+            var c = document.getElementById('wf-card-' + aid + '-' + i);
+            if (!c) continue;
+            c.style.opacity = '';        // clear inline opacity:1 set by reset
+            c.style.transition = '';
+            c.classList.add('dn-pre-absorb');
+          }
+        }, 80);   // 80ms: after khai-tran setTimeout(0,60,120...) but before runStep(400ms)
 
         return result;
       };
