@@ -3417,8 +3417,130 @@
     @keyframes builderLineDash { to { stroke-dashoffset: -28; } }
     @keyframes flow { to { stroke-dashoffset: -15; } }
     #builder-canvas {
-      background: radial-gradient(ellipse at center, rgba(20,8,40,0.85) 0%, rgba(5,5,18,0.95) 100%);
+      background: radial-gradient(ellipse at center, rgba(30,12,4,0.9) 0%, rgba(8,4,2,0.97) 100%);
     }
+
+    /* ══════════════════════════════════════
+       LÒ LUYỆN ĐAN — Alchemy Furnace
+       ══════════════════════════════════════ */
+    #lo-luyen-dan {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      display: flex; flex-direction: column; align-items: center;
+      pointer-events: none;
+    }
+    .lo-dan-svg {
+      width: 150px; height: 180px;
+      filter:
+        drop-shadow(0 0 18px rgba(255,110,0,0.55))
+        drop-shadow(0 0 50px rgba(255,60,0,0.25));
+      animation: lo-dan-idle 3.5s ease-in-out infinite;
+    }
+    @keyframes lo-dan-idle {
+      0%,100% { filter: drop-shadow(0 0 14px rgba(255,100,0,0.45)) drop-shadow(0 0 40px rgba(255,50,0,0.2)); }
+      50%      { filter: drop-shadow(0 0 28px rgba(255,150,0,0.75)) drop-shadow(0 0 70px rgba(255,80,0,0.4)); }
+    }
+    .lo-dan-label {
+      font-family: 'Orbitron', 'Share Tech Mono', serif;
+      font-size: 13px; letter-spacing: 6px;
+      color: rgba(255,180,60,0.55);
+      text-shadow: 0 0 12px rgba(255,130,0,0.6);
+      margin-top: 4px;
+    }
+    /* Glow rings around furnace */
+    .lo-dan-glow-ring {
+      position: absolute;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,110,0,0.22);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: lo-ring-pulse 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .lo-dan-glow-ring-2 { width: 270px; height: 270px; border-color: rgba(255,80,0,0.12); animation-delay: -1s; }
+    .lo-dan-glow-ring-3 { width: 340px; height: 340px; border-color: rgba(255,60,0,0.07); animation-delay: -2s; }
+    @keyframes lo-ring-pulse {
+      0%,100% { opacity: 0.5; transform: translate(-50%,-50%) scale(1); }
+      50%      { opacity: 0.9; transform: translate(-50%,-50%) scale(1.04); }
+    }
+    /* Furnace active (during run) */
+    #lo-luyen-dan.lo-active .lo-dan-svg {
+      animation: lo-dan-active 0.45s ease-in-out infinite !important;
+    }
+    @keyframes lo-dan-active {
+      0%,100% { filter: drop-shadow(0 0 40px rgba(255,160,0,0.95)) drop-shadow(0 0 100px rgba(255,80,0,0.7)); transform: scale(1) translateY(0); }
+      33%      { filter: drop-shadow(0 0 55px rgba(255,200,0,1))    drop-shadow(0 0 130px rgba(255,100,0,0.8)); transform: scale(1.02) translateY(-2px); }
+      66%      { filter: drop-shadow(0 0 45px rgba(255,160,0,0.95)) drop-shadow(0 0 110px rgba(255,80,0,0.7)); transform: scale(0.99) translateY(1px); }
+    }
+    #lo-luyen-dan.lo-active .lo-dan-glow-ring { animation-duration: 0.8s !important; border-color: rgba(255,150,0,0.5) !important; }
+    /* Furnace absorb flash (ingredient enters) */
+    #lo-luyen-dan.lo-absorb .lo-dan-svg {
+      animation: lo-dan-absorb 0.45s ease-out forwards !important;
+    }
+    @keyframes lo-dan-absorb {
+      0%   { filter: drop-shadow(0 0 80px #fff) drop-shadow(0 0 160px #ffaa00); transform: scale(1.14); }
+      50%  { filter: drop-shadow(0 0 60px #ffdd00) drop-shadow(0 0 120px #ff8800); transform: scale(1.08) rotate(-1deg); }
+      100% { filter: drop-shadow(0 0 40px rgba(255,160,0,0.95)); transform: scale(1); }
+    }
+    /* Dan Thanh (pill formed) final burst */
+    #lo-luyen-dan.lo-dan-thanh .lo-dan-svg {
+      animation: lo-dan-thanh 1.2s cubic-bezier(0.34,1.56,0.64,1) forwards !important;
+    }
+    @keyframes lo-dan-thanh {
+      0%   { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255,160,0,0.6)); }
+      20%  { transform: scale(1.22) rotate(5deg); filter: drop-shadow(0 0 100px #fff) drop-shadow(0 0 200px #ffdd00); }
+      50%  { transform: scale(0.92) rotate(-3deg); filter: drop-shadow(0 0 60px #00ffcc) drop-shadow(0 0 120px #00ff88); }
+      100% { transform: scale(1); filter: drop-shadow(0 0 30px rgba(0,255,136,0.6)); }
+    }
+
+    /* ══════════════════════════════════════
+       DƯỢC LIỆU GEM — Ingredient Nodes
+       ══════════════════════════════════════ */
+    .duoc-lieu-gem {
+      position: relative;
+      width: 62px; height: 62px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .dl-gem-svg {
+      width: 62px; height: 62px;
+      color: var(--nc, #ff9900);
+      filter: drop-shadow(0 0 6px var(--nc, #ff9900)) drop-shadow(0 0 18px var(--nc, #ff9900));
+      animation: dl-float 3s ease-in-out infinite;
+      overflow: visible;
+    }
+    @keyframes dl-float {
+      0%,100% { transform: translateY(0) rotate(0deg) scale(1); }
+      50%      { transform: translateY(-6px) rotate(4deg) scale(1.04); }
+    }
+    .dl-hub {
+      position: absolute;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--nc, #ff9900);
+      box-shadow: 0 0 10px var(--nc, #ff9900), 0 0 22px var(--nc, #ff9900);
+      animation: plaw-hub-pulse 1.8s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    /* Ingredient fly into furnace */
+    .canvas-node.dl-fly-in {
+      z-index: 50 !important;
+      animation: dl-fly-to-furnace 0.55s cubic-bezier(0.6,0,1,0.4) forwards !important;
+    }
+    @keyframes dl-fly-to-furnace {
+      0%   { opacity: 1; transform: translate(0,0) scale(1) rotate(0deg); }
+      60%  { opacity: 0.7; transform: translate(var(--fly-dx,0px), var(--fly-dy,0px)) scale(0.35) rotate(120deg); }
+      100% { opacity: 0;   transform: translate(var(--fly-dx,0px), var(--fly-dy,0px)) scale(0.05) rotate(180deg); }
+    }
+    /* Hide left/right port dots for luyện đan builder */
+    .canvas-node::before, .canvas-node::after { display: none !important; }
+    /* Run states for ingredient gems */
+    .canvas-node.sp-running .dl-gem-svg { color: #ffaa00 !important; filter: drop-shadow(0 0 14px #ffaa00) drop-shadow(0 0 36px #ff8800) !important; animation-duration: 0.8s !important; }
+    .canvas-node.sp-running .dl-hub     { background: #ffaa00 !important; box-shadow: 0 0 22px #ffaa00, 0 0 50px #ff8800 !important; }
+    .canvas-node.sp-done .dl-gem-svg    { color: #00ffaa !important; filter: drop-shadow(0 0 8px #00ffaa) drop-shadow(0 0 20px #00ffaa) !important; opacity: 0.4; }
+    .canvas-node.khai-tran .dl-gem-svg  { color: #ffe030 !important; filter: drop-shadow(0 0 24px #ffe030) drop-shadow(0 0 60px #ff9900) !important; animation: khai-tran-burst 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards !important; }
 
     .builder-title {
       font-family: -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif;
@@ -10377,11 +10499,81 @@
               linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
             background-size:40px 40px;"></div>
 
+          <!-- ═══════════════════════════════════════
+               LÒ LUYỆN ĐAN — Xianxia Alchemy Furnace
+               ═══════════════════════════════════════ -->
+          <div id="lo-luyen-dan">
+            <!-- Ambient glow rings -->
+            <div class="lo-dan-glow-ring"></div>
+            <div class="lo-dan-glow-ring lo-dan-glow-ring-2"></div>
+            <div class="lo-dan-glow-ring lo-dan-glow-ring-3"></div>
+            <!-- Furnace SVG -->
+            <svg class="lo-dan-svg" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- FLAMES -->
+              <ellipse cx="100" cy="232" rx="52" ry="12" fill="rgba(255,70,0,0.22)"/>
+              <path d="M72,218 C68,202 80,190 75,176 C80,190 90,198 86,214 Z" fill="rgba(255,80,0,0.65)"/>
+              <path d="M72,218 C70,207 78,198 75,188 C78,196 85,202 82,215 Z" fill="rgba(255,160,0,0.75)"/>
+              <path d="M100,215 C95,197 108,182 100,163 C106,181 116,191 111,208 Z" fill="rgba(255,80,0,0.7)"/>
+              <path d="M100,215 C97,200 107,187 100,170 C105,185 113,193 109,210 Z" fill="rgba(255,170,0,0.85)"/>
+              <path d="M128,218 C132,202 120,190 125,176 C120,190 110,198 114,214 Z" fill="rgba(255,80,0,0.65)"/>
+              <path d="M128,218 C130,207 122,198 125,188 C122,196 115,202 118,215 Z" fill="rgba(255,160,0,0.75)"/>
+              <!-- 3 LEGS -->
+              <path d="M68,182 L50,228" stroke="#7A5210" stroke-width="11" stroke-linecap="round"/>
+              <path d="M68,182 L50,228" stroke="#C4892A" stroke-width="5" stroke-linecap="round"/>
+              <path d="M132,182 L150,228" stroke="#7A5210" stroke-width="11" stroke-linecap="round"/>
+              <path d="M132,182 L150,228" stroke="#C4892A" stroke-width="5" stroke-linecap="round"/>
+              <path d="M100,197 L100,230" stroke="#7A5210" stroke-width="9" stroke-linecap="round"/>
+              <path d="M100,197 L100,230" stroke="#C4892A" stroke-width="4" stroke-linecap="round"/>
+              <!-- MAIN BODY shadow -->
+              <ellipse cx="103" cy="126" rx="75" ry="84" fill="rgba(40,18,2,0.7)"/>
+              <!-- Main body -->
+              <ellipse cx="100" cy="123" rx="75" ry="84" fill="rgba(82,42,8,0.97)" stroke="#9B6B1A" stroke-width="3"/>
+              <!-- Inner hot glow -->
+              <ellipse cx="100" cy="123" rx="62" ry="71" fill="rgba(255,90,0,0.07)"/>
+              <!-- Body highlight -->
+              <ellipse cx="84" cy="84" rx="22" ry="14" fill="rgba(255,200,120,0.07)"/>
+              <!-- Seam lines -->
+              <line x1="100" y1="40" x2="100" y2="207" stroke="rgba(255,130,0,0.12)" stroke-width="1"/>
+              <line x1="26" y1="82" x2="174" y2="164" stroke="rgba(255,130,0,0.09)" stroke-width="1"/>
+              <line x1="174" y1="82" x2="26" y2="164" stroke="rgba(255,130,0,0.09)" stroke-width="1"/>
+              <!-- TRIGRAMS -->
+              <text x="100" y="88" text-anchor="middle" fill="rgba(255,195,70,0.6)" font-size="16" font-family="serif">☰</text>
+              <text x="47"  y="128" text-anchor="middle" fill="rgba(255,195,70,0.5)" font-size="14" font-family="serif">☵</text>
+              <text x="153" y="128" text-anchor="middle" fill="rgba(255,195,70,0.5)" font-size="14" font-family="serif">☲</text>
+              <text x="100" y="170" text-anchor="middle" fill="rgba(255,195,70,0.5)" font-size="14" font-family="serif">☷</text>
+              <!-- HANDLES/EARS -->
+              <path d="M25,104 C5,104 1,122 4,138 C7,154 20,156 25,147" stroke="#8A6018" stroke-width="8" fill="none" stroke-linecap="round"/>
+              <path d="M25,104 C9,104 5,120 8,134 C11,148 20,151 25,147" stroke="#C4892A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+              <path d="M175,104 C195,104 199,122 196,138 C193,154 180,156 175,147" stroke="#8A6018" stroke-width="8" fill="none" stroke-linecap="round"/>
+              <path d="M175,104 C191,104 195,120 192,134 C189,148 180,151 175,147" stroke="#C4892A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+              <!-- LID shadow -->
+              <ellipse cx="102" cy="45" rx="67" ry="26" fill="rgba(40,18,2,0.55)"/>
+              <!-- LID body -->
+              <ellipse cx="100" cy="43" rx="67" ry="26" fill="rgba(75,40,8,0.97)" stroke="#9B6B1A" stroke-width="2.5"/>
+              <ellipse cx="100" cy="43" rx="59" ry="20" fill="none" stroke="rgba(255,150,50,0.2)" stroke-width="1"/>
+              <!-- Steam holes -->
+              <circle cx="72" cy="39" r="3.8" fill="rgba(0,0,0,0.75)"/>
+              <circle cx="100" cy="34" r="3.8" fill="rgba(0,0,0,0.75)"/>
+              <circle cx="128" cy="39" r="3.8" fill="rgba(0,0,0,0.75)"/>
+              <!-- FINIAL base -->
+              <ellipse cx="100" cy="21" rx="21" ry="10" fill="rgba(75,40,8,0.97)" stroke="#9B6B1A" stroke-width="2"/>
+              <!-- FINIAL sphere -->
+              <circle cx="100" cy="11" r="14" fill="rgba(90,48,10,0.97)" stroke="#ffaa00" stroke-width="2.2"/>
+              <circle cx="100" cy="11" r="9"  fill="rgba(255,165,0,0.75)"/>
+              <circle cx="96"  cy="7"  r="4"  fill="rgba(255,240,200,0.5)"/>
+              <!-- STEAM wisps -->
+              <path d="M72,34 C68,22 76,12 71,1"   stroke="rgba(190,210,255,0.18)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+              <path d="M100,29 C95,15 105,5 100,-6" stroke="rgba(190,210,255,0.20)" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+              <path d="M128,34 C132,22 124,12 129,1" stroke="rgba(190,210,255,0.18)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            </svg>
+            <div class="lo-dan-label">丹 炉</div>
+          </div>
+
           <!-- Subtle ambient glow -->
           <div style="
             position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);
             width:500px;height:300px;border-radius:50%;
-            background:radial-gradient(ellipse, rgba(94,159,255,0.06) 0%, transparent 70%);
+            background:radial-gradient(ellipse, rgba(94,159,255,0.04) 0%, transparent 70%);
             pointer-events:none;z-index:0;"></div>
 
           <!-- Empty-state label -->
@@ -12467,32 +12659,34 @@
       const typeKey = (rawType||'').split(' / ')[0].trim();
       const d = _nodeData[typeKey] || _ndList[_nodeHash(typeKey) % _ndList.length];
       return `<div class="node-card" style="--nc:${d.color};--nc-bg:${d.bg};--nc-glow:${d.glow};--nc-ring:${d.ring};">
-        <div class="phap-luan-wheel">
-          <svg class="plaw-svg" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Outer rim -->
-            <circle cx="40" cy="40" r="36" stroke="currentColor" stroke-width="2.2"/>
-            <!-- Middle ring -->
-            <circle cx="40" cy="40" r="24" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
-            <!-- Inner ring -->
-            <circle cx="40" cy="40" r="13" stroke="currentColor" stroke-width="0.9" opacity="0.4"/>
-            <!-- 8 căm (bát quái spokes) -->
-            <line x1="40" y1="4" x2="40" y2="76" stroke="currentColor" stroke-width="2"/>
-            <line x1="4" y1="40" x2="76" y2="40" stroke="currentColor" stroke-width="2"/>
-            <line x1="14.9" y1="14.9" x2="65.1" y2="65.1" stroke="currentColor" stroke-width="1.5"/>
-            <line x1="65.1" y1="14.9" x2="14.9" y2="65.1" stroke="currentColor" stroke-width="1.5"/>
-            <!-- Bát cực dots at rim (8 directions) -->
-            <circle cx="40" cy="4" r="2.8" fill="currentColor"/>
-            <circle cx="76" cy="40" r="2.8" fill="currentColor"/>
-            <circle cx="40" cy="76" r="2.8" fill="currentColor"/>
-            <circle cx="4" cy="40" r="2.8" fill="currentColor"/>
-            <circle cx="65.1" cy="14.9" r="2.2" fill="currentColor" opacity="0.8"/>
-            <circle cx="65.1" cy="65.1" r="2.2" fill="currentColor" opacity="0.8"/>
-            <circle cx="14.9" cy="65.1" r="2.2" fill="currentColor" opacity="0.8"/>
-            <circle cx="14.9" cy="14.9" r="2.2" fill="currentColor" opacity="0.8"/>
-            <!-- Hub trung tâm -->
-            <circle cx="40" cy="40" r="5.5" fill="currentColor" opacity="0.95"/>
+        <div class="duoc-lieu-gem">
+          <svg class="dl-gem-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outer hexagon shell -->
+            <polygon points="32,3 58,17.5 58,46.5 32,61 6,46.5 6,17.5"
+              fill="currentColor" fill-opacity="0.14" stroke="currentColor" stroke-width="2"/>
+            <!-- Inner hex -->
+            <polygon points="32,11 51,21.5 51,42.5 32,53 13,42.5 13,21.5"
+              fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-width="0.9" opacity="0.6"/>
+            <!-- Facet cross lines -->
+            <line x1="32" y1="3"  x2="32" y2="61"  stroke="currentColor" stroke-width="0.6" opacity="0.35"/>
+            <line x1="6"  y1="17.5" x2="58" y2="46.5" stroke="currentColor" stroke-width="0.6" opacity="0.35"/>
+            <line x1="58" y1="17.5" x2="6"  y2="46.5" stroke="currentColor" stroke-width="0.6" opacity="0.35"/>
+            <!-- Inner radiance lines -->
+            <line x1="32" y1="22" x2="32" y2="42" stroke="currentColor" stroke-width="0.4" opacity="0.5"/>
+            <line x1="22" y1="27" x2="42" y2="37" stroke="currentColor" stroke-width="0.4" opacity="0.5"/>
+            <line x1="42" y1="27" x2="22" y2="37" stroke="currentColor" stroke-width="0.4" opacity="0.5"/>
+            <!-- Center core pill -->
+            <circle cx="32" cy="32" r="11" fill="currentColor" opacity="0.85"/>
+            <circle cx="28" cy="27" r="5"  fill="white"         opacity="0.38"/>
+            <!-- Corner sparkle dots -->
+            <circle cx="32" cy="3"  r="2.8" fill="currentColor"/>
+            <circle cx="58" cy="17.5" r="2.2" fill="currentColor" opacity="0.75"/>
+            <circle cx="58" cy="46.5" r="2.2" fill="currentColor" opacity="0.75"/>
+            <circle cx="32" cy="61" r="2.8" fill="currentColor"/>
+            <circle cx="6"  cy="46.5" r="2.2" fill="currentColor" opacity="0.75"/>
+            <circle cx="6"  cy="17.5" r="2.2" fill="currentColor" opacity="0.75"/>
           </svg>
-          <div class="plaw-hub"></div>
+          <div class="dl-hub"></div>
         </div>
         <div class="node-name-xx">${dispName}</div>
       </div>`;
@@ -12594,27 +12788,35 @@
     }
     function drawLines() {
       const svg = document.getElementById('builder-svg');
-      const c1 = document.getElementById('builder-canvas').getBoundingClientRect();
+      const canvas = document.getElementById('builder-canvas');
+      if (!svg || !canvas) return;
+      const c1 = canvas.getBoundingClientRect();
       const n = bNodes.length;
       if (!n) { svg.innerHTML = _spGradDefs(); return; }
-      // Get center of each node
-      function nc(node) {
-        const r = node.getBoundingClientRect();
-        return { x: r.left - c1.left + r.width / 2, y: r.top - c1.top + r.height / 2 };
-      }
+      // Lò luyện đan nằm ở tâm canvas
+      const fcx = c1.width / 2;
+      const fcy = c1.height / 2;
       let paths = '';
       for (let i = 0; i < n; i++) {
-        const p1 = nc(bNodes[i]);
-        const p2 = nc(bNodes[(i + 1) % n]); // khép vòng tròn trận pháp
-        // Outer glow hào quang
-        paths += `<path d="M${p1.x},${p1.y} L${p2.x},${p2.y}" stroke="url(#sp-line-grad)" stroke-width="7" opacity="0.06" fill="none"/>`;
-        // Main linh khí beam
-        paths += `<path id="sp-line-${i}" d="M${p1.x},${p1.y} L${p2.x},${p2.y}" stroke="url(#sp-line-grad)" stroke-width="1.6" opacity="0.60" fill="none" stroke-dasharray="9 5" class="builder-line"/>`;
-        // Bright core tia sáng
-        paths += `<path d="M${p1.x},${p1.y} L${p2.x},${p2.y}" stroke="rgba(220,200,255,0.28)" stroke-width="0.6" fill="none"/>`;
-        // Mid-point energy orb
-        const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
-        paths += `<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="2.5" fill="rgba(180,120,255,0.55)" filter="url(#particle-glow-sm)"/>`;
+        const r = bNodes[i].getBoundingClientRect();
+        const nx = r.left - c1.left + r.width / 2;
+        const ny = r.top - c1.top + r.height / 2;
+        // Vector hướng vào lò
+        const dx = fcx - nx, dy = fcy - ny;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const ux = dx / dist, uy = dy / dist;
+        // Dừng cách lò 72px (không chạm vào lò)
+        const stop = Math.max(dist - 72, 12);
+        const ex = nx + ux * stop, ey = ny + uy * stop;
+        // Hào quang ngoài
+        paths += `<path d="M${nx.toFixed(1)},${ny.toFixed(1)} L${ex.toFixed(1)},${ey.toFixed(1)}" stroke="url(#sp-line-grad)" stroke-width="8" opacity="0.05" fill="none"/>`;
+        // Beam chính — dược liệu lưu chuyển vào lò
+        paths += `<path id="sp-line-${i}" d="M${nx.toFixed(1)},${ny.toFixed(1)} L${ex.toFixed(1)},${ey.toFixed(1)}" stroke="url(#sp-line-grad)" stroke-width="1.5" opacity="0.55" fill="none" stroke-dasharray="10 6" class="builder-line"/>`;
+        // Core sáng
+        paths += `<path d="M${nx.toFixed(1)},${ny.toFixed(1)} L${ex.toFixed(1)},${ey.toFixed(1)}" stroke="rgba(255,220,180,0.22)" stroke-width="0.6" fill="none"/>`;
+        // Orb giữa đường
+        const mx = (nx + ex) / 2, my = (ny + ey) / 2;
+        paths += `<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="2.2" fill="rgba(255,160,60,0.5)" filter="url(#particle-glow-sm)"/>`;
       }
       svg.innerHTML = _spGradDefs() + paths;
     }
@@ -12712,42 +12914,44 @@
       if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '⚡ VẬN TRẬN'; }
     }
 
-    // ── KHAI TRẬN — Kích hoạt tất cả pháp luân đồng loạt ──
+    // ── KHAI LÒ — Đốt lửa luyện đan + dược liệu bùng sáng ──
     function _khaiBurstAll() {
-      const canvas = document.getElementById('builder-canvas');
-      if (!canvas) return;
-      // Ripple ring từ tâm trận
-      const cr = canvas.getBoundingClientRect();
-      const ringSize = Math.min(cr.width, cr.height) * 0.88;
-      const ring = document.createElement('div');
-      ring.className = 'khai-tran-ring';
-      ring.style.cssText = `width:${ringSize}px;height:${ringSize}px;left:${(cr.width-ringSize)/2}px;top:${(cr.height-ringSize)/2}px;`;
-      canvas.appendChild(ring);
-      setTimeout(() => ring.remove(), 1500);
-      // Ring thứ 2 nhỏ hơn, delay nhỏ
-      setTimeout(() => {
-        const ring2 = document.createElement('div');
-        ring2.className = 'khai-tran-ring';
-        const s2 = ringSize * 0.6;
-        ring2.style.cssText = `width:${s2}px;height:${s2}px;left:${(cr.width-s2)/2}px;top:${(cr.height-s2)/2}px;border-color:rgba(200,160,255,0.7);`;
-        canvas.appendChild(ring2);
-        setTimeout(() => ring2.remove(), 1300);
-      }, 220);
-      // Tất cả nodes bùng sáng đồng loạt (stagger nhẹ)
+      // Kích hoạt lò luyện đan
+      const lo = document.getElementById('lo-luyen-dan');
+      if (lo) {
+        lo.classList.add('lo-active');
+        // Absorb flash nhỏ ban đầu
+        setTimeout(() => { lo.classList.add('lo-absorb'); setTimeout(() => lo.classList.remove('lo-absorb'), 500); }, 200);
+      }
+      // Tất cả dược liệu bùng sáng đồng loạt (stagger nhẹ)
       bNodes.forEach((n, i) => {
         setTimeout(() => {
           n.classList.add('khai-tran');
           setTimeout(() => n.classList.remove('khai-tran'), 750);
         }, i * 55);
       });
-      // Tất cả beams flash vàng gold
+      // Beams flash cam-vàng như lửa
       const allLines = document.querySelectorAll('.builder-line');
       allLines.forEach((l, i) => {
         setTimeout(() => {
-          l.style.cssText += 'stroke:#ffe030 !important;stroke-width:3.5px !important;opacity:1 !important;filter:drop-shadow(0 0 8px #ffe030);';
-          setTimeout(() => { l.style.cssText = ''; }, 600);
-        }, i * 40 + 80);
+          l.style.cssText += 'stroke:#ff9900 !important;stroke-width:3px !important;opacity:1 !important;filter:drop-shadow(0 0 8px #ff8800);';
+          setTimeout(() => { l.style.cssText = ''; }, 650);
+        }, i * 40 + 100);
       });
+    }
+
+    // ── Bay dược liệu vào lò (dùng CSS custom property) ──
+    function _flyDuocLieuVaoLo(node) {
+      const canvas = document.getElementById('builder-canvas');
+      if (!canvas || !node) return;
+      const nr = node.getBoundingClientRect();
+      const cr = canvas.getBoundingClientRect();
+      const nx = nr.left - cr.left + nr.width / 2;
+      const ny = nr.top - cr.top + nr.height / 2;
+      const fcx = cr.width / 2, fcy = cr.height / 2;
+      node.style.setProperty('--fly-dx', (fcx - nx) + 'px');
+      node.style.setProperty('--fly-dy', (fcy - ny) + 'px');
+      node.classList.add('dl-fly-in');
     }
 
     // ── RUN WORKFLOW ANIMATION ──
@@ -12769,68 +12973,76 @@
       if (panel && inner) { panel.classList.add('sp-open'); inner.innerHTML = ''; }
 
       _showFormationOverlay();
-      _blogLog('⚡ Thiên Địa Chi Lực Vận Động — Bát Quái Trận Pháp Khai Thiên...', 'run');
-      _setBuilderStatus('⚡ TRẬN PHÁP VẬN HÀNH', '#ffaa00');
+      _blogLog('🔥 Thiên Hỏa Vận Chuyển — Lò Luyện Đan Khai Hoả...', 'run');
+      _setBuilderStatus('🔥 LÒ ĐANG LUYỆN', '#ff8800');
 
-      // ⚡ KHAI TRẬN — Tất cả pháp luân bùng sáng đồng loạt trước khi chạy từng bước
+      // 🔥 KHAI LÒ — Đốt lò + dược liệu bùng sáng đồng loạt
       _khaiBurstAll();
       await new Promise(r => setTimeout(r, 900));
 
       const lines = document.querySelectorAll('.builder-line');
       const delay = ms => new Promise(r => setTimeout(r, ms));
+      const lo = document.getElementById('lo-luyen-dan');
 
       for (let i = 0; i < bNodes.length; i++) {
         const node = bNodes[i];
         const label = node.getAttribute('data-raw-type') || node.innerText.split('\n')[0];
         const dispLabel = label.split(' / ')[0] || label;
 
-        // activate connection line before this node (if exists)
-        if (i > 0 && lines[i-1]) {
-          lines[i-1].classList.add('sp-active');
-          _spawnParticles(i - 1);
+        // Beam dẫn dược liệu đang sáng
+        if (lines[i]) {
+          lines[i].classList.add('sp-active');
+          _spawnParticles(i);
         }
 
         node.classList.add('sp-running');
-        _blogLog(`◈ Luyện Hoá ${i+1}/${bNodes.length} — ${dispLabel} thu nạp linh khí...`, 'run');
-        await delay(900 + Math.random() * 400);
+        _blogLog(`⚗ Đưa dược liệu ${i+1}/${bNodes.length} vào lò — ${dispLabel}...`, 'run');
+        await delay(750 + Math.random() * 350);
 
-        // finish line
-        if (i > 0 && lines[i-1]) {
-          _removeParticles(i - 1);
-          lines[i-1].classList.remove('sp-active');
-          lines[i-1].classList.add('sp-done-line');
+        // Dược liệu bay vào lò 🧪→🔥
+        if (lines[i]) {
+          _removeParticles(i);
+          lines[i].classList.remove('sp-active');
+          lines[i].classList.add('sp-done-line');
         }
 
-        // 5% chance of simulated error
+        // 5% chance of simulated disruption
         const fail = Math.random() < 0.05;
         node.classList.remove('sp-running');
         if (fail) {
           node.classList.add('sp-error');
-          _blogLog(`⚠ Linh Khí Hỗn Loạn tại tầng ${i+1} — ${dispLabel} đang tái kết cấu...`, 'err');
+          _blogLog(`⚠ Dược Liệu ${dispLabel} phản ứng bất thường — tái điều chỉnh hoả lực...`, 'err');
           await delay(700);
           node.classList.remove('sp-error');
           node.classList.add('sp-running');
-          await delay(600);
+          await delay(550);
           node.classList.remove('sp-running');
         }
+
+        // Dược liệu nhập lò — furnace absorb flash
+        _flyDuocLieuVaoLo(node);
+        await delay(280);
+        if (lo) { lo.classList.add('lo-absorb'); setTimeout(() => lo.classList.remove('lo-absorb'), 480); }
+        await delay(300);
         node.classList.add('sp-done');
-        _blogLog(`✦ Pháp Khí Tựu Thành — ${dispLabel} viên mãn!`, 'ok');
+        _blogLog(`✦ ${dispLabel} đã nhập lò — linh khí đang ngưng tụ...`, 'ok');
+        await delay(180);
       }
 
-      // activate last line if any
-      if (lines.length > 0 && bNodes.length > 1) {
-        const last = lines[lines.length - 1];
-        if (last && !last.classList.contains('sp-done-line')) { last.classList.add('sp-done-line'); }
-      }
-
-      await new Promise(r => setTimeout(r, 400));
+      // Đan Thành — Kim Đan xuất lò!
+      await delay(500);
       _removeAllParticles();
-      _blogLog(`🌟 Trận Pháp Đại Thành — ${bNodes.length} Pháp Khí Vận Hành Viên Mãn!`, 'ok');
-      _setBuilderStatus('✦ VIÊN MÃN', '#00ffaa');
-      showToast('⚡ Trận Pháp hoàn tất!', 'success');
+      if (lo) {
+        lo.classList.remove('lo-active');
+        lo.classList.add('lo-dan-thanh');
+        setTimeout(() => lo.classList.remove('lo-dan-thanh'), 1300);
+      }
+      _blogLog(`🌟 ĐAN THÀNH! Kim Đan Ngưng Tụ — ${bNodes.length} Dược Liệu Luyện Thành Đại Đan!`, 'ok');
+      _setBuilderStatus('✦ ĐAN THÀNH', '#00ffaa');
+      showToast('🌟 Luyện Đan Thành Công!', 'success');
       _wfRunning = false;
       _hideFormationOverlay();
-      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '⚡ VẬN TRẬN LẠI'; }
+      if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '🔥 LUYỆN LẠI'; }
     }
 
     function loadPreset(index) {
