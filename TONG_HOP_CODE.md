@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **00:42:53 1/6/2026**
+> Cập nhật lần cuối: **09:53:28 1/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,784 dòng, 79.1 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(19,918 dòng, 1.53 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(20,119 dòng, 1.54 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,784 | 79.1 KB |
-| `tienhiepv3.html` | 19,918 | 1.53 MB |
+| `tienhiepv3.html` | 20,119 | 1.54 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **25,423** | **1.77 MB** |
+| **TỔNG** | **25,624** | **1.78 MB** |
 
 ---
 
@@ -1886,7 +1886,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 19,918 dòng · 1.53 MB
+> 20,119 dòng · 1.54 MB
 
 ```html
 <!DOCTYPE html>
@@ -5299,12 +5299,17 @@ app.listen(PORT, '0.0.0.0', () => {
     .builder-line {
       fill: none;
       stroke: url(#sp-line-grad);
-      stroke-width: 2.5;
+      stroke-width: 1.6;
       stroke-linecap: round;
-      filter: drop-shadow(0 0 4px rgba(130,170,255,0.4));
-      opacity: 0.75;
+      filter: drop-shadow(0 0 5px rgba(160,100,255,0.55));
+      opacity: 0.65;
+      animation: builderLineDash 1.8s linear infinite;
     }
+    @keyframes builderLineDash { to { stroke-dashoffset: -28; } }
     @keyframes flow { to { stroke-dashoffset: -15; } }
+    #builder-canvas {
+      background: radial-gradient(ellipse at center, rgba(20,8,40,0.85) 0%, rgba(5,5,18,0.95) 100%);
+    }
 
     .builder-title {
       font-family: -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif;
@@ -5487,40 +5492,71 @@ app.listen(PORT, '0.0.0.0', () => {
        ══════════════════════════════════════════════ */
     /* ── Xianxia Run States — targets .node-card child ── */
     .canvas-node.sp-running { animation: xx-node-pulse 0.75s ease-in-out infinite; z-index: 20; }
-    .canvas-node.sp-running .node-card {
-      border-color: #ffaa00 !important;
-      box-shadow:
-        0 0 0 2px rgba(255,170,0,0.5),
-        0 0 24px rgba(255,140,0,0.85),
-        0 0 55px rgba(255,80,0,0.4),
-        inset 0 0 18px rgba(255,160,0,0.15) !important;
-    }
-    .canvas-node.sp-running .node-name-xx { color:#ffe080 !important; text-shadow:0 0 14px rgba(255,180,0,1) !important; }
-    .canvas-node.sp-running .node-icon-wrap { filter: drop-shadow(0 0 16px #ffaa00) !important; }
-    .canvas-node.sp-running .soul-orbit { border-color: #ffaa00 !important; box-shadow: 0 0 20px #ffaa00, 0 0 45px #ffaa00 !important; opacity: 0.8 !important; animation-duration: 1.2s, 0.6s !important; }
+    .canvas-node.sp-running .plaw-svg { color:#ffaa00 !important; filter: drop-shadow(0 0 14px #ffaa00) drop-shadow(0 0 36px #ff8800) !important; animation-duration: 1.1s !important; }
+    .canvas-node.sp-running .plaw-hub { background:#ffaa00 !important; box-shadow: 0 0 22px #ffaa00, 0 0 50px #ff8800 !important; animation-duration: 0.4s !important; }
+    .canvas-node.sp-running .node-name-xx { color:#ffe080 !important; text-shadow:0 0 18px rgba(255,180,0,1) !important; }
     @keyframes xx-node-pulse {
       0%,100% { transform: scale(1);    filter: brightness(1); }
-      50%      { transform: scale(1.07); filter: brightness(1.35) saturate(1.5); }
+      50%      { transform: scale(1.09); filter: brightness(1.5) saturate(1.8); }
+    }
+    /* ── Khai Trận burst — tất cả pháp luân bùng sáng đồng loạt ── */
+    .canvas-node.khai-tran .plaw-svg {
+      animation: khai-tran-burst 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards !important;
+      color: #ffe030 !important;
+      filter: drop-shadow(0 0 24px #ffe030) drop-shadow(0 0 60px #ff9900) !important;
+    }
+    .canvas-node.khai-tran .plaw-hub {
+      background: #ffe030 !important;
+      box-shadow: 0 0 30px #ffe030, 0 0 70px #ff9900 !important;
+      animation: khai-hub-burst 0.7s ease-out forwards !important;
+    }
+    @keyframes khai-tran-burst {
+      0%   { transform: scale(1)    rotate(0deg);   opacity: 1; }
+      18%  { transform: scale(1.35) rotate(25deg);  opacity: 1; filter: brightness(6); }
+      45%  { transform: scale(0.88) rotate(38deg);  opacity: 1; filter: brightness(2.5); }
+      100% { transform: scale(1)    rotate(45deg);  opacity: 1; filter: brightness(1); }
+    }
+    @keyframes khai-hub-burst {
+      0%   { transform: scale(1);    opacity: 1; }
+      25%  { transform: scale(3.5);  opacity: 0.8; }
+      60%  { transform: scale(0.7);  opacity: 1; }
+      100% { transform: scale(1);    opacity: 1; }
+    }
+    /* Canvas khai trận ripple ring */
+    .khai-tran-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid rgba(255,210,40,0.85);
+      pointer-events: none;
+      z-index: 50;
+      animation: khai-ring-expand 1.4s ease-out forwards;
+    }
+    @keyframes khai-ring-expand {
+      0%   { opacity: 0.9; transform: scale(0.05); }
+      40%  { opacity: 0.6; }
+      100% { opacity: 0;   transform: scale(1); }
+    }
+    /* HUD khai trận node flash */
+    .hud-space-node.khai-tran {
+      animation: hud-khai-flash 0.6s cubic-bezier(0.34,1.56,0.64,1) !important;
+    }
+    @keyframes hud-khai-flash {
+      0%   { transform: translate(-50%,-50%) scale(1);    filter: brightness(1); }
+      20%  { transform: translate(-50%,-50%) scale(1.28); filter: brightness(5) saturate(3); }
+      55%  { transform: translate(-50%,-50%) scale(0.92); filter: brightness(2); }
+      100% { transform: translate(-50%,-50%) scale(1);    filter: brightness(1); }
     }
     .canvas-node.sp-done { animation: xx-done-seal 0.4s cubic-bezier(0.34,1.56,0.64,1); }
-    .canvas-node.sp-done .node-card {
-      border-color: #00ffaa !important;
-      box-shadow:
-        0 0 0 2px rgba(0,255,150,0.4),
-        0 0 22px rgba(0,255,136,0.7),
-        inset 0 0 14px rgba(0,255,136,0.1) !important;
-    }
+    .canvas-node.sp-done .plaw-svg { color:#00ffaa !important; filter: drop-shadow(0 0 8px #00ffaa) drop-shadow(0 0 20px #00ffaa) !important; }
+    .canvas-node.sp-done .plaw-hub { background:#00ffaa !important; box-shadow: 0 0 14px #00ffaa, 0 0 28px #00ffaa !important; }
     .canvas-node.sp-done .node-name-xx { color:#00ffaa !important; text-shadow:0 0 12px rgba(0,255,160,1) !important; }
-    .canvas-node.sp-done .soul-orbit { border-color:#00ffaa !important; box-shadow: 0 0 16px #00ffaa, 0 0 32px #00ffaa !important; opacity: 0.6 !important; }
     @keyframes xx-done-seal {
       0%  { transform: scale(1.18); filter: brightness(3); }
       100%{ transform: scale(1);    filter: brightness(1); }
     }
     .canvas-node.sp-error { animation: xx-error-shake 0.45s ease-in-out; }
-    .canvas-node.sp-error .node-card {
-      border-color: #ff3333 !important;
-      box-shadow: 0 0 0 3px rgba(255,50,50,0.45), 0 0 30px rgba(255,40,40,0.7) !important;
-    }
+    .canvas-node.sp-error .plaw-svg { color:#ff3333 !important; filter: drop-shadow(0 0 10px #ff3333) drop-shadow(0 0 22px #ff3333) !important; }
+    .canvas-node.sp-error .plaw-hub { background:#ff3333 !important; box-shadow: 0 0 14px #ff3333 !important; }
     .canvas-node.sp-error .node-name-xx { color:#ff6666 !important; }
     @keyframes xx-error-shake {
       0%,100% { transform: translateX(0) rotate(0deg); }
@@ -10742,46 +10778,53 @@ app.listen(PORT, '0.0.0.0', () => {
       // ── Position calculation ──────────────────────────────
       function calcSpaceNodePositions(n) {
         const pos = [];
-        if (n <= 4) {
-          // Single row centered
-          const gap = Math.min(22, 80 / Math.max(n - 1, 1));
-          const startX = 50 - ((n - 1) * gap) / 2;
+        if (n === 1) {
+          pos.push({ x: 50, y: 50 });
+        } else if (n <= 7) {
+          // Trận đơn: vòng tròn duy nhất
+          const rx = 30, ry = 30;
           for (let i = 0; i < n; i++) {
-            pos.push({ x: startX + i * gap, y: 45 + (i % 2 === 0 ? -6 : 6) });
+            const a = (2 * Math.PI / n) * i - Math.PI / 2;
+            pos.push({ x: 50 + rx * Math.cos(a), y: 50 + ry * Math.sin(a) });
           }
-        } else if (n <= 8) {
-          // Two rows
-          const r1 = Math.ceil(n / 2), r2 = n - r1;
-          const g1 = Math.min(20, 76 / Math.max(r1 - 1, 1));
-          const g2 = Math.min(20, 76 / Math.max(r2 - 1, 1));
-          const s1 = 50 - ((r1 - 1) * g1) / 2;
-          const s2 = 50 - ((r2 - 1) * g2) / 2;
-          for (let i = 0; i < r1; i++) pos.push({ x: s1 + i * g1, y: 30 });
-          for (let i = 0; i < r2; i++) pos.push({ x: s2 + i * g2, y: 65 });
         } else {
-          // Three rows
-          const r1 = Math.ceil(n / 3), r2 = Math.ceil((n - r1) / 2), r3 = n - r1 - r2;
-          const rows = [r1, r2, r3];
-          const ys   = [22, 50, 78];
-          let idx = 0;
-          rows.forEach((cnt, ri) => {
-            const g = Math.min(18, 72 / Math.max(cnt - 1, 1));
-            const s = 50 - ((cnt - 1) * g) / 2;
-            for (let i = 0; i < cnt; i++) { pos.push({ x: s + i * g, y: ys[ri] }); idx++; }
-          });
+          // Trận kép: vòng trong + vòng ngoài
+          const inner = Math.round(n * 0.4);
+          const outer = n - inner;
+          const riX = 16, riY = 16, roX = 34, roY = 34;
+          for (let i = 0; i < inner; i++) {
+            const a = (2 * Math.PI / inner) * i - Math.PI / 2;
+            pos.push({ x: 50 + riX * Math.cos(a), y: 50 + riY * Math.sin(a) });
+          }
+          for (let i = 0; i < outer; i++) {
+            const a = (2 * Math.PI / outer) * i - Math.PI / 2;
+            pos.push({ x: 50 + roX * Math.cos(a), y: 50 + roY * Math.sin(a) });
+          }
         }
         return pos;
       }
 
-      // ── Draw SVG bezier connections ───────────────────────
+      // ── Draw SVG linh khí connections (trận pháp circle) ─────
       function drawSpaceConnections(container, aid, n, color) {
         const svg = document.getElementById('hud-conn-svg');
         if (!svg) return;
-        svg.innerHTML = '';
+        svg.innerHTML = `<defs>
+          <linearGradient id="hud-lg-${aid}" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="${color}" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="rgba(200,160,255,0.9)"/>
+            <stop offset="100%" stop-color="${color}" stop-opacity="0.8"/>
+          </linearGradient>
+          <filter id="hud-glow-${aid}">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>`;
         const cr = container.getBoundingClientRect();
-        for (let i = 0; i < n - 1; i++) {
+        const NS = 'http://www.w3.org/2000/svg';
+        // Kết nối vòng tròn trận pháp: mỗi node nối với node kế tiếp VÀ khép vòng
+        for (let i = 0; i < n; i++) {
           const a = document.getElementById(`wf-card-${aid}-${i}`);
-          const b = document.getElementById(`wf-card-${aid}-${i+1}`);
+          const b = document.getElementById(`wf-card-${aid}-${(i+1) % n}`);
           if (!a || !b) continue;
           const ar = a.getBoundingClientRect();
           const br = b.getBoundingClientRect();
@@ -10789,36 +10832,44 @@ app.listen(PORT, '0.0.0.0', () => {
           const y1 = ar.top  + ar.height / 2 - cr.top;
           const x2 = br.left + br.width / 2 - cr.left;
           const y2 = br.top  + br.height / 2 - cr.top;
-          const mx = (x1 + x2) / 2;
 
-          // Glow path (thick, low opacity)
-          const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          glow.setAttribute('d', `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+          // Outer hào quang beam
+          const glow = document.createElementNS(NS, 'line');
+          glow.setAttribute('x1', x1); glow.setAttribute('y1', y1);
+          glow.setAttribute('x2', x2); glow.setAttribute('y2', y2);
           glow.setAttribute('stroke', color);
-          glow.setAttribute('stroke-width', '4');
-          glow.setAttribute('fill', 'none');
-          glow.setAttribute('opacity', '0.08');
+          glow.setAttribute('stroke-width', '6');
+          glow.setAttribute('opacity', '0.07');
           svg.appendChild(glow);
 
-          // Animated dash line
-          const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          line.setAttribute('d', `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
-          line.setAttribute('stroke', color);
-          line.setAttribute('stroke-width', '1.2');
-          line.setAttribute('fill', 'none');
-          line.setAttribute('stroke-dasharray', '7 5');
-          line.setAttribute('opacity', '0.45');
-          line.style.animation = 'connFlow 2.5s linear infinite';
+          // Main linh khí beam
+          const line = document.createElementNS(NS, 'line');
+          line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+          line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+          line.setAttribute('stroke', `url(#hud-lg-${aid})`);
+          line.setAttribute('stroke-width', '1.4');
+          line.setAttribute('opacity', '0.55');
+          line.setAttribute('stroke-dasharray', '8 5');
+          line.style.animation = 'connFlow 2.2s linear infinite';
           svg.appendChild(line);
 
-          // Arrow at midpoint
-          const ax = mx, ay = (y1 + y2) / 2;
-          const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-          arrow.setAttribute('cx', ax); arrow.setAttribute('cy', ay);
-          arrow.setAttribute('r', '3');
-          arrow.setAttribute('fill', color);
-          arrow.setAttribute('opacity', '0.5');
-          svg.appendChild(arrow);
+          // Bright core
+          const core = document.createElementNS(NS, 'line');
+          core.setAttribute('x1', x1); core.setAttribute('y1', y1);
+          core.setAttribute('x2', x2); core.setAttribute('y2', y2);
+          core.setAttribute('stroke', 'rgba(230,210,255,0.22)');
+          core.setAttribute('stroke-width', '0.5');
+          svg.appendChild(core);
+
+          // Mid-point energy orb
+          const ox = (x1+x2)/2, oy = (y1+y2)/2;
+          const orb = document.createElementNS(NS, 'circle');
+          orb.setAttribute('cx', ox); orb.setAttribute('cy', oy);
+          orb.setAttribute('r', '3');
+          orb.setAttribute('fill', color);
+          orb.setAttribute('opacity', '0.5');
+          orb.setAttribute('filter', `url(#hud-glow-${aid})`);
+          svg.appendChild(orb);
         }
       }
 
@@ -11016,6 +11067,54 @@ app.listen(PORT, '0.0.0.0', () => {
         if (btn) { btn.classList.add('wf-btn-launching'); setTimeout(() => { if(btn) btn.classList.remove('wf-btn-launching'); }, 600); }
 
         const cards = dat.map((_, i) => document.getElementById(`wf-card-${aid}-${i}`));
+
+        // ⚡ KHAI TRẬN HUD — tất cả node bùng sáng đồng loạt + beams flash
+        (function _hudKhaiBurst() {
+          const container = document.getElementById('workflow-container');
+          if (!container) return;
+          // Ripple ring từ tâm
+          const cr = container.getBoundingClientRect();
+          const rs = Math.min(cr.width, cr.height) * 0.82;
+          const ring = document.createElement('div');
+          ring.className = 'khai-tran-ring';
+          ring.style.cssText = `width:${rs}px;height:${rs}px;left:${(cr.width-rs)/2}px;top:${(cr.height-rs)/2}px;`;
+          container.appendChild(ring);
+          setTimeout(() => ring.remove(), 1500);
+          const rs2 = rs * 0.55;
+          setTimeout(() => {
+            const ring2 = document.createElement('div');
+            ring2.className = 'khai-tran-ring';
+            ring2.style.cssText = `width:${rs2}px;height:${rs2}px;left:${(cr.width-rs2)/2}px;top:${(cr.height-rs2)/2}px;border-color:rgba(180,120,255,0.7);`;
+            container.appendChild(ring2);
+            setTimeout(() => ring2.remove(), 1300);
+          }, 200);
+          // Tất cả node cards bùng sáng stagger
+          cards.forEach((c, i) => {
+            if (!c) return;
+            setTimeout(() => {
+              c.classList.add('khai-tran');
+              setTimeout(() => c.classList.remove('khai-tran'), 700);
+            }, i * 60);
+          });
+          // HUD SVG beams flash gold
+          const svg = document.getElementById('hud-conn-svg');
+          if (svg) {
+            const allLines = svg.querySelectorAll('line[stroke-dasharray]');
+            allLines.forEach((l, i) => {
+              setTimeout(() => {
+                const origStroke = l.getAttribute('stroke');
+                l.setAttribute('stroke', '#ffe030');
+                l.setAttribute('stroke-width', '3');
+                l.setAttribute('opacity', '0.9');
+                setTimeout(() => {
+                  l.setAttribute('stroke', origStroke || agColor);
+                  l.setAttribute('stroke-width', '1.4');
+                  l.setAttribute('opacity', '0.55');
+                }, 550);
+              }, i * 45 + 60);
+            });
+          }
+        })();
 
         // === Scan line ===
         const container = document.getElementById('workflow-container');
@@ -14258,14 +14357,35 @@ app.listen(PORT, '0.0.0.0', () => {
     function _mkNodeHtml(rawType, dispName) {
       const typeKey = (rawType||'').split(' / ')[0].trim();
       const d = _nodeData[typeKey] || _ndList[_nodeHash(typeKey) % _ndList.length];
-      return `<div class="soul-orbit soul-orbit-1"></div>
-      <div class="soul-orbit soul-orbit-2"></div>
-      <div class="soul-orbit soul-orbit-3"></div>
-      <div class="node-card" style="--nc:${d.color};--nc-bg:${d.bg};--nc-glow:${d.glow};--nc-ring:${d.ring};">
-        <div class="node-element-badge">${d.badge}</div>
-        <div class="node-icon-wrap">${d.icon}</div>
+      return `<div class="node-card" style="--nc:${d.color};--nc-bg:${d.bg};--nc-glow:${d.glow};--nc-ring:${d.ring};">
+        <div class="phap-luan-wheel">
+          <svg class="plaw-svg" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outer rim -->
+            <circle cx="40" cy="40" r="36" stroke="currentColor" stroke-width="2.2"/>
+            <!-- Middle ring -->
+            <circle cx="40" cy="40" r="24" stroke="currentColor" stroke-width="0.9" opacity="0.5"/>
+            <!-- Inner ring -->
+            <circle cx="40" cy="40" r="13" stroke="currentColor" stroke-width="0.9" opacity="0.4"/>
+            <!-- 8 căm (bát quái spokes) -->
+            <line x1="40" y1="4" x2="40" y2="76" stroke="currentColor" stroke-width="2"/>
+            <line x1="4" y1="40" x2="76" y2="40" stroke="currentColor" stroke-width="2"/>
+            <line x1="14.9" y1="14.9" x2="65.1" y2="65.1" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="65.1" y1="14.9" x2="14.9" y2="65.1" stroke="currentColor" stroke-width="1.5"/>
+            <!-- Bát cực dots at rim (8 directions) -->
+            <circle cx="40" cy="4" r="2.8" fill="currentColor"/>
+            <circle cx="76" cy="40" r="2.8" fill="currentColor"/>
+            <circle cx="40" cy="76" r="2.8" fill="currentColor"/>
+            <circle cx="4" cy="40" r="2.8" fill="currentColor"/>
+            <circle cx="65.1" cy="14.9" r="2.2" fill="currentColor" opacity="0.8"/>
+            <circle cx="65.1" cy="65.1" r="2.2" fill="currentColor" opacity="0.8"/>
+            <circle cx="14.9" cy="65.1" r="2.2" fill="currentColor" opacity="0.8"/>
+            <circle cx="14.9" cy="14.9" r="2.2" fill="currentColor" opacity="0.8"/>
+            <!-- Hub trung tâm -->
+            <circle cx="40" cy="40" r="5.5" fill="currentColor" opacity="0.95"/>
+          </svg>
+          <div class="plaw-hub"></div>
+        </div>
         <div class="node-name-xx">${dispName}</div>
-        <div class="node-type-sub">${typeKey.split(' ')[0]}</div>
       </div>`;
     }
     function _setNodeVars(node, rawType) {
@@ -14320,11 +14440,26 @@ app.listen(PORT, '0.0.0.0', () => {
     }
 
     function _spGradDefs() {
+      const canvas = document.getElementById('builder-canvas');
+      const cw = canvas ? canvas.clientWidth : 800;
+      const ch = canvas ? canvas.clientHeight : 500;
+      const cx = cw / 2, cy = ch / 2;
+      const R = Math.min(cx, cy) * 0.78;
+      // 8 spoke lines for mandala bg
+      const spokes = Array.from({length:8}, (_,i) => {
+        const a = (Math.PI * 2 / 8) * i;
+        return `<line x1="${cx}" y1="${cy}" x2="${(cx + R*Math.cos(a)).toFixed(1)}" y2="${(cy + R*Math.sin(a)).toFixed(1)}" stroke="#7755ff" stroke-width="0.5"/>`;
+      }).join('');
       return `<defs>
         <linearGradient id="sp-line-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" style="stop-color:rgba(100,220,160,0.8)"/>
-          <stop offset="100%" style="stop-color:rgba(94,159,255,0.8)"/>
+          <stop offset="0%" style="stop-color:rgba(180,80,255,0.9)"/>
+          <stop offset="50%" style="stop-color:rgba(80,200,255,0.9)"/>
+          <stop offset="100%" style="stop-color:rgba(255,180,60,0.9)"/>
         </linearGradient>
+        <radialGradient id="sp-center-grad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" style="stop-color:rgba(120,80,255,0.18)"/>
+          <stop offset="100%" style="stop-color:rgba(0,0,0,0)"/>
+        </radialGradient>
         <filter id="particle-glow" x="-80%" y="-80%" width="260%" height="260%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur"/>
           <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
@@ -14333,24 +14468,44 @@ app.listen(PORT, '0.0.0.0', () => {
           <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
           <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
-      </defs>`;
+        <filter id="mandala-blur">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>
+        </filter>
+      </defs>
+      <!-- Trận Pháp Mandala nền -->
+      <g opacity="0.13" pointer-events="none">
+        <circle cx="${cx}" cy="${cy}" r="${R}" stroke="#aa88ff" stroke-width="1" fill="none"/>
+        <circle cx="${cx}" cy="${cy}" r="${(R*0.72).toFixed(1)}" stroke="#88aaff" stroke-width="0.7" fill="none" stroke-dasharray="14 7"/>
+        <circle cx="${cx}" cy="${cy}" r="${(R*0.44).toFixed(1)}" stroke="#cc88ff" stroke-width="0.7" fill="none"/>
+        <circle cx="${cx}" cy="${cy}" r="${(R*0.18).toFixed(1)}" stroke="#ffcc88" stroke-width="1" fill="none"/>
+        ${spokes}
+        <circle cx="${cx}" cy="${cy}" r="${(R*1.05).toFixed(1)}" stroke="#6644cc" stroke-width="0.4" fill="none" stroke-dasharray="3 18"/>
+      </g>
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#sp-center-grad)" pointer-events="none" opacity="0.6"/>`;
     }
     function drawLines() {
       const svg = document.getElementById('builder-svg');
+      const c1 = document.getElementById('builder-canvas').getBoundingClientRect();
+      const n = bNodes.length;
+      if (!n) { svg.innerHTML = _spGradDefs(); return; }
+      // Get center of each node
+      function nc(node) {
+        const r = node.getBoundingClientRect();
+        return { x: r.left - c1.left + r.width / 2, y: r.top - c1.top + r.height / 2 };
+      }
       let paths = '';
-      for (let i = 0; i < bNodes.length - 1; i++) {
-        const n1 = bNodes[i];
-        const n2 = bNodes[i + 1];
-        const r1 = n1.getBoundingClientRect();
-        const r2 = n2.getBoundingClientRect();
-        const c1 = document.getElementById('builder-canvas').getBoundingClientRect();
-
-        const x1 = r1.left - c1.left + r1.width;
-        const y1 = r1.top - c1.top + r1.height / 2;
-        const x2 = r2.left - c1.left;
-        const y2 = r2.top - c1.top + r2.height / 2;
-
-        paths += `<path id="sp-line-${i}" d="M${x1},${y1} C${x1+60},${y1} ${x2-60},${y2} ${x2},${y2}" class="builder-line"/>`;
+      for (let i = 0; i < n; i++) {
+        const p1 = nc(bNodes[i]);
+        const p2 = nc(bNodes[(i + 1) % n]); // khép vòng tròn trận pháp
+        // Outer glow hào quang
+        paths += `<path d="M${p1.x},${p1.y} L${p2.x},${p2.y}" stroke="url(#sp-line-grad)" stroke-width="7" opacity="0.06" fill="none"/>`;
+        // Main linh khí beam
+        paths += `<path id="sp-line-${i}" d="M${p1.x},${p1.y} L${p2.x},${p2.y}" stroke="url(#sp-line-grad)" stroke-width="1.6" opacity="0.60" fill="none" stroke-dasharray="9 5" class="builder-line"/>`;
+        // Bright core tia sáng
+        paths += `<path d="M${p1.x},${p1.y} L${p2.x},${p2.y}" stroke="rgba(220,200,255,0.28)" stroke-width="0.6" fill="none"/>`;
+        // Mid-point energy orb
+        const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+        paths += `<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="2.5" fill="rgba(180,120,255,0.55)" filter="url(#particle-glow-sm)"/>`;
       }
       svg.innerHTML = _spGradDefs() + paths;
     }
@@ -14448,6 +14603,44 @@ app.listen(PORT, '0.0.0.0', () => {
       if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '⚡ VẬN TRẬN'; }
     }
 
+    // ── KHAI TRẬN — Kích hoạt tất cả pháp luân đồng loạt ──
+    function _khaiBurstAll() {
+      const canvas = document.getElementById('builder-canvas');
+      if (!canvas) return;
+      // Ripple ring từ tâm trận
+      const cr = canvas.getBoundingClientRect();
+      const ringSize = Math.min(cr.width, cr.height) * 0.88;
+      const ring = document.createElement('div');
+      ring.className = 'khai-tran-ring';
+      ring.style.cssText = `width:${ringSize}px;height:${ringSize}px;left:${(cr.width-ringSize)/2}px;top:${(cr.height-ringSize)/2}px;`;
+      canvas.appendChild(ring);
+      setTimeout(() => ring.remove(), 1500);
+      // Ring thứ 2 nhỏ hơn, delay nhỏ
+      setTimeout(() => {
+        const ring2 = document.createElement('div');
+        ring2.className = 'khai-tran-ring';
+        const s2 = ringSize * 0.6;
+        ring2.style.cssText = `width:${s2}px;height:${s2}px;left:${(cr.width-s2)/2}px;top:${(cr.height-s2)/2}px;border-color:rgba(200,160,255,0.7);`;
+        canvas.appendChild(ring2);
+        setTimeout(() => ring2.remove(), 1300);
+      }, 220);
+      // Tất cả nodes bùng sáng đồng loạt (stagger nhẹ)
+      bNodes.forEach((n, i) => {
+        setTimeout(() => {
+          n.classList.add('khai-tran');
+          setTimeout(() => n.classList.remove('khai-tran'), 750);
+        }, i * 55);
+      });
+      // Tất cả beams flash vàng gold
+      const allLines = document.querySelectorAll('.builder-line');
+      allLines.forEach((l, i) => {
+        setTimeout(() => {
+          l.style.cssText += 'stroke:#ffe030 !important;stroke-width:3.5px !important;opacity:1 !important;filter:drop-shadow(0 0 8px #ffe030);';
+          setTimeout(() => { l.style.cssText = ''; }, 600);
+        }, i * 40 + 80);
+      });
+    }
+
     // ── RUN WORKFLOW ANIMATION ──
     let _wfRunning = false;
     async function runWorkflow() {
@@ -14459,7 +14652,7 @@ app.listen(PORT, '0.0.0.0', () => {
       if (runBtn) { runBtn.disabled = true; runBtn.style.opacity = '0.55'; runBtn.innerHTML = '☯ ĐANG VẬN...'; }
 
       // reset states
-      bNodes.forEach(n => { n.classList.remove('sp-running','sp-done','sp-error'); });
+      bNodes.forEach(n => { n.classList.remove('sp-running','sp-done','sp-error','khai-tran'); });
       document.querySelectorAll('.builder-line').forEach(l => l.classList.remove('sp-active','sp-done-line'));
       _removeAllParticles();
       const panel = document.getElementById('builder-log-panel');
@@ -14469,6 +14662,10 @@ app.listen(PORT, '0.0.0.0', () => {
       _showFormationOverlay();
       _blogLog('⚡ Thiên Địa Chi Lực Vận Động — Bát Quái Trận Pháp Khai Thiên...', 'run');
       _setBuilderStatus('⚡ TRẬN PHÁP VẬN HÀNH', '#ffaa00');
+
+      // ⚡ KHAI TRẬN — Tất cả pháp luân bùng sáng đồng loạt trước khi chạy từng bước
+      _khaiBurstAll();
+      await new Promise(r => setTimeout(r, 900));
 
       const lines = document.querySelectorAll('.builder-line');
       const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -14547,14 +14744,18 @@ app.listen(PORT, '0.0.0.0', () => {
 
       const canvas = document.getElementById('builder-canvas');
       const rect = canvas.getBoundingClientRect();
-      const startX = 50;
-      const startY = rect.height / 2 - 20;
+      const _formN = nodesData.length;
+      const _fcx = rect.width / 2;
+      const _fcy = rect.height / 2;
+      const _frad = Math.min(_fcx * 0.70, _fcy * 0.70);
 
       nodesData.forEach((name, i) => {
         const node = document.createElement('div');
         node.className = 'canvas-node';
-        node.style.left = (startX + i * 220) + 'px';
-        node.style.top = startY + 'px';
+        // Bày trận pháp: vị trí theo vòng tròn
+        const _fAngle = (2 * Math.PI / _formN) * i - Math.PI / 2;
+        node.style.left = Math.round(_fcx + _frad * Math.cos(_fAngle) - 45) + 'px';
+        node.style.top  = Math.round(_fcy + _frad * Math.sin(_fAngle) - 50) + 'px';
 
         // Auto translate english node name to Xianxia node name
         const xxNodePrefix = ["Luyện", "Tụ", "Thu", "Phát", "Hóa", "Tạo", "Truy", "Thám", "Kiến", "Phân"];
