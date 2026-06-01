@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **23:20:28 1/6/2026**
+> Cập nhật lần cuối: **23:21:55 1/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,784 dòng, 79.1 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,751 dòng, 1.60 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,752 dòng, 1.60 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,784 | 79.1 KB |
-| `tienhiepv3.html` | 21,751 | 1.60 MB |
+| `tienhiepv3.html` | 21,752 | 1.60 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **27,256** | **1.85 MB** |
+| **TỔNG** | **27,257** | **1.85 MB** |
 
 ---
 
@@ -1886,7 +1886,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 21,751 dòng · 1.60 MB
+> 21,752 dòng · 1.60 MB
 
 ```html
 <!DOCTYPE html>
@@ -5397,6 +5397,7 @@ app.listen(PORT, '0.0.0.0', () => {
       filter: drop-shadow(0 0 24px rgba(255,100,0,0.15));
     }
     .ld-shelf-orb {
+      pointer-events: auto;
       width: 58px;
       height: 58px;
       border-radius: 50%;
@@ -13075,7 +13076,7 @@ app.listen(PORT, '0.0.0.0', () => {
             transform:translateY(-50%);
             z-index:20;
             display:flex;flex-direction:column;align-items:center;gap:10px;
-            pointer-events:auto;">
+            pointer-events:none;">
 
             <div style="
               font-family:'Share Tech Mono',monospace;
