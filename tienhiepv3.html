@@ -3536,6 +3536,112 @@
     }
     /* Hide left/right port dots for luyện đan builder */
     .canvas-node::before, .canvas-node::after { display: none !important; }
+
+    /* ══════════════════════════════════════
+       KIM ĐAN — Golden Pill Output
+       ══════════════════════════════════════ */
+    #kim-dan-el {
+      position: absolute;
+      left: 50%; top: 50%;
+      z-index: 20;
+      display: none; flex-direction: column; align-items: center;
+      cursor: pointer; pointer-events: auto;
+      transform: translate(-50%, -150%);
+    }
+    #kim-dan-el.visible {
+      display: flex;
+      animation: kim-dan-rise 1.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+    @keyframes kim-dan-rise {
+      0%   { opacity: 0; transform: translate(-50%,-20%); }
+      55%  { opacity: 1; transform: translate(-50%,-160%); }
+      100% { opacity: 1; transform: translate(-50%,-150%); }
+    }
+    #kim-dan-el.kd-floating {
+      animation: kim-dan-float 2.8s ease-in-out infinite !important;
+      transform: translate(-50%, -150%) !important;
+    }
+    @keyframes kim-dan-float {
+      0%,100% { transform: translate(-50%,-150%) scale(1)    rotate(0deg); }
+      35%     { transform: translate(-50%,-163%) scale(1.05) rotate(2deg); }
+      70%     { transform: translate(-50%,-145%) scale(0.97) rotate(-1deg); }
+    }
+    .kim-dan-orb {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: radial-gradient(ellipse at 35% 30%, rgba(255,255,210,0.95), rgba(255,215,0,0.97) 40%, rgba(255,130,0,0.85));
+      border: 2px solid rgba(255,240,100,0.65);
+      box-shadow: 0 0 22px rgba(255,215,0,0.95), 0 0 55px rgba(255,160,0,0.75), 0 0 110px rgba(255,100,0,0.4), inset 0 0 18px rgba(255,255,200,0.35);
+      animation: kim-dan-pulse 1.6s ease-in-out infinite alternate;
+      position: relative;
+    }
+    .kim-dan-orb::after {
+      content: '💊';
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      font-size: 20px;
+      filter: drop-shadow(0 0 10px rgba(255,220,0,1));
+    }
+    @keyframes kim-dan-pulse {
+      from { box-shadow: 0 0 18px rgba(255,215,0,0.85), 0 0 45px rgba(255,160,0,0.65), 0 0 90px rgba(255,100,0,0.35); }
+      to   { box-shadow: 0 0 32px rgba(255,225,0,1),   0 0 80px rgba(255,180,0,0.95), 0 0 150px rgba(255,120,0,0.55); }
+    }
+    .kim-dan-ring {
+      position: absolute; border-radius: 50%;
+      border: 1px solid rgba(255,200,50,0.35);
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      animation: kim-dan-ring-spin linear infinite;
+      pointer-events: none;
+    }
+    @keyframes kim-dan-ring-spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+    .kim-dan-label {
+      font-family: 'Share Tech Mono','Orbitron',monospace;
+      font-size: 10px; letter-spacing: 4px;
+      color: rgba(255,220,100,0.88);
+      text-shadow: 0 0 12px rgba(255,180,0,0.9);
+      margin-top: 7px;
+    }
+    .kim-dan-hint {
+      font-family: 'Share Tech Mono',monospace;
+      font-size: 7.5px; letter-spacing: 1.5px;
+      color: rgba(255,180,60,0.5);
+      margin-top: 2px;
+      animation: kd-hint-blink 2s ease-in-out infinite;
+    }
+    @keyframes kd-hint-blink { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+    #kim-dan-el:hover .kim-dan-orb { filter: brightness(1.2); transform: scale(1.12); }
+    /* Kim Đan Output Panel */
+    #kim-dan-panel {
+      position: absolute;
+      left: 50%; top: 28%;
+      transform: translate(-50%, 0) scale(0.88);
+      z-index: 100;
+      background: linear-gradient(160deg, rgba(18,8,2,0.98), rgba(10,5,1,0.99));
+      border: 1px solid rgba(255,200,60,0.45);
+      border-radius: 14px;
+      padding: 22px 26px 18px;
+      min-width: 340px; max-width: 460px;
+      box-shadow: 0 0 40px rgba(255,160,0,0.28), 0 0 100px rgba(255,80,0,0.12), inset 0 1px 0 rgba(255,220,100,0.1);
+      opacity: 0; pointer-events: none;
+      transition: all 0.38s cubic-bezier(0.34,1.4,0.64,1);
+    }
+    #kim-dan-panel.visible {
+      opacity: 1; pointer-events: auto;
+      transform: translate(-50%, 0) scale(1);
+    }
+    .kd-step-row {
+      display: flex; align-items: center; gap: 9px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,200,60,0.07);
+    }
+    .kd-step-num {
+      font-family: 'Orbitron',monospace; font-size: 8px;
+      color: rgba(255,190,50,0.45); min-width: 22px;
+    }
+    .kd-step-name {
+      font-family: 'Share Tech Mono',monospace; font-size: 10px;
+      color: rgba(255,225,170,0.88); line-height: 1.3;
+    }
     /* Run states for ingredient gems */
     .canvas-node.sp-running .dl-gem-svg { color: #ffaa00 !important; filter: drop-shadow(0 0 14px #ffaa00) drop-shadow(0 0 36px #ff8800) !important; animation-duration: 0.8s !important; }
     .canvas-node.sp-running .dl-hub     { background: #ffaa00 !important; box-shadow: 0 0 22px #ffaa00, 0 0 50px #ff8800 !important; }
@@ -12940,6 +13046,63 @@
       });
     }
 
+    // ── Kim Đan xuất lò — Golden Pill Output ──
+    function _spawnKimDan(steps) {
+      // Xoá Kim Đan và panel cũ nếu có
+      ['kim-dan-el','kim-dan-panel'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
+      const canvas = document.getElementById('builder-canvas');
+      if (!canvas) return;
+
+      // Build step list rows
+      const rows = steps.map((s, i) => `
+        <div class="kd-step-row">
+          <span class="kd-step-num">${String(i+1).padStart(2,'0')}</span>
+          <span style="color:#00ffaa;font-size:9px;">✦</span>
+          <span class="kd-step-name">${s}</span>
+        </div>`).join('');
+
+      // Output panel
+      const panelEl = document.createElement('div');
+      panelEl.id = 'kim-dan-panel';
+      panelEl.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
+          <div>
+            <div style="font-family:'Orbitron',monospace;font-size:13px;color:#ffcc44;letter-spacing:3px;text-shadow:0 0 14px rgba(255,180,0,0.8);">🌟 KIM ĐAN NGƯNG TỤ</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:8.5px;color:rgba(255,200,60,0.5);letter-spacing:2px;margin-top:4px;">${steps.length} DƯỢC LIỆU · ĐẠI ĐAN VIÊN MÃN</div>
+          </div>
+          <button onclick="document.getElementById('kim-dan-panel').classList.remove('visible')"
+            style="background:none;border:1px solid rgba(255,200,60,0.3);border-radius:6px;color:rgba(255,200,60,0.6);font-size:13px;cursor:pointer;width:26px;height:26px;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+        <div style="border-top:1px solid rgba(255,200,60,0.12);padding-top:12px;max-height:260px;overflow-y:auto;">${rows}</div>
+        <div style="margin-top:14px;padding-top:11px;border-top:1px solid rgba(255,200,60,0.1);font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,255,160,0.65);text-align:center;letter-spacing:2px;">
+          ✦ TẤT CẢ DƯỢC LIỆU ĐÃ LUYỆN THÀNH CÔNG ✦
+        </div>`;
+      canvas.appendChild(panelEl);
+
+      // Kim Đan orb element
+      const el = document.createElement('div');
+      el.id = 'kim-dan-el';
+      el.innerHTML = `
+        <div style="position:relative;width:84px;height:84px;display:flex;align-items:center;justify-content:center;">
+          <div class="kim-dan-ring" style="width:78px;height:78px;animation-duration:7s;"></div>
+          <div class="kim-dan-ring" style="width:100px;height:100px;opacity:0.4;animation-duration:12s;animation-direction:reverse;border-color:rgba(255,220,80,0.22);"></div>
+          <div class="kim-dan-ring" style="width:116px;height:116px;opacity:0.2;animation-duration:18s;border-color:rgba(255,180,40,0.15);"></div>
+          <div class="kim-dan-orb"></div>
+        </div>
+        <div class="kim-dan-label">金 丹 · KIM ĐAN</div>
+        <div class="kim-dan-hint">✦ CHẠM ĐỂ XEM KẾT QUẢ ✦</div>`;
+      canvas.appendChild(el);
+
+      // Rise animation → then float
+      requestAnimationFrame(() => {
+        el.classList.add('visible');
+        setTimeout(() => { el.classList.remove('visible'); el.classList.add('kd-floating'); }, 1350);
+      });
+
+      // Click toggle panel
+      el.addEventListener('click', () => { panelEl.classList.toggle('visible'); });
+    }
+
     // ── Bay dược liệu vào lò (dùng CSS custom property) ──
     function _flyDuocLieuVaoLo(node) {
       const canvas = document.getElementById('builder-canvas');
@@ -13038,8 +13201,14 @@
         setTimeout(() => lo.classList.remove('lo-dan-thanh'), 1300);
       }
       _blogLog(`🌟 ĐAN THÀNH! Kim Đan Ngưng Tụ — ${bNodes.length} Dược Liệu Luyện Thành Đại Đan!`, 'ok');
-      _setBuilderStatus('✦ ĐAN THÀNH', '#00ffaa');
+      _setBuilderStatus('✦ ĐAN THÀNH', '#ffcc44');
       showToast('🌟 Luyện Đan Thành Công!', 'success');
+      // Spawn Kim Đan golden pill — danh sách dược liệu đã dùng
+      const stepLabels = bNodes.map(n => {
+        const raw = n.getAttribute('data-raw-type') || '';
+        return raw.split(' / ')[0] || raw || n.querySelector('.node-name-xx')?.textContent || '???';
+      });
+      setTimeout(() => _spawnKimDan(stepLabels), 700);
       _wfRunning = false;
       _hideFormationOverlay();
       if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '🔥 LUYỆN LẠI'; }
@@ -13053,6 +13222,8 @@
       _hideBuilderEmpty();
       _wfRunning = false;
       _hideFormationOverlay();
+      // Xoá Kim Đan cũ khi load preset mới
+      ['kim-dan-el','kim-dan-panel'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
       const runBtn = document.getElementById('builder-run-btn');
       if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '⚡ VẬN TRẬN'; }
       _setBuilderStatus('LINH KHÍ SẴN SÀNG', '#ffaa00');
