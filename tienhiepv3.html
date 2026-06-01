@@ -13376,8 +13376,16 @@
       _hideBuilderEmpty();
       const canvas = document.getElementById('builder-canvas');
       const rect = canvas.getBoundingClientRect();
-      const x = ev.clientX - rect.left - 60;
-      const y = ev.clientY - rect.top - 20;
+
+      // Snap node to orbital ring around furnace center (same as loadPreset)
+      const _cx = rect.width / 2;
+      const _cy = rect.height / 2;
+      const _rad = Math.min(_cx * 0.68, _cy * 0.68);
+      const _slotCount = 8; // max 8 orbital slots
+      const _slotIdx = bNodes.length % _slotCount;
+      const _angle = (2 * Math.PI / _slotCount) * _slotIdx - Math.PI / 2;
+      const x = Math.round(_cx + _rad * Math.cos(_angle) - 45);
+      const y = Math.round(_cy + _rad * Math.sin(_angle) - 50);
 
       const node = document.createElement('div');
       node.className = 'canvas-node';

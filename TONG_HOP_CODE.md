@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **23:56:03 1/6/2026**
+> Cập nhật lần cuối: **23:59:04 1/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,784 dòng, 79.1 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,630 dòng, 1.60 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,638 dòng, 1.60 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,784 | 79.1 KB |
-| `tienhiepv3.html` | 21,630 | 1.60 MB |
+| `tienhiepv3.html` | 21,638 | 1.60 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **27,135** | **1.84 MB** |
+| **TỔNG** | **27,143** | **1.84 MB** |
 
 ---
 
@@ -1886,7 +1886,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 21,630 dòng · 1.60 MB
+> 21,638 dòng · 1.60 MB
 
 ```html
 <!DOCTYPE html>
@@ -15267,8 +15267,16 @@ app.listen(PORT, '0.0.0.0', () => {
       _hideBuilderEmpty();
       const canvas = document.getElementById('builder-canvas');
       const rect = canvas.getBoundingClientRect();
-      const x = ev.clientX - rect.left - 60;
-      const y = ev.clientY - rect.top - 20;
+
+      // Snap node to orbital ring around furnace center (same as loadPreset)
+      const _cx = rect.width / 2;
+      const _cy = rect.height / 2;
+      const _rad = Math.min(_cx * 0.68, _cy * 0.68);
+      const _slotCount = 8; // max 8 orbital slots
+      const _slotIdx = bNodes.length % _slotCount;
+      const _angle = (2 * Math.PI / _slotCount) * _slotIdx - Math.PI / 2;
+      const x = Math.round(_cx + _rad * Math.cos(_angle) - 45);
+      const y = Math.round(_cy + _rad * Math.sin(_angle) - 50);
 
       const node = document.createElement('div');
       node.className = 'canvas-node';
