@@ -3911,6 +3911,70 @@
         drop-shadow(0 -4px 12px rgba(255,200,0,0.4));
     }
 
+    /* ══ Herb Bowl — Dược Liệu Trong Lò ══ */
+    #ld-herb-bowl {
+      position: absolute;
+      top: 6%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: none;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      width: 175px;
+      pointer-events: auto;
+    }
+    .ld-bowl-orb {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 32%, rgba(255,255,255,0.35), var(--hc, #ff8800) 55%, rgba(0,0,0,0.55));
+      border: 2px solid var(--hc, #ff8800);
+      box-shadow: 0 0 10px var(--hc, #ff8800), 0 0 5px var(--hc, #ff8800) inset;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: transform 0.15s, box-shadow 0.2s;
+      animation: bowl-orb-float 2.2s ease-in-out infinite alternate;
+    }
+    .ld-bowl-orb:nth-child(2) { animation-duration: 2.5s; animation-delay: 0.3s; }
+    .ld-bowl-orb:nth-child(3) { animation-duration: 2.0s; animation-delay: 0.6s; }
+    .ld-bowl-orb:nth-child(4) { animation-duration: 2.8s; animation-delay: 0.2s; }
+    .ld-bowl-orb:nth-child(5) { animation-duration: 1.9s; animation-delay: 0.5s; }
+    .ld-bowl-orb:nth-child(6) { animation-duration: 2.4s; animation-delay: 0.1s; }
+    .ld-bowl-orb:hover { transform: scale(1.25); box-shadow: 0 0 20px var(--hc, #ff8800), 0 0 10px var(--hc, #ff8800) inset; }
+    .ld-bowl-orb.ld-orb-cooking {
+      animation: bowl-orb-cook 0.5s ease-in-out infinite alternate;
+      box-shadow: 0 0 25px var(--hc, #ff8800), 0 0 12px #fff inset;
+    }
+    .ld-bowl-orb.ld-orb-done {
+      opacity: 0.5;
+      filter: grayscale(0.5);
+      animation: none;
+    }
+    @keyframes bowl-orb-float {
+      from { transform: translateY(0px) scale(1); }
+      to   { transform: translateY(-5px) scale(1.04); }
+    }
+    @keyframes bowl-orb-cook {
+      from { transform: scale(1.1) rotate(-8deg); filter: brightness(1.4); }
+      to   { transform: scale(1.25) rotate(8deg);  filter: brightness(1.8); }
+    }
+    /* Flash khi thả herb vào lò */
+    .ld-herb-flash .bld-inner-glow {
+      animation: ld-flash-inner 0.6s ease-out !important;
+    }
+    @keyframes ld-flash-inner {
+      0%   { opacity: 0.6; transform: translateX(-50%) scale(1); }
+      35%  { opacity: 1;   transform: translateX(-50%) scale(1.6); }
+      100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+    }
+
     /* ── Inner glow (lò đang nóng) ── */
     .bld-inner-glow {
       position: absolute;
@@ -11244,6 +11308,8 @@
             <!-- Cauldron body -->
             <div class="bld-cauldron-wrap">
               <div class="bld-inner-glow"></div>
+              <!-- Dược liệu bên trong miệng lò -->
+              <div id="ld-herb-bowl" style="display:none;"></div>
               <svg class="bld-cauldron-svg" viewBox="0 0 220 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="cld-body" x1="0" y1="0" x2="0" y2="1">
@@ -13307,11 +13373,15 @@
     }
 
     let draggedType = null;
+    let draggedDataType = null;
     let nodeCounter = 0;
     let bNodes = [];
+    let ldHerbs = []; // dược liệu đang trong lò
 
     function drag(ev) {
-      draggedType = ev.target.innerText;
+      const el = ev.currentTarget || ev.target;
+      draggedType = el.innerText;
+      draggedDataType = el.getAttribute('data-type') || (el.closest('[data-type]') ? el.closest('[data-type]').getAttribute('data-type') : '') || '';
       ev.dataTransfer.setData("text", draggedType);
     }
     function allowDrop(ev) { ev.preventDefault(); }
@@ -13374,48 +13444,23 @@
       ev.preventDefault();
       if (!draggedType) return;
       _hideBuilderEmpty();
-      const canvas = document.getElementById('builder-canvas');
-      const rect = canvas.getBoundingClientRect();
 
-      // Snap node to orbital ring around furnace center (same as loadPreset)
-      const _cx = rect.width / 2;
-      const _cy = rect.height / 2;
-      const _rad = Math.min(_cx * 0.68, _cy * 0.68);
-      const _slotCount = 8; // max 8 orbital slots
-      const _slotIdx = bNodes.length % _slotCount;
-      const _angle = (2 * Math.PI / _slotCount) * _slotIdx - Math.PI / 2;
-      const x = Math.round(_cx + _rad * Math.cos(_angle) - 45);
-      const y = Math.round(_cy + _rad * Math.sin(_angle) - 50);
+      // Lấy thông tin dược liệu từ _nodeData
+      const _dt = (draggedDataType || '').trim();
+      const _nd = _nodeData[_dt] || {};
+      const _icon  = _nd.icon  || draggedType.trim().split(' ')[0];
+      const _color = _nd.color || '#ff8800';
+      const _xxName = _nd.xxName || draggedType.trim().split('/')[0].trim();
+      const _badge  = _nd.badge || '';
 
-      const node = document.createElement('div');
-      node.className = 'canvas-node';
-      node.style.left = x + 'px';
-      node.style.top = y + 'px';
-      node.setAttribute('data-raw-type', draggedType);
-      _setNodeVars(node, draggedType);
-      const _ddisp = currentTheme === 'xx' ? (draggedType.split(' / ')[1] || draggedType) : draggedType.split(' / ')[0];
-      node.innerHTML = _mkNodeHtml(draggedType, _ddisp);
-      node.id = 'bnode-' + nodeCounter++;
+      // Nạp dược liệu vào lò
+      ldHerbs.push({ dataType: _dt, icon: _icon, color: _color, xxName: _xxName, badge: _badge, raw: draggedType.trim() });
+      draggedType = null;
+      draggedDataType = null;
 
-      node.onmousedown = function (e) {
-        let shiftX = e.clientX - node.getBoundingClientRect().left;
-        let shiftY = e.clientY - node.getBoundingClientRect().top;
-        function moveAt(pageX, pageY) {
-          node.style.left = pageX - rect.left - shiftX + 'px';
-          node.style.top = pageY - rect.top - shiftY + 'px';
-          drawLines();
-        }
-        function onMouseMove(event) { moveAt(event.pageX, event.pageY); }
-        document.addEventListener('mousemove', onMouseMove);
-        node.onmouseup = function () {
-          document.removeEventListener('mousemove', onMouseMove);
-          node.onmouseup = null;
-        };
-      };
-      node.ondragstart = function () { return false; };
-      canvas.appendChild(node);
-      bNodes.push(node);
-      drawLines();
+      _renderHerbBowl();
+      _triggerHerbDropAnim();
+      showToast('⚗️ ' + _icon + ' ' + _xxName + ' nhập lò!', 'success');
       draggedType = null;
     }
 
@@ -13798,7 +13843,7 @@ function clearBuilder() {
     let _wfRunning = false;
     async function runWorkflow() {
       if (_wfRunning) return;
-      if (bNodes.length === 0) { showToast('Chưa có khối nào trên canvas!', 'error'); return; }
+      if (ldHerbs.length === 0) { showToast('Chưa có dược liệu trong lò!', 'error'); return; }
 
       _wfRunning = true;
       const runBtn = document.getElementById('builder-run-btn');
@@ -13808,6 +13853,8 @@ function clearBuilder() {
       bNodes.forEach(n => { n.classList.remove('sp-running','sp-done','sp-error','khai-tran'); });
       document.querySelectorAll('.builder-line').forEach(l => l.classList.remove('sp-active','sp-done-line'));
       _removeAllParticles();
+      // Reset bowl orbs
+      document.querySelectorAll('.ld-bowl-orb').forEach(o => o.classList.remove('ld-orb-cooking','ld-orb-done'));
       const panel = document.getElementById('builder-log-panel');
       const inner = document.getElementById('builder-log-inner');
       if (panel && inner) { panel.classList.add('sp-open'); inner.innerHTML = ''; }
@@ -13823,53 +13870,39 @@ function clearBuilder() {
       const lines = document.querySelectorAll('.builder-line');
       const delay = ms => new Promise(r => setTimeout(r, ms));
 
-      for (let i = 0; i < bNodes.length; i++) {
-        const node = bNodes[i];
-        const label = node.getAttribute('data-raw-type') || node.innerText.split('\n')[0];
-        const dispLabel = label.split(' / ')[0] || label;
+      for (let i = 0; i < ldHerbs.length; i++) {
+        const herb = ldHerbs[i];
+        const dispLabel = herb.xxName || herb.dataType || '';
+        const orbs = document.querySelectorAll('.ld-bowl-orb');
 
-        // activate connection line before this node (if exists)
-        if (i > 0 && lines[i-1]) {
-          lines[i-1].classList.add('sp-active');
-          _spawnParticles(i - 1);
-        }
+        // Highlight the orb for this herb
+        if (orbs[i]) orbs[i].classList.add('ld-orb-cooking');
+        if (i > 0 && orbs[i-1]) { orbs[i-1].classList.remove('ld-orb-cooking'); orbs[i-1].classList.add('ld-orb-done'); }
 
-        node.classList.add('sp-running');
-        _blogLog(`◈ Luyện Hoá ${i+1}/${bNodes.length} — ${dispLabel} thu nạp linh khí...`, 'run');
+        _blogLog(`◈ Luyện Hoá ${i+1}/${ldHerbs.length} — ${herb.icon} ${dispLabel} hoà linh khí...`, 'run');
         await delay(900 + Math.random() * 400);
-
-        // finish line
-        if (i > 0 && lines[i-1]) {
-          _removeParticles(i - 1);
-          lines[i-1].classList.remove('sp-active');
-          lines[i-1].classList.add('sp-done-line');
-        }
 
         // 5% chance of simulated error
         const fail = Math.random() < 0.05;
-        node.classList.remove('sp-running');
         if (fail) {
-          node.classList.add('sp-error');
+          if (orbs[i]) orbs[i].style.borderColor = '#ff3030';
           _blogLog(`⚠ Linh Khí Hỗn Loạn tại tầng ${i+1} — ${dispLabel} đang tái kết cấu...`, 'err');
           await delay(700);
-          node.classList.remove('sp-error');
-          node.classList.add('sp-running');
-          await delay(600);
-          node.classList.remove('sp-running');
+          if (orbs[i]) orbs[i].style.borderColor = '';
         }
-        node.classList.add('sp-done');
-        _blogLog(`✦ Pháp Khí Tựu Thành — ${dispLabel} viên mãn!`, 'ok');
+        if (orbs[i]) { orbs[i].classList.remove('ld-orb-cooking'); orbs[i].classList.add('ld-orb-done'); }
+        _blogLog(`✦ Pháp Khí Tựu Thành — ${herb.icon} ${dispLabel} viên mãn!`, 'ok');
       }
 
       // activate last line if any
-      if (lines.length > 0 && bNodes.length > 1) {
+      if (lines.length > 0 && ldHerbs.length > 1) {
         const last = lines[lines.length - 1];
         if (last && !last.classList.contains('sp-done-line')) { last.classList.add('sp-done-line'); }
       }
 
       await new Promise(r => setTimeout(r, 400));
       _removeAllParticles();
-      _blogLog(`🌟 Trận Pháp Đại Thành — ${bNodes.length} Pháp Khí Vận Hành Viên Mãn!`, 'ok');
+      _blogLog(`🌟 Luyện Đan Đại Thành — ${ldHerbs.length} Dược Liệu Vận Hành Viên Mãn!`, 'ok');
       _setBuilderStatus('✦ VIÊN MÃN', '#00ffaa');
       showToast('⚡ Trận Pháp hoàn tất!', 'success');
       _wfRunning = false;
