@@ -10463,9 +10463,11 @@
         cameraTargetPos = new THREE.Vector3(0, 30, 120);
         cameraTargetLook = new THREE.Vector3(0, 0, 0);
         // Clean up any alchemy pill / success overlays that may have escaped the container
-        window._hudWfAbort = true;
         document.querySelectorAll('.ld-pill-emerge').forEach(e => e.remove());
         document.querySelectorAll('.dan-thanh-flash-el, .dan-thanh-banner-el, .dan-thanh-ring-el, .dan-thanh-runic-el').forEach(e => e.remove());
+        // Signal any running alchemy loop to stop, then clear so next run starts fresh
+        window._hudWfAbort = true;
+        setTimeout(() => { window._hudWfAbort = false; }, 100);
       }
       window.closeHUD = closeHUD;
 
