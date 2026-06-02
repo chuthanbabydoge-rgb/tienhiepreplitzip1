@@ -10499,6 +10499,10 @@
         const _cleanPills = () => {
           document.querySelectorAll('.ld-pill-emerge').forEach(e => e.remove());
           document.querySelectorAll('.dan-thanh-flash-el, .dan-thanh-banner-el, .dan-thanh-ring-el, .dan-thanh-runic-el').forEach(e => e.remove());
+          // Also remove kim dan pill and its orbit effects (position:fixed, survive HUD close)
+          document.querySelectorAll('.ld-kim-dan, .ld-kim-dan-trail, .ld-kim-dan-ring').forEach(e => e.remove());
+          const _halo = document.getElementById('ld-bagua-halo-active');
+          if (_halo) _halo.remove();
         };
         _cleanPills();
         // Second sweep catches pills that were mid-creation at the moment of closeHUD
