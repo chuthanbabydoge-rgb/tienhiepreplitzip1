@@ -4558,6 +4558,56 @@
       100% { transform: translate(-50%,-50%) scale(2.8); opacity: 0; }
     }
 
+    /* ══ Kim Đan — Grand flying pill from furnace to top ══ */
+    .ld-kim-dan {
+      position: fixed;
+      z-index: 9999;
+      pointer-events: none;
+      font-size: 62px;
+      line-height: 1;
+      filter:
+        drop-shadow(0 0 28px #ffcc00)
+        drop-shadow(0 0 56px #ff8800)
+        drop-shadow(0 0 12px #ffffff);
+      animation: kimDanFly var(--kd-dur, 2.2s) cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+      transform-origin: center center;
+    }
+    .ld-kim-dan-trail {
+      position: fixed;
+      z-index: 9998;
+      pointer-events: none;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--tc, #ffcc00) 0%, transparent 70%);
+      animation: kimDanTrail 0.7s ease-out forwards;
+    }
+    .ld-kim-dan-ring {
+      position: fixed;
+      z-index: 9997;
+      pointer-events: none;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 200, 0, 0.7);
+      box-shadow: 0 0 18px rgba(255,150,0,0.5), inset 0 0 10px rgba(255,200,0,0.2);
+      animation: kimDanRingExpand 0.8s ease-out forwards;
+    }
+    @keyframes kimDanFly {
+      0%   { transform: translate(-50%, -50%) scale(0.3) rotate(0deg);   opacity: 0; filter: brightness(5) drop-shadow(0 0 40px #fff); }
+      8%   { transform: translate(-50%, -50%) scale(1.5) rotate(60deg);  opacity: 1; filter: brightness(3) drop-shadow(0 0 50px #ffcc00); }
+      25%  { transform: translate(-50%, calc(-50% - 18vh)) scale(1.2) rotate(200deg); opacity: 1; }
+      50%  { transform: translate(-50%, calc(-50% - 45vh)) scale(1.1) rotate(400deg); opacity: 1; filter: brightness(2) drop-shadow(0 0 36px #ff8800); }
+      75%  { transform: translate(-50%, calc(-50% - 70vh)) scale(1.0) rotate(580deg); opacity: 1; filter: brightness(1.5); }
+      88%  { transform: translate(-50%, calc(-50% - 88vh)) scale(0.9) rotate(700deg); opacity: 0.8; }
+      100% { transform: translate(-50%, calc(-50% - 100vh)) scale(0.4) rotate(800deg); opacity: 0; filter: brightness(6) drop-shadow(0 0 60px #fff); }
+    }
+    @keyframes kimDanTrail {
+      0%   { transform: translate(-50%,-50%) scale(1);   opacity: 0.8; }
+      100% { transform: translate(-50%,-50%) scale(2.5); opacity: 0; }
+    }
+    @keyframes kimDanRingExpand {
+      0%   { transform: translate(-50%,-50%) scale(0.2); opacity: 1; }
+      50%  { opacity: 0.6; }
+      100% { transform: translate(-50%,-50%) scale(3.5); opacity: 0; }
+    }
+
     .hsn-num {
       font-family: 'Orbitron', sans-serif;
       font-size: 7px;
@@ -13797,6 +13847,55 @@
       setTimeout(() => { furnace.style.filter = 'none'; furnace.style.transition = 'filter 0.6s'; }, 100);
     }
 
+    function _spawnKimDan() {
+      const furnace = document.getElementById('builder-ld-furnace');
+      if (!furnace) return;
+      const fr = furnace.getBoundingClientRect();
+      // Spawn position = furnace mouth center (fixed coords)
+      const sx = fr.left + fr.width  * 0.5;
+      const sy = fr.top  + fr.height * 0.15;
+
+      // Expanding ring burst at launch point
+      const ring = document.createElement('div');
+      ring.className = 'ld-kim-dan-ring';
+      ring.style.cssText = `left:${sx}px;top:${sy}px;width:60px;height:60px;`;
+      document.body.appendChild(ring);
+      setTimeout(() => ring.remove(), 900);
+
+      // Second ring slightly delayed
+      const ring2 = document.createElement('div');
+      ring2.className = 'ld-kim-dan-ring';
+      ring2.style.cssText = `left:${sx}px;top:${sy}px;width:80px;height:80px;animation-delay:0.15s;`;
+      document.body.appendChild(ring2);
+      setTimeout(() => ring2.remove(), 1100);
+
+      // Trail sparks spawned along the flight path
+      const trailColors = ['#ffcc00','#ff9900','#ff6600','#ffffff','#ffee88'];
+      let trailCount = 0;
+      const trailInterval = setInterval(() => {
+        trailCount++;
+        const progress = trailCount / 14;
+        const tx = sx + (Math.random() - 0.5) * 18;
+        const ty = sy - progress * window.innerHeight * 0.9;
+        const sz = 22 + Math.random() * 22;
+        const trail = document.createElement('div');
+        trail.className = 'ld-kim-dan-trail';
+        trail.style.cssText = `left:${tx}px;top:${ty}px;width:${sz}px;height:${sz}px;--tc:${trailColors[trailCount % trailColors.length]};animation-duration:${0.5 + Math.random()*0.3}s;`;
+        document.body.appendChild(trail);
+        setTimeout(() => trail.remove(), 900);
+        if (trailCount >= 14) clearInterval(trailInterval);
+      }, 120);
+
+      // The main pill element
+      const dur = 2.4;
+      const pill = document.createElement('div');
+      pill.className = 'ld-kim-dan';
+      pill.textContent = '💊';
+      pill.style.cssText = `left:${sx}px;top:${sy}px;--kd-dur:${dur}s;`;
+      document.body.appendChild(pill);
+      setTimeout(() => pill.remove(), dur * 1000 + 200);
+    }
+
     function spawnLdSparks(canvas, cx, cy) {
   const colors = ['#ff8800','#ffcc00','#ff4400','#ff6600','#ffff00','#ff9900'];
   for (let i = 0; i < 18; i++) {
@@ -13981,9 +14080,12 @@ function clearBuilder() {
 
       await new Promise(r => setTimeout(r, 500));
       _removeAllParticles();
+      // Kim Đan flies from furnace mouth to top of screen
+      _spawnKimDan();
+      await new Promise(r => setTimeout(r, 600));
       _blogLog(`🌟 Luyện Đan Đại Thành — ${ldHerbs.length} Dược Liệu Vận Hành Viên Mãn!`, 'ok');
       _setBuilderStatus('✦ VIÊN MÃN', '#00ffaa');
-      showToast('⚡ Trận Pháp hoàn tất!', 'success');
+      showToast('💊 Kim Đan Viên Mãn! Đại Thành!', 'success');
       _wfRunning = false;
       _hideFormationOverlay();
       if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '⚡ VẬN TRẬN LẠI'; }
