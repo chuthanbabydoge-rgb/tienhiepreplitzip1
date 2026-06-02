@@ -4182,9 +4182,9 @@
     /* ── Builder log panel: cổ thư cuộn ── */
     #builder-log-panel {
       position:absolute;bottom:0;left:0;right:0;z-index:30;
-      background:linear-gradient(to top,rgba(22,7,0,0.97),rgba(14,4,0,0.94));
-      border-top:1px solid rgba(255,150,0,0.28);
-      box-shadow:0 -4px 24px rgba(255,90,0,0.15);
+      background: transparent;
+      border-top: 1px solid rgba(255,150,0,0.10);
+      box-shadow: none;
       max-height:0;overflow:hidden;
       transition:max-height 0.4s ease;
     }
@@ -4193,13 +4193,14 @@
       padding:10px 16px;
       font-family:'Share Tech Mono','Fira Mono',monospace;
       font-size:11px;line-height:1.85;
-      color:rgba(255,190,80,0.55);
+      color:rgba(255,190,80,0.70);
       overflow-y:auto;max-height:160px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
     }
-    #builder-log-inner .log-run  { color:#ffaa00; text-shadow:0 0 8px rgba(255,170,0,0.6); }
-    #builder-log-inner .log-ok   { color:#00ffaa; text-shadow:0 0 8px rgba(0,255,160,0.5); }
-    #builder-log-inner .log-err  { color:#ff4444; text-shadow:0 0 8px rgba(255,60,60,0.5); }
-    #builder-log-inner .log-info { color:rgba(255,190,80,0.35); }
+    #builder-log-inner .log-run  { color:#ffcc44; text-shadow:0 0 8px rgba(255,170,0,0.8), 0 1px 4px rgba(0,0,0,0.95); }
+    #builder-log-inner .log-ok   { color:#00ffaa; text-shadow:0 0 8px rgba(0,255,160,0.7), 0 1px 4px rgba(0,0,0,0.95); }
+    #builder-log-inner .log-err  { color:#ff4444; text-shadow:0 0 8px rgba(255,60,60,0.7), 0 1px 4px rgba(0,0,0,0.95); }
+    #builder-log-inner .log-info { color:rgba(255,210,100,0.50); text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
 
     .close-btn,
     .modal-close {
@@ -4563,13 +4564,16 @@
       position: fixed;
       z-index: 9999;
       pointer-events: none;
-      font-size: 62px;
+      font-size: 68px;
       line-height: 1;
       filter:
         drop-shadow(0 0 28px #ffcc00)
         drop-shadow(0 0 56px #ff8800)
         drop-shadow(0 0 12px #ffffff);
-      animation: kimDanFly var(--kd-dur, 2.2s) cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+      animation:
+        kimDanAppear 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards,
+        kimDanSpin   4s  linear                            1s infinite,
+        kimDanGlow   2.4s ease-in-out                     1s infinite;
       transform-origin: center center;
     }
     .ld-kim-dan-trail {
@@ -4589,14 +4593,22 @@
       box-shadow: 0 0 18px rgba(255,150,0,0.5), inset 0 0 10px rgba(255,200,0,0.2);
       animation: kimDanRingExpand 0.8s ease-out forwards;
     }
-    @keyframes kimDanFly {
-      0%   { transform: translate(-50%, -50%) scale(0.3) rotate(0deg);   opacity: 0; filter: brightness(5) drop-shadow(0 0 40px #fff); }
-      8%   { transform: translate(-50%, -50%) scale(1.5) rotate(60deg);  opacity: 1; filter: brightness(3) drop-shadow(0 0 50px #ffcc00); }
-      25%  { transform: translate(-50%, calc(-50% - 18vh)) scale(1.2) rotate(200deg); opacity: 1; }
-      50%  { transform: translate(-50%, calc(-50% - 45vh)) scale(1.1) rotate(400deg); opacity: 1; filter: brightness(2) drop-shadow(0 0 36px #ff8800); }
-      75%  { transform: translate(-50%, calc(-50% - 70vh)) scale(1.0) rotate(580deg); opacity: 1; filter: brightness(1.5); }
-      88%  { transform: translate(-50%, calc(-50% - 88vh)) scale(0.9) rotate(700deg); opacity: 0.8; }
-      100% { transform: translate(-50%, calc(-50% - 100vh)) scale(0.4) rotate(800deg); opacity: 0; filter: brightness(6) drop-shadow(0 0 60px #fff); }
+    @keyframes kimDanAppear {
+      0%   { transform: translate(-50%,-50%) scale(0.1) rotate(-90deg); opacity: 0; filter: brightness(8) drop-shadow(0 0 60px #fff); }
+      60%  { transform: translate(-50%,-50%) scale(1.3) rotate(20deg);  opacity: 1; filter: brightness(3) drop-shadow(0 0 50px #ffcc00); }
+      80%  { transform: translate(-50%,-50%) scale(0.95) rotate(-8deg); opacity: 1; }
+      100% { transform: translate(-50%,-50%) scale(1.0) rotate(0deg);   opacity: 1; filter: brightness(1.8) drop-shadow(0 0 30px #ffcc00); }
+    }
+    @keyframes kimDanSpin {
+      from { transform: translate(-50%,-50%) rotate(0deg)   scale(1.0); }
+      to   { transform: translate(-50%,-50%) rotate(360deg) scale(1.0); }
+    }
+    @keyframes kimDanGlow {
+      0%   { filter: drop-shadow(0 0 20px #ffcc00) drop-shadow(0 0 40px #ff8800) drop-shadow(0 0 8px #fff); }
+      25%  { filter: drop-shadow(0 0 40px #ffffff) drop-shadow(0 0 70px #ffcc00) drop-shadow(0 0 20px #ff4400); }
+      50%  { filter: drop-shadow(0 0 28px #ff6600) drop-shadow(0 0 55px #ffaa00) drop-shadow(0 0 12px #ffff88); }
+      75%  { filter: drop-shadow(0 0 50px #ffffff) drop-shadow(0 0 80px #ff8800) drop-shadow(0 0 25px #ffcc00); }
+      100% { filter: drop-shadow(0 0 20px #ffcc00) drop-shadow(0 0 40px #ff8800) drop-shadow(0 0 8px #fff); }
     }
     @keyframes kimDanTrail {
       0%   { transform: translate(-50%,-50%) scale(1);   opacity: 0.8; }
@@ -13847,11 +13859,18 @@
       setTimeout(() => { furnace.style.filter = 'none'; furnace.style.transition = 'filter 0.6s'; }, 100);
     }
 
+    function _removeKimDan() {
+      document.querySelectorAll('.ld-kim-dan').forEach(el => el.remove());
+    }
+
     function _spawnKimDan() {
+      // Remove any previous pill first
+      _removeKimDan();
+
       const furnace = document.getElementById('builder-ld-furnace');
       if (!furnace) return;
       const fr = furnace.getBoundingClientRect();
-      // Spawn position = furnace mouth center (fixed coords)
+      // Spawn at furnace mouth center (fixed coords)
       const sx = fr.left + fr.width  * 0.5;
       const sy = fr.top  + fr.height * 0.15;
 
@@ -13862,38 +13881,46 @@
       document.body.appendChild(ring);
       setTimeout(() => ring.remove(), 900);
 
-      // Second ring slightly delayed
       const ring2 = document.createElement('div');
       ring2.className = 'ld-kim-dan-ring';
-      ring2.style.cssText = `left:${sx}px;top:${sy}px;width:80px;height:80px;animation-delay:0.15s;`;
+      ring2.style.cssText = `left:${sx}px;top:${sy}px;width:90px;height:90px;animation-delay:0.15s;`;
       document.body.appendChild(ring2);
       setTimeout(() => ring2.remove(), 1100);
 
-      // Trail sparks spawned along the flight path
-      const trailColors = ['#ffcc00','#ff9900','#ff6600','#ffffff','#ffee88'];
-      let trailCount = 0;
-      const trailInterval = setInterval(() => {
-        trailCount++;
-        const progress = trailCount / 14;
-        const tx = sx + (Math.random() - 0.5) * 18;
-        const ty = sy - progress * window.innerHeight * 0.9;
-        const sz = 22 + Math.random() * 22;
-        const trail = document.createElement('div');
-        trail.className = 'ld-kim-dan-trail';
-        trail.style.cssText = `left:${tx}px;top:${ty}px;width:${sz}px;height:${sz}px;--tc:${trailColors[trailCount % trailColors.length]};animation-duration:${0.5 + Math.random()*0.3}s;`;
-        document.body.appendChild(trail);
-        setTimeout(() => trail.remove(), 900);
-        if (trailCount >= 14) clearInterval(trailInterval);
-      }, 120);
+      // Orbit spark ring that spins around the pill while it hovers
+      const orbitInterval = setInterval(() => {
+        const pill = document.querySelector('.ld-kim-dan');
+        if (!pill) { clearInterval(orbitInterval); return; }
+        const pr = pill.getBoundingClientRect();
+        const cx = pr.left + pr.width  * 0.5;
+        const cy = pr.top  + pr.height * 0.5;
+        const angle = (Date.now() / 600) % (Math.PI * 2);
+        const radius = 46;
+        const ox = cx + Math.cos(angle) * radius;
+        const oy = cy + Math.sin(angle) * radius;
+        const spark = document.createElement('div');
+        spark.className = 'ld-kim-dan-trail';
+        const sz = 10 + Math.random() * 10;
+        const colors = ['#ffcc00','#ff9900','#ffffff','#ffee88','#ff6600'];
+        spark.style.cssText = `left:${ox}px;top:${oy}px;width:${sz}px;height:${sz}px;--tc:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${0.35+Math.random()*0.2}s;`;
+        document.body.appendChild(spark);
+        setTimeout(() => spark.remove(), 600);
+      }, 80);
 
-      // The main pill element
-      const dur = 2.4;
+      // The main pill — stays alive until _removeKimDan() is called
       const pill = document.createElement('div');
       pill.className = 'ld-kim-dan';
       pill.textContent = '💊';
-      pill.style.cssText = `left:${sx}px;top:${sy}px;--kd-dur:${dur}s;`;
+      pill.style.cssText = `left:${sx}px;top:${sy}px;`;
+      pill._orbitInterval = orbitInterval;
+      pill.addEventListener('animationend', () => {}, { once: true });
       document.body.appendChild(pill);
-      setTimeout(() => pill.remove(), dur * 1000 + 200);
+
+      // Stop orbit sparks if pill is removed externally
+      const obs = new MutationObserver(() => {
+        if (!document.contains(pill)) { clearInterval(orbitInterval); obs.disconnect(); }
+      });
+      obs.observe(document.body, { childList: true, subtree: false });
     }
 
     function spawnLdSparks(canvas, cx, cy) {
@@ -13984,7 +14011,8 @@ function clearBuilder() {
       const runBtn = document.getElementById('builder-run-btn');
       if (runBtn) { runBtn.disabled = true; runBtn.style.opacity = '0.55'; runBtn.innerHTML = '☯ ĐANG VẬN...'; }
 
-      // reset states
+      // reset states — clear any previous kim đan pill
+      _removeKimDan();
       bNodes.forEach(n => { n.classList.remove('sp-running','sp-done','sp-error','khai-tran'); });
       document.querySelectorAll('.builder-line').forEach(l => l.classList.remove('sp-active','sp-done-line'));
       _removeAllParticles();
