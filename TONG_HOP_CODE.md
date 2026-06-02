@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **23:32:53 2/6/2026**
+> Cập nhật lần cuối: **23:45:19 2/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,784 dòng, 79.1 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,671 dòng, 1.60 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,669 dòng, 1.60 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,784 | 79.1 KB |
-| `tienhiepv3.html` | 21,671 | 1.60 MB |
+| `tienhiepv3.html` | 21,669 | 1.60 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **27,176** | **1.84 MB** |
+| **TỔNG** | **27,174** | **1.84 MB** |
 
 ---
 
@@ -1886,7 +1886,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 21,671 dòng · 1.60 MB
+> 21,669 dòng · 1.60 MB
 
 ```html
 <!DOCTYPE html>
@@ -15884,10 +15884,8 @@ function clearBuilder() {
           const sx   = nr.left - cr.left + nr.width/2;
           const sy   = cr.top  - cr.top  + 20; // drop from top of canvas
           _bldThrowHerb(canvas, sx, 20, _dd.icon, _dd.color, () => {
-            n.classList.add('ld-herb-land');
-            n.style.opacity   = '';
-            n.style.transform = '';
             spawnLdSparks(canvas, sx, nr.top - cr.top + 20);
+            // Node stays hidden — ingredient is inside the furnace
           });
         }, delay);
       });

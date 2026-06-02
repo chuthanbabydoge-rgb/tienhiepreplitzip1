@@ -640,10 +640,8 @@ html = html.replace(
           const sx   = nr.left - cr.left + nr.width/2;
           const sy   = cr.top  - cr.top  + 20; // drop from top of canvas
           _bldThrowHerb(canvas, sx, 20, _dd.icon, _dd.color, () => {
-            n.classList.add('ld-herb-land');
-            n.style.opacity   = '';
-            n.style.transform = '';
             spawnLdSparks(canvas, sx, nr.top - cr.top + 20);
+            // Node stays hidden — ingredient is inside the furnace
           });
         }, delay);
       });

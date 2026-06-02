@@ -13761,6 +13761,31 @@
       if (!_bldEmbersStarted) { _bldEmbersStarted = true; _bldStartEmbers(); }
     }
 
+    function _renderHerbBowl() {
+      const bowl = document.getElementById('ld-herb-bowl');
+      if (!bowl) return;
+      if (ldHerbs.length === 0) { bowl.style.display = 'none'; return; }
+      bowl.style.display = 'flex';
+      bowl.innerHTML = ldHerbs.map(h =>
+        `<div class="ld-bowl-orb" style="--hc:${h.color};background:radial-gradient(circle at 38% 38%,${h.color}55,${h.color}22);border:1px solid ${h.color}88;box-shadow:0 0 10px ${h.color}66;" title="${h.xxName}">${h.icon}</div>`
+      ).join('');
+    }
+
+    function _triggerHerbDropAnim() {
+      const furnace = document.getElementById('builder-ld-furnace');
+      if (!furnace) return;
+      const canvas = document.getElementById('builder-canvas');
+      if (!canvas) return;
+      const fr = furnace.getBoundingClientRect();
+      const cr = canvas.getBoundingClientRect();
+      const cx = fr.left - cr.left + fr.width * 0.5;
+      const cy = fr.top  - cr.top  + fr.height * 0.12;
+      _bldFurnaceBurst(canvas, cx, cy);
+      furnace.style.filter = 'brightness(2.5) saturate(2)';
+      furnace.style.transition = 'filter 0.1s';
+      setTimeout(() => { furnace.style.filter = 'none'; furnace.style.transition = 'filter 0.6s'; }, 100);
+    }
+
     function spawnLdSparks(canvas, cx, cy) {
   const colors = ['#ff8800','#ffcc00','#ff4400','#ff6600','#ffff00','#ff9900'];
   for (let i = 0; i < 18; i++) {
@@ -13993,10 +14018,8 @@ function clearBuilder() {
           const sx   = nr.left - cr.left + nr.width/2;
           const sy   = cr.top  - cr.top  + 20; // drop from top of canvas
           _bldThrowHerb(canvas, sx, 20, _dd.icon, _dd.color, () => {
-            n.classList.add('ld-herb-land');
-            n.style.opacity   = '';
-            n.style.transform = '';
             spawnLdSparks(canvas, sx, nr.top - cr.top + 20);
+            // Node stays hidden — ingredient is inside the furnace
           });
         }, delay);
       });
