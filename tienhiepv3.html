@@ -8223,6 +8223,25 @@
       document.getElementById('hud-close').addEventListener('click', closeHUD);
       document.getElementById('hud-backdrop').addEventListener('click', closeHUD);
 
+      // ── Watch #hud.active removal → nuke pills instantly, regardless of which button closed HUD ──
+      (function() {
+        const _hudEl = document.getElementById('hud');
+        if (!_hudEl) return;
+        const _pillNuke = () => {
+          clearTimeout(window._ldPillSpawnTimer);
+          window._ldPillSpawnTimer = null;
+          document.querySelectorAll('.ld-pill-emerge').forEach(e => e.remove());
+          document.querySelectorAll('.dan-thanh-flash-el,.dan-thanh-banner-el,.dan-thanh-ring-el,.dan-thanh-runic-el').forEach(e => e.remove());
+        };
+        new MutationObserver(mutations => {
+          mutations.forEach(m => {
+            if (m.type === 'attributes' && m.attributeName === 'class') {
+              if (!_hudEl.classList.contains('active')) _pillNuke();
+            }
+          });
+        }).observe(_hudEl, { attributes: true, attributeFilter: ['class'] });
+      })();
+
       // ── EDGE SWIPE TO CLOSE HUD ────────────────────────────────────────
       (function() {
         const SWIPE_THRESHOLD   = 80;   // px to trigger close
@@ -10408,15 +10427,20 @@
               clearTimeout(window._ldPillSpawnTimer);
               window._ldPillSpawnTimer = setTimeout(() => {
                 window._ldPillSpawnTimer = null;
+                // Only create pill if HUD is still active
+                const _hud = document.getElementById('hud');
+                if (!_hud || !_hud.classList.contains('active')) return;
                 // Attach pill to body with fixed positioning anchored to furnace center
-                // so it never escapes into the universe backdrop
                 const fr = furnaceEl.getBoundingClientRect();
                 const pill = document.createElement('div');
                 pill.className = 'ld-pill-emerge';
                 pill.textContent = '💊';
                 pill.style.cssText = `position:fixed;left:${fr.left + fr.width/2}px;top:${fr.top + fr.height/2}px;`;
                 document.body.appendChild(pill);
-                setTimeout(() => { if (pill.parentNode) pill.remove(); }, 2100);
+                // Self-destruct when CSS animation ends (most reliable cleanup)
+                pill.addEventListener('animationend', () => { if (pill.parentNode) pill.remove(); }, { once: true });
+                // Failsafe timer
+                setTimeout(() => { if (pill.parentNode) pill.remove(); }, 2200);
               }, 300);
             }
             // Completion glow overlay
