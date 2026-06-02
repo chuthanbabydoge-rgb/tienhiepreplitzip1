@@ -10427,19 +10427,18 @@
               clearTimeout(window._ldPillSpawnTimer);
               window._ldPillSpawnTimer = setTimeout(() => {
                 window._ldPillSpawnTimer = null;
-                // Only create pill if HUD is still active
+                // Append pill INSIDE #hud — it auto-hides when HUD closes (display:none)
                 const _hud = document.getElementById('hud');
                 if (!_hud || !_hud.classList.contains('active')) return;
-                // Attach pill to body with fixed positioning anchored to furnace center
                 const fr = furnaceEl.getBoundingClientRect();
                 const pill = document.createElement('div');
                 pill.className = 'ld-pill-emerge';
                 pill.textContent = '💊';
-                pill.style.cssText = `position:fixed;left:${fr.left + fr.width/2}px;top:${fr.top + fr.height/2}px;`;
-                document.body.appendChild(pill);
-                // Self-destruct when CSS animation ends (most reliable cleanup)
+                // position:fixed inside #hud (no transform ancestor) = viewport-relative,
+                // but the element is part of #hud's render tree so it vanishes with HUD
+                pill.style.cssText = `position:fixed;left:${fr.left + fr.width/2}px;top:${fr.top + fr.height/2}px;z-index:9500;`;
+                _hud.appendChild(pill);
                 pill.addEventListener('animationend', () => { if (pill.parentNode) pill.remove(); }, { once: true });
-                // Failsafe timer
                 setTimeout(() => { if (pill.parentNode) pill.remove(); }, 2200);
               }, 300);
             }
