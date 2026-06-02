@@ -4646,7 +4646,7 @@
     }
     /* Pill emerge completion */
     .ld-pill-emerge {
-      position: fixed;
+      position: absolute;
       left: 50%; top: 50%;
       transform: translate(-50%, -50%);
       font-size: 52px;
@@ -10434,9 +10434,9 @@
                 const pill = document.createElement('div');
                 pill.className = 'ld-pill-emerge';
                 pill.textContent = '💊';
-                // position:fixed inside #hud (no transform ancestor) = viewport-relative,
-                // but the element is part of #hud's render tree so it vanishes with HUD
-                pill.style.cssText = `position:fixed;left:${fr.left + fr.width/2}px;top:${fr.top + fr.height/2}px;z-index:9500;`;
+                // position:absolute inside #hud (which is fixed; inset:0) = same screen coords
+                // but guaranteed to hide when #hud gets display:none (unlike position:fixed)
+                pill.style.cssText = `position:absolute;left:${fr.left + fr.width/2}px;top:${fr.top + fr.height/2}px;z-index:9500;`;
                 _hud.appendChild(pill);
                 pill.addEventListener('animationend', () => { if (pill.parentNode) pill.remove(); }, { once: true });
                 setTimeout(() => { if (pill.parentNode) pill.remove(); }, 2200);
