@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **00:36:11 3/6/2026**
+> Cập nhật lần cuối: **02:26:13 3/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,789 dòng, 79.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(22,134 dòng, 1.62 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(22,317 dòng, 1.63 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,789 | 79.2 KB |
-| `tienhiepv3.html` | 22,134 | 1.62 MB |
+| `tienhiepv3.html` | 22,317 | 1.63 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **27,644** | **1.86 MB** |
+| **TỔNG** | **27,827** | **1.87 MB** |
 
 ---
 
@@ -1891,7 +1891,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 22,134 dòng · 1.62 MB
+> 22,317 dòng · 1.63 MB
 
 ```html
 <!DOCTYPE html>
@@ -10119,6 +10119,25 @@ app.listen(PORT, '0.0.0.0', () => {
       document.getElementById('hud-close').addEventListener('click', closeHUD);
       document.getElementById('hud-backdrop').addEventListener('click', closeHUD);
 
+      // ── Watch #hud.active removal → nuke pills instantly, regardless of which button closed HUD ──
+      (function() {
+        const _hudEl = document.getElementById('hud');
+        if (!_hudEl) return;
+        const _pillNuke = () => {
+          clearTimeout(window._ldPillSpawnTimer);
+          window._ldPillSpawnTimer = null;
+          document.querySelectorAll('.ld-pill-emerge').forEach(e => e.remove());
+          document.querySelectorAll('.dan-thanh-flash-el,.dan-thanh-banner-el,.dan-thanh-ring-el,.dan-thanh-runic-el').forEach(e => e.remove());
+        };
+        new MutationObserver(mutations => {
+          mutations.forEach(m => {
+            if (m.type === 'attributes' && m.attributeName === 'class') {
+              if (!_hudEl.classList.contains('active')) _pillNuke();
+            }
+          });
+        }).observe(_hudEl, { attributes: true, attributeFilter: ['class'] });
+      })();
+
       // ── EDGE SWIPE TO CLOSE HUD ────────────────────────────────────────
       (function() {
         const SWIPE_THRESHOLD   = 80;   // px to trigger close
@@ -12300,12 +12319,23 @@ app.listen(PORT, '0.0.0.0', () => {
             if (furnaceEl) {
               furnaceEl.classList.add('absorb');
               setTimeout(() => furnaceEl.classList.remove('absorb'), 600);
-              setTimeout(() => {
+              // Store timer so closeHUD() can cancel it before pill is created
+              clearTimeout(window._ldPillSpawnTimer);
+              window._ldPillSpawnTimer = setTimeout(() => {
+                window._ldPillSpawnTimer = null;
+                // Append pill INSIDE #hud — it auto-hides when HUD closes (display:none)
+                const _hud = document.getElementById('hud');
+                if (!_hud || !_hud.classList.contains('active')) return;
+                const fr = furnaceEl.getBoundingClientRect();
                 const pill = document.createElement('div');
                 pill.className = 'ld-pill-emerge';
                 pill.textContent = '💊';
-                furnaceEl.appendChild(pill);
-                setTimeout(() => { if (pill.parentNode) pill.remove(); }, 2000);
+                // position:absolute inside #hud (which is fixed; inset:0) = same screen coords
+                // but guaranteed to hide when #hud gets display:none (unlike position:fixed)
+                pill.style.cssText = `position:absolute;left:${fr.left + fr.width/2}px;top:${fr.top + fr.height/2}px;z-index:9500;`;
+                _hud.appendChild(pill);
+                pill.addEventListener('animationend', () => { if (pill.parentNode) pill.remove(); }, { once: true });
+                setTimeout(() => { if (pill.parentNode) pill.remove(); }, 2200);
               }, 300);
             }
             // Completion glow overlay
@@ -12316,6 +12346,8 @@ app.listen(PORT, '0.0.0.0', () => {
             setTimeout(() => { if (overlay.parentNode) container.removeChild(overlay); }, 1200);
             if (statusEl) { statusEl.textContent = `✨ Luyện đan thành công! ${dat.length} dược liệu đã hội tụ!`; statusEl.className = 'wf-run-status done'; }
             if (btn) { btn.disabled = false; btn.textContent = '🔥 LUYỆN LẠI'; }
+            // 🎆 ĐAN THÀNH — dramatic success effects
+            _danThanhSuccess();
             return;
           }
           if (statusEl) { statusEl.textContent = `🔥 Đang luyện dược liệu ${step + 1}/${dat.length}: ${dat[step].name}...`; statusEl.className = 'wf-run-status running'; }
@@ -12356,6 +12388,20 @@ app.listen(PORT, '0.0.0.0', () => {
         selectedPlanet = null;
         cameraTargetPos = new THREE.Vector3(0, 30, 120);
         cameraTargetLook = new THREE.Vector3(0, 0, 0);
+        // Cancel pending pill creation (race condition: pill spawns 300ms after success)
+        clearTimeout(window._ldPillSpawnTimer);
+        window._ldPillSpawnTimer = null;
+        // Clean up any alchemy pill / success overlays immediately
+        const _cleanPills = () => {
+          document.querySelectorAll('.ld-pill-emerge').forEach(e => e.remove());
+          document.querySelectorAll('.dan-thanh-flash-el, .dan-thanh-banner-el, .dan-thanh-ring-el, .dan-thanh-runic-el').forEach(e => e.remove());
+        };
+        _cleanPills();
+        // Second sweep catches pills that were mid-creation at the moment of closeHUD
+        setTimeout(_cleanPills, 400);
+        // Signal any running alchemy loop to stop, then clear so next run starts fresh
+        window._hudWfAbort = true;
+        setTimeout(() => { window._hudWfAbort = false; }, 100);
       }
       window.closeHUD = closeHUD;
 
@@ -15962,6 +16008,143 @@ app.listen(PORT, '0.0.0.0', () => {
     let _bldEmbersStarted = false;
     function _bldEnsureEmbers() {
       if (!_bldEmbersStarted) { _bldEmbersStarted = true; _bldStartEmbers(); }
+    }
+
+    // ══ ĐAN THÀNH — Web Audio sound ════════════════════════════════
+    function _danThanhSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = ctx.currentTime;
+
+        // Layer 1 — Deep gong boom on flash (80 / 160 / 240 Hz sines)
+        [80, 160, 240].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const g   = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now);
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.65, now + 1.6);
+          g.gain.setValueAtTime(0.28 / (i + 1), now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+          osc.connect(g); g.connect(ctx.destination);
+          osc.start(now); osc.stop(now + 1.6);
+        });
+
+        // Layer 2 — Rising bell cascade (528 → 1056 Hz harmonics)
+        [528, 660, 792, 1056].forEach((freq, i) => {
+          const t   = now + 0.05 + i * 0.09;
+          const osc = ctx.createOscillator();
+          const g   = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq * 0.78, t);
+          osc.frequency.linearRampToValueAtTime(freq, t + 0.06);
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(0.22 / (i + 1), t + 0.03);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 1.9);
+          osc.connect(g); g.connect(ctx.destination);
+          osc.start(t); osc.stop(t + 1.9);
+        });
+
+        // Layer 3 — Sparkle shimmer pings (8 random high-freq pings during fireworks)
+        for (let i = 0; i < 8; i++) {
+          const t    = now + 0.08 + Math.random() * 0.45;
+          const freq = 1300 + Math.random() * 2600;
+          const osc  = ctx.createOscillator();
+          const g    = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t);
+          g.gain.setValueAtTime(0.07, t);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+          osc.connect(g); g.connect(ctx.destination);
+          osc.start(t); osc.stop(t + 0.28);
+        }
+
+        // Layer 4 — Triumphant chord at banner reveal (C5 E5 G5 B5 = Cmaj7)
+        const cTime = now + 0.12;
+        [523, 659, 784, 988].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const g   = ctx.createGain();
+          osc.type = i === 0 ? 'triangle' : 'sine';
+          osc.frequency.setValueAtTime(freq, cTime);
+          g.gain.setValueAtTime(0.13, cTime);
+          g.gain.setValueAtTime(0.13, cTime + 0.08);
+          g.gain.exponentialRampToValueAtTime(0.001, cTime + 2.8);
+          osc.connect(g); g.connect(ctx.destination);
+          osc.start(cTime); osc.stop(cTime + 2.8);
+        });
+
+        setTimeout(() => { try { ctx.close(); } catch(_){} }, 4000);
+      } catch(e) { /* Audio not available — silent fail */ }
+    }
+
+    // ══ ĐAN THÀNH — dramatic success effects ═══════════════════════
+    function _danThanhSuccess() {
+      _danThanhSound();
+      // 1. Golden screen flash
+      const flash = document.createElement('div');
+      flash.className = 'dan-thanh-flash-el';
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), 950);
+
+      // 2. Rotating runic symbol (丹) behind banner
+      const runic = document.createElement('div');
+      runic.className = 'dan-thanh-runic-el';
+      runic.textContent = '丹';
+      document.body.appendChild(runic);
+      setTimeout(() => runic.remove(), 2300);
+
+      // 3. Expanding shockwave rings from screen center
+      const cx = window.innerWidth / 2, cy = window.innerHeight * 0.45;
+      [0, 180, 360].forEach(delay => {
+        setTimeout(() => {
+          const ring = document.createElement('div');
+          ring.className = 'dan-thanh-ring-el';
+          ring.style.cssText = `left:${cx}px;top:${cy}px;animation:danThanh-ring-expand ${0.9 + delay/1000}s ease-out forwards;`;
+          document.body.appendChild(ring);
+          setTimeout(() => ring.remove(), 1100 + delay);
+        }, delay);
+      });
+
+      // 4. Golden spark fireworks burst
+      const SPARK_EMOJIS = ['✨','⭐','💫','🌟','✦','⬟'];
+      const SPARK_COLORS = ['#ffe030','#ffaa00','#ff6600','#ffffff','#ffdd66','#ffcc33'];
+      for (let i = 0; i < 28; i++) {
+        setTimeout(() => {
+          const s = document.createElement('div');
+          const angle = (i / 28) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+          const dist = 120 + Math.random() * 220;
+          const sx = Math.cos(angle) * dist + (Math.random() - 0.5) * 40;
+          const sy = Math.sin(angle) * dist - Math.random() * 60;
+          const size = 14 + Math.random() * 18;
+          const dur = 0.7 + Math.random() * 0.6;
+          const color = SPARK_COLORS[i % SPARK_COLORS.length];
+          s.style.cssText = `
+            position:fixed;left:${cx}px;top:${cy}px;
+            font-size:${size}px;line-height:1;pointer-events:none;z-index:99993;
+            color:${color};text-shadow:0 0 8px ${color},0 0 16px ${color};
+            --sx:${sx}px;--sy:${sy}px;
+            animation:danThanh-spark ${dur}s ease-out forwards;
+          `;
+          s.textContent = SPARK_EMOJIS[Math.floor(Math.random() * SPARK_EMOJIS.length)];
+          document.body.appendChild(s);
+          setTimeout(() => s.remove(), dur * 1000 + 50);
+        }, Math.random() * 200);
+      }
+
+      // 5. "ĐAN THÀNH!" banner
+      setTimeout(() => {
+        const banner = document.createElement('div');
+        banner.className = 'dan-thanh-banner-el';
+        banner.innerHTML = `<span class="dtb-title">⚗️ ĐAN THÀNH! ⚗️</span><span class="dtb-sub">— LINH ĐAN XUẤT LÒ —</span>`;
+        document.body.appendChild(banner);
+        setTimeout(() => banner.remove(), 2850);
+      }, 120);
+
+      // 6. Screen shake on the HUD modal / builder container
+      const modal = document.getElementById('builder-modal') || document.getElementById('hud');
+      if (modal) {
+        modal.style.animation = 'danThanh-shake 0.55s ease-out';
+        setTimeout(() => { modal.style.animation = ''; }, 600);
+      }
     }
 
     function _renderHerbBowl() {
