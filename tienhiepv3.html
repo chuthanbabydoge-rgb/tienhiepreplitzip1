@@ -3949,21 +3949,32 @@
     .ld-bowl-orb:nth-child(6) { animation-duration: 2.4s; animation-delay: 0.1s; }
     .ld-bowl-orb:hover { transform: scale(1.25); box-shadow: 0 0 20px var(--hc, #ff8800), 0 0 10px var(--hc, #ff8800) inset; }
     .ld-bowl-orb.ld-orb-cooking {
-      animation: bowl-orb-cook 0.5s ease-in-out infinite alternate;
-      box-shadow: 0 0 25px var(--hc, #ff8800), 0 0 12px #fff inset;
+      animation: bowl-orb-cook 0.45s ease-in-out infinite alternate;
+      box-shadow: 0 0 30px var(--hc, #ff8800), 0 0 16px #fff inset, 0 0 50px var(--hc, #ff8800);
+      z-index: 2;
     }
     .ld-bowl-orb.ld-orb-done {
-      opacity: 0.5;
-      filter: grayscale(0.5);
+      opacity: 0.35;
+      filter: grayscale(0.7) brightness(0.7);
       animation: none;
+      transform: scale(0.85);
+    }
+    .ld-bowl-orb.ld-orb-absorb {
+      animation: bowl-orb-absorb 0.55s cubic-bezier(0.4,0,1,1) forwards !important;
+      pointer-events: none;
     }
     @keyframes bowl-orb-float {
       from { transform: translateY(0px) scale(1); }
       to   { transform: translateY(-5px) scale(1.04); }
     }
     @keyframes bowl-orb-cook {
-      from { transform: scale(1.1) rotate(-8deg); filter: brightness(1.4); }
-      to   { transform: scale(1.25) rotate(8deg);  filter: brightness(1.8); }
+      from { transform: scale(1.15) rotate(-10deg); filter: brightness(1.6) saturate(1.5); }
+      to   { transform: scale(1.32) rotate(10deg);  filter: brightness(2.2) saturate(2); }
+    }
+    @keyframes bowl-orb-absorb {
+      0%   { transform: scale(1.3); opacity: 1; filter: brightness(3) saturate(2); }
+      40%  { transform: scale(1.6); opacity: 1; filter: brightness(4) saturate(3); }
+      100% { transform: scale(0) rotate(720deg); opacity: 0; filter: brightness(6); }
     }
     /* Flash khi thả herb vào lò */
     .ld-herb-flash .bld-inner-glow {
@@ -13895,28 +13906,71 @@ function clearBuilder() {
       const lines = document.querySelectorAll('.builder-line');
       const delay = ms => new Promise(r => setTimeout(r, ms));
 
+      // Helper: absorb one orb into furnace with burst
+      function _absorbOrb(orb) {
+        if (!orb) return;
+        orb.classList.remove('ld-orb-cooking', 'ld-orb-done');
+        orb.classList.add('ld-orb-absorb');
+        // Furnace burst at mouth
+        const furnaceEl = document.getElementById('builder-ld-furnace');
+        const canvasEl  = document.getElementById('builder-canvas');
+        if (furnaceEl && canvasEl) {
+          const fr = furnaceEl.getBoundingClientRect();
+          const cr = canvasEl.getBoundingClientRect();
+          const cx = fr.left - cr.left + fr.width * 0.5;
+          const cy = fr.top  - cr.top  + fr.height * 0.12;
+          _bldFurnaceBurst(canvasEl, cx, cy);
+          furnaceEl.style.filter = 'brightness(3) saturate(2.5)';
+          furnaceEl.style.transition = 'filter 0.08s';
+          setTimeout(() => { furnaceEl.style.filter = 'none'; furnaceEl.style.transition = 'filter 0.55s'; }, 80);
+        }
+        setTimeout(() => { if (orb.parentNode) orb.remove(); }, 560);
+      }
+
       for (let i = 0; i < ldHerbs.length; i++) {
         const herb = ldHerbs[i];
         const dispLabel = herb.xxName || herb.dataType || '';
         const orbs = document.querySelectorAll('.ld-bowl-orb');
 
-        // Highlight the orb for this herb
-        if (orbs[i]) orbs[i].classList.add('ld-orb-cooking');
-        if (i > 0 && orbs[i-1]) { orbs[i-1].classList.remove('ld-orb-cooking'); orbs[i-1].classList.add('ld-orb-done'); }
+        // Light up current orb
+        if (orbs[i]) {
+          orbs[i].classList.remove('ld-orb-done');
+          orbs[i].classList.add('ld-orb-cooking');
+        }
 
         _blogLog(`◈ Luyện Hoá ${i+1}/${ldHerbs.length} — ${herb.icon} ${dispLabel} hoà linh khí...`, 'run');
-        await delay(900 + Math.random() * 400);
+        await delay(800 + Math.random() * 350);
 
         // 5% chance of simulated error
         const fail = Math.random() < 0.05;
         if (fail) {
-          if (orbs[i]) orbs[i].style.borderColor = '#ff3030';
+          if (orbs[i]) { orbs[i].style.boxShadow = '0 0 30px #ff3030, 0 0 12px #ff3030 inset'; }
           _blogLog(`⚠ Linh Khí Hỗn Loạn tại tầng ${i+1} — ${dispLabel} đang tái kết cấu...`, 'err');
-          await delay(700);
-          if (orbs[i]) orbs[i].style.borderColor = '';
+          await delay(650);
+          if (orbs[i]) orbs[i].style.boxShadow = '';
         }
-        if (orbs[i]) { orbs[i].classList.remove('ld-orb-cooking'); orbs[i].classList.add('ld-orb-done'); }
+
+        // Absorb orb into furnace with burst + spin-to-zero animation
+        _absorbOrb(orbs[i]);
+        await delay(350);
         _blogLog(`✦ Pháp Khí Tựu Thành — ${herb.icon} ${dispLabel} viên mãn!`, 'ok');
+      }
+
+      // Final grand burst
+      await new Promise(r => setTimeout(r, 300));
+      const furnaceFinal = document.getElementById('builder-ld-furnace');
+      const canvasFinal  = document.getElementById('builder-canvas');
+      if (furnaceFinal && canvasFinal) {
+        const fr = furnaceFinal.getBoundingClientRect();
+        const cr = canvasFinal.getBoundingClientRect();
+        const cx = fr.left - cr.left + fr.width * 0.5;
+        const cy = fr.top  - cr.top  + fr.height * 0.12;
+        for (let b = 0; b < 3; b++) {
+          setTimeout(() => _bldFurnaceBurst(canvasFinal, cx + (Math.random()-0.5)*30, cy + (Math.random()-0.5)*20), b * 130);
+        }
+        furnaceFinal.style.filter = 'brightness(5) saturate(3) hue-rotate(20deg)';
+        furnaceFinal.style.transition = 'filter 0.1s';
+        setTimeout(() => { furnaceFinal.style.filter = 'none'; furnaceFinal.style.transition = 'filter 1s'; }, 100);
       }
 
       // activate last line if any
@@ -13925,7 +13979,7 @@ function clearBuilder() {
         if (last && !last.classList.contains('sp-done-line')) { last.classList.add('sp-done-line'); }
       }
 
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 500));
       _removeAllParticles();
       _blogLog(`🌟 Luyện Đan Đại Thành — ${ldHerbs.length} Dược Liệu Vận Hành Viên Mãn!`, 'ok');
       _setBuilderStatus('✦ VIÊN MÃN', '#00ffaa');
