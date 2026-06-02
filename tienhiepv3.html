@@ -4646,7 +4646,7 @@
     }
     /* Pill emerge completion */
     .ld-pill-emerge {
-      position: absolute;
+      position: fixed;
       left: 50%; top: 50%;
       transform: translate(-50%, -50%);
       font-size: 52px;
@@ -10405,11 +10405,15 @@
               furnaceEl.classList.add('absorb');
               setTimeout(() => furnaceEl.classList.remove('absorb'), 600);
               setTimeout(() => {
+                // Attach pill to body with fixed positioning anchored to furnace center
+                // so it never escapes into the universe backdrop
+                const fr = furnaceEl.getBoundingClientRect();
                 const pill = document.createElement('div');
                 pill.className = 'ld-pill-emerge';
                 pill.textContent = '💊';
-                furnaceEl.appendChild(pill);
-                setTimeout(() => { if (pill.parentNode) pill.remove(); }, 2000);
+                pill.style.cssText = `position:fixed;left:${fr.left + fr.width/2}px;top:${fr.top + fr.height/2}px;`;
+                document.body.appendChild(pill);
+                setTimeout(() => { if (pill.parentNode) pill.remove(); }, 2100);
               }, 300);
             }
             // Completion glow overlay
