@@ -10404,7 +10404,10 @@
             if (furnaceEl) {
               furnaceEl.classList.add('absorb');
               setTimeout(() => furnaceEl.classList.remove('absorb'), 600);
-              setTimeout(() => {
+              // Store timer so closeHUD() can cancel it before pill is created
+              clearTimeout(window._ldPillSpawnTimer);
+              window._ldPillSpawnTimer = setTimeout(() => {
+                window._ldPillSpawnTimer = null;
                 // Attach pill to body with fixed positioning anchored to furnace center
                 // so it never escapes into the universe backdrop
                 const fr = furnaceEl.getBoundingClientRect();
@@ -10466,9 +10469,17 @@
         selectedPlanet = null;
         cameraTargetPos = new THREE.Vector3(0, 30, 120);
         cameraTargetLook = new THREE.Vector3(0, 0, 0);
-        // Clean up any alchemy pill / success overlays that may have escaped the container
-        document.querySelectorAll('.ld-pill-emerge').forEach(e => e.remove());
-        document.querySelectorAll('.dan-thanh-flash-el, .dan-thanh-banner-el, .dan-thanh-ring-el, .dan-thanh-runic-el').forEach(e => e.remove());
+        // Cancel pending pill creation (race condition: pill spawns 300ms after success)
+        clearTimeout(window._ldPillSpawnTimer);
+        window._ldPillSpawnTimer = null;
+        // Clean up any alchemy pill / success overlays immediately
+        const _cleanPills = () => {
+          document.querySelectorAll('.ld-pill-emerge').forEach(e => e.remove());
+          document.querySelectorAll('.dan-thanh-flash-el, .dan-thanh-banner-el, .dan-thanh-ring-el, .dan-thanh-runic-el').forEach(e => e.remove());
+        };
+        _cleanPills();
+        // Second sweep catches pills that were mid-creation at the moment of closeHUD
+        setTimeout(_cleanPills, 400);
         // Signal any running alchemy loop to stop, then clear so next run starts fresh
         window._hudWfAbort = true;
         setTimeout(() => { window._hudWfAbort = false; }, 100);
