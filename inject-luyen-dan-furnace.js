@@ -625,7 +625,11 @@ html = html.replace(
         node.style.transform = 'scale(0.01)';
         canvas.appendChild(node);
         bNodes.push(node);
+        // Also register in ldHerbs so runWorkflow can process it
+        const _dd2 = _nodeData[name] || _ndList[_nodeHash(name) % _ndList.length];
+        ldHerbs.push({ dataType: name, icon: _dd2.icon, color: _dd2.color, xxName: name_xx, badge: '', raw: rawName });
       });
+      _renderHerbBowl();
       drawLines();
       // Staggered ingredient throw — each node pops in after flying into furnace
       _bldEnsureEmbers();
