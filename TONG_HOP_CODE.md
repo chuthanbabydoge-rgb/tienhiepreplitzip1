@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **00:25:54 3/6/2026**
+> Cập nhật lần cuối: **00:36:11 3/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,789 dòng, 79.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(22,054 dòng, 1.62 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(22,134 dòng, 1.62 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,789 | 79.2 KB |
-| `tienhiepv3.html` | 22,054 | 1.62 MB |
+| `tienhiepv3.html` | 22,134 | 1.62 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **27,564** | **1.86 MB** |
+| **TỔNG** | **27,644** | **1.86 MB** |
 
 ---
 
@@ -1891,7 +1891,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 22,054 dòng · 1.62 MB
+> 22,134 dòng · 1.62 MB
 
 ```html
 <!DOCTYPE html>
@@ -6589,6 +6589,86 @@ app.listen(PORT, '0.0.0.0', () => {
       0%   { transform: translate(-50%,-50%) scale(0);   opacity: 0.9; }
       60%  { transform: translate(-50%,-50%) scale(1.8); opacity: 0.5; }
       100% { transform: translate(-50%,-50%) scale(2.8); opacity: 0; }
+    }
+
+    /* ══ ĐAN THÀNH SUCCESS EFFECTS ══════════════════════════════════ */
+    @keyframes danThanh-flash {
+      0%   { opacity: 0; }
+      12%  { opacity: 1; }
+      55%  { opacity: 0.7; }
+      100% { opacity: 0; }
+    }
+    @keyframes danThanh-banner {
+      0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.3) rotate(-8deg); filter: brightness(4); }
+      18%  { opacity: 1; transform: translate(-50%,-50%) scale(1.18) rotate(2deg); filter: brightness(2); }
+      35%  { opacity: 1; transform: translate(-50%,-50%) scale(0.96) rotate(-1deg); filter: brightness(1.4); }
+      60%  { opacity: 1; transform: translate(-50%,-50%) scale(1.04) rotate(0deg); filter: brightness(1.2); }
+      80%  { opacity: 1; transform: translate(-50%,-50%) scale(1.0) rotate(0deg); filter: brightness(1); }
+      100% { opacity: 0; transform: translate(-50%,-50%) scale(0.85) rotate(0deg); filter: brightness(1); }
+    }
+    @keyframes danThanh-shake {
+      0%,100% { transform: translateX(0); }
+      10%  { transform: translateX(-7px) rotate(-0.6deg); }
+      20%  { transform: translateX(7px)  rotate(0.6deg); }
+      30%  { transform: translateX(-5px) rotate(-0.4deg); }
+      40%  { transform: translateX(5px)  rotate(0.4deg); }
+      50%  { transform: translateX(-3px); }
+      60%  { transform: translateX(3px); }
+      70%  { transform: translateX(-2px); }
+      80%  { transform: translateX(2px); }
+    }
+    @keyframes danThanh-spark {
+      0%   { transform: translate(0,0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--sx),var(--sy)) scale(0); opacity: 0; }
+    }
+    @keyframes danThanh-ring-expand {
+      0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.9; }
+      100% { transform: translate(-50%,-50%) scale(4);  opacity: 0; }
+    }
+    @keyframes danThanh-runic {
+      0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.5) rotate(0deg); }
+      20%  { opacity: 0.7; transform: translate(-50%,-50%) scale(1.1) rotate(30deg); }
+      60%  { opacity: 0.4; transform: translate(-50%,-50%) scale(1.3) rotate(120deg); }
+      100% { opacity: 0;   transform: translate(-50%,-50%) scale(1.6) rotate(200deg); }
+    }
+    .dan-thanh-flash-el {
+      position: fixed; inset: 0; z-index: 99990; pointer-events: none;
+      background: radial-gradient(ellipse at center, rgba(255,220,80,0.92) 0%, rgba(255,120,0,0.55) 35%, transparent 70%);
+      animation: danThanh-flash 0.9s ease-out forwards;
+    }
+    .dan-thanh-banner-el {
+      position: fixed; left: 50%; top: 45%;
+      z-index: 99995; pointer-events: none;
+      animation: danThanh-banner 2.8s cubic-bezier(0.22,1,0.36,1) forwards;
+      text-align: center; line-height: 1.1;
+      filter: drop-shadow(0 0 30px #ffcc00) drop-shadow(0 0 60px #ff6600);
+    }
+    .dan-thanh-banner-el .dtb-title {
+      font-size: 52px; font-weight: 900; letter-spacing: 6px;
+      color: #fff8c0;
+      text-shadow: 0 0 20px #ffcc00, 0 0 40px #ff8800, 0 0 80px #ff4400, 2px 2px 0 rgba(0,0,0,0.6);
+      font-family: serif;
+      display: block;
+    }
+    .dan-thanh-banner-el .dtb-sub {
+      font-size: 16px; letter-spacing: 8px; color: rgba(255,220,100,0.9);
+      text-shadow: 0 0 12px #ffaa00; display: block; margin-top: 6px;
+    }
+    .dan-thanh-ring-el {
+      position: fixed; width: 120px; height: 120px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,200,50,0.85);
+      box-shadow: 0 0 20px rgba(255,160,0,0.5);
+      z-index: 99991; pointer-events: none;
+    }
+    .dan-thanh-runic-el {
+      position: fixed; left: 50%; top: 45%;
+      width: 340px; height: 340px;
+      z-index: 99992; pointer-events: none;
+      font-size: 100px; text-align: center; line-height: 340px;
+      color: rgba(255,200,50,0.55);
+      text-shadow: 0 0 40px #ff8800;
+      animation: danThanh-runic 2.2s ease-out forwards;
     }
 
     /* ══ Kim Đan — Grand flying pill from furnace to top ══ */
