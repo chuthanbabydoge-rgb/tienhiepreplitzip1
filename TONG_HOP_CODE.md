@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **23:45:19 2/6/2026**
+> Cập nhật lần cuối: **00:25:54 3/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,784 dòng, 79.1 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(21,669 dòng, 1.60 MB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,789 dòng, 79.2 KB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(22,054 dòng, 1.62 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -22,8 +22,8 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 39 | 987 B |
-| `server.js` | 1,784 | 79.1 KB |
-| `tienhiepv3.html` | 21,669 | 1.60 MB |
+| `server.js` | 1,789 | 79.2 KB |
+| `tienhiepv3.html` | 22,054 | 1.62 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **27,174** | **1.84 MB** |
+| **TỔNG** | **27,564** | **1.86 MB** |
 
 ---
 
@@ -91,7 +91,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,784 dòng · 79.1 KB
+> 1,789 dòng · 79.2 KB
 
 ```javascript
 const express = require('express');
@@ -552,10 +552,15 @@ function requireAuth(req, res, next) {
   res.send(`<!DOCTYPE html><html><head>
     <script>
       var loginUrl = ${JSON.stringify(loginUrl)};
-      // If inside an iframe (Replit preview), navigate the top-level window
-      if (window.top !== window.self) {
-        window.top.location.href = loginUrl;
-      } else {
+      try {
+        // If inside an iframe (Replit preview), navigate the top-level window
+        if (window.top !== window.self) {
+          window.top.location.href = loginUrl;
+        } else {
+          window.location.href = loginUrl;
+        }
+      } catch (e) {
+        // Fallback if top-level navigation is blocked (iframe sandbox)
         window.location.href = loginUrl;
       }
     </script>
@@ -1886,7 +1891,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 21,669 dòng · 1.60 MB
+> 22,054 dòng · 1.62 MB
 
 ```html
 <!DOCTYPE html>
@@ -5790,16 +5795,17 @@ app.listen(PORT, '0.0.0.0', () => {
     /* ── Cauldron SVG ── */
     .bld-cauldron-wrap {
       position: relative;
-      width: 200px;
-      height: 180px;
+      width: 230px;
+      height: 210px;
       z-index: 2;
     }
     .bld-cauldron-svg {
       width: 100%;
       height: 100%;
       filter:
-        drop-shadow(0 0 18px rgba(255,100,0,0.7))
-        drop-shadow(0 -4px 12px rgba(255,200,0,0.4));
+        drop-shadow(0 0 28px rgba(255,120,0,0.85))
+        drop-shadow(0 0 55px rgba(255,80,0,0.45))
+        drop-shadow(0 -6px 18px rgba(255,220,0,0.35));
     }
 
     /* ══ Herb Bowl — Dược Liệu Trong Lò ══ */
@@ -5840,21 +5846,32 @@ app.listen(PORT, '0.0.0.0', () => {
     .ld-bowl-orb:nth-child(6) { animation-duration: 2.4s; animation-delay: 0.1s; }
     .ld-bowl-orb:hover { transform: scale(1.25); box-shadow: 0 0 20px var(--hc, #ff8800), 0 0 10px var(--hc, #ff8800) inset; }
     .ld-bowl-orb.ld-orb-cooking {
-      animation: bowl-orb-cook 0.5s ease-in-out infinite alternate;
-      box-shadow: 0 0 25px var(--hc, #ff8800), 0 0 12px #fff inset;
+      animation: bowl-orb-cook 0.45s ease-in-out infinite alternate;
+      box-shadow: 0 0 30px var(--hc, #ff8800), 0 0 16px #fff inset, 0 0 50px var(--hc, #ff8800);
+      z-index: 2;
     }
     .ld-bowl-orb.ld-orb-done {
-      opacity: 0.5;
-      filter: grayscale(0.5);
+      opacity: 0.35;
+      filter: grayscale(0.7) brightness(0.7);
       animation: none;
+      transform: scale(0.85);
+    }
+    .ld-bowl-orb.ld-orb-absorb {
+      animation: bowl-orb-absorb 0.55s cubic-bezier(0.4,0,1,1) forwards !important;
+      pointer-events: none;
     }
     @keyframes bowl-orb-float {
       from { transform: translateY(0px) scale(1); }
       to   { transform: translateY(-5px) scale(1.04); }
     }
     @keyframes bowl-orb-cook {
-      from { transform: scale(1.1) rotate(-8deg); filter: brightness(1.4); }
-      to   { transform: scale(1.25) rotate(8deg);  filter: brightness(1.8); }
+      from { transform: scale(1.15) rotate(-10deg); filter: brightness(1.6) saturate(1.5); }
+      to   { transform: scale(1.32) rotate(10deg);  filter: brightness(2.2) saturate(2); }
+    }
+    @keyframes bowl-orb-absorb {
+      0%   { transform: scale(1.3); opacity: 1; filter: brightness(3) saturate(2); }
+      40%  { transform: scale(1.6); opacity: 1; filter: brightness(4) saturate(3); }
+      100% { transform: scale(0) rotate(720deg); opacity: 0; filter: brightness(6); }
     }
     /* Flash khi thả herb vào lò */
     .ld-herb-flash .bld-inner-glow {
@@ -6015,6 +6032,141 @@ app.listen(PORT, '0.0.0.0', () => {
       to   { opacity: 1;   transform: translateX(-50%) scaleX(1.1); }
     }
 
+    /* ══ Furnace altar / pedestal ══ */
+    .bld-altar {
+      width: 230px;
+      height: 20px;
+      margin-top: -4px;
+      background: linear-gradient(180deg, #6b3a10 0%, #3a1800 55%, #1e0c00 100%);
+      border-radius: 6px 6px 12px 12px;
+      border-top: 2px solid rgba(220,150,50,0.55);
+      box-shadow:
+        0 6px 22px rgba(0,0,0,0.75),
+        0 -3px 14px rgba(255,100,0,0.25),
+        inset 0 1px 0 rgba(255,210,70,0.18);
+      position: relative;
+      z-index: 1;
+      flex-shrink: 0;
+    }
+    .bld-altar::before {
+      content: '— ✦ — ✦ — ✦ —';
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%,-50%);
+      font-size: 7px;
+      letter-spacing: 3px;
+      color: rgba(255,200,60,0.45);
+      white-space: nowrap;
+    }
+    .bld-altar::after {
+      content: '';
+      position: absolute;
+      bottom: -10px; left: 50%;
+      transform: translateX(-50%);
+      width: 250px; height: 10px;
+      background: linear-gradient(180deg, #2e1400 0%, #160900 100%);
+      border-radius: 0 0 10px 10px;
+      border-top: 1px solid rgba(180,100,20,0.28);
+    }
+
+    /* ══ Rotating rune orbit ring around cauldron ══ */
+    .bld-furnace-rune-ring {
+      position: absolute;
+      left: 50%;
+      bottom: 52px;
+      width: 280px; height: 280px;
+      pointer-events: none;
+      z-index: 1;
+      animation: bldRuneRingCW 14s linear infinite;
+    }
+    .bld-furnace-rune-ring span {
+      position: absolute;
+      left: 50%; top: 50%;
+      font-size: 13px;
+      color: rgba(255,180,40,0.5);
+      text-shadow: 0 0 10px rgba(255,140,0,0.7), 0 0 20px rgba(255,60,0,0.35);
+      transform:
+        translate(-50%,-50%)
+        rotate(calc(var(--ri) * 45deg))
+        translateY(-128px)
+        rotate(calc(var(--ri) * -45deg));
+      animation: bldRuneGlow 2.8s ease-in-out calc(var(--ri) * 0.35s) infinite alternate;
+    }
+    .bld-furnace-rune-ring2 {
+      position: absolute;
+      left: 50%;
+      bottom: 52px;
+      width: 230px; height: 230px;
+      pointer-events: none;
+      z-index: 1;
+      animation: bldRuneRingCCW 20s linear infinite;
+    }
+    .bld-furnace-rune-ring2 span {
+      position: absolute;
+      left: 50%; top: 50%;
+      font-size: 9px;
+      color: rgba(180,220,255,0.4);
+      text-shadow: 0 0 8px rgba(100,180,255,0.6);
+      transform:
+        translate(-50%,-50%)
+        rotate(calc(var(--ri) * 45deg))
+        translateY(-104px)
+        rotate(calc(var(--ri) * -45deg));
+      animation: bldRuneGlow2 3.5s ease-in-out calc(var(--ri) * 0.44s) infinite alternate;
+    }
+    @keyframes bldRuneRingCW  { from { transform: translateX(-50%) rotate(0deg);    } to { transform: translateX(-50%) rotate(360deg);  } }
+    @keyframes bldRuneRingCCW { from { transform: translateX(-50%) rotate(0deg);    } to { transform: translateX(-50%) rotate(-360deg); } }
+    @keyframes bldRuneGlow {
+      from { opacity: 0.25; filter: drop-shadow(0 0 3px rgba(255,140,0,0.4)); }
+      to   { opacity: 0.80; filter: drop-shadow(0 0 12px rgba(255,200,0,0.9)) drop-shadow(0 0 5px rgba(255,80,0,0.6)); }
+    }
+    @keyframes bldRuneGlow2 {
+      from { opacity: 0.15; filter: drop-shadow(0 0 3px rgba(100,180,255,0.4)); }
+      to   { opacity: 0.55; filter: drop-shadow(0 0 10px rgba(160,220,255,0.8)); }
+    }
+
+    /* ══ Bát Quái Halo — wraps pill ══ */
+    .ld-bagua-halo-wrap {
+      position: fixed;
+      z-index: 9998;
+      pointer-events: none;
+      width: 0; height: 0;
+      opacity: 0;
+      animation: ldBaguaFadeIn 0.9s ease-out 0.4s forwards;
+    }
+    .ld-bagua-halo-inner {
+      position: absolute;
+      left: 0; top: 0;
+      width: 180px; height: 180px;
+      transform: translate(-50%,-50%);
+      animation: ldBaguaRotCW 9s linear infinite;
+    }
+    .ld-bagua-halo-inner span {
+      position: absolute;
+      left: 50%; top: 50%;
+      font-size: 20px;
+      color: rgba(255,210,60,0.85);
+      text-shadow: 0 0 14px rgba(255,160,0,0.9), 0 0 28px rgba(255,80,0,0.55);
+      transform:
+        translate(-50%,-50%)
+        rotate(calc(var(--bi) * 45deg))
+        translateY(-78px)
+        rotate(calc(var(--bi) * -45deg));
+      animation: ldBaguaGlow 3.2s ease-in-out calc(var(--bi) * 0.4s) infinite alternate;
+    }
+    @keyframes ldBaguaFadeIn {
+      0%   { opacity: 0; }
+      100% { opacity: 1; }
+    }
+    @keyframes ldBaguaRotCW {
+      from { transform: translate(-50%,-50%) rotate(0deg);   }
+      to   { transform: translate(-50%,-50%) rotate(360deg); }
+    }
+    @keyframes ldBaguaGlow {
+      from { opacity: 0.4; text-shadow: 0 0 8px rgba(255,140,0,0.5); }
+      to   { opacity: 1.0; text-shadow: 0 0 20px rgba(255,230,0,1), 0 0 38px rgba(255,100,0,0.75), 0 0 6px #fff; }
+    }
+
     /* ── Nodes: when builder has furnace, float above it in a ring ── */
     .canvas-node { cursor: grab; transition: filter 0.2s; }
     .canvas-node:hover { filter: brightness(1.25) !important; }
@@ -6062,9 +6214,9 @@ app.listen(PORT, '0.0.0.0', () => {
     /* ── Builder log panel: cổ thư cuộn ── */
     #builder-log-panel {
       position:absolute;bottom:0;left:0;right:0;z-index:30;
-      background:linear-gradient(to top,rgba(22,7,0,0.97),rgba(14,4,0,0.94));
-      border-top:1px solid rgba(255,150,0,0.28);
-      box-shadow:0 -4px 24px rgba(255,90,0,0.15);
+      background: transparent;
+      border-top: 1px solid rgba(255,150,0,0.10);
+      box-shadow: none;
       max-height:0;overflow:hidden;
       transition:max-height 0.4s ease;
     }
@@ -6073,13 +6225,14 @@ app.listen(PORT, '0.0.0.0', () => {
       padding:10px 16px;
       font-family:'Share Tech Mono','Fira Mono',monospace;
       font-size:11px;line-height:1.85;
-      color:rgba(255,190,80,0.55);
+      color:rgba(255,190,80,0.70);
       overflow-y:auto;max-height:160px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
     }
-    #builder-log-inner .log-run  { color:#ffaa00; text-shadow:0 0 8px rgba(255,170,0,0.6); }
-    #builder-log-inner .log-ok   { color:#00ffaa; text-shadow:0 0 8px rgba(0,255,160,0.5); }
-    #builder-log-inner .log-err  { color:#ff4444; text-shadow:0 0 8px rgba(255,60,60,0.5); }
-    #builder-log-inner .log-info { color:rgba(255,190,80,0.35); }
+    #builder-log-inner .log-run  { color:#ffcc44; text-shadow:0 0 8px rgba(255,170,0,0.8), 0 1px 4px rgba(0,0,0,0.95); }
+    #builder-log-inner .log-ok   { color:#00ffaa; text-shadow:0 0 8px rgba(0,255,160,0.7), 0 1px 4px rgba(0,0,0,0.95); }
+    #builder-log-inner .log-err  { color:#ff4444; text-shadow:0 0 8px rgba(255,60,60,0.7), 0 1px 4px rgba(0,0,0,0.95); }
+    #builder-log-inner .log-info { color:rgba(255,210,100,0.50); text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
 
     .close-btn,
     .modal-close {
@@ -6436,6 +6589,67 @@ app.listen(PORT, '0.0.0.0', () => {
       0%   { transform: translate(-50%,-50%) scale(0);   opacity: 0.9; }
       60%  { transform: translate(-50%,-50%) scale(1.8); opacity: 0.5; }
       100% { transform: translate(-50%,-50%) scale(2.8); opacity: 0; }
+    }
+
+    /* ══ Kim Đan — Grand flying pill from furnace to top ══ */
+    .ld-kim-dan {
+      position: fixed;
+      z-index: 9999;
+      pointer-events: none;
+      font-size: 68px;
+      line-height: 1;
+      filter:
+        drop-shadow(0 0 28px #ffcc00)
+        drop-shadow(0 0 56px #ff8800)
+        drop-shadow(0 0 12px #ffffff);
+      animation:
+        kimDanAppear 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards,
+        kimDanSpin   4s  linear                            1s infinite,
+        kimDanGlow   2.4s ease-in-out                     1s infinite;
+      transform-origin: center center;
+    }
+    .ld-kim-dan-trail {
+      position: fixed;
+      z-index: 9998;
+      pointer-events: none;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--tc, #ffcc00) 0%, transparent 70%);
+      animation: kimDanTrail 0.7s ease-out forwards;
+    }
+    .ld-kim-dan-ring {
+      position: fixed;
+      z-index: 9997;
+      pointer-events: none;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 200, 0, 0.7);
+      box-shadow: 0 0 18px rgba(255,150,0,0.5), inset 0 0 10px rgba(255,200,0,0.2);
+      animation: kimDanRingExpand 0.8s ease-out forwards;
+    }
+    @keyframes kimDanAppear {
+      0%   { transform: translate(-50%,-50%) scale(0.1) rotate(-90deg); opacity: 0; filter: brightness(8) drop-shadow(0 0 60px #fff); }
+      60%  { transform: translate(-50%,-50%) scale(1.3) rotate(20deg);  opacity: 1; filter: brightness(3) drop-shadow(0 0 50px #ffcc00); }
+      80%  { transform: translate(-50%,-50%) scale(0.95) rotate(-8deg); opacity: 1; }
+      100% { transform: translate(-50%,-50%) scale(1.0) rotate(0deg);   opacity: 1; filter: brightness(1.8) drop-shadow(0 0 30px #ffcc00); }
+    }
+    @keyframes kimDanSpin {
+      from { transform: translate(-50%,-50%) rotate(0deg)   scale(1.0); }
+      to   { transform: translate(-50%,-50%) rotate(360deg) scale(1.0); }
+    }
+    @keyframes kimDanGlow {
+      0%   { filter: drop-shadow(0 0 20px #ffcc00) drop-shadow(0 0 40px #ff8800) drop-shadow(0 0 8px #fff); }
+      25%  { filter: drop-shadow(0 0 40px #ffffff) drop-shadow(0 0 70px #ffcc00) drop-shadow(0 0 20px #ff4400); }
+      50%  { filter: drop-shadow(0 0 28px #ff6600) drop-shadow(0 0 55px #ffaa00) drop-shadow(0 0 12px #ffff88); }
+      75%  { filter: drop-shadow(0 0 50px #ffffff) drop-shadow(0 0 80px #ff8800) drop-shadow(0 0 25px #ffcc00); }
+      100% { filter: drop-shadow(0 0 20px #ffcc00) drop-shadow(0 0 40px #ff8800) drop-shadow(0 0 8px #fff); }
+    }
+    @keyframes kimDanTrail {
+      0%   { transform: translate(-50%,-50%) scale(1);   opacity: 0.8; }
+      100% { transform: translate(-50%,-50%) scale(2.5); opacity: 0; }
+    }
+    @keyframes kimDanRingExpand {
+      0%   { transform: translate(-50%,-50%) scale(0.2); opacity: 1; }
+      50%  { opacity: 0.6; }
+      100% { transform: translate(-50%,-50%) scale(3.5); opacity: 0; }
     }
 
     .hsn-num {
@@ -13176,6 +13390,21 @@ app.listen(PORT, '0.0.0.0', () => {
             <!-- Ground glow -->
             <div class="bld-furnace-ground-glow"></div>
 
+            <!-- Outer rune orbit ring (gold, CW) -->
+            <div class="bld-furnace-rune-ring">
+              <span style="--ri:0">☰</span><span style="--ri:1">☷</span>
+              <span style="--ri:2">☵</span><span style="--ri:3">☲</span>
+              <span style="--ri:4">☳</span><span style="--ri:5">☴</span>
+              <span style="--ri:6">☶</span><span style="--ri:7">☱</span>
+            </div>
+            <!-- Inner rune orbit ring (blue, CCW) -->
+            <div class="bld-furnace-rune-ring2">
+              <span style="--ri:0">乾</span><span style="--ri:1">坤</span>
+              <span style="--ri:2">坎</span><span style="--ri:3">離</span>
+              <span style="--ri:4">震</span><span style="--ri:5">巽</span>
+              <span style="--ri:6">艮</span><span style="--ri:7">兌</span>
+            </div>
+
             <!-- Smoke wisps rise above cauldron -->
             <div class="bld-smoke-wrap">
               <div class="bld-smoke sm1"></div>
@@ -13278,6 +13507,9 @@ app.listen(PORT, '0.0.0.0', () => {
               <!-- 丹 inscription -->
               <div class="bld-dan-rune">丹</div>
             </div>
+
+            <!-- Stone altar / pedestal under cauldron -->
+            <div class="bld-altar"></div>
           </div>
 
           <!-- Log panel (slides up from bottom) -->
@@ -15652,6 +15884,112 @@ app.listen(PORT, '0.0.0.0', () => {
       if (!_bldEmbersStarted) { _bldEmbersStarted = true; _bldStartEmbers(); }
     }
 
+    function _renderHerbBowl() {
+      const bowl = document.getElementById('ld-herb-bowl');
+      if (!bowl) return;
+      if (ldHerbs.length === 0) { bowl.style.display = 'none'; return; }
+      bowl.style.display = 'flex';
+      bowl.innerHTML = ldHerbs.map(h =>
+        `<div class="ld-bowl-orb" style="--hc:${h.color};background:radial-gradient(circle at 38% 38%,${h.color}55,${h.color}22);border:1px solid ${h.color}88;box-shadow:0 0 10px ${h.color}66;" title="${h.xxName}">${h.icon}</div>`
+      ).join('');
+    }
+
+    function _triggerHerbDropAnim() {
+      const furnace = document.getElementById('builder-ld-furnace');
+      if (!furnace) return;
+      const canvas = document.getElementById('builder-canvas');
+      if (!canvas) return;
+      const fr = furnace.getBoundingClientRect();
+      const cr = canvas.getBoundingClientRect();
+      const cx = fr.left - cr.left + fr.width * 0.5;
+      const cy = fr.top  - cr.top  + fr.height * 0.12;
+      _bldFurnaceBurst(canvas, cx, cy);
+      furnace.style.filter = 'brightness(2.5) saturate(2)';
+      furnace.style.transition = 'filter 0.1s';
+      setTimeout(() => { furnace.style.filter = 'none'; furnace.style.transition = 'filter 0.6s'; }, 100);
+    }
+
+    function _removeKimDan() {
+      document.querySelectorAll('.ld-kim-dan').forEach(el => el.remove());
+      const halo = document.getElementById('ld-bagua-halo-active');
+      if (halo) halo.remove();
+    }
+
+    function _spawnKimDan() {
+      // Remove any previous pill first
+      _removeKimDan();
+
+      const furnace = document.getElementById('builder-ld-furnace');
+      if (!furnace) return;
+      const fr = furnace.getBoundingClientRect();
+      // Spawn at furnace mouth center (fixed coords)
+      const sx = fr.left + fr.width  * 0.5;
+      const sy = fr.top  + fr.height * 0.15;
+
+      // Expanding ring burst at launch point
+      const ring = document.createElement('div');
+      ring.className = 'ld-kim-dan-ring';
+      ring.style.cssText = `left:${sx}px;top:${sy}px;width:60px;height:60px;`;
+      document.body.appendChild(ring);
+      setTimeout(() => ring.remove(), 900);
+
+      const ring2 = document.createElement('div');
+      ring2.className = 'ld-kim-dan-ring';
+      ring2.style.cssText = `left:${sx}px;top:${sy}px;width:90px;height:90px;animation-delay:0.15s;`;
+      document.body.appendChild(ring2);
+      setTimeout(() => ring2.remove(), 1100);
+
+      // Orbit spark ring that spins around the pill while it hovers
+      const orbitInterval = setInterval(() => {
+        const pill = document.querySelector('.ld-kim-dan');
+        if (!pill) { clearInterval(orbitInterval); return; }
+        const pr = pill.getBoundingClientRect();
+        const cx = pr.left + pr.width  * 0.5;
+        const cy = pr.top  + pr.height * 0.5;
+        const angle = (Date.now() / 600) % (Math.PI * 2);
+        const radius = 46;
+        const ox = cx + Math.cos(angle) * radius;
+        const oy = cy + Math.sin(angle) * radius;
+        const spark = document.createElement('div');
+        spark.className = 'ld-kim-dan-trail';
+        const sz = 10 + Math.random() * 10;
+        const colors = ['#ffcc00','#ff9900','#ffffff','#ffee88','#ff6600'];
+        spark.style.cssText = `left:${ox}px;top:${oy}px;width:${sz}px;height:${sz}px;--tc:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${0.35+Math.random()*0.2}s;`;
+        document.body.appendChild(spark);
+        setTimeout(() => spark.remove(), 600);
+      }, 80);
+
+      // Bát Quái halo spinning behind pill
+      const haloWrap = document.createElement('div');
+      haloWrap.id = 'ld-bagua-halo-active';
+      haloWrap.className = 'ld-bagua-halo-wrap';
+      haloWrap.style.cssText = `left:${sx}px;top:${sy}px;`;
+      const haloInner = document.createElement('div');
+      haloInner.className = 'ld-bagua-halo-inner';
+      ['☰','☷','☵','☲','☳','☴','☶','☱'].forEach((t, i) => {
+        const s = document.createElement('span');
+        s.textContent = t;
+        s.style.setProperty('--bi', i);
+        haloInner.appendChild(s);
+      });
+      haloWrap.appendChild(haloInner);
+      document.body.appendChild(haloWrap);
+
+      // The main pill — stays alive until _removeKimDan() is called
+      const pill = document.createElement('div');
+      pill.className = 'ld-kim-dan';
+      pill.textContent = '💊';
+      pill.style.cssText = `left:${sx}px;top:${sy}px;`;
+      pill._orbitInterval = orbitInterval;
+      document.body.appendChild(pill);
+
+      // Stop orbit sparks if pill is removed externally
+      const obs = new MutationObserver(() => {
+        if (!document.contains(pill)) { clearInterval(orbitInterval); obs.disconnect(); }
+      });
+      obs.observe(document.body, { childList: true, subtree: false });
+    }
+
     function spawnLdSparks(canvas, cx, cy) {
   const colors = ['#ff8800','#ffcc00','#ff4400','#ff6600','#ffff00','#ff9900'];
   for (let i = 0; i < 18; i++) {
@@ -15740,7 +16078,8 @@ function clearBuilder() {
       const runBtn = document.getElementById('builder-run-btn');
       if (runBtn) { runBtn.disabled = true; runBtn.style.opacity = '0.55'; runBtn.innerHTML = '☯ ĐANG VẬN...'; }
 
-      // reset states
+      // reset states — clear any previous kim đan pill
+      _removeKimDan();
       bNodes.forEach(n => { n.classList.remove('sp-running','sp-done','sp-error','khai-tran'); });
       document.querySelectorAll('.builder-line').forEach(l => l.classList.remove('sp-active','sp-done-line'));
       _removeAllParticles();
@@ -15761,28 +16100,71 @@ function clearBuilder() {
       const lines = document.querySelectorAll('.builder-line');
       const delay = ms => new Promise(r => setTimeout(r, ms));
 
+      // Helper: absorb one orb into furnace with burst
+      function _absorbOrb(orb) {
+        if (!orb) return;
+        orb.classList.remove('ld-orb-cooking', 'ld-orb-done');
+        orb.classList.add('ld-orb-absorb');
+        // Furnace burst at mouth
+        const furnaceEl = document.getElementById('builder-ld-furnace');
+        const canvasEl  = document.getElementById('builder-canvas');
+        if (furnaceEl && canvasEl) {
+          const fr = furnaceEl.getBoundingClientRect();
+          const cr = canvasEl.getBoundingClientRect();
+          const cx = fr.left - cr.left + fr.width * 0.5;
+          const cy = fr.top  - cr.top  + fr.height * 0.12;
+          _bldFurnaceBurst(canvasEl, cx, cy);
+          furnaceEl.style.filter = 'brightness(3) saturate(2.5)';
+          furnaceEl.style.transition = 'filter 0.08s';
+          setTimeout(() => { furnaceEl.style.filter = 'none'; furnaceEl.style.transition = 'filter 0.55s'; }, 80);
+        }
+        setTimeout(() => { if (orb.parentNode) orb.remove(); }, 560);
+      }
+
       for (let i = 0; i < ldHerbs.length; i++) {
         const herb = ldHerbs[i];
         const dispLabel = herb.xxName || herb.dataType || '';
         const orbs = document.querySelectorAll('.ld-bowl-orb');
 
-        // Highlight the orb for this herb
-        if (orbs[i]) orbs[i].classList.add('ld-orb-cooking');
-        if (i > 0 && orbs[i-1]) { orbs[i-1].classList.remove('ld-orb-cooking'); orbs[i-1].classList.add('ld-orb-done'); }
+        // Light up current orb
+        if (orbs[i]) {
+          orbs[i].classList.remove('ld-orb-done');
+          orbs[i].classList.add('ld-orb-cooking');
+        }
 
         _blogLog(`◈ Luyện Hoá ${i+1}/${ldHerbs.length} — ${herb.icon} ${dispLabel} hoà linh khí...`, 'run');
-        await delay(900 + Math.random() * 400);
+        await delay(800 + Math.random() * 350);
 
         // 5% chance of simulated error
         const fail = Math.random() < 0.05;
         if (fail) {
-          if (orbs[i]) orbs[i].style.borderColor = '#ff3030';
+          if (orbs[i]) { orbs[i].style.boxShadow = '0 0 30px #ff3030, 0 0 12px #ff3030 inset'; }
           _blogLog(`⚠ Linh Khí Hỗn Loạn tại tầng ${i+1} — ${dispLabel} đang tái kết cấu...`, 'err');
-          await delay(700);
-          if (orbs[i]) orbs[i].style.borderColor = '';
+          await delay(650);
+          if (orbs[i]) orbs[i].style.boxShadow = '';
         }
-        if (orbs[i]) { orbs[i].classList.remove('ld-orb-cooking'); orbs[i].classList.add('ld-orb-done'); }
+
+        // Absorb orb into furnace with burst + spin-to-zero animation
+        _absorbOrb(orbs[i]);
+        await delay(350);
         _blogLog(`✦ Pháp Khí Tựu Thành — ${herb.icon} ${dispLabel} viên mãn!`, 'ok');
+      }
+
+      // Final grand burst
+      await new Promise(r => setTimeout(r, 300));
+      const furnaceFinal = document.getElementById('builder-ld-furnace');
+      const canvasFinal  = document.getElementById('builder-canvas');
+      if (furnaceFinal && canvasFinal) {
+        const fr = furnaceFinal.getBoundingClientRect();
+        const cr = canvasFinal.getBoundingClientRect();
+        const cx = fr.left - cr.left + fr.width * 0.5;
+        const cy = fr.top  - cr.top  + fr.height * 0.12;
+        for (let b = 0; b < 3; b++) {
+          setTimeout(() => _bldFurnaceBurst(canvasFinal, cx + (Math.random()-0.5)*30, cy + (Math.random()-0.5)*20), b * 130);
+        }
+        furnaceFinal.style.filter = 'brightness(5) saturate(3) hue-rotate(20deg)';
+        furnaceFinal.style.transition = 'filter 0.1s';
+        setTimeout(() => { furnaceFinal.style.filter = 'none'; furnaceFinal.style.transition = 'filter 1s'; }, 100);
       }
 
       // activate last line if any
@@ -15791,11 +16173,14 @@ function clearBuilder() {
         if (last && !last.classList.contains('sp-done-line')) { last.classList.add('sp-done-line'); }
       }
 
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 500));
       _removeAllParticles();
+      // Kim Đan flies from furnace mouth to top of screen
+      _spawnKimDan();
+      await new Promise(r => setTimeout(r, 600));
       _blogLog(`🌟 Luyện Đan Đại Thành — ${ldHerbs.length} Dược Liệu Vận Hành Viên Mãn!`, 'ok');
       _setBuilderStatus('✦ VIÊN MÃN', '#00ffaa');
-      showToast('⚡ Trận Pháp hoàn tất!', 'success');
+      showToast('💊 Kim Đan Viên Mãn! Đại Thành!', 'success');
       _wfRunning = false;
       _hideFormationOverlay();
       if (runBtn) { runBtn.disabled = false; runBtn.style.opacity = ''; runBtn.innerHTML = '⚡ VẬN TRẬN LẠI'; }
@@ -15804,6 +16189,7 @@ function clearBuilder() {
     function loadPreset(index) {
       bNodes.forEach(n => n.remove());
       bNodes = [];
+      ldHerbs = [];
       nodeCounter = 0;
       document.getElementById('builder-svg').innerHTML = _spGradDefs();
       _hideBuilderEmpty();
@@ -15869,7 +16255,11 @@ function clearBuilder() {
         node.style.transform = 'scale(0.01)';
         canvas.appendChild(node);
         bNodes.push(node);
+        // Also register in ldHerbs so runWorkflow can process it
+        const _dd2 = _nodeData[name] || _ndList[_nodeHash(name) % _ndList.length];
+        ldHerbs.push({ dataType: name, icon: _dd2.icon, color: _dd2.color, xxName: name_xx, badge: '', raw: rawName });
       });
+      _renderHerbBowl();
       drawLines();
       // Staggered ingredient throw — each node pops in after flying into furnace
       _bldEnsureEmbers();

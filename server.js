@@ -456,10 +456,15 @@ function requireAuth(req, res, next) {
   res.send(`<!DOCTYPE html><html><head>
     <script>
       var loginUrl = ${JSON.stringify(loginUrl)};
-      // If inside an iframe (Replit preview), navigate the top-level window
-      if (window.top !== window.self) {
-        window.top.location.href = loginUrl;
-      } else {
+      try {
+        // If inside an iframe (Replit preview), navigate the top-level window
+        if (window.top !== window.self) {
+          window.top.location.href = loginUrl;
+        } else {
+          window.location.href = loginUrl;
+        }
+      } catch (e) {
+        // Fallback if top-level navigation is blocked (iframe sandbox)
         window.location.href = loginUrl;
       }
     </script>
