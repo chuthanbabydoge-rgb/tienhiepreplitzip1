@@ -1,12 +1,12 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **03:06:21 3/6/2026**
+> Cập nhật lần cuối: **03:52:42 21/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
 - [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,789 dòng, 79.2 KB)*
-- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(22,321 dòng, 1.63 MB)*
+- [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(22,431 dòng, 1.63 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
 - [`inject.js`](#inject-js) — Inject script 1 *(369 dòng, 20.8 KB)*
@@ -23,7 +23,7 @@
 |------|------|------------|
 | `package.json` | 39 | 987 B |
 | `server.js` | 1,789 | 79.2 KB |
-| `tienhiepv3.html` | 22,321 | 1.63 MB |
+| `tienhiepv3.html` | 22,431 | 1.63 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
 | `inject.js` | 369 | 20.8 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **27,831** | **1.87 MB** |
+| **TỔNG** | **27,941** | **1.88 MB** |
 
 ---
 
@@ -59,7 +59,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@google/genai": "^2.7.0",
+    "@google/genai": "^2.9.0",
     "@imgly/background-removal-node": "^1.4.5",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/express-session": "^1.19.0",
@@ -77,7 +77,7 @@
     "p-retry": "^7.1.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "pg": "^8.21.0",
+    "pg": "^8.22.0",
     "zod": "^4.4.3",
     "zod-validation-error": "^5.0.0"
   }
@@ -1891,7 +1891,7 @@ app.listen(PORT, '0.0.0.0', () => {
 <a name="tienhiepv3-html"></a>
 
 > Main frontend (boot screen → login → universe UI)  
-> 22,321 dòng · 1.63 MB
+> 22,431 dòng · 1.63 MB
 
 ```html
 <!DOCTYPE html>
@@ -6675,7 +6675,8 @@ app.listen(PORT, '0.0.0.0', () => {
     .ld-kim-dan {
       position: fixed;
       z-index: 9999;
-      pointer-events: none;
+      pointer-events: auto;
+      cursor: pointer;
       font-size: 68px;
       line-height: 1;
       filter:
@@ -6687,6 +6688,33 @@ app.listen(PORT, '0.0.0.0', () => {
         kimDanSpin   4s  linear                            1s infinite,
         kimDanGlow   2.4s ease-in-out                     1s infinite;
       transform-origin: center center;
+    }
+    .ld-kim-dan:hover {
+      filter:
+        drop-shadow(0 0 50px #ffffff)
+        drop-shadow(0 0 90px #ffcc00)
+        drop-shadow(0 0 30px #ff4400) !important;
+    }
+    /* Hint label dưới viên đan */
+    .ld-kim-dan-hint {
+      position: fixed;
+      z-index: 10000;
+      pointer-events: none;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: #ffee88;
+      background: rgba(0,0,0,0.75);
+      border: 1px solid rgba(255,200,0,0.45);
+      padding: 3px 9px;
+      border-radius: 4px;
+      white-space: nowrap;
+      transform: translateX(-50%);
+      animation: kimDanHintPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes kimDanHintPulse {
+      0%, 100% { opacity: 0.6; }
+      50%       { opacity: 1; box-shadow: 0 0 10px rgba(255,200,0,0.5); }
     }
     .ld-kim-dan-trail {
       position: fixed;
@@ -12399,6 +12427,8 @@ app.listen(PORT, '0.0.0.0', () => {
           document.querySelectorAll('.ld-kim-dan, .ld-kim-dan-trail, .ld-kim-dan-ring').forEach(e => e.remove());
           const _halo = document.getElementById('ld-bagua-halo-active');
           if (_halo) _halo.remove();
+          const _hint = document.getElementById('ld-kim-dan-hint-el');
+          if (_hint) _hint.remove();
         };
         _cleanPills();
         // Second sweep catches pills that were mid-creation at the moment of closeHUD
@@ -16180,6 +16210,8 @@ app.listen(PORT, '0.0.0.0', () => {
       document.querySelectorAll('.ld-kim-dan').forEach(el => el.remove());
       const halo = document.getElementById('ld-bagua-halo-active');
       if (halo) halo.remove();
+      const hint = document.getElementById('ld-kim-dan-hint-el');
+      if (hint) hint.remove();
     }
 
     function _spawnKimDan() {
@@ -16250,9 +16282,87 @@ app.listen(PORT, '0.0.0.0', () => {
       pill._orbitInterval = orbitInterval;
       document.body.appendChild(pill);
 
+      // Hint label xuất hiện sau 0.6s (sau animation appear)
+      const hint = document.createElement('div');
+      hint.className = 'ld-kim-dan-hint';
+      hint.id = 'ld-kim-dan-hint-el';
+      hint.textContent = '✨ CLICK THU THẬP';
+      hint.style.cssText = `left:${sx}px;top:${sy + 52}px;opacity:0;transition:opacity 0.4s;`;
+      document.body.appendChild(hint);
+      setTimeout(() => { if (hint.parentNode) hint.style.opacity = '1'; }, 700);
+
+      // Click → bay vào Kho Tàng
+      pill.addEventListener('click', function onPillClick() {
+        pill.removeEventListener('click', onPillClick);
+        clearInterval(orbitInterval);
+        if (hint.parentNode) hint.remove();
+
+        // Tìm vị trí vault button (đích bay đến)
+        const vaultBtn = document.getElementById('vault-count-btn') || document.getElementById('vault-lbl');
+        const pr = pill.getBoundingClientRect();
+        let tx = window.innerWidth * 0.1, ty = 80;
+        if (vaultBtn) {
+          const vr = vaultBtn.getBoundingClientRect();
+          tx = vr.left + vr.width / 2;
+          ty = vr.top  + vr.height / 2;
+        }
+
+        // Xóa halo
+        const halo = document.getElementById('ld-bagua-halo-active');
+        if (halo) { halo.style.transition = 'opacity 0.3s'; halo.style.opacity = '0'; setTimeout(() => halo.remove(), 350); }
+
+        // Animation bay đến vault
+        pill.style.animation = 'none';
+        pill.style.transition = 'left 0.65s cubic-bezier(0.4,0,0.2,1), top 0.65s cubic-bezier(0.4,0,0.2,1), font-size 0.65s ease, opacity 0.35s ease 0.35s';
+        pill.style.left      = tx + 'px';
+        pill.style.top       = ty + 'px';
+        pill.style.fontSize  = '16px';
+        pill.style.opacity   = '0';
+
+        // Lưu vào Kho Tàng
+        const agent     = window.currentAgent;
+        const herbNames = (typeof ldHerbs !== 'undefined' && ldHerbs.length)
+          ? ldHerbs.map(h => (h.icon || '') + ' ' + (h.xxName || h.raw || '')).join(', ')
+          : 'không rõ';
+        const herbCount = (typeof ldHerbs !== 'undefined') ? ldHerbs.length : 0;
+        const title   = `💊 Kim Đan — ${herbCount} dược liệu`;
+        const content = `Luyện thành công Kim Đan từ ${herbCount} dược liệu: ${herbNames}.\nThời gian: ${new Date().toLocaleString('vi-VN')}`;
+        const vData = typeof vaultLoad === 'function' ? vaultLoad() : [];
+        vData.unshift({
+          id:         'v_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          ts:         Date.now(),
+          title,
+          type:       'văn bản',
+          content,
+          agentId:    agent?.id    || 0,
+          agentName:  agent?.xname || agent?.name  || 'Lò Luyện Đan',
+          agentEmoji: agent?.emoji || '⚗️',
+          agentColor: agent?.color || '#ffaa00',
+        });
+        if (typeof vaultSave === 'function') vaultSave(vData);
+        if (typeof vaultUpdateBadge === 'function') vaultUpdateBadge();
+
+        // Flash vault button
+        if (vaultBtn) {
+          const origColor = vaultBtn.style.color;
+          vaultBtn.style.transition = 'color 0.15s, text-shadow 0.15s';
+          vaultBtn.style.color      = '#ffcc00';
+          vaultBtn.style.textShadow = '0 0 18px #ffcc00, 0 0 30px #ff8800';
+          setTimeout(() => { vaultBtn.style.color = origColor; vaultBtn.style.textShadow = ''; }, 700);
+        }
+
+        if (typeof showToast === 'function') showToast('💊 Kim Đan đã nhập Kho Tàng!', 'success');
+        setTimeout(() => { if (pill.parentNode) pill.remove(); }, 750);
+      });
+
       // Stop orbit sparks if pill is removed externally
       const obs = new MutationObserver(() => {
-        if (!document.contains(pill)) { clearInterval(orbitInterval); obs.disconnect(); }
+        if (!document.contains(pill)) {
+          clearInterval(orbitInterval);
+          obs.disconnect();
+          const h = document.getElementById('ld-kim-dan-hint-el');
+          if (h) h.remove();
+        }
       });
       obs.observe(document.body, { childList: true, subtree: false });
     }
