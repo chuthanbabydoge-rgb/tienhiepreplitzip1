@@ -8,6 +8,7 @@ const { GoogleGenAI, Modality } = require('@google/genai');
 const Jimp = require('jimp');
 const pgSession = require('connect-pg-simple')(session);
 const { Pool } = require('pg');
+const { initWorkflowTables, registerWorkflowRoutes } = require('./workflow-engine');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -102,6 +103,7 @@ async function initDB() {
     );
   `);
   console.log('✅ DB tables ready');
+  await initWorkflowTables(pgPool);
 }
 
 async function upsertUser(user, incrementLogin = false) {
@@ -1779,6 +1781,9 @@ app.post('/api/live/copy', async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
+// ── Multi-Agent Workflow API ───────────────────────────────────────────────
+registerWorkflowRoutes(app, pgPool);
 
 // ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {
