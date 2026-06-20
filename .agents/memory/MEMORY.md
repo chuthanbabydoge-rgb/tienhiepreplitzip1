@@ -1,0 +1,1 @@
+- [Gemini JSON parsing in ReAct loop](gemini-react-json.md) — Gemini outputs unescaped newlines in JSON string values; need sanitizeJSON() + regex fallback to parse correctly.

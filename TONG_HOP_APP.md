@@ -1,6 +1,6 @@
 # 🏯 TỔNG HỢP APP — VƯƠNG ĐẾ AI
 > ⚡ Tự động cập nhật khi code thay đổi — build xong feature → file này tự tick ✅
-> 🕐 Cập nhật lần cuối: **04:16:02 21/6/2026**
+> 🕐 Cập nhật lần cuối: **04:21:50 21/6/2026**
 
 ---
 
@@ -183,11 +183,11 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 - [x] Resize chatbox bằng kéo góc (desktop & mobile)
 
 ## 6. THỐNG KÊ FILE
-> **14 file** | **29,083 dòng** | **1.94 MB**
+> **14 file** | **29,084 dòng** | **1.95 MB**
 
 | File | Dòng | Kích thước | Vai trò |
 |------|------|------------|---------|
-| `server.js` | 1,794 | 79.6 KB | Backend — Express + Auth + Gemini AI + DB |
+| `server.js` | 1,795 | 79.6 KB | Backend — Express + Auth + Gemini AI + DB |
 | `tienhiepv3.html` | 22,431 | 1.63 MB | Frontend chính — UI + Three.js 3D |
 | `create-character.html` | 2,194 | 99.3 KB | Trang tạo nhân vật AI |
 | `profile.html` | 582 | 25.5 KB | Trang hồ sơ người dùng |
@@ -201,7 +201,7 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 | `inject4.js` | 51 | 3.1 KB | Script inject 4 |
 | `inject5.js` | 92 | 5.0 KB | Script inject 5 |
 | `inject6.js` | 35 | 2.4 KB | Script inject 6 |
-| **TỔNG** | **29,083** | **1.94 MB** | — |
+| **TỔNG** | **29,084** | **1.95 MB** | — |
 
 ## 7. TRANG (PAGES)
 
@@ -297,4 +297,4 @@ Nền tảng AI chủ đề **Tiên Hiệp / Xianxia** — người dùng tươn
 > *(Chưa có feature roadmap nào mới hoàn thành kể từ lần cập nhật trước)*
 
 ---
-*Auto-generated bởi `generate-app-summary.js` lúc 04:16:02 21/6/2026 — Build xong feature → file tự cập nhật ✅*
+*Auto-generated bởi `generate-app-summary.js` lúc 04:21:50 21/6/2026 — Build xong feature → file tự cập nhật ✅*
