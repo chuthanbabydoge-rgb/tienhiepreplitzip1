@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Marketplace — Vương Đế AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root{--c:#00ffff;--c2:rgba(0,255,255,.15);--c3:rgba(0,255,255,.06);--p:#a855f7;--g:#00ff88;--y:#ffd700;--r:#ff4466;--o:#ff8800;--bg:#000;--bg1:#030b14;--bg2:#071520;--b:rgba(0,255,255,.18);--b2:rgba(0,255,255,.35);--t:#c8e8ff;--t2:rgba(180,220,255,.55)}
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;background:var(--bg);color:var(--t);font-family:'Rajdhani',sans-serif;font-size:14px;overflow:hidden}
+    body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px)}
+
+    /* Layout */
+    #app{display:grid;grid-template-rows:54px 1fr;grid-template-columns:220px 1fr 280px;height:100vh}
+    #topbar{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 20px;background:linear-gradient(90deg,#000a15,#001a2e 50%,#000a15);border-bottom:1px solid var(--b2);position:relative;overflow:hidden}
+    #topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--c),transparent);animation:hl 3s ease-in-out infinite}
+    @keyframes hl{0%,100%{opacity:.3}50%{opacity:1}}
+
+    .logo{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;color:var(--c);text-shadow:0 0 12px var(--c);letter-spacing:2px;white-space:nowrap}
+    .logo em{color:var(--p);font-style:normal;text-shadow:0 0 12px var(--p)}
+    .badge{background:linear-gradient(135deg,rgba(0,255,255,.12),rgba(168,85,247,.12));border:1px solid var(--b2);padding:2px 10px;border-radius:20px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--c);letter-spacing:1px}
+    .pills{display:flex;gap:8px;margin-left:auto}
+    .pill{display:flex;align-items:center;gap:5px;padding:3px 11px;border-radius:20px;background:var(--bg2);border:1px solid var(--b);font-size:11px;font-family:'Share Tech Mono',monospace;color:var(--t2)}
+    .dot{width:6px;height:6px;border-radius:50%}
+    .dot-g{background:var(--g);box-shadow:0 0 8px var(--g);animation:pk 2s infinite}
+    .dot-y{background:var(--y);box-shadow:0 0 8px var(--y);animation:pk 2s .4s infinite}
+    .dot-p{background:var(--p);box-shadow:0 0 8px var(--p);animation:pk 2s .8s infinite}
+    @keyframes pk{0%,100%{opacity:1}50%{opacity:.35}}
+
+    /* Sidebar */
+    #sidebar{background:linear-gradient(180deg,#020d1a,#01080f);border-right:1px solid var(--b);padding:14px 10px;display:flex;flex-direction:column;gap:3px;overflow-y:auto}
+    .nsec{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:var(--t2);padding:10px 12px 3px;opacity:.55}
+    .ni{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:7px;cursor:pointer;transition:all .2s;font-size:13px;font-weight:600;color:var(--t2);border:1px solid transparent;white-space:nowrap}
+    .ni:hover{background:var(--c2);border-color:var(--b);color:var(--c)}
+    .ni.active{background:linear-gradient(135deg,rgba(0,255,255,.15),rgba(0,255,255,.05));border-color:var(--b2);color:var(--c);text-shadow:0 0 8px rgba(0,255,255,.5)}
+    .ni .ic{font-size:15px;width:20px;text-align:center}
+
+    /* Main */
+    #main{overflow:hidden;display:flex;flex-direction:column}
+    .panel{display:none;flex:1;overflow:hidden;flex-direction:column}
+    .panel.active{display:flex}
+    .ph{padding:14px 20px 10px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+    .ptitle{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--c);text-shadow:0 0 10px rgba(0,255,255,.4);letter-spacing:.5px}
+    .pb{flex:1;overflow-y:auto;padding:14px 20px}
+
+    /* Right pane */
+    #rp{background:var(--bg1);border-left:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden}
+    .rpanel{display:none;flex:1;flex-direction:column;overflow:hidden}
+    .rpanel.active{display:flex}
+    .rph{padding:12px 14px;border-bottom:1px solid var(--b);font-family:'Orbitron',monospace;font-size:10px;color:var(--p);letter-spacing:1px}
+    .rpb{flex:1;overflow-y:auto;padding:12px}
+
+    /* Cards */
+    .card{background:linear-gradient(135deg,rgba(0,255,255,.04),rgba(0,255,255,.01));border:1px solid var(--b);border-radius:10px;padding:14px;margin-bottom:10px;transition:border-color .2s,box-shadow .2s}
+    .card:hover{border-color:var(--b2);box-shadow:0 0 16px rgba(0,255,255,.08)}
+    .card.clickable{cursor:pointer}
+    .card.sel{border-color:var(--c);box-shadow:0 0 20px rgba(0,255,255,.15)}
+    .ctitle{font-weight:700;font-size:15px;color:var(--c);margin-bottom:3px}
+    .csub{font-size:12px;color:var(--t2);line-height:1.4}
+    .cmeta{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+
+    /* Tags */
+    .tag{padding:2px 8px;border-radius:10px;font-size:10px;font-family:'Share Tech Mono',monospace;background:rgba(0,255,255,.08);border:1px solid rgba(0,255,255,.2);color:var(--c)}
+    .tag.p{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.3);color:var(--p)}
+    .tag.g{background:rgba(0,255,136,.1);border-color:rgba(0,255,136,.3);color:var(--g)}
+    .tag.r{background:rgba(255,68,102,.1);border-color:rgba(255,68,102,.3);color:var(--r)}
+    .tag.y{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.3);color:var(--y)}
+    .tag.o{background:rgba(255,136,0,.1);border-color:rgba(255,136,0,.3);color:var(--o)}
+    .tag.feat{background:linear-gradient(90deg,rgba(255,215,0,.15),rgba(255,136,0,.1));border-color:var(--y);color:var(--y);animation:pk 2s infinite}
+
+    /* Status */
+    .st{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:'Share Tech Mono',monospace;padding:2px 8px;border-radius:10px}
+    .st.idle{background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.25);color:var(--g)}
+    .st.active{background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.25);color:var(--g)}
+    .st.busy{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);color:var(--y)}
+    .st.free{background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2);color:var(--g)}
+    .st.premium{background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3);color:var(--y)}
+
+    /* Stats */
+    .srow{display:grid;gap:10px;margin-bottom:14px}
+    .srow-4{grid-template-columns:repeat(4,1fr)}
+    .srow-3{grid-template-columns:repeat(3,1fr)}
+    .sbox{background:linear-gradient(135deg,rgba(0,255,255,.05),rgba(0,255,255,.02));border:1px solid var(--b);border-radius:10px;padding:14px;text-align:center}
+    .snum{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;color:var(--c);text-shadow:0 0 16px rgba(0,255,255,.5);line-height:1}
+    .snum.p{color:var(--p);text-shadow:0 0 16px rgba(168,85,247,.5)}
+    .snum.g{color:var(--g);text-shadow:0 0 16px rgba(0,255,136,.5)}
+    .snum.y{color:var(--y);text-shadow:0 0 16px rgba(255,215,0,.5)}
+    .slbl{font-size:10px;font-family:'Orbitron',monospace;color:var(--t2);letter-spacing:1px;margin-top:4px}
+
+    /* Forms */
+    .fg{margin-bottom:11px}
+    .fg label{display:block;font-size:10px;font-family:'Orbitron',monospace;color:var(--c);letter-spacing:1px;margin-bottom:4px;opacity:.8}
+    .fg input,.fg textarea,.fg select{width:100%;background:rgba(0,15,30,.8);border:1px solid var(--b);border-radius:6px;color:var(--t);font-family:'Rajdhani',sans-serif;font-size:13px;padding:7px 10px;outline:none;transition:border-color .2s}
+    .fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--c);box-shadow:0 0 8px rgba(0,255,255,.1)}
+    .fg textarea{resize:vertical;min-height:65px}
+    .fg select option{background:#050e1a}
+    .fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+    /* Buttons */
+    .btn{padding:7px 16px;border-radius:6px;border:none;cursor:pointer;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:1px;transition:all .2s;white-space:nowrap}
+    .btn-c{background:linear-gradient(135deg,rgba(0,255,255,.2),rgba(0,255,255,.07));border:1px solid var(--b2);color:var(--c)}
+    .btn-c:hover{background:linear-gradient(135deg,rgba(0,255,255,.35),rgba(0,255,255,.14));box-shadow:0 0 14px rgba(0,255,255,.2)}
+    .btn-p{background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(168,85,247,.07));border:1px solid rgba(168,85,247,.4);color:var(--p)}
+    .btn-p:hover{background:linear-gradient(135deg,rgba(168,85,247,.35),rgba(168,85,247,.14));box-shadow:0 0 14px rgba(168,85,247,.2)}
+    .btn-g{background:linear-gradient(135deg,rgba(0,255,136,.2),rgba(0,255,136,.07));border:1px solid rgba(0,255,136,.4);color:var(--g)}
+    .btn-g:hover{background:linear-gradient(135deg,rgba(0,255,136,.35),rgba(0,255,136,.14));box-shadow:0 0 14px rgba(0,255,136,.2)}
+    .btn-y{background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.35);color:var(--y)}
+    .btn-y:hover{background:rgba(255,215,0,.2)}
+    .btn-r{background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.3);color:var(--r)}
+    .btn-r:hover{background:rgba(255,68,102,.18)}
+    .btn-sm{padding:4px 9px;font-size:8px}
+    .btn-full{width:100%;margin-bottom:6px}
+    .btn:disabled{opacity:.4;cursor:not-allowed}
+
+    /* Marketplace grid */
+    #mkt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .mkt-card{background:linear-gradient(135deg,rgba(0,255,255,.04),rgba(0,8,20,.8));border:1px solid var(--b);border-radius:12px;padding:16px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+    .mkt-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--c),transparent);opacity:0;transition:opacity .3s}
+    .mkt-card:hover{border-color:var(--b2);box-shadow:0 4px 24px rgba(0,255,255,.1);transform:translateY(-1px)}
+    .mkt-card:hover::before{opacity:1}
+    .mkt-card.feat-card{border-color:rgba(255,215,0,.25)}
+    .mkt-card.feat-card::before{background:linear-gradient(90deg,transparent,var(--y),transparent);opacity:.6}
+    .mc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+    .mc-cat{font-family:'Share Tech Mono',monospace;font-size:9px;padding:2px 8px;border-radius:10px;letter-spacing:.5px}
+    .cat-marketing{background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.3);color:var(--p)}
+    .cat-startup{background:rgba(0,255,255,.1);border:1px solid rgba(0,255,255,.25);color:var(--c)}
+    .cat-real_estate{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.25);color:var(--g)}
+    .cat-education{background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.25);color:var(--y)}
+    .cat-customer_service{background:rgba(255,136,0,.1);border:1px solid rgba(255,136,0,.25);color:var(--o)}
+    .cat-research{background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.25);color:#0cf}
+    .cat-general{background:rgba(180,180,255,.08);border:1px solid rgba(180,180,255,.2);color:#aaf}
+    .mc-name{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--c);margin-bottom:4px}
+    .mc-tagline{font-size:12px;color:var(--t2);line-height:1.4;margin-bottom:10px}
+    .mc-tools{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+    .mc-tool{font-family:'Share Tech Mono',monospace;font-size:9px;padding:1px 6px;border-radius:4px;background:rgba(0,15,30,.8);border:1px solid rgba(0,255,255,.12);color:rgba(0,255,255,.6)}
+    .mc-foot{display:flex;justify-content:space-between;align-items:center}
+    .mc-stats{display:flex;gap:10px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--t2)}
+    .mc-stats span{display:flex;align-items:center;gap:3px}
+    .price-free{color:var(--g);font-size:10px;font-family:'Share Tech Mono',monospace;padding:2px 8px;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2);border-radius:10px}
+    .price-premium{color:var(--y);font-size:10px;font-family:'Share Tech Mono',monospace;padding:2px 8px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);border-radius:10px}
+
+    /* Rating stars */
+    .stars{color:var(--y);font-size:11px;letter-spacing:1px}
+
+    /* Search bar */
+    #mkt-search{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+    #mkt-q{flex:1;min-width:180px;background:rgba(0,15,30,.8);border:1px solid var(--b);border-radius:6px;color:var(--t);font-family:'Rajdhani',sans-serif;font-size:13px;padding:7px 12px;outline:none}
+    #mkt-q:focus{border-color:var(--c)}
+    .cat-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+    .cf{padding:4px 12px;border-radius:20px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:.5px;cursor:pointer;border:1px solid var(--b);background:var(--bg2);color:var(--t2);transition:all .2s}
+    .cf:hover{border-color:var(--b2);color:var(--c)}
+    .cf.active{background:var(--c2);border-color:var(--b2);color:var(--c)}
+
+    /* Org cards */
+    .org-card{background:linear-gradient(135deg,rgba(0,255,255,.04),rgba(0,8,20,.9));border:1px solid var(--b);border-radius:12px;padding:16px;margin-bottom:10px;cursor:pointer;transition:all .2s}
+    .org-card:hover{border-color:var(--b2);box-shadow:0 0 16px rgba(0,255,255,.08)}
+    .org-card.sel{border-color:var(--c)}
+    .org-emoji{font-size:28px;margin-bottom:6px;display:block}
+    .org-name{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--c);margin-bottom:4px}
+
+    /* Agent performance bar */
+    .perf-bar{height:4px;background:rgba(0,255,255,.1);border-radius:4px;overflow:hidden;margin-top:4px}
+    .perf-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--c),var(--g));transition:width .6s ease}
+
+    /* Dashboard metrics */
+    .metric-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+    .metric{background:rgba(0,10,25,.7);border:1px solid var(--b);border-radius:8px;padding:10px 12px}
+    .metric-v{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;line-height:1}
+    .metric-l{font-size:10px;font-family:'Share Tech Mono',monospace;color:var(--t2);margin-top:2px;letter-spacing:.5px}
+
+    /* Exec log */
+    .exec-row{display:flex;align-items:center;gap:8px;padding:8px;background:rgba(0,5,12,.7);border:1px solid var(--b);border-radius:6px;margin-bottom:6px;font-family:'Share Tech Mono',monospace;font-size:10px}
+    .exec-status{width:8px;height:8px;border-radius:50%}
+    .exec-status.completed{background:var(--g);box-shadow:0 0 6px var(--g)}
+    .exec-status.running{background:var(--c);box-shadow:0 0 6px var(--c);animation:pk 1s infinite}
+    .exec-status.failed{background:var(--r);box-shadow:0 0 6px var(--r)}
+
+    /* Install progress */
+    .install-spinner{width:12px;height:12px;border:2px solid var(--b);border-top-color:var(--g);border-radius:50%;animation:spin .5s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Divider */
+    .div{height:1px;background:linear-gradient(90deg,transparent,var(--b),transparent);margin:12px 0}
+    .empty{text-align:center;padding:30px 10px;color:var(--t2);font-size:13px}
+    .empty .ic{font-size:32px;margin-bottom:6px;opacity:.4;display:block}
+
+    /* Toast */
+    #tc{position:fixed;bottom:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:7px}
+    .toast{padding:8px 16px;border-radius:7px;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;animation:tIn .25s ease;border:1px solid}
+    .toast.s{background:#001a0d;border-color:var(--g);color:var(--g)}
+    .toast.e{background:#1a0008;border-color:var(--r);color:var(--r)}
+    .toast.i{background:#00101a;border-color:var(--c);color:var(--c)}
+    @keyframes tIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+    ::-webkit-scrollbar{width:3px;height:3px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(0,255,255,.2);border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:rgba(0,255,255,.4)}
+  </style>
+</head>
+<body>
+<div id="app">
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo">AGENT<em>MKT</em> <span style="color:var(--t2);font-size:10px">// VƯƠNG ĐẾ AI</span></div>
+  <div class="badge">MARKETPLACE v1</div>
+  <div class="pills">
+    <div class="pill"><span class="dot dot-g"></span><span id="tp-templates">–</span> TEMPLATES</div>
+    <div class="pill"><span class="dot dot-y"></span><span id="tp-orgs">–</span> ORGS</div>
+    <div class="pill"><span class="dot dot-p"></span><span id="tp-installs">–</span> INSTALLS</div>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:6px">
+    <a href="/agent-os" style="text-decoration:none"><button class="btn btn-c btn-sm">Agent OS →</button></a>
+    <a href="/user" style="text-decoration:none"><button class="btn btn-p btn-sm">← Main App</button></a>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="nsec">MARKETPLACE</div>
+  <div class="ni active" onclick="nav('mkt')"><span class="ic">🛒</span> Browse</div>
+  <div class="ni" onclick="nav('my-installs')"><span class="ic">📦</span> My Installs</div>
+  <div class="nsec">ORGANIZATIONS</div>
+  <div class="ni" onclick="nav('orgs')"><span class="ic">🏢</span> My Orgs</div>
+  <div class="ni" onclick="nav('org-dashboard')"><span class="ic">📊</span> Org Dashboard</div>
+  <div class="nsec">TEMPLATES</div>
+  <div class="ni" onclick="nav('my-templates')"><span class="ic">📄</span> My Templates</div>
+  <div class="ni" onclick="nav('create-template')"><span class="ic">＋</span> New Template</div>
+  <div class="nsec">SYSTEM</div>
+  <div class="ni" onclick="nav('create-org')"><span class="ic">＋</span> New Org</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- ═══ MARKETPLACE BROWSE ═══ -->
+  <div class="panel active" id="panel-mkt">
+    <div class="ph">
+      <div class="ptitle">🛒 AGENT MARKETPLACE</div>
+      <select id="mkt-sort" onchange="loadMarketplace()" style="background:var(--bg2);border:1px solid var(--b);color:var(--t);font-size:11px;padding:4px 8px;border-radius:4px;font-family:'Orbitron',monospace">
+        <option value="featured">⭐ Featured</option>
+        <option value="popular">🔥 Popular</option>
+        <option value="newest">🆕 Newest</option>
+        <option value="rating">⭐ Rating</option>
+      </select>
+    </div>
+    <div class="pb">
+      <div id="mkt-search">
+        <input id="mkt-q" placeholder="🔍  Tìm template..." oninput="debounceMkt()">
+        <button class="btn btn-c btn-sm" onclick="loadMarketplace()">Search</button>
+      </div>
+      <div class="cat-filters">
+        <div class="cf active" onclick="setCat('all',this)">ALL</div>
+        <div class="cf" onclick="setCat('marketing',this)">Marketing</div>
+        <div class="cf" onclick="setCat('startup',this)">Startup</div>
+        <div class="cf" onclick="setCat('real_estate',this)">Real Estate</div>
+        <div class="cf" onclick="setCat('education',this)">Education</div>
+        <div class="cf" onclick="setCat('customer_service',this)">Customer Service</div>
+        <div class="cf" onclick="setCat('research',this)">Research</div>
+        <div class="cf" onclick="setCat('general',this)">General</div>
+      </div>
+      <div id="mkt-grid"><div class="empty"><span class="ic">🛒</span>Đang tải marketplace...</div></div>
+    </div>
+  </div>
+
+  <!-- ═══ MY INSTALLS ═══ -->
+  <div class="panel" id="panel-my-installs">
+    <div class="ph">
+      <div class="ptitle">📦 MY INSTALLS</div>
+      <button class="btn btn-c btn-sm" onclick="loadMyInstalls()">↻</button>
+    </div>
+    <div class="pb" id="my-installs-body">
+      <div class="empty"><span class="ic">📦</span>Đang tải...</div>
+    </div>
+  </div>
+
+  <!-- ═══ MY ORGANIZATIONS ═══ -->
+  <div class="panel" id="panel-orgs">
+    <div class="ph">
+      <div class="ptitle">🏢 MY ORGANIZATIONS</div>
+      <button class="btn btn-c btn-sm" onclick="nav('create-org')">+ New</button>
+      <button class="btn btn-c btn-sm" onclick="loadOrgs()">↻</button>
+    </div>
+    <div class="pb" id="orgs-body">
+      <div class="empty"><span class="ic">🏢</span>Đang tải...</div>
+    </div>
+  </div>
+
+  <!-- ═══ ORG DASHBOARD ═══ -->
+  <div class="panel" id="panel-org-dashboard">
+    <div class="ph">
+      <div class="ptitle">📊 ORG DASHBOARD</div>
+      <select id="dash-org-sel" onchange="loadOrgDashboard()" style="background:var(--bg2);border:1px solid var(--b);color:var(--t);font-size:11px;padding:4px 8px;border-radius:4px;margin-left:4px">
+        <option value="">— Select Org —</option>
+      </select>
+      <button class="btn btn-c btn-sm" onclick="loadOrgDashboard()">↻</button>
+    </div>
+    <div class="pb" id="org-dashboard-body">
+      <div class="empty"><span class="ic">📊</span>Chọn tổ chức để xem dashboard</div>
+    </div>
+  </div>
+
+  <!-- ═══ MY TEMPLATES ═══ -->
+  <div class="panel" id="panel-my-templates">
+    <div class="ph">
+      <div class="ptitle">📄 MY TEMPLATES</div>
+      <button class="btn btn-c btn-sm" onclick="nav('create-template')">+ New</button>
+      <button class="btn btn-c btn-sm" onclick="loadMyTemplates()">↻</button>
+    </div>
+    <div class="pb" id="my-templates-body">
+      <div class="empty"><span class="ic">📄</span>Đang tải...</div>
+    </div>
+  </div>
+
+  <!-- ═══ CREATE TEMPLATE ═══ -->
+  <div class="panel" id="panel-create-template">
+    <div class="ph"><div class="ptitle">＋ CREATE TEMPLATE</div></div>
+    <div class="pb">
+      <div class="fg"><label>TEMPLATE NAME *</label><input id="ct-name" placeholder="VD: Marketing Content Strategist"></div>
+      <div class="fg"><label>TAGLINE</label><input id="ct-tagline" placeholder="Mô tả ngắn gọn trong 1 dòng..."></div>
+      <div class="fg"><label>DESCRIPTION</label><textarea id="ct-desc" placeholder="Mô tả chi tiết template này làm được gì..."></textarea></div>
+      <div class="fg2">
+        <div class="fg"><label>CATEGORY</label>
+          <select id="ct-cat">
+            <option value="general">General</option>
+            <option value="marketing">Marketing</option>
+            <option value="startup">Startup</option>
+            <option value="real_estate">Real Estate</option>
+            <option value="education">Education</option>
+            <option value="customer_service">Customer Service</option>
+            <option value="research">Research</option>
+          </select>
+        </div>
+        <div class="fg"><label>TAGS (comma separated)</label><input id="ct-tags" placeholder="marketing, content, strategy"></div>
+      </div>
+      <div class="div"></div>
+      <div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--p);letter-spacing:1px;margin-bottom:10px">AGENT CONFIGURATION</div>
+      <div class="fg"><label>AGENT NAME *</label><input id="ct-aname" placeholder="VD: Content Strategist"></div>
+      <div class="fg"><label>AGENT ROLE *</label><input id="ct-arole" placeholder="VD: Chuyên gia chiến lược nội dung marketing kỹ thuật số"></div>
+      <div class="fg"><label>GOAL *</label><textarea id="ct-agoal" rows="2" placeholder="Mục tiêu chính của agent này..."></textarea></div>
+      <div class="fg"><label>BACKSTORY</label><textarea id="ct-aback" rows="2" placeholder="Kinh nghiệm, chuyên môn, nền tảng của agent..."></textarea></div>
+      <div class="fg2">
+        <div class="fg"><label>MODEL</label>
+          <select id="ct-amodel">
+            <option value="gemini-2.5-flash" selected>gemini-2.5-flash</option>
+            <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+          </select>
+        </div>
+        <div class="fg"><label>MAX ITERATIONS</label><input type="number" id="ct-aiter" value="6" min="2" max="20"></div>
+      </div>
+      <div class="fg"><label>TOOLS (comma separated)</label><input id="ct-tools" placeholder="web_search, summarize, memory_save, final_answer" value="web_search, summarize, memory_save, final_answer"></div>
+      <div class="fg"><label>EXAMPLE TASK TITLE</label><input id="ct-ex-title" placeholder="VD: Phân tích thị trường AI Việt Nam 2025"></div>
+      <div class="fg"><label>EXAMPLE TASK DESC</label><textarea id="ct-ex-desc" rows="2" placeholder="Mô tả task mẫu..."></textarea></div>
+      <button class="btn btn-p btn-full" onclick="createTemplate()">📄 CREATE TEMPLATE</button>
+    </div>
+  </div>
+
+  <!-- ═══ CREATE ORG ═══ -->
+  <div class="panel" id="panel-create-org">
+    <div class="ph"><div class="ptitle">＋ NEW ORGANIZATION</div></div>
+    <div class="pb">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <div id="emoji-pick" style="display:flex;gap:8px;flex-wrap:wrap">
+          <span style="font-family:'Orbitron',monospace;font-size:9px;color:var(--c);width:100%;letter-spacing:1px">CHOOSE AVATAR</span>
+          <div id="ep-selected" style="font-size:36px;width:60px;height:60px;display:flex;align-items:center;justify-content:center;border:1px solid var(--b);border-radius:8px;background:var(--bg2);cursor:default">🏢</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;margin-top:20px">
+          ${['🏢','🚀','🏫','🏦','🏪','🌐','⚡','🤖','🎯','🔬','💼','🏗️','🎨','🛒','📡'].map(e=>`<span onclick="pickEmoji('${e}')" style="font-size:24px;cursor:pointer;padding:4px;border-radius:6px;transition:background .2s" onmouseover="this.style.background='rgba(0,255,255,.1)'" onmouseout="this.style.background=''">${e}</span>`).join('')}
+        </div>
+      </div>
+      <div class="fg"><label>ORG NAME *</label><input id="co-name" placeholder="VD: Startup Studio Việt Nam"></div>
+      <div class="fg"><label>DESCRIPTION</label><textarea id="co-desc" placeholder="Mô tả tổ chức, lĩnh vực hoạt động..."></textarea></div>
+      <div class="fg"><label>CATEGORY</label>
+        <select id="co-cat">
+          <option value="general">General</option>
+          <option value="marketing">Marketing Agency</option>
+          <option value="startup">Startup Studio</option>
+          <option value="real_estate">Real Estate Company</option>
+          <option value="education">Online School</option>
+          <option value="research">Research Lab</option>
+          <option value="enterprise">Enterprise</option>
+        </select>
+      </div>
+      <button class="btn btn-g btn-full" onclick="createOrg()">🏢 CREATE ORGANIZATION</button>
+    </div>
+  </div>
+
+</div><!-- /#main -->
+
+<!-- RIGHT PANE -->
+<div id="rp">
+  <div class="rpanel active" id="rpanel-detail">
+    <div class="rph" id="rph-title">DETAIL</div>
+    <div class="rpb" id="rpanel-body">
+      <div class="empty" style="padding:24px 8px"><span class="ic">👆</span>Select item to view details</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /#app -->
+<div id="tc"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let orgs=[], myTemplates=[], myInstalls=[], mktCat='all', mktDebounce=null;
+let selectedOrgId=null, selectedEmoji='🏢';
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg,type='i'){
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;el.textContent=msg;
+  document.getElementById('tc').appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(path,opts={}){
+  const res=await fetch('/api/mkt'+path,{headers:{'Content-Type':'application/json'},...opts});
+  return res.json();
+}
+async function aosApi(path,opts={}){
+  const res=await fetch('/api/aos'+path,{headers:{'Content-Type':'application/json'},...opts});
+  return res.json();
+}
+
+// ── Nav ───────────────────────────────────────────────────────────────────────
+function nav(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  const p=document.getElementById('panel-'+id);
+  if(p)p.classList.add('active');
+  document.querySelectorAll('.ni').forEach(n=>{
+    if(n.getAttribute('onclick')?.includes(`'${id}'`))n.classList.add('active');
+  });
+  if(id==='mkt')loadMarketplace();
+  if(id==='my-installs')loadMyInstalls();
+  if(id==='orgs')loadOrgs();
+  if(id==='org-dashboard')populateOrgDashSel();
+  if(id==='my-templates')loadMyTemplates();
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+async function loadStats(){
+  try{
+    const s=await api('/stats');
+    document.getElementById('tp-templates').textContent=s.total_templates||0;
+    document.getElementById('tp-orgs').textContent=s.total_organizations||0;
+    document.getElementById('tp-installs').textContent=s.total_installs||0;
+  }catch{}
+}
+
+// ── Emoji picker ─────────────────────────────────────────────────────────────
+function pickEmoji(e){
+  selectedEmoji=e;
+  document.getElementById('ep-selected').textContent=e;
+}
+
+// ── Stars ─────────────────────────────────────────────────────────────────────
+function stars(avg,cnt){
+  if(!cnt)return'<span style="color:var(--t2);font-size:10px;font-family:\'Share Tech Mono\'">No ratings</span>';
+  const full=Math.round(avg);
+  return`<span class="stars">${'★'.repeat(full)}${'☆'.repeat(5-full)}</span><span style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:var(--t2);margin-left:4px">${avg.toFixed(1)} (${cnt})</span>`;
+}
+
+// ── Category label ────────────────────────────────────────────────────────────
+const catLabel={marketing:'Marketing',startup:'Startup',real_estate:'Real Estate',education:'Education',customer_service:'Customer Service',research:'Research',general:'General'};
+
+// ── MARKETPLACE ───────────────────────────────────────────────────────────────
+function setCat(cat,el){
+  mktCat=cat;
+  document.querySelectorAll('.cf').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  loadMarketplace();
+}
+function debounceMkt(){clearTimeout(mktDebounce);mktDebounce=setTimeout(loadMarketplace,350);}
+
+async function loadMarketplace(){
+  const q=document.getElementById('mkt-q').value.trim();
+  const sort=document.getElementById('mkt-sort').value;
+  const params=new URLSearchParams({sort,limit:24});
+  if(mktCat&&mktCat!=='all')params.append('category',mktCat);
+  if(q)params.append('q',q);
+  const data=await api('/marketplace?'+params);
+  const grid=document.getElementById('mkt-grid');
+  const templates=data.templates||[];
+  if(!templates.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><span class="ic">🔍</span>Không tìm thấy template phù hợp</div>';return;}
+  grid.innerHTML=templates.map(t=>`
+    <div class="mkt-card ${t.is_featured?'feat-card':''}" onclick="showTemplateDetail(${t.id})">
+      <div class="mc-head">
+        <span class="mc-cat cat-${t.category}">${catLabel[t.category]||t.category}</span>
+        ${t.is_featured?'<span class="tag feat">⭐ FEATURED</span>':''}
+      </div>
+      <div class="mc-name">${t.name}</div>
+      <div class="mc-tagline">${t.tagline||t.description?.slice(0,80)||''}</div>
+      <div class="mc-tools">${(t.tools||[]).slice(0,4).map(tool=>`<span class="mc-tool">${tool}</span>`).join('')}${(t.tools||[]).length>4?`<span class="mc-tool">+${t.tools.length-4}</span>`:''}</div>
+      <div class="mc-foot">
+        <div class="mc-stats">
+          <span>⬇ ${t.install_count||0}</span>
+          <span>${stars(t.rating_avg||0,t.rating_count||0)}</span>
+        </div>
+        <span class="${t.price_type==='premium'?'price-premium':'price-free'}">${t.price_type==='premium'?'⚡ PREMIUM':'FREE'}</span>
+      </div>
+    </div>`).join('');
+}
+
+async function showTemplateDetail(id){
+  const data=await api('/marketplace/'+id);
+  const t=data.template;
+  if(!t)return;
+  document.getElementById('rph-title').textContent='TEMPLATE DETAIL';
+  document.getElementById('rpanel-body').innerHTML=`
+    <div style="margin-bottom:10px">
+      <span class="mc-cat cat-${t.category}" style="display:inline-block;margin-bottom:6px">${catLabel[t.category]||t.category}</span>
+      ${t.is_featured?'<span class="tag feat" style="margin-left:4px">⭐ FEATURED</span>':''}
+      <div style="font-family:\'Orbitron\',monospace;font-size:14px;color:var(--c);margin-bottom:4px">${t.name}</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:8px">${t.description||t.tagline||''}</div>
+      ${stars(t.rating_avg||0,t.rating_count||0)}
+    </div>
+    <div class="div"></div>
+    <div style="font-family:\'Orbitron\',monospace;font-size:9px;color:var(--p);letter-spacing:1px;margin-bottom:6px">AGENT CONFIG</div>
+    <div style="font-size:12px;margin-bottom:4px"><span style="color:var(--t2)">Role:</span> ${t.agent_role||t.agent_config?.role||'–'}</div>
+    <div class="div"></div>
+    <div style="font-family:\'Orbitron\',monospace;font-size:9px;color:var(--c);letter-spacing:1px;margin-bottom:6px">TOOLS</div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px">${(t.tools||[]).map(tool=>`<span class="mc-tool">${tool}</span>`).join('')}</div>
+    <div class="div"></div>
+    <div style="display:flex;gap:8px;justify-content:space-between;margin-bottom:10px">
+      <div class="metric" style="flex:1"><div class="metric-v" style="color:var(--g)">${t.install_count||0}</div><div class="metric-l">INSTALLS</div></div>
+      <div class="metric" style="flex:1"><div class="metric-v" style="color:var(--y)">${t.rating_avg?t.rating_avg.toFixed(1):'–'}</div><div class="metric-l">RATING</div></div>
+    </div>
+    ${(t.preview_tasks||[]).length?`
+      <div style="font-family:\'Orbitron\',monospace;font-size:9px;color:var(--y);letter-spacing:1px;margin-bottom:6px">EXAMPLE TASKS</div>
+      ${t.preview_tasks.map(pt=>`<div style="background:rgba(255,215,0,.04);border:1px solid rgba(255,215,0,.15);border-radius:6px;padding:8px;margin-bottom:6px;font-size:12px"><div style="color:var(--y);font-weight:700;margin-bottom:2px">${pt.title||''}</div><div style="color:var(--t2)">${pt.description||''}</div></div>`).join('')}
+    `:''}
+    <div class="div"></div>
+    <div class="fg"><label>INSTALL TO ORG (optional)</label>
+      <select id="install-org-sel" style="width:100%;background:rgba(0,15,30,.8);border:1px solid var(--b);border-radius:6px;color:var(--t);font-family:\'Rajdhani\',sans-serif;font-size:13px;padding:7px 10px;outline:none">
+        <option value="">— No org —</option>
+        ${orgs.map(o=>`<option value="${o.id}">${o.avatar_emoji} ${o.name}</option>`).join('')}
+      </select>
+    </div>
+    <button class="btn btn-g btn-full" onclick="installTemplate(${t.id})" id="btn-install-${t.id}" style="margin-top:4px">⬇ INSTALL TEMPLATE</button>
+    <button class="btn btn-c btn-full" onclick="rateTemplate(${t.id})">⭐ RATE TEMPLATE</button>
+  `;
+}
+
+async function installTemplate(id){
+  const orgId=document.getElementById('install-org-sel')?.value||null;
+  const btn=document.getElementById('btn-install-'+id);
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="install-spinner"></span> Installing...';}
+  const data=await api('/marketplace/'+id+'/install',{method:'POST',body:JSON.stringify({org_id:orgId||undefined})});
+  if(data.error){toast('Error: '+data.error,'e');if(btn){btn.disabled=false;btn.textContent='⬇ INSTALL TEMPLATE';}return;}
+  if(data.already_installed){toast('Already installed!','i');return;}
+  toast('✓ Installed! Agent created: '+data.agent?.name,'s');
+  loadStats();loadMyInstalls();
+  if(btn){btn.textContent='✓ INSTALLED';btn.className='btn btn-sm btn-full';btn.style.color='var(--g)';}
+}
+
+async function rateTemplate(id){
+  const r=prompt('Rate this template (1-5 stars):');
+  if(!r||isNaN(r)||r<1||r>5)return;
+  const review=prompt('Write a short review (optional):');
+  const data=await api('/marketplace/'+id+'/rate',{method:'POST',body:JSON.stringify({rating:parseInt(r),review:review||''})});
+  if(data.error){toast('Must install first','e');return;}
+  toast('✓ Thanks for your rating!','s');
+  loadMarketplace();
+}
+
+// ── MY INSTALLS ───────────────────────────────────────────────────────────────
+async function loadMyInstalls(){
+  const data=await api('/my-installs');
+  myInstalls=data.installs||[];
+  const body=document.getElementById('my-installs-body');
+  if(!myInstalls.length){body.innerHTML='<div class="empty"><span class="ic">📦</span>Chưa cài đặt template nào. Hãy khám phá marketplace!</div>';return;}
+  body.innerHTML=myInstalls.map(i=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="ctitle">${i.template_name}</div>
+          <div class="csub">${i.tagline||''}</div>
+        </div>
+        <span class="mc-cat cat-${i.category}" style="white-space:nowrap">${catLabel[i.category]||i.category}</span>
+      </div>
+      <div class="cmeta">
+        ${i.agent_name?`<span class="tag g">🤖 ${i.agent_name}</span>`:''}
+        ${i.agent_status?`<span class="st ${i.agent_status}">${i.agent_status}</span>`:''}
+        ${i.org_id?`<span class="tag p">Org #${i.org_id}</span>`:''}
+      </div>
+      <div style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:var(--t2);margin-top:6px">
+        Installed: ${new Date(i.installed_at).toLocaleDateString('vi-VN')}
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px">
+        <button class="btn btn-c btn-sm" onclick="goToAgent(${i.agent_id})">⚡ Run Agent</button>
+        <button class="btn btn-c btn-sm" onclick="showTemplateDetail(${i.template_id})">View Template</button>
+      </div>
+    </div>`).join('');
+}
+
+function goToAgent(id){window.location.href='/agent-os';}
+
+// ── ORGANIZATIONS ─────────────────────────────────────────────────────────────
+async function loadOrgs(){
+  const data=await api('/organizations');
+  orgs=data.organizations||[];
+  const body=document.getElementById('orgs-body');
+  if(!orgs.length){body.innerHTML='<div class="empty"><span class="ic">🏢</span>Chưa có tổ chức nào. <a href="#" onclick="nav(\'create-org\')" style="color:var(--c)">Tạo ngay!</a></div>';return;}
+  body.innerHTML=orgs.map(o=>`
+    <div class="org-card" onclick="selectOrg(${o.id})">
+      <span class="org-emoji">${o.avatar_emoji}</span>
+      <div class="org-name">${o.name}</div>
+      <div class="csub" style="margin-bottom:8px">${o.description||''}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <span class="mc-cat cat-${o.category}">${catLabel[o.category]||o.category}</span>
+        <span class="tag">${o.agent_count||0} agents</span>
+        <span class="tag p">${o.template_count||0} installs</span>
+        <span class="tag g">${o.plan}</span>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px">
+        <button class="btn btn-c btn-sm" onclick="event.stopPropagation();openOrgDashboard(${o.id})">📊 Dashboard</button>
+        <button class="btn btn-p btn-sm" onclick="event.stopPropagation();manageOrgAgents(${o.id})">🤖 Agents</button>
+        <button class="btn btn-r btn-sm" onclick="event.stopPropagation();deleteOrg(${o.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function selectOrg(id){
+  selectedOrgId=id;
+  const o=orgs.find(x=>x.id===id);
+  if(!o)return;
+  document.getElementById('rph-title').textContent='ORG DETAIL';
+  document.getElementById('rpanel-body').innerHTML=`
+    <div style="text-align:center;margin-bottom:12px">
+      <div style="font-size:40px">${o.avatar_emoji}</div>
+      <div style="font-family:\'Orbitron\',monospace;font-size:14px;color:var(--c);margin-top:6px">${o.name}</div>
+      <span class="mc-cat cat-${o.category}">${catLabel[o.category]||o.category}</span>
+    </div>
+    <div class="metric-row">
+      <div class="metric"><div class="metric-v">${o.agent_count||0}</div><div class="metric-l">AGENTS</div></div>
+      <div class="metric"><div class="metric-v" style="color:var(--p)">${o.template_count||0}</div><div class="metric-l">INSTALLS</div></div>
+    </div>
+    <div class="metric-row">
+      <div class="metric"><div class="metric-v" style="color:var(--g)">${o.total_tasks_done||0}</div><div class="metric-l">TASKS DONE</div></div>
+      <div class="metric"><div class="metric-v" style="color:var(--r)">${o.total_tasks_failed||0}</div><div class="metric-l">FAILED</div></div>
+    </div>
+    <div class="div"></div>
+    <div class="csub" style="margin-bottom:12px">${o.description||'No description'}</div>
+    <button class="btn btn-c btn-full" onclick="openOrgDashboard(${o.id})">📊 Open Dashboard</button>
+    <button class="btn btn-p btn-full" onclick="manageOrgAgents(${o.id})">🤖 Manage Agents</button>
+    <button class="btn btn-r btn-full" onclick="deleteOrg(${o.id})">✕ Delete Org</button>
+  `;
+}
+
+async function deleteOrg(id){
+  if(!confirm('Xóa tổ chức này?'))return;
+  await api('/organizations/'+id,{method:'DELETE'});
+  toast('Đã xóa tổ chức','i');
+  loadOrgs();loadStats();
+}
+
+async function manageOrgAgents(orgId){
+  const [orgData,aosData]=await Promise.all([api('/organizations/'+orgId+'/agents'),aosApi('/agents')]);
+  const orgAgents=orgData.agents||[];
+  const allAgents=aosData.agents||[];
+  const orgAgentIds=new Set(orgAgents.map(a=>a.agent_id));
+
+  document.getElementById('rph-title').textContent='ORG AGENTS';
+  document.getElementById('rpanel-body').innerHTML=`
+    <div style="font-family:\'Orbitron\',monospace;font-size:9px;color:var(--c);letter-spacing:1px;margin-bottom:8px">AGENTS IN ORG (${orgAgents.length})</div>
+    ${orgAgents.length?orgAgents.map(a=>`
+      <div class="exec-row" style="flex-wrap:wrap;gap:4px;margin-bottom:6px">
+        <div>
+          <div style="color:var(--c);font-weight:700">${a.name}</div>
+          <div style="color:var(--t2);font-size:9px">${a.role_in_org} · ${a.tasks_completed||0} done</div>
+          <div class="perf-bar"><div class="perf-fill" style="width:${a.performance_score||0}%"></div></div>
+        </div>
+        <button class="btn btn-r btn-sm" onclick="removeOrgAgent(${orgId},${a.agent_id})" style="margin-left:auto">✕</button>
+      </div>`).join(''):'<div class="empty" style="padding:10px">No agents yet</div>'}
+    <div class="div"></div>
+    <div style="font-family:\'Orbitron\',monospace;font-size:9px;color:var(--p);letter-spacing:1px;margin-bottom:8px">ADD AGENT TO ORG</div>
+    <div class="fg"><label>SELECT AGENT</label>
+      <select id="add-agent-sel" style="width:100%;background:rgba(0,15,30,.8);border:1px solid var(--b);border-radius:6px;color:var(--t);font-size:13px;padding:7px 10px;outline:none">
+        ${allAgents.filter(a=>!orgAgentIds.has(a.id)).map(a=>`<option value="${a.id}">${a.name}</option>`).join('')||'<option>No available agents</option>'}
+      </select>
+    </div>
+    <div class="fg"><label>ROLE IN ORG</label>
+      <select id="add-agent-role" style="width:100%;background:rgba(0,15,30,.8);border:1px solid var(--b);border-radius:6px;color:var(--t);font-size:13px;padding:7px 10px;outline:none">
+        <option value="worker">Worker</option>
+        <option value="specialist">Specialist</option>
+        <option value="manager">Manager</option>
+      </select>
+    </div>
+    <button class="btn btn-g btn-full" onclick="addOrgAgent(${orgId})">+ ADD AGENT</button>
+  `;
+}
+
+async function addOrgAgent(orgId){
+  const agentId=document.getElementById('add-agent-sel')?.value;
+  const role=document.getElementById('add-agent-role')?.value||'worker';
+  if(!agentId)return;
+  await api('/organizations/'+orgId+'/agents',{method:'POST',body:JSON.stringify({agent_id:parseInt(agentId),role_in_org:role})});
+  toast('Agent added to org','s');
+  manageOrgAgents(orgId);loadOrgs();
+}
+
+async function removeOrgAgent(orgId,agentId){
+  await api('/organizations/'+orgId+'/agents/'+agentId,{method:'DELETE'});
+  toast('Agent removed','i');
+  manageOrgAgents(orgId);
+}
+
+// ── ORG DASHBOARD ─────────────────────────────────────────────────────────────
+async function populateOrgDashSel(){
+  if(!orgs.length){const d=await api('/organizations');orgs=d.organizations||[];}
+  const sel=document.getElementById('dash-org-sel');
+  sel.innerHTML='<option value="">— Select Org —</option>'+orgs.map(o=>`<option value="${o.id}">${o.avatar_emoji} ${o.name}</option>`).join('');
+}
+
+function openOrgDashboard(orgId){
+  nav('org-dashboard');
+  setTimeout(async()=>{
+    document.getElementById('dash-org-sel').value=orgId;
+    await loadOrgDashboard();
+  },100);
+}
+
+async function loadOrgDashboard(){
+  const orgId=document.getElementById('dash-org-sel').value;
+  const body=document.getElementById('org-dashboard-body');
+  if(!orgId){body.innerHTML='<div class="empty"><span class="ic">📊</span>Chọn tổ chức để xem dashboard</div>';return;}
+
+  body.innerHTML='<div class="empty"><span class="ic">⏳</span>Đang tải dashboard...</div>';
+  const [dashData,orgDetail]=await Promise.all([api('/organizations/'+orgId+'/dashboard'),api('/organizations/'+orgId)]);
+  const org=orgDetail.organization;
+  const agents=dashData.agents||[];
+  const executions=dashData.recent_executions||[];
+  const taskStats=dashData.task_stats||{};
+  const workflows=dashData.workflows||[];
+
+  const totalTasks=Object.values(taskStats).reduce((a,b)=>a+b,0);
+  const successRate=totalTasks>0?Math.round((taskStats.completed||0)/totalTasks*100):0;
+
+  body.innerHTML=`
+    <!-- Org header -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--b)">
+      <div style="font-size:36px">${org?.avatar_emoji||'🏢'}</div>
+      <div>
+        <div style="font-family:\'Orbitron\',monospace;font-size:15px;color:var(--c)">${org?.name||'Organization'}</div>
+        <div style="font-size:12px;color:var(--t2)">${org?.description||''}</div>
+      </div>
+      <span class="tag g" style="margin-left:auto">${org?.plan||'free'} plan</span>
+    </div>
+
+    <!-- Top metrics -->
+    <div class="srow srow-4" style="margin-bottom:14px">
+      <div class="sbox"><div class="snum">${agents.length}</div><div class="slbl">AGENTS</div></div>
+      <div class="sbox"><div class="snum g">${taskStats.completed||0}</div><div class="slbl">DONE</div></div>
+      <div class="sbox"><div class="snum y">${taskStats.pending||0}</div><div class="slbl">PENDING</div></div>
+      <div class="sbox"><div class="snum p">${successRate}%</div><div class="slbl">SUCCESS</div></div>
+    </div>
+
+    <!-- Agents -->
+    <div style="font-family:\'Orbitron\',monospace;font-size:10px;color:var(--c);letter-spacing:1px;margin-bottom:8px">🤖 ACTIVE AGENTS</div>
+    ${agents.length?agents.map(a=>`
+      <div class="card" style="padding:10px 12px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1">
+            <div style="font-weight:700;color:var(--c);font-size:13px">${a.agent_name}</div>
+            <div style="font-size:11px;color:var(--t2)">${a.agent_role?.slice(0,50)||''}</div>
+          </div>
+          <span class="st ${a.agent_status}">${a.agent_status}</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px;font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--t2)">
+          <span>✓ ${a.tasks_completed||0}</span>
+          <span>✗ ${a.tasks_failed||0}</span>
+          <span style="color:var(--y)">⚡ ${a.performance_score||0}%</span>
+        </div>
+        <div class="perf-bar" style="margin-top:4px"><div class="perf-fill" style="width:${a.performance_score||0}%"></div></div>
+        ${a.current_task?`<div style="font-size:10px;color:var(--y);margin-top:4px;font-family:\'Share Tech Mono\'">▶ ${a.current_task}</div>`:''}
+      </div>`).join(''):`<div class="empty" style="padding:16px">No agents in this org. <a href="#" onclick="manageOrgAgents(${orgId})" style="color:var(--c)">Add agents</a></div>`}
+
+    <div class="div"></div>
+
+    <!-- Task status breakdown -->
+    <div style="font-family:\'Orbitron\',monospace;font-size:10px;color:var(--p);letter-spacing:1px;margin-bottom:8px">📋 TASK STATUS</div>
+    <div class="srow" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+      ${[['pending','⏳',taskStats.pending||0,'y'],['running','▶',taskStats.running||0,'c'],['completed','✓',taskStats.completed||0,'g'],['failed','✗',taskStats.failed||0,'r']].map(([s,ic,cnt,col])=>`
+        <div class="sbox"><div class="snum ${col}" style="font-size:18px">${cnt}</div><div class="slbl">${s.toUpperCase()}</div></div>`).join('')}
+    </div>
+
+    <!-- Recent executions -->
+    <div style="font-family:\'Orbitron\',monospace;font-size:10px;color:var(--c);letter-spacing:1px;margin-bottom:8px">📡 RECENT EXECUTIONS</div>
+    ${executions.length?executions.map(e=>`
+      <div class="exec-row">
+        <div class="exec-status ${e.status}"></div>
+        <div style="flex:1">
+          <div style="color:var(--c)">${e.agent_name}</div>
+          <div style="color:var(--t2);font-size:9px">${e.task_title?.slice(0,40)||''}</div>
+        </div>
+        <span class="tag ${e.status==='completed'?'g':e.status==='failed'?'r':'y'}" style="font-size:9px">${e.status}</span>
+        <span style="color:var(--t2);font-size:9px">${e.iterations||0} iter</span>
+      </div>`).join(''):`<div class="empty" style="padding:14px">No executions yet</div>`}
+
+    ${workflows.length?`
+      <div class="div"></div>
+      <div style="font-family:\'Orbitron\',monospace;font-size:10px;color:var(--y);letter-spacing:1px;margin-bottom:8px">⚙ WORKFLOWS</div>
+      ${workflows.map(w=>`<div class="exec-row"><div class="exec-status ${w.status}"></div><div style="flex:1;color:var(--c)">${w.workflow_name}</div><span style="color:var(--t2);font-size:9px">${w.status}</span></div>`).join('')}`:''}
+
+    <div style="margin-top:14px;display:flex;gap:6px">
+      <button class="btn btn-p btn-sm" onclick="manageOrgAgents(${orgId})">🤖 Manage Agents</button>
+      <button class="btn btn-c btn-sm" onclick="loadOrgDashboard()">↻ Refresh</button>
+    </div>
+  `;
+}
+
+// ── MY TEMPLATES ──────────────────────────────────────────────────────────────
+async function loadMyTemplates(){
+  const data=await api('/templates');
+  myTemplates=data.templates||[];
+  const body=document.getElementById('my-templates-body');
+  if(!myTemplates.length){body.innerHTML='<div class="empty"><span class="ic">📄</span>Chưa có template nào. <a href="#" onclick="nav(\'create-template\')" style="color:var(--c)">Tạo ngay!</a></div>';return;}
+  body.innerHTML=myTemplates.map(t=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="ctitle">${t.name}</div>
+          <div class="csub">${t.tagline||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <span class="mc-cat cat-${t.category}">${catLabel[t.category]||t.category}</span>
+          ${t.is_published?'<span class="tag g">PUBLISHED</span>':'<span class="tag" style="color:var(--t2)">DRAFT</span>'}
+        </div>
+      </div>
+      <div class="cmeta">
+        <span class="tag">v${t.version}</span>
+        <span class="tag p">⬇ ${t.total_installs||0}</span>
+        <span class="tag y">★ ${t.rating_avg?t.rating_avg.toFixed(1):'–'}</span>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-${t.is_published?'r':'g'} btn-sm" onclick="togglePublish(${t.id},${!t.is_published})">${t.is_published?'Unpublish':'Publish'}</button>
+        <button class="btn btn-r btn-sm" onclick="deleteTemplate(${t.id})">✕ Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+async function togglePublish(id,publish){
+  const data=await api('/templates/'+id+'/publish',{method:'POST',body:JSON.stringify({publish})});
+  if(data.error){toast('Error: '+data.error,'e');return;}
+  toast(publish?'✓ Template published to marketplace!':'Template unpublished','i');
+  loadMyTemplates();loadStats();
+}
+
+async function deleteTemplate(id){
+  if(!confirm('Xóa template này?'))return;
+  await api('/templates/'+id,{method:'DELETE'});
+  toast('Deleted','i');
+  loadMyTemplates();loadStats();
+}
+
+// ── CREATE TEMPLATE ───────────────────────────────────────────────────────────
+async function createTemplate(){
+  const name=document.getElementById('ct-name').value.trim();
+  const role=document.getElementById('ct-arole').value.trim();
+  const goal=document.getElementById('ct-agoal').value.trim();
+  if(!name||!role||!goal){toast('Fill Name, Agent Role, Goal','e');return;}
+  const tags=document.getElementById('ct-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const tools=document.getElementById('ct-tools').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const exTitle=document.getElementById('ct-ex-title').value.trim();
+  const exDesc=document.getElementById('ct-ex-desc').value.trim();
+  const data=await api('/templates',{method:'POST',body:JSON.stringify({
+    name,
+    tagline:document.getElementById('ct-tagline').value.trim(),
+    description:document.getElementById('ct-desc').value.trim(),
+    category:document.getElementById('ct-cat').value,
+    tags,tools,
+    agent_config:{
+      name:document.getElementById('ct-aname').value.trim()||name,
+      role,goal,
+      backstory:document.getElementById('ct-aback').value.trim(),
+      model:document.getElementById('ct-amodel').value,
+      max_iterations:parseInt(document.getElementById('ct-aiter').value),
+    },
+    preview_tasks:exTitle?[{title:exTitle,description:exDesc}]:[],
+  })});
+  if(data.error){toast('Error: '+data.error,'e');return;}
+  toast('✓ Template created! Publish it to the marketplace.','s');
+  ['ct-name','ct-tagline','ct-desc','ct-tags','ct-aname','ct-arole','ct-agoal','ct-aback','ct-ex-title','ct-ex-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  nav('my-templates');
+}
+
+// ── CREATE ORG ────────────────────────────────────────────────────────────────
+async function createOrg(){
+  const name=document.getElementById('co-name').value.trim();
+  if(!name){toast('Nhập tên tổ chức','e');return;}
+  const data=await api('/organizations',{method:'POST',body:JSON.stringify({
+    name,
+    description:document.getElementById('co-desc').value.trim(),
+    category:document.getElementById('co-cat').value,
+    avatar_emoji:selectedEmoji,
+  })});
+  if(data.error){toast('Error: '+data.error,'e');return;}
+  toast('✓ Organization created!','s');
+  ['co-name','co-desc'].forEach(id=>document.getElementById(id).value='');
+  selectedEmoji='🏢';document.getElementById('ep-selected').textContent='🏢';
+  nav('orgs');loadStats();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',async()=>{
+  await Promise.all([loadStats(),loadMarketplace()]);
+  const d=await api('/organizations');
+  orgs=d.organizations||[];
+});
+</script>
+</body>
+</html>

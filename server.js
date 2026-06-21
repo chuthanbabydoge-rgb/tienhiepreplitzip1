@@ -10,6 +10,7 @@ const pgSession = require('connect-pg-simple')(session);
 const { Pool } = require('pg');
 const { initWorkflowTables, registerWorkflowRoutes } = require('./workflow-engine');
 const { initAOSTables, registerAOSRoutes } = require('./agent-os');
+const { initMarketplaceTables, registerMarketplaceRoutes } = require('./agent-marketplace');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -106,6 +107,7 @@ async function initDB() {
   console.log('✅ DB tables ready');
   await initWorkflowTables(pgPool);
   await initAOSTables(pgPool);
+  await initMarketplaceTables(pgPool);
 }
 
 async function upsertUser(user, incrementLogin = false) {
@@ -1794,6 +1796,12 @@ registerWorkflowRoutes(app, pgPool);
 
 // ── Agent Operating System v1 ──────────────────────────────────────────────
 registerAOSRoutes(app, pgPool);
+
+// ── Agent Marketplace ──────────────────────────────────────────────────────
+app.get('/agent-marketplace', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'agent-marketplace.html'));
+});
+registerMarketplaceRoutes(app, pgPool);
 
 // ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {
