@@ -1,11 +1,11 @@
 # 🏯 VƯƠNG ĐẾ AI — TỔNG HỢP CODE
-> Cập nhật lần cuối: **20:17:46 21/6/2026**
+> Cập nhật lần cuối: **22:48:25 21/6/2026**
 > File này tự động sinh bởi `generate-snapshot.js` và cập nhật khi code thay đổi.
 
 ## 📋 Mục lục
 
 - [`package.json`](#package-json) — Package config & dependencies *(39 dòng, 987 B)*
-- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,804 dòng, 80.2 KB)*
+- [`server.js`](#server-js) — Backend Express server + Auth + Gemini AI *(1,829 dòng, 81.7 KB)*
 - [`tienhiepv3.html`](#tienhiepv3-html) — Main frontend (boot screen → login → universe UI) *(22,431 dòng, 1.63 MB)*
 - [`create-character.html`](#create-character-html) — Character creation page *(2,194 dòng, 99.3 KB)*
 - [`user.html`](#user-html) — User page *(708 dòng, 25.1 KB)*
@@ -22,7 +22,7 @@
 | File | Dòng | Kích thước |
 |------|------|------------|
 | `package.json` | 39 | 987 B |
-| `server.js` | 1,804 | 80.2 KB |
+| `server.js` | 1,829 | 81.7 KB |
 | `tienhiepv3.html` | 22,431 | 1.63 MB |
 | `create-character.html` | 2,194 | 99.3 KB |
 | `user.html` | 708 | 25.1 KB |
@@ -33,7 +33,7 @@
 | `inject5.js` | 92 | 5.0 KB |
 | `inject6.js` | 35 | 2.4 KB |
 | `test_dom.js` | 22 | 629 B |
-| **TỔNG** | **27,956** | **1.88 MB** |
+| **TỔNG** | **27,981** | **1.88 MB** |
 
 ---
 
@@ -91,7 +91,7 @@
 <a name="server-js"></a>
 
 > Backend Express server + Auth + Gemini AI  
-> 1,804 dòng · 80.2 KB
+> 1,829 dòng · 81.7 KB
 
 ```javascript
 const express = require('express');
@@ -105,7 +105,9 @@ const Jimp = require('jimp');
 const pgSession = require('connect-pg-simple')(session);
 const { Pool } = require('pg');
 const { initWorkflowTables, registerWorkflowRoutes } = require('./workflow-engine');
-const { initAOSTables, registerAOSRoutes } = require('./agent-os');
+const { initAOSTables, registerAOSRoutes, startScheduler } = require('./agent-os');
+const { initMarketplaceTables, registerMarketplaceRoutes } = require('./agent-marketplace');
+const { initWorldTables, registerWorldRoutes, createWorldWebSocket } = require('./world-engine');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -202,6 +204,8 @@ async function initDB() {
   console.log('✅ DB tables ready');
   await initWorkflowTables(pgPool);
   await initAOSTables(pgPool);
+  await initMarketplaceTables(pgPool);
+  await initWorldTables(pgPool);
 }
 
 async function upsertUser(user, incrementLogin = false) {
@@ -1891,12 +1895,33 @@ registerWorkflowRoutes(app, pgPool);
 // ── Agent Operating System v1 ──────────────────────────────────────────────
 registerAOSRoutes(app, pgPool);
 
+// ── Agent Marketplace ──────────────────────────────────────────────────────
+app.get('/agent-marketplace', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'agent-marketplace.html'));
+});
+registerMarketplaceRoutes(app, pgPool);
+
+// ── World Engine ───────────────────────────────────────────────────────────
+app.get('/world', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'world-viewer.html'));
+});
+
 // ── Start ──────────────────────────────────────────────────────────────────
-app.listen(PORT, '0.0.0.0', () => {
+const httpServer = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${PORT}`);
-  // Warm up OIDC discovery in the background
   getOidcConfig().catch(err => console.error('OIDC warmup error:', err));
 });
+
+// ── World Engine WebSocket + Routes (needs httpServer) ─────────────────────
+const { wss: worldWss, onAgentStatusChange } = createWorldWebSocket(httpServer, pgPool);
+registerWorldRoutes(app, pgPool, worldWss);
+
+// ── AOS v2: Wire World Hook + Start Autonomous Scheduler ───────────────────
+// Connect agent task status changes → World Engine citizen status updates
+if (app._aosRuntime) {
+  app._aosRuntime.setWorldHook({ onAgentStatusChange });
+}
+startScheduler(pgPool, app._aosRuntime, { interval: 5000 });
 
 ```
 
