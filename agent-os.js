@@ -863,6 +863,11 @@ function startScheduler(pool, runtime, opts = {}) {
                 )
                 AND dep.status != 'completed'
               )
+              AND NOT EXISTS (
+                SELECT 1 FROM agent_roles ar
+                JOIN org_companies oc ON oc.id = ar.org_id
+                WHERE ar.agent_id = $1 AND oc.status = 'paused'
+              )
             ORDER BY t.priority DESC, t.created_at ASC
             LIMIT 1
             FOR UPDATE SKIP LOCKED

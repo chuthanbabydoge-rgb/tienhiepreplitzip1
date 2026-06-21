@@ -13,7 +13,7 @@ const { initAOSTables, registerAOSRoutes, startScheduler } = require('./agent-os
 const { initMarketplaceTables, registerMarketplaceRoutes } = require('./agent-marketplace');
 const { initWorldTables, registerWorldRoutes, createWorldWebSocket } = require('./world-engine');
 const { initEconomyTables, registerEconomyRoutes, EconomyEngine } = require('./agent-economy');
-const { initOrgTables, registerOrgRoutes, OrganizationEngine } = require('./organization-engine');
+const { initOrgTables, registerOrgRoutes, OrganizationEngine, startOrgScheduler } = require('./organization-engine');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -1845,3 +1845,4 @@ if (app._aosRuntime) {
   });
 }
 startScheduler(pgPool, app._aosRuntime, { interval: 5000 });
+startOrgScheduler(pgPool);

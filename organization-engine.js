@@ -278,6 +278,27 @@ class OrganizationEngine {
     if (!['ceo', 'manager', 'worker'].includes(level)) {
       throw new Error('level must be: ceo, manager, worker');
     }
+
+    // ── Treasury enforcement: org must afford at least 10 task salaries ──────
+    const salary     = SALARY_BY_LEVEL[level] || 30;
+    const minReserve = salary * 10;
+    const { rows: [org] } = await this.pool.query(
+      'SELECT id, name, treasury, status FROM org_companies WHERE id=$1', [orgId]
+    );
+    if (!org) throw new Error('Organization not found');
+    if (org.status === 'paused') {
+      throw new Error(
+        `Org "${org.name}" is PAUSED — treasury critically low. ` +
+        `Fund the treasury (currently ${Math.floor(parseFloat(org.treasury))} coins) to resume hiring.`
+      );
+    }
+    if (parseFloat(org.treasury) < minReserve) {
+      throw new Error(
+        `Insufficient treasury. Hiring ${level} requires ${minReserve} coin reserve ` +
+        `(${salary} salary × 10 tasks) but org has ${Math.floor(parseFloat(org.treasury))} coins.`
+      );
+    }
+
     const { rows: [role] } = await this.pool.query(
       `INSERT INTO agent_roles (agent_id, org_id, dept_id, position_id, level)
        VALUES ($1,$2,$3,$4,$5)
@@ -397,6 +418,54 @@ class OrganizationEngine {
        title, description, period || currentPeriod(),
        targetMetric || 'tasks_completed', targetValue || 0, priority]
     );
+
+    // ── CEO real authority: high-priority goals trigger auto-pipeline ─────────
+    if (role.level === 'ceo' && priority >= 8) {
+      const self = this;
+
+      // Step 1: auto-allocate 5% of treasury to target dept (or first dept)
+      (async () => {
+        try {
+          const { rows: [orgData] } = await self.pool.query(
+            'SELECT treasury FROM org_companies WHERE id=$1', [orgId]
+          );
+          let targetDeptId = deptId;
+          if (!targetDeptId) {
+            const { rows: [firstDept] } = await self.pool.query(
+              'SELECT id FROM departments WHERE org_id=$1 LIMIT 1', [orgId]
+            );
+            targetDeptId = firstDept?.id;
+          }
+          if (targetDeptId && parseFloat(orgData?.treasury || 0) > 1000) {
+            const autoAlloc = Math.max(500, Math.floor(parseFloat(orgData.treasury) * 0.05));
+            await self.allocateBudget(orgId, targetDeptId, autoAlloc);
+            console.log(`[OrgEngine] CEO auto-funded goal #${goal.id}: ${autoAlloc} coins → dept #${targetDeptId}`);
+          }
+        } catch (e) {
+          console.error('[OrgEngine] CEO auto-allocate error:', e.message);
+        }
+      })();
+
+      // Step 2: schedule decomposition after 3s (let tx settle; find manager or CEO)
+      setTimeout(async () => {
+        try {
+          const { rows: leaders } = await self.pool.query(`
+            SELECT agent_id, level FROM agent_roles
+            WHERE org_id=$1 AND level IN ('manager','ceo')
+            ORDER BY CASE level WHEN 'manager' THEN 1 ELSE 2 END
+            LIMIT 1
+          `, [orgId]);
+          const decomposerId = leaders[0]?.agent_id || agentId;
+          const result = await self.decomposeGoal(goal.id, decomposerId);
+          console.log(`[OrgEngine] CEO auto-decomposed goal #${goal.id} → ${result.tasks_created} tasks`);
+        } catch (e) {
+          console.error(`[OrgEngine] CEO auto-decompose goal #${goal.id}:`, e.message);
+        }
+      }, 3000);
+
+      console.log(`[OrgEngine] CEO goal #${goal.id} priority=${priority}: auto-pipeline triggered`);
+    }
+
     return goal;
   }
 
@@ -405,6 +474,29 @@ class OrganizationEngine {
    * Each task is assigned to a worker in the same org.
    */
   async decomposeGoal(goalId, managerAgentId) {
+    // ── Atomic claim: only one caller can decompose a goal ────────────────────
+    // Uses sentinel task_ids=[-1] as "decomposing in progress" lock.
+    // If two callers race, only the one that wins the UPDATE proceeds.
+    const { rows: [claimed] } = await this.pool.query(
+      `UPDATE organization_goals
+       SET task_ids = '[-1]'::jsonb, updated_at=NOW()
+       WHERE id=$1
+         AND (task_ids IS NULL
+              OR task_ids = '[]'::jsonb
+              OR jsonb_array_length(task_ids) = 0)
+       RETURNING *`,
+      [goalId]
+    );
+    if (!claimed) {
+      // Another process already claimed or decomposed this goal — idempotent return
+      const { rows: [existing] } = await this.pool.query(
+        'SELECT task_ids FROM organization_goals WHERE id=$1', [goalId]
+      );
+      const ids = (existing?.task_ids || []).filter(id => id !== -1);
+      return { goal_id: goalId, tasks_created: 0, task_ids: ids, already_decomposed: true };
+    }
+
+    // ── Full goal context for Gemini ──────────────────────────────────────────
     const { rows: [goal] } = await this.pool.query(
       `SELECT g.*, o.name AS org_name, o.type AS org_type,
               d.name AS dept_name, a.name AS manager_name
@@ -1076,4 +1168,82 @@ function registerOrgRoutes(app, pool) {
   return engine;
 }
 
-module.exports = { initOrgTables, registerOrgRoutes, OrganizationEngine };
+// ─── Org Scheduler ─────────────────────────────────────────────────────────────
+// Runs every 30s. Responsibilities:
+//   1. Auto-decompose active goals that have no tasks yet (via manager/CEO AI)
+//   2. Pause orgs when treasury drops below minimum operating balance
+//   3. Resume orgs when treasury is replenished
+async function startOrgScheduler(pool) {
+  const engine = new OrganizationEngine(pool);
+  const INTERVAL_MS = 30000;
+
+  const tick = async () => {
+    try {
+      const { rows: orgs } = await pool.query(
+        'SELECT id, name, treasury, status FROM org_companies ORDER BY id'
+      );
+
+      for (const org of orgs) {
+        const treasury = parseFloat(org.treasury);
+
+        // ── 1. Treasury health: pause / resume ──────────────────────────────
+        if (treasury < 50 && org.status !== 'paused') {
+          await pool.query(
+            `UPDATE org_companies SET status='paused', updated_at=NOW() WHERE id=$1`,
+            [org.id]
+          );
+          console.log(`[OrgScheduler] Org #${org.id} "${org.name}" PAUSED — treasury=${treasury.toFixed(0)}`);
+          continue;
+        }
+        if (treasury >= 500 && org.status === 'paused') {
+          await pool.query(
+            `UPDATE org_companies SET status='active', updated_at=NOW() WHERE id=$1`,
+            [org.id]
+          );
+          console.log(`[OrgScheduler] Org #${org.id} "${org.name}" RESUMED — treasury=${treasury.toFixed(0)}`);
+        }
+        if (org.status === 'paused') continue; // still paused
+
+        // ── 2. Auto-decompose goals that have no tasks yet ──────────────────
+        const { rows: pendingGoals } = await pool.query(`
+          SELECT g.*
+          FROM organization_goals g
+          WHERE g.org_id=$1
+            AND g.status = 'active'
+            AND (g.task_ids IS NULL
+                 OR g.task_ids = '[]'::jsonb
+                 OR jsonb_array_length(g.task_ids) = 0)
+          LIMIT 3
+        `, [org.id]);
+
+        for (const goal of pendingGoals) {
+          const { rows: leaders } = await pool.query(`
+            SELECT agent_id, level FROM agent_roles
+            WHERE org_id=$1 AND level IN ('manager','ceo')
+            ORDER BY CASE level WHEN 'manager' THEN 1 ELSE 2 END
+            LIMIT 1
+          `, [org.id]);
+
+          if (!leaders.length) continue;
+
+          try {
+            const result = await engine.decomposeGoal(goal.id, leaders[0].agent_id);
+            console.log(
+              `[OrgScheduler] Org #${org.id} goal #${goal.id}: ` +
+              `auto-decomposed → ${result.tasks_created} tasks`
+            );
+          } catch (e) {
+            console.error(`[OrgScheduler] Goal #${goal.id} decompose error:`, e.message);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[OrgScheduler] tick error:', e.message);
+    }
+  };
+
+  setInterval(tick, INTERVAL_MS);
+  console.log(`[OrgScheduler] Started — treasury guard + auto-planning every ${INTERVAL_MS / 1000}s`);
+}
+
+module.exports = { initOrgTables, registerOrgRoutes, OrganizationEngine, startOrgScheduler };
