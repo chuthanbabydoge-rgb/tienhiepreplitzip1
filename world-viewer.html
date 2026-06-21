@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>World Engine v1 — Vương Đế AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root{--c:#00ffff;--p:#a855f7;--g:#00ff88;--y:#ffd700;--r:#ff4466;--bg:#000;--b:rgba(0,255,255,.2)}
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;font-family:'Rajdhani',sans-serif;color:#c8e8ff}
+
+    #canvas-3d{position:fixed;inset:0;z-index:0}
+
+    /* HUD */
+    #hud{position:fixed;inset:0;pointer-events:none;z-index:10}
+    #hud>*{pointer-events:all}
+
+    /* Topbar */
+    #topbar{position:fixed;top:0;left:0;right:0;height:50px;background:linear-gradient(90deg,rgba(0,5,15,.95),rgba(0,20,40,.9));border-bottom:1px solid var(--b);display:flex;align-items:center;gap:12px;padding:0 16px;z-index:20;backdrop-filter:blur(8px)}
+    .logo{font-family:'Orbitron',monospace;font-size:12px;font-weight:900;color:var(--c);text-shadow:0 0 12px var(--c);letter-spacing:2px}
+    .logo em{color:var(--p);font-style:normal}
+    #world-sel{background:rgba(0,15,30,.9);border:1px solid var(--b);border-radius:6px;color:var(--c);font-family:'Share Tech Mono',monospace;font-size:11px;padding:5px 10px;outline:none;cursor:pointer}
+    .tb-pill{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;background:rgba(0,15,30,.8);border:1px solid rgba(0,255,255,.15);font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(180,220,255,.6)}
+    .tb-dot{width:6px;height:6px;border-radius:50%;animation:pk 2s infinite}
+    @keyframes pk{0%,100%{opacity:1}50%{opacity:.3}}
+    .btn{padding:5px 12px;border-radius:5px;border:none;cursor:pointer;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:.5px;transition:all .2s}
+    .btn-c{background:rgba(0,255,255,.15);border:1px solid var(--b);color:var(--c)}
+    .btn-c:hover{background:rgba(0,255,255,.28);box-shadow:0 0 10px rgba(0,255,255,.2)}
+    .btn-p{background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.35);color:var(--p)}
+    .btn-g{background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.3);color:var(--g)}
+    .btn-r{background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.25);color:var(--r)}
+
+    /* Left panel */
+    #left-panel{position:fixed;left:12px;top:60px;bottom:12px;width:240px;display:flex;flex-direction:column;gap:8px;z-index:15;overflow:hidden}
+    .panel-box{background:rgba(0,5,15,.88);border:1px solid var(--b);border-radius:10px;padding:12px;backdrop-filter:blur(6px)}
+    .pbox-title{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1.5px;color:var(--c);margin-bottom:8px;opacity:.8}
+
+    /* Status legend */
+    #status-legend{display:flex;flex-direction:column;gap:5px}
+    .sl-item{display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer;padding:3px 6px;border-radius:4px;transition:background .15s}
+    .sl-item:hover{background:rgba(0,255,255,.06)}
+    .sl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .sl-label{font-family:'Share Tech Mono',monospace;font-size:10px;flex:1}
+    .sl-count{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(180,220,255,.5)}
+
+    /* Citizen list */
+    #citizen-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;min-height:0}
+    .ci-item{display:flex;align-items:center;gap:7px;padding:5px 7px;background:rgba(0,10,25,.6);border:1px solid rgba(0,255,255,.08);border-radius:5px;cursor:pointer;transition:all .15s}
+    .ci-item:hover{border-color:var(--b);background:rgba(0,20,40,.7)}
+    .ci-item.active{border-color:var(--c);background:rgba(0,255,255,.05)}
+    .ci-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .ci-name{font-size:11px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ci-status{font-family:'Share Tech Mono',monospace;font-size:9px;opacity:.6}
+
+    /* Right panel */
+    #right-panel{position:fixed;right:12px;top:60px;bottom:12px;width:220px;display:flex;flex-direction:column;gap:8px;z-index:15}
+
+    /* Event log */
+    #event-log{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+    #event-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;min-height:0}
+    .ev-item{font-family:'Share Tech Mono',monospace;font-size:9px;padding:4px 6px;border-radius:4px;background:rgba(0,10,25,.7);border-left:2px solid;animation:evIn .2s ease;line-height:1.4}
+    @keyframes evIn{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
+    .ev-status_change{border-color:var(--c);color:rgba(0,200,220,.9)}
+    .ev-task_start{border-color:var(--g);color:rgba(0,200,100,.9)}
+    .ev-task_done{border-color:var(--y);color:rgba(200,180,0,.9)}
+    .ev-error{border-color:var(--r);color:rgba(220,50,80,.9)}
+    .ev-info{border-color:rgba(180,180,255,.4);color:rgba(180,180,255,.7)}
+    .ev-time{opacity:.5;font-size:8px;display:block;margin-bottom:1px}
+
+    /* Citizen detail */
+    #citizen-detail{overflow:hidden}
+    #cd-body{display:none}
+    .cd-name{font-family:'Orbitron',monospace;font-size:12px;color:var(--c);margin-bottom:4px}
+    .cd-role{font-size:11px;color:rgba(180,220,255,.6);margin-bottom:8px;line-height:1.4}
+    .cd-stat{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:10px;margin-bottom:3px}
+    .cd-status-badge{display:inline-block;padding:3px 8px;border-radius:10px;font-family:'Share Tech Mono',monospace;font-size:9px;margin-top:4px}
+    .status-btn-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+    .status-btn{padding:3px 7px;border-radius:4px;border:1px solid;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8px;background:transparent;transition:all .15s}
+
+    /* Stats row */
+    .stats-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+    .sm-box{background:rgba(0,10,25,.6);border:1px solid rgba(0,255,255,.1);border-radius:6px;padding:7px;text-align:center}
+    .sm-num{font-family:'Orbitron',monospace;font-size:16px;font-weight:900;line-height:1}
+    .sm-lbl{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(180,220,255,.5);letter-spacing:.5px;margin-top:2px}
+
+    /* World controls */
+    #ctrl-panel{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:20}
+    .ctrl-btn{padding:8px 14px;border-radius:8px;background:rgba(0,10,25,.9);border:1px solid rgba(0,255,255,.25);color:var(--c);font-family:'Orbitron',monospace;font-size:9px;cursor:pointer;letter-spacing:.5px;transition:all .2s;backdrop-filter:blur(4px)}
+    .ctrl-btn:hover{background:rgba(0,255,255,.1);border-color:var(--c);box-shadow:0 0 10px rgba(0,255,255,.15)}
+    .ctrl-btn.active{background:rgba(0,255,255,.15);border-color:var(--c)}
+
+    /* XR buttons area */
+    #xr-area{position:fixed;bottom:60px;right:12px;display:flex;flex-direction:column;gap:6px;z-index:20}
+    .xr-btn{padding:7px 12px;border-radius:6px;background:rgba(0,5,15,.9);border:1px solid rgba(168,85,247,.3);color:var(--p);font-family:'Orbitron',monospace;font-size:9px;cursor:pointer;letter-spacing:.5px;transition:all .2s;backdrop-filter:blur(4px)}
+    .xr-btn:hover{background:rgba(168,85,247,.12);border-color:var(--p)}
+    .xr-btn:disabled{opacity:.3;cursor:not-allowed}
+
+    /* Compass */
+    #compass{position:fixed;bottom:12px;right:242px;width:44px;height:44px;z-index:20;opacity:.6}
+    #compass canvas{border-radius:50%;background:rgba(0,10,25,.7);border:1px solid rgba(0,255,255,.2)}
+
+    /* Loading overlay */
+    #loading{position:fixed;inset:0;background:#000;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+    #loading .load-logo{font-family:'Orbitron',monospace;font-size:28px;font-weight:900;color:var(--c);text-shadow:0 0 30px var(--c);letter-spacing:4px}
+    #loading .load-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,255,255,.5);letter-spacing:2px}
+    #loading .load-bar{width:200px;height:2px;background:rgba(0,255,255,.1);border-radius:2px;overflow:hidden}
+    #loading .load-fill{height:100%;background:var(--c);width:0;transition:width .4s ease;box-shadow:0 0 8px var(--c)}
+    #loading.hidden{display:none}
+
+    /* No-world overlay */
+    #no-world{position:fixed;inset:0;background:rgba(0,2,8,.95);z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+    #no-world.show{display:flex}
+    #no-world .nw-icon{font-size:48px;opacity:.4}
+    #no-world h2{font-family:'Orbitron',monospace;font-size:18px;color:var(--c);letter-spacing:2px}
+    #no-world p{font-size:13px;color:rgba(180,220,255,.5);text-align:center;max-width:300px}
+    #create-world-form{background:rgba(0,10,25,.9);border:1px solid var(--b);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:10px;width:320px}
+    #create-world-form input,#create-world-form select{background:rgba(0,15,30,.9);border:1px solid rgba(0,255,255,.2);border-radius:6px;color:#c8e8ff;font-family:'Rajdhani',sans-serif;font-size:13px;padding:8px 10px;outline:none;width:100%}
+    #create-world-form input:focus{border-color:var(--c)}
+
+    /* CSS2D labels */
+    .citizen-label{color:var(--c);font-family:'Share Tech Mono',monospace;font-size:10px;white-space:nowrap;text-shadow:0 0 6px var(--c);pointer-events:none;user-select:none}
+
+    ::-webkit-scrollbar{width:3px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(0,255,255,.2);border-radius:3px}
+  </style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="load-logo">WORLD ENGINE</div>
+  <div class="load-sub">INITIALIZING v1.0</div>
+  <div class="load-bar"><div class="load-fill" id="load-fill"></div></div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,255,255,.4)" id="load-msg">Loading Three.js...</div>
+</div>
+
+<!-- No-world overlay -->
+<div id="no-world">
+  <div class="nw-icon">🌐</div>
+  <h2>NO WORLDS FOUND</h2>
+  <p>Create your first world to see your agents come to life.</p>
+  <div id="create-world-form">
+    <div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--c);letter-spacing:1px">CREATE NEW WORLD</div>
+    <input id="nw-name" placeholder="World name..." value="Realm of AI">
+    <input id="nw-desc" placeholder="Description...">
+    <select id="nw-theme">
+      <option value="cyberpunk">Cyberpunk</option>
+      <option value="scifi">Sci-Fi</option>
+      <option value="fantasy">Fantasy</option>
+      <option value="minimal">Minimal</option>
+    </select>
+    <button class="btn btn-g" onclick="createWorld()" style="padding:10px;font-size:10px">⚡ CREATE WORLD</button>
+  </div>
+</div>
+
+<!-- 3D Canvas -->
+<div id="canvas-3d"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <!-- Topbar -->
+  <div id="topbar">
+    <div class="logo">WORLD<em>OS</em> <span style="font-size:9px;color:rgba(0,255,255,.4)">// VƯƠNG ĐẾ AI</span></div>
+    <select id="world-sel" onchange="switchWorld(this.value)">
+      <option value="">— Select World —</option>
+    </select>
+    <div class="tb-pill"><span class="tb-dot" style="background:var(--g);box-shadow:0 0 6px var(--g)"></span><span id="tb-citizens">0</span> citizens</div>
+    <div class="tb-pill"><span class="tb-dot" style="background:var(--c);box-shadow:0 0 6px var(--c)"></span><span id="tb-active">0</span> active</div>
+    <div class="tb-pill" id="ws-status"><span class="tb-dot" style="background:var(--r);box-shadow:0 0 6px var(--r)" id="ws-dot"></span><span id="ws-label">DISCONNECTED</span></div>
+    <div style="margin-left:auto;display:flex;gap:6px">
+      <button class="btn btn-c" onclick="nav('/agent-os')">Agent OS</button>
+      <button class="btn btn-p" onclick="nav('/agent-marketplace')">Marketplace</button>
+      <button class="btn btn-c" onclick="nav('/user')">← App</button>
+    </div>
+  </div>
+
+  <!-- Left panel -->
+  <div id="left-panel">
+    <!-- Mini stats -->
+    <div class="panel-box">
+      <div class="pbox-title">WORLD STATS</div>
+      <div class="stats-mini">
+        <div class="sm-box"><div class="sm-num" id="s-total" style="color:var(--c)">0</div><div class="sm-lbl">CITIZENS</div></div>
+        <div class="sm-box"><div class="sm-num" id="s-working" style="color:var(--g)">0</div><div class="sm-lbl">WORKING</div></div>
+        <div class="sm-box"><div class="sm-num" id="s-idle" style="color:rgba(0,255,255,.4)">0</div><div class="sm-lbl">IDLE</div></div>
+      </div>
+    </div>
+
+    <!-- Status legend -->
+    <div class="panel-box">
+      <div class="pbox-title">STATUS LEGEND</div>
+      <div id="status-legend">
+        <div class="sl-item" onclick="filterByStatus('idle')"><div class="sl-dot" style="background:#00ffff;box-shadow:0 0 6px #00ffff"></div><div class="sl-label">idle</div><div class="sl-count" id="cnt-idle">0</div></div>
+        <div class="sl-item" onclick="filterByStatus('thinking')"><div class="sl-dot" style="background:#ffd700;box-shadow:0 0 6px #ffd700"></div><div class="sl-label">thinking</div><div class="sl-count" id="cnt-thinking">0</div></div>
+        <div class="sl-item" onclick="filterByStatus('working')"><div class="sl-dot" style="background:#00ff88;box-shadow:0 0 6px #00ff88"></div><div class="sl-label">working</div><div class="sl-count" id="cnt-working">0</div></div>
+        <div class="sl-item" onclick="filterByStatus('meeting')"><div class="sl-dot" style="background:#a855f7;box-shadow:0 0 6px #a855f7"></div><div class="sl-label">meeting</div><div class="sl-count" id="cnt-meeting">0</div></div>
+        <div class="sl-item" onclick="filterByStatus('completed')"><div class="sl-dot" style="background:#00ff44;box-shadow:0 0 6px #00ff44"></div><div class="sl-label">completed</div><div class="sl-count" id="cnt-completed">0</div></div>
+        <div class="sl-item" onclick="filterByStatus('failed')"><div class="sl-dot" style="background:#ff4466;box-shadow:0 0 6px #ff4466"></div><div class="sl-label">failed</div><div class="sl-count" id="cnt-failed">0</div></div>
+      </div>
+    </div>
+
+    <!-- Citizen list -->
+    <div class="panel-box" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
+      <div class="pbox-title">CITIZENS</div>
+      <div id="citizen-list"><div style="font-size:11px;color:rgba(180,220,255,.3);text-align:center;padding:16px">No citizens yet</div></div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div id="right-panel">
+    <!-- Citizen detail -->
+    <div class="panel-box" id="citizen-detail">
+      <div class="pbox-title">SELECTED CITIZEN</div>
+      <div id="cd-body">
+        <div class="cd-name" id="cd-name">–</div>
+        <div class="cd-role" id="cd-role">–</div>
+        <div class="cd-stat"><span style="color:rgba(180,220,255,.5)">Status</span><span id="cd-status">–</span></div>
+        <div class="cd-stat"><span style="color:rgba(180,220,255,.5)">Position</span><span id="cd-pos">–</span></div>
+        <div class="cd-stat"><span style="color:rgba(180,220,255,.5)">Speed</span><span id="cd-speed">–</span></div>
+        <div class="status-btn-row" id="status-btn-row"></div>
+      </div>
+      <div id="cd-placeholder" style="font-size:11px;color:rgba(180,220,255,.3);text-align:center;padding:10px">Click a citizen to select</div>
+    </div>
+
+    <!-- Event log -->
+    <div class="panel-box event-log" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
+      <div class="pbox-title" style="display:flex;justify-content:space-between">
+        <span>EVENTS</span>
+        <span style="cursor:pointer;opacity:.5;font-size:11px" onclick="document.getElementById('event-list').innerHTML=''">clear</span>
+      </div>
+      <div id="event-list"></div>
+    </div>
+  </div>
+
+  <!-- Bottom controls -->
+  <div id="ctrl-panel">
+    <button class="ctrl-btn" onclick="resetCamera()">📷 Reset Camera</button>
+    <button class="ctrl-btn" id="btn-follow" onclick="toggleFollow()">👁 Follow Mode</button>
+    <button class="ctrl-btn" onclick="toggleLabels()">🏷 Labels</button>
+    <button class="ctrl-btn" onclick="toggleWireframe()">🔳 Wireframe</button>
+    <button class="ctrl-btn" onclick="nav('/world?create=1')" style="border-color:var(--g);color:var(--g)">+ New World</button>
+  </div>
+
+  <!-- XR buttons -->
+  <div id="xr-area">
+    <button class="xr-btn" id="btn-vr" disabled title="VR Mode (WebXR required)">🥽 VR MODE</button>
+    <button class="xr-btn" id="btn-ar" disabled title="AR Mode (WebXR required)">📱 AR MODE</button>
+  </div>
+</div>
+
+<!-- Three.js import map -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls }   from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+const WORLD_SIZE = 120;
+const STATUS_COLORS = {
+  idle:      0x00ffff,
+  thinking:  0xffd700,
+  working:   0x00ff88,
+  meeting:   0xa855f7,
+  completed: 0x00ff44,
+  failed:    0xff4466,
+};
+const STATUS_CSS = {
+  idle:'#00ffff', thinking:'#ffd700', working:'#00ff88',
+  meeting:'#a855f7', completed:'#00ff44', failed:'#ff4466'
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let scene, camera, renderer, labelRenderer, controls, clock;
+let citizenMeshes  = new Map(); // citizenId → { mesh, light, label, data }
+let buildingMeshes = new Map();
+let ws = null, wsReady = false;
+let currentWorldId = null;
+let followTarget = null, followMode = false;
+let showLabels = true, wireframeMode = false;
+let statusFilter = null;
+let selectedCitizenId = null;
+let worlds = [];
+
+// ── Loading progress ──────────────────────────────────────────────────────────
+function setLoad(pct, msg) {
+  document.getElementById('load-fill').style.width = pct + '%';
+  document.getElementById('load-msg').textContent = msg;
+}
+
+// ── Three.js init ──────────────────────────────────────────────────────────────
+function initThree() {
+  const container = document.getElementById('canvas-3d');
+
+  // Scene
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000510);
+  scene.fog = new THREE.FogExp2(0x000510, 0.012);
+
+  // Camera
+  camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(60, 80, 120);
+  camera.lookAt(60, 0, 60);
+
+  // WebGL renderer
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // XR scaffold
+  renderer.xr = renderer.xr || {};
+  container.appendChild(renderer.domElement);
+
+  // CSS2D label renderer
+  labelRenderer = new CSS2DRenderer();
+  labelRenderer.setSize(window.innerWidth, window.innerHeight);
+  labelRenderer.domElement.style.position = 'absolute';
+  labelRenderer.domElement.style.top = '0';
+  labelRenderer.domElement.style.pointerEvents = 'none';
+  container.appendChild(labelRenderer.domElement);
+
+  // Orbit controls
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.06;
+  controls.minDistance = 10;
+  controls.maxDistance = 300;
+  controls.maxPolarAngle = Math.PI / 2.2;
+  controls.target.set(60, 0, 60);
+  controls.update();
+
+  // Lighting
+  const ambient = new THREE.AmbientLight(0x112244, 0.8);
+  scene.add(ambient);
+
+  const sun = new THREE.DirectionalLight(0x4488ff, 1.2);
+  sun.position.set(50, 100, 30);
+  sun.castShadow = true;
+  sun.shadow.camera.far = 300;
+  sun.shadow.camera.left = -120;
+  sun.shadow.camera.right = 120;
+  sun.shadow.camera.top = 120;
+  sun.shadow.camera.bottom = -120;
+  sun.shadow.mapSize.width = 2048;
+  sun.shadow.mapSize.height = 2048;
+  scene.add(sun);
+
+  // Atmospheric point lights
+  const cyan = new THREE.PointLight(0x00ffff, 1.5, 80);
+  cyan.position.set(30, 30, 30);
+  scene.add(cyan);
+  const purple = new THREE.PointLight(0x8800ff, 1.2, 80);
+  purple.position.set(90, 25, 90);
+  scene.add(purple);
+
+  // Stars
+  addStars();
+
+  clock = new THREE.Clock();
+}
+
+function addStars() {
+  const geo = new THREE.BufferGeometry();
+  const positions = [];
+  for (let i = 0; i < 2000; i++) {
+    positions.push((Math.random() - .5) * 800, 80 + Math.random() * 200, (Math.random() - .5) * 800);
+  }
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({ color: 0x8888ff, size: 0.4, transparent: true, opacity: 0.7 });
+  scene.add(new THREE.Points(geo, mat));
+}
+
+// ── World rendering ────────────────────────────────────────────────────────────
+function buildWorld(districts, buildings) {
+  // Clear existing world geometry (keep citizens)
+  scene.traverse(obj => {
+    if (obj.userData.worldGeom) scene.remove(obj);
+  });
+
+  // Ground
+  const groundGeo = new THREE.PlaneGeometry(WORLD_SIZE + 20, WORLD_SIZE + 20, 40, 40);
+  const groundMat = new THREE.MeshLambertMaterial({ color: 0x010a14, wireframe: false });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.set(WORLD_SIZE / 2, -0.1, WORLD_SIZE / 2);
+  ground.receiveShadow = true;
+  ground.userData.worldGeom = true;
+  scene.add(ground);
+
+  // Grid
+  const grid = new THREE.GridHelper(WORLD_SIZE + 20, 30, 0x001a2a, 0x001a2a);
+  grid.position.set(WORLD_SIZE / 2, 0, WORLD_SIZE / 2);
+  grid.userData.worldGeom = true;
+  scene.add(grid);
+
+  // Districts (flat colored zones)
+  for (const d of districts) {
+    const geo = new THREE.BoxGeometry(d.width, 0.3, d.depth);
+    const mat = new THREE.MeshLambertMaterial({
+      color: new THREE.Color(d.color),
+      transparent: true,
+      opacity: 0.6,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(d.pos_x + d.width / 2, 0.15, d.pos_z + d.depth / 2);
+    mesh.receiveShadow = true;
+    mesh.userData.worldGeom = true;
+    mesh.userData.district = d;
+    scene.add(mesh);
+
+    // District border glow
+    const edges = new THREE.EdgesGeometry(geo);
+    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: new THREE.Color(d.color), opacity: 0.4, transparent: true }));
+    line.position.copy(mesh.position);
+    line.userData.worldGeom = true;
+    scene.add(line);
+
+    // District label
+    const div = document.createElement('div');
+    div.className = 'citizen-label';
+    div.style.fontSize = '11px';
+    div.style.opacity = '0.5';
+    div.style.letterSpacing = '2px';
+    div.textContent = d.name.toUpperCase();
+    const label = new CSS2DObject(div);
+    label.position.set(d.pos_x + d.width / 2, 1.5, d.pos_z + d.depth / 2);
+    label.userData.worldGeom = true;
+    scene.add(label);
+  }
+
+  // Buildings
+  buildingMeshes.clear();
+  for (const b of buildings) {
+    const geo = new THREE.BoxGeometry(b.width, b.height, b.depth);
+    const mat = new THREE.MeshLambertMaterial({ color: new THREE.Color(b.color) });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(b.pos_x + b.width / 2, b.height / 2, b.pos_z + b.depth / 2);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData.worldGeom = true;
+    mesh.userData.building = b;
+    scene.add(mesh);
+
+    // Edge highlight
+    const edges = new THREE.EdgesGeometry(geo);
+    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: new THREE.Color(b.color), opacity: 0.5, transparent: true }));
+    line.position.copy(mesh.position);
+    line.userData.worldGeom = true;
+    scene.add(line);
+
+    buildingMeshes.set(b.id, mesh);
+  }
+}
+
+// ── Citizens ──────────────────────────────────────────────────────────────────
+function createCitizenMesh(citizen) {
+  const group = new THREE.Group();
+
+  // Body sphere (small)
+  const bodyGeo = new THREE.SphereGeometry(0.8, 8, 8);
+  const color = STATUS_COLORS[citizen.status] || STATUS_COLORS.idle;
+  const mat = new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: 0.3 });
+  const body = new THREE.Mesh(bodyGeo, mat);
+  body.castShadow = true;
+  group.add(body);
+
+  // Head
+  const headGeo = new THREE.SphereGeometry(0.45, 8, 8);
+  const head = new THREE.Mesh(headGeo, mat.clone());
+  head.position.y = 1.1;
+  group.add(head);
+
+  // Point light (glow)
+  const light = new THREE.PointLight(color, 1.2, 8);
+  light.position.y = 1;
+  group.add(light);
+
+  // Status ring on ground
+  const ringGeo = new THREE.RingGeometry(1.0, 1.3, 16);
+  const ringMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.4, side: THREE.DoubleSide });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.05;
+  group.add(ring);
+
+  // CSS2D label
+  const div = document.createElement('div');
+  div.className = 'citizen-label';
+  div.textContent = citizen.name.slice(0, 16);
+  const label = new CSS2DObject(div);
+  label.position.y = 2.2;
+  label.visible = showLabels;
+  group.add(label);
+
+  group.position.set(citizen.pos_x, 0.8, citizen.pos_z);
+  group.userData.citizenId = citizen.id;
+  scene.add(group);
+
+  return { mesh: group, light, label, data: { ...citizen } };
+}
+
+function updateCitizenMesh(citizenId, updates) {
+  const obj = citizenMeshes.get(citizenId);
+  if (!obj) return;
+
+  if (updates.status && updates.status !== obj.data.status) {
+    const col = STATUS_COLORS[updates.status] || STATUS_COLORS.idle;
+    obj.mesh.children.forEach(child => {
+      if (child.material) {
+        child.material.color?.setHex(col);
+        child.material.emissive?.setHex(col);
+      }
+      if (child.isPointLight) child.color.setHex(col);
+    });
+    obj.data.status = updates.status;
+  }
+
+  if (updates.target_x !== undefined) obj.data.target_x = updates.target_x;
+  if (updates.target_z !== undefined) obj.data.target_z = updates.target_z;
+  if (updates.pos_x !== undefined) { obj.data.pos_x = updates.pos_x; }
+  if (updates.pos_z !== undefined) { obj.data.pos_z = updates.pos_z; }
+}
+
+function spawnCitizens(citizens) {
+  // Remove old citizen meshes
+  citizenMeshes.forEach(obj => scene.remove(obj.mesh));
+  citizenMeshes.clear();
+
+  for (const c of citizens) {
+    const obj = createCitizenMesh(c);
+    citizenMeshes.set(c.id, obj);
+  }
+  refreshCitizenList();
+  updateStats();
+}
+
+function refreshCitizenList() {
+  const list = document.getElementById('citizen-list');
+  const items = [];
+  citizenMeshes.forEach((obj, id) => {
+    items.push({ id, name: obj.data.name, status: obj.data.status });
+  });
+  if (!items.length) {
+    list.innerHTML = '<div style="font-size:11px;color:rgba(180,220,255,.3);text-align:center;padding:16px">No citizens</div>';
+    return;
+  }
+  list.innerHTML = items.map(c => `
+    <div class="ci-item ${c.id === selectedCitizenId ? 'active' : ''}" onclick="window.selectCitizen(${c.id})" id="ci-${c.id}">
+      <div class="ci-dot" style="background:${STATUS_CSS[c.status]||'#00ffff'};box-shadow:0 0 5px ${STATUS_CSS[c.status]||'#00ffff'}"></div>
+      <div class="ci-name">${c.name}</div>
+      <div class="ci-status">${c.status}</div>
+    </div>`).join('');
+
+  document.getElementById('tb-citizens').textContent = items.length;
+  const active = items.filter(c => c.status !== 'idle').length;
+  document.getElementById('tb-active').textContent = active;
+}
+
+function updateStats() {
+  const counts = { idle:0, thinking:0, working:0, meeting:0, completed:0, failed:0 };
+  citizenMeshes.forEach(obj => { counts[obj.data.status] = (counts[obj.data.status]||0)+1; });
+  document.getElementById('s-total').textContent = citizenMeshes.size;
+  document.getElementById('s-working').textContent = counts.working;
+  document.getElementById('s-idle').textContent = counts.idle;
+  Object.keys(counts).forEach(s => {
+    const el = document.getElementById('cnt-'+s);
+    if (el) el.textContent = counts[s];
+  });
+}
+
+// ── Animation loop ─────────────────────────────────────────────────────────────
+const LERP_SPEED = 2.5;
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  const t = clock.getElapsedTime();
+
+  // Lerp citizen positions
+  citizenMeshes.forEach(obj => {
+    const { data, mesh } = obj;
+    const tx = data.target_x ?? data.pos_x;
+    const tz = data.target_z ?? data.pos_z;
+    mesh.position.x += (tx - mesh.position.x) * LERP_SPEED * dt;
+    mesh.position.z += (tz - mesh.position.z) * LERP_SPEED * dt;
+
+    // Bob animation
+    mesh.position.y = 0.8 + Math.sin(t * 2 + data.id * 1.3) * 0.1;
+
+    // Rotate while working/thinking
+    if (data.status === 'working' || data.status === 'thinking') {
+      mesh.rotation.y += dt * 1.5;
+    }
+
+    // Ring pulse animation
+    const ring = mesh.children.find(c => c.geometry?.type === 'RingGeometry');
+    if (ring) {
+      ring.material.opacity = 0.2 + Math.sin(t * 3 + data.id) * 0.2;
+      const s = 1 + Math.sin(t * 2 + data.id * 0.7) * 0.15;
+      ring.scale.set(s, s, s);
+    }
+  });
+
+  // Follow mode
+  if (followMode && followTarget) {
+    const obj = citizenMeshes.get(followTarget);
+    if (obj) {
+      const tp = obj.mesh.position;
+      controls.target.lerp(new THREE.Vector3(tp.x, 0, tp.z), 0.05);
+      camera.position.lerp(new THREE.Vector3(tp.x, 20, tp.z + 30), 0.03);
+    }
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+}
+
+// ── WebSocket ──────────────────────────────────────────────────────────────────
+function connectWS(worldId) {
+  if (ws) { ws.close(); ws = null; }
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}/ws/world`);
+
+  ws.onopen = () => {
+    wsReady = true;
+    setWsStatus(true);
+    ws.send(JSON.stringify({ type: 'subscribe', world_id: worldId }));
+  };
+
+  ws.onclose = () => {
+    wsReady = false;
+    setWsStatus(false);
+    setTimeout(() => { if (currentWorldId) connectWS(currentWorldId); }, 3000);
+  };
+
+  ws.onerror = () => setWsStatus(false);
+
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      handleWSMessage(msg);
+    } catch {}
+  };
+}
+
+function setWsStatus(ok) {
+  document.getElementById('ws-dot').style.background = ok ? '#00ff88' : '#ff4466';
+  document.getElementById('ws-dot').style.boxShadow = ok ? '0 0 6px #00ff88' : '0 0 6px #ff4466';
+  document.getElementById('ws-label').textContent = ok ? 'LIVE' : 'RECONNECTING';
+}
+
+function handleWSMessage(msg) {
+  if (msg.type === 'world_state') {
+    buildWorld(msg.districts, msg.buildings);
+    spawnCitizens(msg.citizens);
+    setLoad(100, 'World loaded!');
+    setTimeout(() => document.getElementById('loading').classList.add('hidden'), 600);
+  }
+
+  if (msg.type === 'citizen_update') {
+    const c = msg.citizen;
+    updateCitizenMesh(c.id, c);
+    updateCitizenListItem(c);
+    updateStats();
+    if (c.id === selectedCitizenId) showCitizenDetail(c.id);
+  }
+
+  if (msg.type === 'citizen_bulk_update') {
+    (msg.citizens || []).forEach(c => {
+      updateCitizenMesh(c.id, c);
+    });
+    updateStats();
+    if (selectedCitizenId) showCitizenDetail(selectedCitizenId);
+  }
+
+  if (msg.type === 'event') {
+    addEvent(msg.event, msg.message, msg.citizen_id);
+  }
+}
+
+function updateCitizenListItem(c) {
+  const el = document.getElementById('ci-'+c.id);
+  if (!el) return;
+  const dot = el.querySelector('.ci-dot');
+  const statusEl = el.querySelector('.ci-status');
+  if (dot) { dot.style.background = STATUS_CSS[c.status]; dot.style.boxShadow = '0 0 5px '+STATUS_CSS[c.status]; }
+  if (statusEl) statusEl.textContent = c.status;
+}
+
+// ── Events ────────────────────────────────────────────────────────────────────
+function addEvent(type, message, citizenId) {
+  const list = document.getElementById('event-list');
+  const time = new Date().toLocaleTimeString('vi-VN');
+  const div = document.createElement('div');
+  div.className = `ev-item ev-${type}`;
+  div.innerHTML = `<span class="ev-time">${time}</span>${message||type}`;
+  list.prepend(div);
+  while (list.children.length > 30) list.removeChild(list.lastChild);
+}
+
+// ── Citizen detail ────────────────────────────────────────────────────────────
+window.selectCitizen = function(id) {
+  selectedCitizenId = id;
+  document.querySelectorAll('.ci-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('ci-'+id);
+  if (el) el.classList.add('active');
+  showCitizenDetail(id);
+
+  // Focus camera on citizen
+  const obj = citizenMeshes.get(id);
+  if (obj) {
+    const p = obj.mesh.position;
+    controls.target.set(p.x, 0, p.z);
+  }
+};
+
+function showCitizenDetail(id) {
+  const obj = citizenMeshes.get(id);
+  if (!obj) return;
+  const c = obj.data;
+  document.getElementById('cd-placeholder').style.display = 'none';
+  document.getElementById('cd-body').style.display = 'block';
+  document.getElementById('cd-name').textContent = c.name;
+  document.getElementById('cd-role').textContent = c.role || '–';
+  document.getElementById('cd-status').innerHTML = `<span style="color:${STATUS_CSS[c.status]}">${c.status}</span>`;
+  document.getElementById('cd-pos').textContent = `${Math.round(obj.mesh.position.x)}, ${Math.round(obj.mesh.position.z)}`;
+  document.getElementById('cd-speed').textContent = (c.speed || 4).toFixed(1) + ' u/s';
+
+  const statuses = ['idle','thinking','working','meeting','completed','failed'];
+  document.getElementById('status-btn-row').innerHTML = statuses.map(s => `
+    <button class="status-btn" style="border-color:${STATUS_CSS[s]};color:${STATUS_CSS[s]}" onclick="setCitizenStatus(${id},'${s}')">${s}</button>
+  `).join('');
+}
+
+window.setCitizenStatus = async function(id, status) {
+  try {
+    await fetch(`/api/world/citizens/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    addEvent('status_change', `Citizen #${id} set to ${status}`);
+  } catch {}
+};
+
+// ── World management ───────────────────────────────────────────────────────────
+async function loadWorlds() {
+  try {
+    const res = await fetch('/api/world/worlds');
+    const data = await res.json();
+    worlds = data.worlds || [];
+
+    const sel = document.getElementById('world-sel');
+    sel.innerHTML = '<option value="">— Select World —</option>' +
+      worlds.map(w => `<option value="${w.id}">${w.name} (${w.citizen_count} citizens)</option>`).join('');
+
+    if (worlds.length === 0) {
+      const createParam = new URLSearchParams(location.search).get('create');
+      document.getElementById('no-world').classList.add('show');
+      document.getElementById('loading').classList.add('hidden');
+    } else {
+      // Auto-select first world
+      const firstWorld = worlds[0];
+      sel.value = firstWorld.id;
+      switchWorld(firstWorld.id);
+    }
+  } catch (e) {
+    setLoad(100, 'Error loading worlds');
+    document.getElementById('loading').classList.add('hidden');
+  }
+}
+
+window.switchWorld = function(id) {
+  if (!id) return;
+  currentWorldId = parseInt(id);
+  document.getElementById('loading').classList.remove('hidden');
+  setLoad(30, 'Connecting to world...');
+  connectWS(currentWorldId);
+};
+
+window.createWorld = async function() {
+  const name = document.getElementById('nw-name').value.trim();
+  const desc = document.getElementById('nw-desc').value.trim();
+  const theme = document.getElementById('nw-theme').value;
+  if (!name) return;
+  try {
+    const res = await fetch('/api/world/worlds', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, description: desc, theme }),
+    });
+    const data = await res.json();
+    if (data.world) {
+      document.getElementById('no-world').classList.remove('show');
+      await loadWorlds();
+      document.getElementById('world-sel').value = data.world.id;
+      switchWorld(data.world.id);
+    }
+  } catch {}
+};
+
+// ── Camera controls ────────────────────────────────────────────────────────────
+window.resetCamera = function() {
+  camera.position.set(60, 80, 120);
+  controls.target.set(60, 0, 60);
+  controls.update();
+};
+
+window.toggleFollow = function() {
+  followMode = !followMode;
+  const btn = document.getElementById('btn-follow');
+  if (followMode) {
+    btn.classList.add('active');
+    if (selectedCitizenId) followTarget = selectedCitizenId;
+    else followTarget = citizenMeshes.keys().next().value;
+  } else {
+    btn.classList.remove('active');
+    followTarget = null;
+  }
+};
+
+window.filterByStatus = function(status) {
+  statusFilter = statusFilter === status ? null : status;
+  citizenMeshes.forEach((obj, id) => {
+    const visible = !statusFilter || obj.data.status === statusFilter;
+    obj.mesh.visible = visible;
+  });
+};
+
+window.toggleLabels = function() {
+  showLabels = !showLabels;
+  citizenMeshes.forEach(obj => {
+    if (obj.label) obj.label.visible = showLabels;
+  });
+};
+
+window.toggleWireframe = function() {
+  wireframeMode = !wireframeMode;
+  scene.traverse(obj => {
+    if (obj.isMesh && obj.userData.worldGeom && obj.material) {
+      obj.material.wireframe = wireframeMode;
+    }
+  });
+};
+
+window.nav = function(path) { location.href = path; };
+
+// ── XR scaffold ───────────────────────────────────────────────────────────────
+function setupXR() {
+  if (navigator.xr) {
+    navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+      const btn = document.getElementById('btn-vr');
+      if (supported) {
+        btn.disabled = false;
+        btn.onclick = () => enterXR('immersive-vr');
+      }
+    }).catch(() => {});
+
+    navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+      const btn = document.getElementById('btn-ar');
+      if (supported) {
+        btn.disabled = false;
+        btn.onclick = () => enterXR('immersive-ar');
+      }
+    }).catch(() => {});
+  }
+}
+
+function enterXR(mode) {
+  // XR session scaffold — full implementation ready for VR/AR headsets
+  navigator.xr.requestSession(mode, {
+    requiredFeatures: mode === 'immersive-ar' ? ['hit-test'] : [],
+    optionalFeatures: ['local-floor', 'bounded-floor'],
+  }).then(session => {
+    renderer.xr.enabled = true;
+    renderer.xr.setSession(session);
+    addEvent('info', `Entered ${mode} mode`);
+    session.addEventListener('end', () => {
+      renderer.xr.enabled = false;
+      addEvent('info', 'Exited XR mode');
+    });
+  }).catch(e => {
+    addEvent('error', 'XR error: ' + e.message);
+  });
+}
+
+// ── Resize ────────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  labelRenderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ── Raycaster for clicks ──────────────────────────────────────────────────────
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+renderer.domElement.addEventListener('click', e => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+
+  const objs = [];
+  citizenMeshes.forEach(obj => objs.push(...obj.mesh.children.filter(c => c.isMesh)));
+  const hits = raycaster.intersectObjects(objs);
+  if (hits.length) {
+    const group = hits[0].object.parent;
+    if (group.userData.citizenId != null) window.selectCitizen(group.userData.citizenId);
+  }
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+initThree();
+setLoad(40, 'Three.js initialized...');
+animate();
+setLoad(70, 'Loading worlds...');
+setupXR();
+await loadWorlds();
+</script>
+</body>
+</html>

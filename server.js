@@ -11,6 +11,7 @@ const { Pool } = require('pg');
 const { initWorkflowTables, registerWorkflowRoutes } = require('./workflow-engine');
 const { initAOSTables, registerAOSRoutes } = require('./agent-os');
 const { initMarketplaceTables, registerMarketplaceRoutes } = require('./agent-marketplace');
+const { initWorldTables, registerWorldRoutes, createWorldWebSocket } = require('./world-engine');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -108,6 +109,7 @@ async function initDB() {
   await initWorkflowTables(pgPool);
   await initAOSTables(pgPool);
   await initMarketplaceTables(pgPool);
+  await initWorldTables(pgPool);
 }
 
 async function upsertUser(user, incrementLogin = false) {
@@ -1803,9 +1805,17 @@ app.get('/agent-marketplace', requireAuth, (req, res) => {
 });
 registerMarketplaceRoutes(app, pgPool);
 
+// ── World Engine ───────────────────────────────────────────────────────────
+app.get('/world', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'world-viewer.html'));
+});
+
 // ── Start ──────────────────────────────────────────────────────────────────
-app.listen(PORT, '0.0.0.0', () => {
+const httpServer = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${PORT}`);
-  // Warm up OIDC discovery in the background
   getOidcConfig().catch(err => console.error('OIDC warmup error:', err));
 });
+
+// ── World Engine WebSocket + Routes (needs httpServer) ─────────────────────
+const { wss: worldWss, onAgentStatusChange } = createWorldWebSocket(httpServer, pgPool);
+registerWorldRoutes(app, pgPool, worldWss);
