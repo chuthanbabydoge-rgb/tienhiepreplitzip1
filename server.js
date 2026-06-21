@@ -1784,6 +1784,11 @@ app.post('/api/live/copy', async (req, res) => {
   }
 });
 
+// ── Agent OS Dashboard ─────────────────────────────────────────────────────
+app.get('/agent-os', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'agent-os-dashboard.html'));
+});
+
 // ── Multi-Agent Workflow API ───────────────────────────────────────────────
 registerWorkflowRoutes(app, pgPool);
 

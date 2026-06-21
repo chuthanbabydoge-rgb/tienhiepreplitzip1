@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent OS v1 — Vương Đế AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cyan:    #00ffff;
+      --cyan2:   rgba(0,255,255,0.15);
+      --cyan3:   rgba(0,255,255,0.06);
+      --purple:  #a855f7;
+      --green:   #00ff88;
+      --yellow:  #ffd700;
+      --red:     #ff4466;
+      --orange:  #ff8800;
+      --bg:      #000;
+      --bg1:     #030b14;
+      --bg2:     #071520;
+      --border:  rgba(0,255,255,0.18);
+      --border2: rgba(0,255,255,0.35);
+      --text:    #c8e8ff;
+      --text2:   rgba(180,220,255,0.55);
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;overflow:hidden}
+
+    /* ── Scanline overlay ── */
+    body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px)}
+
+    /* ── Layout ── */
+    #app{display:grid;grid-template-rows:56px 1fr;grid-template-columns:220px 1fr 300px;height:100vh;gap:0}
+    #topbar{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:0 20px;
+      background:linear-gradient(90deg,#000a15 0%,#001a2e 50%,#000a15 100%);
+      border-bottom:1px solid var(--border2);position:relative;overflow:hidden}
+    #topbar::before{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation:scanH 3s ease-in-out infinite}
+    @keyframes scanH{0%,100%{opacity:.3}50%{opacity:1}}
+
+    .logo{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;color:var(--cyan);
+      text-shadow:0 0 12px var(--cyan);letter-spacing:2px;white-space:nowrap}
+    .logo span{color:var(--purple);text-shadow:0 0 12px var(--purple)}
+    .version-badge{background:linear-gradient(135deg,rgba(0,255,255,.12),rgba(168,85,247,.12));
+      border:1px solid var(--border2);padding:2px 10px;border-radius:20px;
+      font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--cyan);letter-spacing:1px}
+
+    .status-pills{display:flex;gap:8px;margin-left:auto}
+    .pill{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;
+      background:var(--bg2);border:1px solid var(--border);font-size:11px;font-family:'Share Tech Mono',monospace}
+    .pill .dot{width:6px;height:6px;border-radius:50%;animation:pulse 2s infinite}
+    .dot.green{background:var(--green);box-shadow:0 0 8px var(--green)}
+    .dot.yellow{background:var(--yellow);box-shadow:0 0 8px var(--yellow)}
+    .dot.red{background:var(--red);box-shadow:0 0 8px var(--red)}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+    /* ── Sidebar ── */
+    #sidebar{background:linear-gradient(180deg,#020d1a 0%,#01080f 100%);border-right:1px solid var(--border);
+      padding:16px 10px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;
+      transition:all .2s;font-size:13px;font-weight:600;color:var(--text2);border:1px solid transparent}
+    .nav-item:hover{background:var(--cyan2);border-color:var(--border);color:var(--cyan)}
+    .nav-item.active{background:linear-gradient(135deg,rgba(0,255,255,.15),rgba(0,255,255,.05));
+      border-color:var(--border2);color:var(--cyan);text-shadow:0 0 8px rgba(0,255,255,.5)}
+    .nav-item .icon{font-size:16px;width:20px;text-align:center}
+    .nav-section{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:var(--text2);
+      padding:12px 12px 4px;opacity:.6}
+
+    /* ── Main ── */
+    #main{overflow:hidden;display:flex;flex-direction:column}
+    .panel{display:none;flex:1;overflow:hidden;flex-direction:column}
+    .panel.active{display:flex}
+
+    .panel-header{padding:16px 20px 12px;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:12px;flex-shrink:0}
+    .panel-title{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:var(--cyan);
+      text-shadow:0 0 10px rgba(0,255,255,.4)}
+    .panel-body{flex:1;overflow-y:auto;padding:16px 20px}
+
+    /* ── Right pane ── */
+    #rightpane{background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+    .rpanel{display:none;flex:1;flex-direction:column;overflow:hidden}
+    .rpanel.active{display:flex}
+    .rp-header{padding:14px 16px;border-bottom:1px solid var(--border);font-family:'Orbitron',monospace;
+      font-size:11px;color:var(--purple);letter-spacing:1px}
+    .rp-body{flex:1;overflow-y:auto;padding:12px}
+
+    /* ── Cards ── */
+    .card{background:linear-gradient(135deg,rgba(0,255,255,.04),rgba(0,255,255,.01));
+      border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;
+      transition:border-color .2s,box-shadow .2s;cursor:default}
+    .card:hover{border-color:var(--border2);box-shadow:0 0 16px rgba(0,255,255,.08)}
+    .card.clickable{cursor:pointer}
+    .card.selected{border-color:var(--cyan);box-shadow:0 0 20px rgba(0,255,255,.15)}
+    .card-title{font-weight:700;font-size:15px;color:var(--cyan);margin-bottom:4px}
+    .card-sub{font-size:12px;color:var(--text2);line-height:1.4}
+    .card-meta{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    .tag{padding:2px 8px;border-radius:10px;font-size:10px;font-family:'Share Tech Mono',monospace;
+      background:rgba(0,255,255,.08);border:1px solid rgba(0,255,255,.2);color:var(--cyan)}
+    .tag.purple{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.3);color:var(--purple)}
+    .tag.green{background:rgba(0,255,136,.1);border-color:rgba(0,255,136,.3);color:var(--green)}
+    .tag.red{background:rgba(255,68,102,.1);border-color:rgba(255,68,102,.3);color:var(--red)}
+    .tag.yellow{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.3);color:var(--yellow)}
+    .tag.orange{background:rgba(255,136,0,.1);border-color:rgba(255,136,0,.3);color:var(--orange)}
+
+    /* ── Status badge ── */
+    .status{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:'Share Tech Mono',monospace;padding:2px 8px;border-radius:10px}
+    .status.idle{background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.25);color:var(--green)}
+    .status.busy{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);color:var(--yellow)}
+    .status.pending{background:rgba(180,180,255,.08);border:1px solid rgba(180,180,255,.2);color:#aaf}
+    .status.running{background:rgba(0,255,255,.08);border:1px solid rgba(0,255,255,.3);color:var(--cyan);animation:glowCyan 1.5s ease-in-out infinite}
+    .status.completed{background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.25);color:var(--green)}
+    .status.failed{background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.25);color:var(--red)}
+    @keyframes glowCyan{0%,100%{box-shadow:0 0 4px rgba(0,255,255,.2)}50%{box-shadow:0 0 10px rgba(0,255,255,.5)}}
+
+    /* ── Forms ── */
+    .form-group{margin-bottom:12px}
+    .form-group label{display:block;font-size:11px;font-family:'Orbitron',monospace;color:var(--cyan);
+      letter-spacing:1px;margin-bottom:5px;opacity:.8}
+    .form-group input,.form-group textarea,.form-group select{
+      width:100%;background:rgba(0,15,30,.8);border:1px solid var(--border);border-radius:6px;
+      color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;padding:8px 10px;
+      transition:border-color .2s;outline:none}
+    .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--cyan);box-shadow:0 0 8px rgba(0,255,255,.12)}
+    .form-group textarea{resize:vertical;min-height:70px}
+    .form-group select option{background:#050e1a}
+
+    /* ── Buttons ── */
+    .btn{padding:8px 18px;border-radius:6px;border:none;cursor:pointer;font-family:'Orbitron',monospace;
+      font-size:10px;font-weight:700;letter-spacing:1px;transition:all .2s}
+    .btn-cyan{background:linear-gradient(135deg,rgba(0,255,255,.2),rgba(0,255,255,.08));
+      border:1px solid var(--border2);color:var(--cyan);text-shadow:0 0 8px rgba(0,255,255,.5)}
+    .btn-cyan:hover{background:linear-gradient(135deg,rgba(0,255,255,.35),rgba(0,255,255,.15));box-shadow:0 0 16px rgba(0,255,255,.2)}
+    .btn-purple{background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(168,85,247,.08));
+      border:1px solid rgba(168,85,247,.4);color:var(--purple)}
+    .btn-purple:hover{background:linear-gradient(135deg,rgba(168,85,247,.35),rgba(168,85,247,.15));box-shadow:0 0 16px rgba(168,85,247,.2)}
+    .btn-green{background:linear-gradient(135deg,rgba(0,255,136,.2),rgba(0,255,136,.08));
+      border:1px solid rgba(0,255,136,.4);color:var(--green)}
+    .btn-green:hover{background:linear-gradient(135deg,rgba(0,255,136,.35),rgba(0,255,136,.15));box-shadow:0 0 16px rgba(0,255,136,.2)}
+    .btn-red{background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.3);color:var(--red)}
+    .btn-red:hover{background:rgba(255,68,102,.2)}
+    .btn-sm{padding:4px 10px;font-size:9px}
+    .btn-full{width:100%}
+    .btn:disabled{opacity:.4;cursor:not-allowed}
+
+    /* ── Stats row ── */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+    .stat-box{background:linear-gradient(135deg,rgba(0,255,255,.05),rgba(0,255,255,.02));
+      border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center}
+    .stat-num{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;color:var(--cyan);
+      text-shadow:0 0 16px rgba(0,255,255,.5);line-height:1}
+    .stat-num.purple{color:var(--purple);text-shadow:0 0 16px rgba(168,85,247,.5)}
+    .stat-num.green{color:var(--green);text-shadow:0 0 16px rgba(0,255,136,.5)}
+    .stat-num.yellow{color:var(--yellow);text-shadow:0 0 16px rgba(255,215,0,.5)}
+    .stat-label{font-size:10px;font-family:'Orbitron',monospace;color:var(--text2);letter-spacing:1px;margin-top:4px}
+
+    /* ── ReAct log ── */
+    #react-log{background:rgba(0,5,15,.9);border:1px solid var(--border);border-radius:8px;
+      padding:12px;max-height:calc(100vh - 340px);overflow-y:auto;font-family:'Share Tech Mono',monospace;font-size:11px}
+    .react-step{margin-bottom:12px;padding:10px;border-radius:6px;border-left:3px solid;animation:fadeIn .3s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+    .react-step.thought{border-color:var(--purple);background:rgba(168,85,247,.06)}
+    .react-step.action{border-color:var(--cyan);background:rgba(0,255,255,.05)}
+    .react-step.observation{border-color:var(--green);background:rgba(0,255,136,.05)}
+    .react-step.final{border-color:var(--yellow);background:rgba(255,215,0,.06)}
+    .react-step .step-label{font-size:9px;letter-spacing:1px;opacity:.7;margin-bottom:4px}
+    .react-step .step-content{line-height:1.6;color:var(--text);white-space:pre-wrap;word-break:break-word}
+
+    /* ── Memory entries ── */
+    .mem-entry{background:rgba(0,10,25,.6);border:1px solid var(--border);border-radius:6px;
+      padding:10px;margin-bottom:8px;position:relative}
+    .mem-entry .mem-type{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--purple);letter-spacing:1px}
+    .mem-entry .mem-content{font-size:12px;line-height:1.5;margin-top:4px;color:var(--text)}
+    .mem-entry .mem-importance{position:absolute;top:8px;right:8px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--yellow)}
+
+    /* ── Log entries ── */
+    .log-entry{background:rgba(0,5,12,.7);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px}
+    .log-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+    .log-steps{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+    .log-step{display:flex;align-items:flex-start;gap:8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);padding:4px 8px;background:rgba(0,10,25,.5);border-radius:4px}
+    .log-step .ls-iter{color:var(--cyan);min-width:16px}
+    .log-step .ls-action{color:var(--yellow);min-width:90px}
+    .log-output{margin-top:8px;padding:8px;background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.12);
+      border-radius:4px;font-size:11px;line-height:1.5;max-height:100px;overflow-y:auto;color:var(--green)}
+
+    /* ── Divider ── */
+    .divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:16px 0}
+
+    /* ── Empty state ── */
+    .empty{text-align:center;padding:40px 20px;color:var(--text2);font-size:13px}
+    .empty .icon{font-size:36px;margin-bottom:8px;opacity:.4}
+
+    /* ── Spinner ── */
+    .spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--cyan);
+      border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── Toast ── */
+    #toast-container{position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;flex-direction:column;gap:8px}
+    .toast{padding:10px 18px;border-radius:8px;font-family:'Orbitron',monospace;font-size:10px;
+      letter-spacing:1px;animation:toastIn .3s ease;border:1px solid}
+    .toast.success{background:#001a0d;border-color:var(--green);color:var(--green)}
+    .toast.error{background:#1a0008;border-color:var(--red);color:var(--red)}
+    .toast.info{background:#00101a;border-color:var(--cyan);color:var(--cyan)}
+    @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar{width:4px;height:4px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(0,255,255,.2);border-radius:4px}
+    ::-webkit-scrollbar-thumb:hover{background:rgba(0,255,255,.4)}
+
+    /* ── Run panel special ── */
+    .run-select-box{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+    .run-select-box .rs-col label{font-family:'Orbitron',monospace;font-size:9px;color:var(--cyan);letter-spacing:1px;margin-bottom:5px;display:block}
+    .run-select-box select{width:100%;background:rgba(0,15,30,.8);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;padding:8px 10px;outline:none}
+    .run-select-box select:focus{border-color:var(--cyan)}
+
+    .output-box{background:rgba(0,5,12,.9);border:1px solid rgba(0,255,136,.2);border-radius:8px;padding:14px;
+      font-family:'Rajdhani',sans-serif;font-size:13px;line-height:1.7;color:var(--text);min-height:80px;
+      white-space:pre-wrap;word-break:break-word;max-height:200px;overflow-y:auto}
+
+    /* ── Flicker anim for "thinking" ── */
+    .thinking-dot{animation:tdot 1.2s ease-in-out infinite}
+    .thinking-dot:nth-child(2){animation-delay:.2s}
+    .thinking-dot:nth-child(3){animation-delay:.4s}
+    @keyframes tdot{0%,80%,100%{opacity:.2}40%{opacity:1}}
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- ── TOPBAR ── -->
+  <div id="topbar">
+    <div class="logo">AGENT<span>OS</span> <span style="color:var(--text2);font-size:10px">// VƯƠNG ĐẾ AI</span></div>
+    <div class="version-badge">v1.0</div>
+    <div class="status-pills">
+      <div class="pill"><span class="dot green" id="srv-dot"></span><span id="srv-label">ONLINE</span></div>
+      <div class="pill"><span class="dot green"></span><span id="stat-agents">0</span> AGENTS</div>
+      <div class="pill"><span class="dot yellow"></span><span id="stat-tasks">0</span> TASKS</div>
+      <div class="pill"><span class="dot" style="background:var(--purple);box-shadow:0 0 8px var(--purple)"></span><span id="stat-memory">0</span> MEMORIES</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <a href="/user" style="text-decoration:none">
+        <button class="btn btn-cyan btn-sm">← Main App</button>
+      </a>
+    </div>
+  </div>
+
+  <!-- ── SIDEBAR ── -->
+  <div id="sidebar">
+    <div class="nav-section">CORE</div>
+    <div class="nav-item active" onclick="nav('dashboard')"><span class="icon">⬡</span> Dashboard</div>
+    <div class="nav-item" onclick="nav('agents')"><span class="icon">🤖</span> Agents</div>
+    <div class="nav-item" onclick="nav('tasks')"><span class="icon">📋</span> Tasks</div>
+    <div class="nav-section">RUNTIME</div>
+    <div class="nav-item" onclick="nav('run')"><span class="icon">⚡</span> Run Agent</div>
+    <div class="nav-item" onclick="nav('logs')"><span class="icon">📡</span> Execution Logs</div>
+    <div class="nav-section">STORAGE</div>
+    <div class="nav-item" onclick="nav('memory')"><span class="icon">🧠</span> Memory</div>
+    <div class="nav-item" onclick="nav('tools')"><span class="icon">🔧</span> Tools</div>
+    <div class="nav-section">SYSTEM</div>
+    <div class="nav-item" onclick="nav('create-agent')"><span class="icon">＋</span> New Agent</div>
+    <div class="nav-item" onclick="nav('create-task')"><span class="icon">＋</span> New Task</div>
+  </div>
+
+  <!-- ── MAIN ── -->
+  <div id="main">
+
+    <!-- Dashboard -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="panel-header">
+        <div class="panel-title">⬡ SYSTEM DASHBOARD</div>
+        <button class="btn btn-cyan btn-sm" onclick="refreshAll()">↻ Refresh</button>
+      </div>
+      <div class="panel-body">
+        <div class="stats-row" id="stats-row">
+          <div class="stat-box"><div class="stat-num" id="d-agents">–</div><div class="stat-label">AGENTS</div></div>
+          <div class="stat-box"><div class="stat-num purple" id="d-tasks">–</div><div class="stat-label">TASKS</div></div>
+          <div class="stat-box"><div class="stat-num green" id="d-memory">–</div><div class="stat-label">MEMORIES</div></div>
+          <div class="stat-box"><div class="stat-num yellow" id="d-tools">–</div><div class="stat-label">TOOLS</div></div>
+        </div>
+        <div class="divider"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="font-family:'Orbitron',monospace;font-size:11px;color:var(--cyan);margin-bottom:10px;letter-spacing:1px">RECENT AGENTS</div>
+            <div id="dash-agents-list"></div>
+          </div>
+          <div>
+            <div style="font-family:'Orbitron',monospace;font-size:11px;color:var(--purple);margin-bottom:10px;letter-spacing:1px">RECENT TASKS</div>
+            <div id="dash-tasks-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agents -->
+    <div class="panel" id="panel-agents">
+      <div class="panel-header">
+        <div class="panel-title">🤖 AGENTS</div>
+        <button class="btn btn-cyan btn-sm" onclick="nav('create-agent')">+ New Agent</button>
+        <button class="btn btn-cyan btn-sm" onclick="loadAgents()" style="margin-left:4px">↻</button>
+      </div>
+      <div class="panel-body" id="agents-list-body">
+        <div class="empty"><div class="icon">🤖</div>Đang tải...</div>
+      </div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="panel" id="panel-tasks">
+      <div class="panel-header">
+        <div class="panel-title">📋 TASKS</div>
+        <button class="btn btn-cyan btn-sm" onclick="nav('create-task')">+ New Task</button>
+        <button class="btn btn-cyan btn-sm" onclick="loadTasks()" style="margin-left:4px">↻</button>
+      </div>
+      <div class="panel-body" id="tasks-list-body">
+        <div class="empty"><div class="icon">📋</div>Đang tải...</div>
+      </div>
+    </div>
+
+    <!-- Run Agent -->
+    <div class="panel" id="panel-run">
+      <div class="panel-header">
+        <div class="panel-title">⚡ RUN AGENT</div>
+      </div>
+      <div class="panel-body">
+        <div class="run-select-box">
+          <div class="rs-col">
+            <label>SELECT AGENT</label>
+            <select id="run-agent-sel"></select>
+          </div>
+          <div class="rs-col">
+            <label>SELECT TASK</label>
+            <select id="run-task-sel"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>CUSTOM INPUT (optional — overrides task description)</label>
+          <textarea id="run-input" placeholder="Ghi đè đầu vào cho lần chạy này..." rows="2"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn btn-green" id="btn-run-sync" onclick="runSync()">▶ RUN SYNC</button>
+          <button class="btn btn-cyan" id="btn-run-async" onclick="runAsync()">▷ RUN ASYNC</button>
+        </div>
+
+        <div id="run-status-bar" style="display:none;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(0,255,255,.04);border:1px solid var(--border);border-radius:6px">
+            <div class="spinner"></div>
+            <span id="run-status-text" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan)">Agent đang xử lý...</span>
+          </div>
+        </div>
+
+        <div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--cyan);letter-spacing:1px;margin-bottom:8px">REACT TRACE</div>
+        <div id="react-log"><div class="empty" style="padding:20px"><div class="icon">⚡</div>Chạy agent để xem ReAct trace</div></div>
+
+        <div id="run-output-wrap" style="display:none;margin-top:12px">
+          <div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--green);letter-spacing:1px;margin-bottom:6px">✓ FINAL OUTPUT</div>
+          <div class="output-box" id="run-output"></div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-top:6px" id="run-meta"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="panel" id="panel-logs">
+      <div class="panel-header">
+        <div class="panel-title">📡 EXECUTION LOGS</div>
+        <button class="btn btn-cyan btn-sm" onclick="loadLogs()">↻ Refresh</button>
+      </div>
+      <div class="panel-body" id="logs-body">
+        <div class="empty"><div class="icon">📡</div>Đang tải logs...</div>
+      </div>
+    </div>
+
+    <!-- Memory -->
+    <div class="panel" id="panel-memory">
+      <div class="panel-header">
+        <div class="panel-title">🧠 AGENT MEMORY</div>
+        <select id="mem-agent-sel" onchange="loadMemory()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:4px 8px;border-radius:4px;margin-left:8px"></select>
+        <button class="btn btn-cyan btn-sm" onclick="loadMemory()" style="margin-left:4px">↻</button>
+        <button class="btn btn-red btn-sm" onclick="clearMemory()" style="margin-left:4px">✕ Clear</button>
+      </div>
+      <div class="panel-body" id="memory-body">
+        <div class="empty"><div class="icon">🧠</div>Chọn agent để xem bộ nhớ</div>
+      </div>
+    </div>
+
+    <!-- Tools -->
+    <div class="panel" id="panel-tools">
+      <div class="panel-header">
+        <div class="panel-title">🔧 TOOLS REGISTRY</div>
+      </div>
+      <div class="panel-body" id="tools-body">
+        <div class="empty"><div class="icon">🔧</div>Đang tải...</div>
+      </div>
+    </div>
+
+    <!-- Create Agent -->
+    <div class="panel" id="panel-create-agent">
+      <div class="panel-header">
+        <div class="panel-title">＋ CREATE AGENT</div>
+      </div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label>NAME *</label>
+          <input type="text" id="ca-name" placeholder="VD: Nhà Phân Tích Chiến Lược">
+        </div>
+        <div class="form-group">
+          <label>ROLE *</label>
+          <input type="text" id="ca-role" placeholder="VD: Chuyên gia phân tích thị trường tài chính">
+        </div>
+        <div class="form-group">
+          <label>GOAL *</label>
+          <textarea id="ca-goal" placeholder="VD: Phân tích dữ liệu và đưa ra dự báo xu hướng thị trường chính xác" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>BACKSTORY</label>
+          <textarea id="ca-backstory" placeholder="VD: 15 năm kinh nghiệm tại Wall Street, từng quản lý quỹ đầu tư 500M USD..." rows="3"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label>MODEL</label>
+            <select id="ca-model">
+              <option value="gemini-2.5-flash" selected>gemini-2.5-flash</option>
+              <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>MAX ITERATIONS</label>
+            <input type="number" id="ca-iter" value="6" min="2" max="20">
+          </div>
+        </div>
+        <button class="btn btn-green btn-full" onclick="createAgent()">⚡ CREATE AGENT</button>
+      </div>
+    </div>
+
+    <!-- Create Task -->
+    <div class="panel" id="panel-create-task">
+      <div class="panel-header">
+        <div class="panel-title">＋ CREATE TASK</div>
+      </div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label>TITLE *</label>
+          <input type="text" id="ct-title" placeholder="VD: Phân tích xu hướng AI Việt Nam 2025">
+        </div>
+        <div class="form-group">
+          <label>DESCRIPTION *</label>
+          <textarea id="ct-desc" placeholder="Mô tả chi tiết nhiệm vụ, ngữ cảnh, dữ liệu đầu vào..." rows="4"></textarea>
+        </div>
+        <div class="form-group">
+          <label>EXPECTED OUTPUT</label>
+          <textarea id="ct-expected" placeholder="VD: Báo cáo gồm top 3 ngành, rào cản, và 3 bước hành động..." rows="2"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label>ASSIGN AGENT</label>
+            <select id="ct-agent"><option value="">— Không giao —</option></select>
+          </div>
+          <div class="form-group">
+            <label>PRIORITY (1–10)</label>
+            <input type="number" id="ct-priority" value="5" min="1" max="10">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>EXTRA INPUT (JSON)</label>
+          <input type="text" id="ct-input" placeholder='{"context":"..."}' value="{}">
+        </div>
+        <button class="btn btn-purple btn-full" onclick="createTask()">📋 CREATE TASK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANE ── -->
+  <div id="rightpane">
+    <!-- Agent detail -->
+    <div class="rpanel active" id="rp-detail">
+      <div class="rp-header">AGENT DETAIL</div>
+      <div class="rp-body" id="rp-detail-body">
+        <div class="empty" style="padding:30px 10px"><div class="icon">🤖</div>Select an agent</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+let agents = [], allTasks = [], currentPanel = 'dashboard';
+let selectedAgentId = null;
+
+// ── Nav ────────────────────────────────────────────────────────────────────────
+function nav(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.toLowerCase().includes(id.replace('-', ' ').replace('create', 'new').toLowerCase()) ||
+        n.getAttribute('onclick')?.includes(`'${id}'`)) {
+      n.classList.add('active');
+    }
+  });
+  currentPanel = id;
+  if (id === 'agents') loadAgents();
+  if (id === 'tasks')  loadTasks();
+  if (id === 'logs')   loadLogs();
+  if (id === 'memory') populateMemAgentSel();
+  if (id === 'tools')  loadTools();
+  if (id === 'run')    populateRunSelects();
+  if (id === 'dashboard') loadDashboard();
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ── API helpers ────────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const res = await fetch('/api/aos' + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  return res.json();
+}
+
+// ── Refresh all ────────────────────────────────────────────────────────────────
+async function refreshAll() {
+  const status = await api('/status');
+  document.getElementById('d-agents').textContent = Object.values(status.agents || {}).reduce((a,b)=>a+b,0);
+  document.getElementById('d-tasks').textContent  = Object.values(status.tasks  || {}).reduce((a,b)=>a+b,0);
+  document.getElementById('d-memory').textContent = status.memory_entries || 0;
+  document.getElementById('d-tools').textContent  = status.tools || 0;
+  document.getElementById('stat-agents').textContent = Object.values(status.agents||{}).reduce((a,b)=>a+b,0);
+  document.getElementById('stat-tasks').textContent  = Object.values(status.tasks||{}).reduce((a,b)=>a+b,0);
+  document.getElementById('stat-memory').textContent = status.memory_entries || 0;
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  await refreshAll();
+  const [agData, taskData] = await Promise.all([api('/agents'), api('/tasks')]);
+  agents = agData.agents || [];
+  allTasks = taskData.tasks || [];
+
+  // Recent agents
+  const al = document.getElementById('dash-agents-list');
+  al.innerHTML = agents.slice(0, 5).map(a => `
+    <div class="card clickable" onclick="showAgentDetail(${a.id})" style="padding:10px 12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="card-title" style="font-size:13px">${a.name}</div>
+        <span class="status ${a.status}">${a.status}</span>
+      </div>
+      <div class="card-sub" style="margin-top:2px">${a.role.slice(0,60)}</div>
+    </div>`).join('') || '<div class="empty">No agents yet</div>';
+
+  // Recent tasks
+  const tl = document.getElementById('dash-tasks-list');
+  tl.innerHTML = allTasks.slice(0, 5).map(t => `
+    <div class="card" style="padding:10px 12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="card-title" style="font-size:13px">${t.title.slice(0,40)}</div>
+        <span class="status ${t.status}">${t.status}</span>
+      </div>
+      <div class="card-sub" style="margin-top:2px">${(t.agent_name||'Unassigned')} · P${t.priority}</div>
+    </div>`).join('') || '<div class="empty">No tasks yet</div>';
+}
+
+// ── Agents ─────────────────────────────────────────────────────────────────────
+async function loadAgents() {
+  const data = await api('/agents');
+  agents = data.agents || [];
+  const body = document.getElementById('agents-list-body');
+  if (!agents.length) { body.innerHTML = '<div class="empty"><div class="icon">🤖</div>Chưa có agent nào. Tạo mới!</div>'; return; }
+  body.innerHTML = agents.map(a => `
+    <div class="card clickable" onclick="showAgentDetail(${a.id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="card-title">${a.name}</div>
+          <div class="card-sub">${a.role}</div>
+        </div>
+        <span class="status ${a.status}">${a.status}</span>
+      </div>
+      <div class="card-sub" style="margin-top:6px;font-style:italic;opacity:.7">"${a.goal.slice(0,80)}"</div>
+      <div class="card-meta">
+        <span class="tag">${a.model}</span>
+        <span class="tag purple">iter: ${a.max_iterations}</span>
+        <span class="tag green">tasks: ${a.completed_tasks||0}/${a.total_tasks||0}</span>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px">
+        <button class="btn btn-cyan btn-sm" onclick="event.stopPropagation();runFromAgent(${a.id})">⚡ Run</button>
+        <button class="btn btn-red btn-sm" onclick="event.stopPropagation();deleteAgent(${a.id})">✕ Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+function runFromAgent(agentId) {
+  selectedAgentId = agentId;
+  nav('run');
+  setTimeout(() => {
+    const sel = document.getElementById('run-agent-sel');
+    if (sel) sel.value = agentId;
+  }, 200);
+}
+
+async function deleteAgent(id) {
+  if (!confirm('Xóa agent này?')) return;
+  await api('/agents/' + id, { method: 'DELETE' });
+  toast('Đã xóa agent', 'info');
+  loadAgents();
+  refreshAll();
+}
+
+function showAgentDetail(id) {
+  const a = agents.find(x => x.id === id);
+  if (!a) return;
+  const body = document.getElementById('rp-detail-body');
+  body.innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="font-family:'Orbitron',monospace;font-size:15px;color:var(--cyan);text-shadow:0 0 10px rgba(0,255,255,.4)">${a.name}</div>
+      <span class="status ${a.status}" style="margin-top:4px">${a.status}</span>
+    </div>
+    <div style="font-size:11px;color:var(--text2);font-family:'Orbitron',monospace;letter-spacing:1px;margin-bottom:4px">ROLE</div>
+    <div style="font-size:13px;margin-bottom:10px">${a.role}</div>
+    <div style="font-size:11px;color:var(--text2);font-family:'Orbitron',monospace;letter-spacing:1px;margin-bottom:4px">GOAL</div>
+    <div style="font-size:13px;font-style:italic;color:var(--cyan);margin-bottom:10px;opacity:.85">"${a.goal}"</div>
+    ${a.backstory ? `<div style="font-size:11px;color:var(--text2);font-family:'Orbitron',monospace;letter-spacing:1px;margin-bottom:4px">BACKSTORY</div>
+    <div style="font-size:12px;line-height:1.6;margin-bottom:10px;color:var(--text2)">${a.backstory}</div>` : ''}
+    <div class="divider"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div class="stat-box" style="padding:10px"><div class="stat-num" style="font-size:20px">${a.completed_tasks||0}</div><div class="stat-label">DONE</div></div>
+      <div class="stat-box" style="padding:10px"><div class="stat-num purple" style="font-size:20px">${a.total_tasks||0}</div><div class="stat-label">TOTAL</div></div>
+    </div>
+    <button class="btn btn-green btn-full" onclick="runFromAgent(${a.id})" style="margin-bottom:6px">⚡ Run Task</button>
+    <button class="btn btn-cyan btn-full" onclick="selectedMemAgent=${a.id};nav('memory')" style="margin-bottom:6px">🧠 View Memory</button>
+    <button class="btn btn-red btn-full" onclick="deleteAgent(${a.id})">✕ Delete Agent</button>
+  `;
+}
+let selectedMemAgent = null;
+
+// ── Tasks ──────────────────────────────────────────────────────────────────────
+async function loadTasks() {
+  const data = await api('/tasks');
+  allTasks = data.tasks || [];
+  const body = document.getElementById('tasks-list-body');
+  if (!allTasks.length) { body.innerHTML = '<div class="empty"><div class="icon">📋</div>Chưa có task nào. Tạo mới!</div>'; return; }
+  body.innerHTML = allTasks.map(t => `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1;margin-right:8px">
+          <div class="card-title">${t.title}</div>
+          <div class="card-sub">${t.description.slice(0,100)}${t.description.length>100?'…':''}</div>
+        </div>
+        <span class="status ${t.status}">${t.status}</span>
+      </div>
+      <div class="card-meta" style="margin-top:8px">
+        <span class="tag">${t.agent_name||'Unassigned'}</span>
+        <span class="tag yellow">P${t.priority}</span>
+        <span class="tag purple">#${t.id}</span>
+      </div>
+      ${t.output ? `<div class="log-output" style="margin-top:8px">${t.output.slice(0,200)}${t.output.length>200?'…':''}</div>` : ''}
+      <div style="margin-top:8px;display:flex;gap:6px">
+        ${t.assigned_agent_id ? `<button class="btn btn-green btn-sm" onclick="runTaskFromList(${t.assigned_agent_id},${t.id})">⚡ Run</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function runTaskFromList(agentId, taskId) {
+  nav('run');
+  setTimeout(() => {
+    document.getElementById('run-agent-sel').value = agentId;
+    document.getElementById('run-task-sel').value = taskId;
+  }, 200);
+}
+
+// ── Run Agent ──────────────────────────────────────────────────────────────────
+async function populateRunSelects() {
+  const [agData, taskData] = await Promise.all([api('/agents'), api('/tasks')]);
+  agents = agData.agents || [];
+  allTasks = taskData.tasks || [];
+
+  const agSel = document.getElementById('run-agent-sel');
+  const taskSel = document.getElementById('run-task-sel');
+  agSel.innerHTML = agents.map(a => `<option value="${a.id}">${a.name} (${a.status})</option>`).join('');
+  taskSel.innerHTML = allTasks.map(t => `<option value="${t.id}">#${t.id} ${t.title.slice(0,40)}</option>`).join('');
+
+  if (selectedAgentId) agSel.value = selectedAgentId;
+}
+
+function addReactStep(iter, action, thought, observation, isFinal) {
+  const log = document.getElementById('react-log');
+  if (log.querySelector('.empty')) log.innerHTML = '';
+
+  // Thought
+  if (thought) {
+    const thoughtEl = document.createElement('div');
+    thoughtEl.className = 'react-step thought';
+    thoughtEl.innerHTML = `<div class="step-label">💭 THOUGHT · iter ${iter}</div><div class="step-content">${thought.slice(0,400)}</div>`;
+    log.appendChild(thoughtEl);
+  }
+
+  // Action
+  const actionEl = document.createElement('div');
+  actionEl.className = `react-step ${isFinal ? 'final' : 'action'}`;
+  actionEl.innerHTML = `<div class="step-label">⚡ ACTION: ${action}</div>`;
+  log.appendChild(actionEl);
+
+  // Observation
+  if (observation !== undefined) {
+    const obsEl = document.createElement('div');
+    obsEl.className = 'react-step observation';
+    const obsText = typeof observation === 'object' ? JSON.stringify(observation) : String(observation);
+    obsEl.innerHTML = `<div class="step-label">👁 OBSERVATION</div><div class="step-content">${obsText.slice(0,300)}</div>`;
+    log.appendChild(obsEl);
+  }
+
+  log.scrollTop = log.scrollHeight;
+}
+
+async function runSync() {
+  const agentId = document.getElementById('run-agent-sel').value;
+  const taskId = document.getElementById('run-task-sel').value;
+  const input = document.getElementById('run-input').value.trim() || null;
+  if (!agentId || !taskId) { toast('Chọn agent và task', 'error'); return; }
+
+  document.getElementById('react-log').innerHTML = '';
+  document.getElementById('run-output-wrap').style.display = 'none';
+  document.getElementById('run-status-bar').style.display = 'block';
+  document.getElementById('btn-run-sync').disabled = true;
+  document.getElementById('btn-run-async').disabled = true;
+
+  // Add "thinking" indicator
+  const log = document.getElementById('react-log');
+  log.innerHTML = `<div class="react-step thought" style="display:flex;gap:4px;align-items:center;padding:12px">
+    <div class="thinking-dot">●</div><div class="thinking-dot">●</div><div class="thinking-dot">●</div>
+    <span style="margin-left:8px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan)">Agent đang suy nghĩ...</span>
+  </div>`;
+
+  try {
+    const data = await api('/agent/run/sync', {
+      method: 'POST',
+      body: JSON.stringify({ agent_id: Number(agentId), task_id: Number(taskId), input }),
+    });
+
+    document.getElementById('run-status-bar').style.display = 'none';
+    log.innerHTML = '';
+
+    if (data.error) {
+      toast('Lỗi: ' + data.error, 'error');
+      log.innerHTML = `<div class="react-step" style="border-color:var(--red);background:rgba(255,68,102,.06)">
+        <div class="step-label">❌ ERROR</div><div class="step-content">${data.error}</div></div>`;
+      return;
+    }
+
+    // Render ReAct steps
+    (data.steps || []).forEach(s => {
+      addReactStep(s.iter, s.action, s.thought, s.observation?.result || s.observation?.error, s.action === 'final_answer');
+    });
+
+    // Show output
+    document.getElementById('run-output-wrap').style.display = 'block';
+    document.getElementById('run-output').textContent = data.output || '';
+    document.getElementById('run-meta').textContent =
+      `Iterations: ${data.iterations} · Tokens: ${data.tokensIn} in / ${data.tokensOut} out · Exec #${data.execId}`;
+    toast('✓ Agent hoàn thành!', 'success');
+    refreshAll();
+
+  } catch (e) {
+    toast('Lỗi kết nối', 'error');
+    document.getElementById('run-status-bar').style.display = 'none';
+  } finally {
+    document.getElementById('btn-run-sync').disabled = false;
+    document.getElementById('btn-run-async').disabled = false;
+  }
+}
+
+async function runAsync() {
+  const agentId = document.getElementById('run-agent-sel').value;
+  const taskId = document.getElementById('run-task-sel').value;
+  const input = document.getElementById('run-input').value.trim() || null;
+  if (!agentId || !taskId) { toast('Chọn agent và task', 'error'); return; }
+
+  const data = await api('/agent/run', {
+    method: 'POST',
+    body: JSON.stringify({ agent_id: Number(agentId), task_id: Number(taskId), input }),
+  });
+  if (data.error) { toast('Lỗi: ' + data.error, 'error'); return; }
+  toast('Agent đã khởi động! Xem logs để theo dõi.', 'info');
+
+  // Poll for completion
+  document.getElementById('run-status-bar').style.display = 'block';
+  document.getElementById('react-log').innerHTML = `<div class="react-step action">
+    <div class="step-label">⚡ ASYNC RUN STARTED</div>
+    <div class="step-content">Agent đang chạy nền. Logs sẽ xuất hiện khi hoàn thành.\nDùng tab Execution Logs để theo dõi.</div>
+  </div>`;
+
+  // Poll task status
+  const pollInterval = setInterval(async () => {
+    const taskData = await api('/tasks/' + taskId);
+    if (!taskData.task) { clearInterval(pollInterval); return; }
+    const status = taskData.task.status;
+    document.getElementById('run-status-text').textContent = `Task status: ${status}...`;
+    if (status === 'completed' || status === 'failed') {
+      clearInterval(pollInterval);
+      document.getElementById('run-status-bar').style.display = 'none';
+      if (status === 'completed') {
+        document.getElementById('run-output-wrap').style.display = 'block';
+        document.getElementById('run-output').textContent = taskData.task.output || '';
+        toast('✓ Task hoàn thành!', 'success');
+        // Show latest logs
+        loadLogs();
+      } else {
+        toast('✗ Task thất bại', 'error');
+      }
+      refreshAll();
+    }
+  }, 3000);
+}
+
+// ── Logs ────────────────────────────────────────────────────────────────────────
+async function loadLogs() {
+  const data = await api('/agent/logs?limit=20');
+  const body = document.getElementById('logs-body');
+  const logs = data.logs || [];
+  if (!logs.length) { body.innerHTML = '<div class="empty"><div class="icon">📡</div>Chưa có logs nào</div>'; return; }
+
+  body.innerHTML = logs.map(log => {
+    const steps = Array.isArray(log.steps) ? log.steps : [];
+    const dur = log.finished_at ? Math.round((new Date(log.finished_at) - new Date(log.started_at)) / 1000) : null;
+    return `<div class="log-entry">
+      <div class="log-header">
+        <span class="status ${log.status}">${log.status}</span>
+        <span style="font-family:'Orbitron',monospace;font-size:11px;color:var(--cyan)">Exec #${log.id}</span>
+        <span style="font-size:11px;color:var(--text2)">${log.agent_name}</span>
+        <span style="font-size:10px;color:var(--purple)">${log.task_title?.slice(0,40)||''}</span>
+        ${dur ? `<span class="tag" style="margin-left:auto">${dur}s · ${log.iterations} iter · ${log.tokens_in||0}T</span>` : ''}
+      </div>
+      ${steps.length ? `<div class="log-steps">${steps.map(s=>`
+        <div class="log-step">
+          <span class="ls-iter">${s.iter}</span>
+          <span class="ls-action">[${s.action}]</span>
+          <span>${(s.thought||'').slice(0,100)}</span>
+        </div>`).join('')}</div>` : ''}
+      ${log.output ? `<div class="log-output">${log.output.slice(0,300)}${log.output.length>300?'…':''}</div>` : ''}
+      ${log.error ? `<div style="color:var(--red);font-size:11px;margin-top:4px;font-family:'Share Tech Mono',monospace">${log.error}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Memory ──────────────────────────────────────────────────────────────────────
+async function populateMemAgentSel() {
+  if (!agents.length) { const d = await api('/agents'); agents = d.agents||[]; }
+  const sel = document.getElementById('mem-agent-sel');
+  sel.innerHTML = '<option value="">— Agent —</option>' + agents.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  if (selectedMemAgent) { sel.value = selectedMemAgent; loadMemory(); selectedMemAgent = null; }
+}
+
+async function loadMemory() {
+  const agentId = document.getElementById('mem-agent-sel').value;
+  if (!agentId) return;
+  const data = await api('/agent/memory?agent_id=' + agentId + '&limit=50');
+  const body = document.getElementById('memory-body');
+  const mem = data.memory || [];
+  if (!mem.length) { body.innerHTML = '<div class="empty"><div class="icon">🧠</div>Bộ nhớ trống</div>'; return; }
+
+  body.innerHTML = mem.map(m => `
+    <div class="mem-entry">
+      <div class="mem-type">${m.type.toUpperCase()} ${m.task_title ? `· ${m.task_title.slice(0,30)}` : ''}</div>
+      <div class="mem-importance">★ ${m.importance}</div>
+      <div class="mem-content">${m.content.slice(0,300)}${m.content.length>300?'…':''}</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);margin-top:6px">${new Date(m.created_at).toLocaleString('vi-VN')}</div>
+    </div>`).join('');
+}
+
+async function clearMemory() {
+  const agentId = document.getElementById('mem-agent-sel').value;
+  if (!agentId) return;
+  if (!confirm('Xóa toàn bộ bộ nhớ của agent này?')) return;
+  await api('/agent/memory/' + agentId, { method: 'DELETE' });
+  toast('Đã xóa bộ nhớ', 'info');
+  loadMemory();
+  refreshAll();
+}
+
+// ── Tools ───────────────────────────────────────────────────────────────────────
+async function loadTools() {
+  const data = await api('/tools');
+  const tools = data.tools || [];
+  const body = document.getElementById('tools-body');
+  const typeColors = { builtin: 'cyan', custom: 'purple', http: 'green' };
+  body.innerHTML = tools.map(t => `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="card-title" style="font-family:'Share Tech Mono',monospace;font-size:13px">${t.name}</div>
+        <span class="tag ${typeColors[t.type]||'cyan'}">${t.type}</span>
+      </div>
+      <div class="card-sub" style="margin-top:4px">${t.description}</div>
+    </div>`).join('');
+}
+
+// ── Create Agent ────────────────────────────────────────────────────────────────
+async function createAgent() {
+  const name = document.getElementById('ca-name').value.trim();
+  const role = document.getElementById('ca-role').value.trim();
+  const goal = document.getElementById('ca-goal').value.trim();
+  if (!name || !role || !goal) { toast('Điền đầy đủ Name, Role, Goal', 'error'); return; }
+
+  const data = await api('/agents', {
+    method: 'POST',
+    body: JSON.stringify({
+      name, role, goal,
+      backstory: document.getElementById('ca-backstory').value.trim(),
+      model: document.getElementById('ca-model').value,
+      max_iterations: parseInt(document.getElementById('ca-iter').value),
+    }),
+  });
+  if (data.error) { toast('Lỗi: ' + data.error, 'error'); return; }
+  toast(`✓ Agent "${name}" đã tạo!`, 'success');
+  ['ca-name','ca-role','ca-goal','ca-backstory'].forEach(id => document.getElementById(id).value = '');
+  nav('agents');
+  refreshAll();
+}
+
+// ── Create Task ─────────────────────────────────────────────────────────────────
+async function populateCreateTaskAgents() {
+  if (!agents.length) { const d = await api('/agents'); agents = d.agents||[]; }
+  const sel = document.getElementById('ct-agent');
+  sel.innerHTML = '<option value="">— Không giao —</option>' + agents.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+}
+
+async function createTask() {
+  const title = document.getElementById('ct-title').value.trim();
+  const desc  = document.getElementById('ct-desc').value.trim();
+  if (!title || !desc) { toast('Điền Title và Description', 'error'); return; }
+
+  let inputJSON = {};
+  try { inputJSON = JSON.parse(document.getElementById('ct-input').value || '{}'); } catch {}
+
+  const data = await api('/tasks', {
+    method: 'POST',
+    body: JSON.stringify({
+      title, description: desc,
+      expected_output: document.getElementById('ct-expected').value.trim(),
+      assigned_agent_id: document.getElementById('ct-agent').value || null,
+      priority: parseInt(document.getElementById('ct-priority').value),
+      input: inputJSON,
+    }),
+  });
+  if (data.error) { toast('Lỗi: ' + data.error, 'error'); return; }
+  toast(`✓ Task "${title}" đã tạo!`, 'success');
+  ['ct-title','ct-desc','ct-expected'].forEach(id => document.getElementById(id).value = '');
+  nav('tasks');
+  refreshAll();
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadDashboard();
+  // Pre-load agents for selects
+  const d = await api('/agents');
+  agents = d.agents || [];
+  // Wire up create-task panel agent select on nav
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes('create-task')) {
+      n.addEventListener('click', populateCreateTaskAgents);
+    }
+  });
+});
+</script>
+</body>
+</html>
