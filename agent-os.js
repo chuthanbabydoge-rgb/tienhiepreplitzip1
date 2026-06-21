@@ -564,6 +564,7 @@ class AgentRuntime {
     this.pool         = pool;
     this.worldHook    = worldHook; // { onAgentStatusChange(agentId, status) }
     this.economyHook  = null;      // { onTaskComplete(taskId, agentId, output) }
+    this.orgHook      = null;      // { onTaskComplete(taskId, agentId, resourceValue) }
     this.registry     = new AgentRegistry(pool);
     this.dag          = new DAGEngine(pool);
     this._running     = new Set(); // track in-process task IDs
@@ -571,6 +572,7 @@ class AgentRuntime {
 
   setWorldHook(hook)    { this.worldHook   = hook; }
   setEconomyHook(hook)  { this.economyHook = hook; }
+  setOrgHook(hook)      { this.orgHook     = hook; }
 
   async _notifyWorld(agentId, status) {
     if (this.worldHook?.onAgentStatusChange) {
@@ -757,6 +759,14 @@ QUY TẮC:
       if (this.economyHook?.onTaskComplete) {
         this.economyHook.onTaskComplete(taskId, agentId, finalOutput).catch(err => {
           console.error('[Economy hook] error:', err.message);
+        });
+      }
+
+      // Organization: track expense + goal progress + dept budget
+      if (this.orgHook?.onTaskComplete) {
+        const resourceValue = finalOutput ? Math.max(25, Math.min(250, finalOutput.length * 0.06)) : 30;
+        this.orgHook.onTaskComplete(taskId, agentId, resourceValue).catch(err => {
+          console.error('[Org hook] error:', err.message);
         });
       }
 

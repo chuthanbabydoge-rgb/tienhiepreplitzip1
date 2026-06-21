@@ -13,6 +13,7 @@ const { initAOSTables, registerAOSRoutes, startScheduler } = require('./agent-os
 const { initMarketplaceTables, registerMarketplaceRoutes } = require('./agent-marketplace');
 const { initWorldTables, registerWorldRoutes, createWorldWebSocket } = require('./world-engine');
 const { initEconomyTables, registerEconomyRoutes, EconomyEngine } = require('./agent-economy');
+const { initOrgTables, registerOrgRoutes, OrganizationEngine } = require('./organization-engine');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -112,6 +113,7 @@ async function initDB() {
   await initMarketplaceTables(pgPool);
   await initWorldTables(pgPool);
   await initEconomyTables(pgPool);
+  await initOrgTables(pgPool);
 }
 
 async function upsertUser(user, incrementLogin = false) {
@@ -1804,6 +1806,9 @@ registerAOSRoutes(app, pgPool);
 // ── Agent Economy v1 ───────────────────────────────────────────────────────
 const economyEngine = registerEconomyRoutes(app, pgPool);
 
+// ── Organization Engine v1 ─────────────────────────────────────────────────
+const orgEngine = registerOrgRoutes(app, pgPool);
+
 // ── Agent Marketplace ──────────────────────────────────────────────────────
 app.get('/agent-marketplace', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'agent-marketplace.html'));
@@ -1832,6 +1837,11 @@ if (app._aosRuntime) {
   app._aosRuntime.setEconomyHook({
     onTaskComplete: (taskId, agentId, output) =>
       economyEngine.generateResourceFromTask(taskId, agentId, output),
+  });
+  // Organization: track expense, dept budget, and goal progress
+  app._aosRuntime.setOrgHook({
+    onTaskComplete: (taskId, agentId, resourceValue) =>
+      orgEngine.onTaskComplete(taskId, agentId, resourceValue),
   });
 }
 startScheduler(pgPool, app._aosRuntime, { interval: 5000 });
