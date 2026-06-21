@@ -9,7 +9,7 @@ const Jimp = require('jimp');
 const pgSession = require('connect-pg-simple')(session);
 const { Pool } = require('pg');
 const { initWorkflowTables, registerWorkflowRoutes } = require('./workflow-engine');
-const { initAOSTables, registerAOSRoutes } = require('./agent-os');
+const { initAOSTables, registerAOSRoutes, startScheduler } = require('./agent-os');
 const { initMarketplaceTables, registerMarketplaceRoutes } = require('./agent-marketplace');
 const { initWorldTables, registerWorldRoutes, createWorldWebSocket } = require('./world-engine');
 
@@ -1819,3 +1819,10 @@ const httpServer = app.listen(PORT, '0.0.0.0', () => {
 // ── World Engine WebSocket + Routes (needs httpServer) ─────────────────────
 const { wss: worldWss, onAgentStatusChange } = createWorldWebSocket(httpServer, pgPool);
 registerWorldRoutes(app, pgPool, worldWss);
+
+// ── AOS v2: Wire World Hook + Start Autonomous Scheduler ───────────────────
+// Connect agent task status changes → World Engine citizen status updates
+if (app._aosRuntime) {
+  app._aosRuntime.setWorldHook({ onAgentStatusChange });
+}
+startScheduler(pgPool, app._aosRuntime, { interval: 5000 });
