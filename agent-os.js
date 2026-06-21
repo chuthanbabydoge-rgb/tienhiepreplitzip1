@@ -561,14 +561,16 @@ class DAGEngine {
 // ─── Agent Runtime ─────────────────────────────────────────────────────────────
 class AgentRuntime {
   constructor(pool, worldHook = null) {
-    this.pool      = pool;
-    this.worldHook = worldHook; // { onAgentStatusChange(agentId, status) }
-    this.registry  = new AgentRegistry(pool);
-    this.dag       = new DAGEngine(pool);
-    this._running  = new Set(); // track in-process task IDs
+    this.pool         = pool;
+    this.worldHook    = worldHook; // { onAgentStatusChange(agentId, status) }
+    this.economyHook  = null;      // { onTaskComplete(taskId, agentId, output) }
+    this.registry     = new AgentRegistry(pool);
+    this.dag          = new DAGEngine(pool);
+    this._running     = new Set(); // track in-process task IDs
   }
 
-  setWorldHook(hook) { this.worldHook = hook; }
+  setWorldHook(hook)    { this.worldHook   = hook; }
+  setEconomyHook(hook)  { this.economyHook = hook; }
 
   async _notifyWorld(agentId, status) {
     if (this.worldHook?.onAgentStatusChange) {
@@ -750,6 +752,13 @@ QUY TẮC:
 
       // DAG: unlock downstream tasks
       await this.dag.onTaskComplete(taskId);
+
+      // Economy: generate resource from completed task output
+      if (this.economyHook?.onTaskComplete) {
+        this.economyHook.onTaskComplete(taskId, agentId, finalOutput).catch(err => {
+          console.error('[Economy hook] error:', err.message);
+        });
+      }
 
       this._running.delete(taskId);
       return { execId, output: finalOutput, steps, tokensIn, tokensOut, iterations: steps.length };

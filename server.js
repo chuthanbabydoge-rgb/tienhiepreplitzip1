@@ -12,6 +12,7 @@ const { initWorkflowTables, registerWorkflowRoutes } = require('./workflow-engin
 const { initAOSTables, registerAOSRoutes, startScheduler } = require('./agent-os');
 const { initMarketplaceTables, registerMarketplaceRoutes } = require('./agent-marketplace');
 const { initWorldTables, registerWorldRoutes, createWorldWebSocket } = require('./world-engine');
+const { initEconomyTables, registerEconomyRoutes, EconomyEngine } = require('./agent-economy');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -110,6 +111,7 @@ async function initDB() {
   await initAOSTables(pgPool);
   await initMarketplaceTables(pgPool);
   await initWorldTables(pgPool);
+  await initEconomyTables(pgPool);
 }
 
 async function upsertUser(user, incrementLogin = false) {
@@ -1799,6 +1801,9 @@ registerWorkflowRoutes(app, pgPool);
 // ── Agent Operating System v1 ──────────────────────────────────────────────
 registerAOSRoutes(app, pgPool);
 
+// ── Agent Economy v1 ───────────────────────────────────────────────────────
+const economyEngine = registerEconomyRoutes(app, pgPool);
+
 // ── Agent Marketplace ──────────────────────────────────────────────────────
 app.get('/agent-marketplace', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'agent-marketplace.html'));
@@ -1820,9 +1825,13 @@ const httpServer = app.listen(PORT, '0.0.0.0', () => {
 const { wss: worldWss, onAgentStatusChange } = createWorldWebSocket(httpServer, pgPool);
 registerWorldRoutes(app, pgPool, worldWss);
 
-// ── AOS v2: Wire World Hook + Start Autonomous Scheduler ───────────────────
-// Connect agent task status changes → World Engine citizen status updates
+// ── AOS v2: Wire World Hook + Economy Hook + Start Autonomous Scheduler ────
 if (app._aosRuntime) {
   app._aosRuntime.setWorldHook({ onAgentStatusChange });
+  // Economy: auto-generate resource + reward whenever an agent completes a task
+  app._aosRuntime.setEconomyHook({
+    onTaskComplete: (taskId, agentId, output) =>
+      economyEngine.generateResourceFromTask(taskId, agentId, output),
+  });
 }
 startScheduler(pgPool, app._aosRuntime, { interval: 5000 });
